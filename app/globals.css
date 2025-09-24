@@ -2,80 +2,129 @@
 @import "tw-animate-css";
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --font-inter: "Inter", sans-serif;
+  /* Updated to Vercel-inspired minimalistic design tokens */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  /* Updated primary color to black for buttons */
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #64748b;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  /* Updated accent color to black for consistency */
+  --accent: #000000;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  /* Updated ring color to match new black primary color */
+  --ring: rgba(0, 0, 0, 0.2);
+  /* Added light grey highlight colors for better visual hierarchy */
+  --highlight: #f8fafc;
+  --highlight-foreground: #1a1a1a;
+  --highlight-border: #e2e8f0;
+
+  /* Added Kroolo-specific color tokens */
+  --status-open: #fbbf24;
+  --status-open-bg: #fef3c7;
+  --priority-medium: #f97316;
+  --priority-medium-bg: #fed7aa;
+  --priority-high: #ef4444;
+  --priority-high-bg: #fecaca;
+  --priority-urgent: #dc2626;
+  --priority-urgent-bg: #fee2e2;
+  --success: #10b981;
+  --success-bg: #d1fae5;
+
+  --chart-1: #f97316;
+  --chart-2: #1a1a1a;
+  --chart-3: #ef4444;
+  --chart-4: #000000;
+  --chart-5: #64748b;
+  --radius: 0.375rem;
+
+  /* Updated sidebar colors to match Kroolo */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #f1f5f9;
+  --sidebar-primary-foreground: #1a1a1a;
+  /* Updated sidebar accent to match new black primary color */
+  --sidebar-accent: #000000;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e2e8f0;
+  /* Updated sidebar ring to match new black primary color */
+  --sidebar-ring: rgba(0, 0, 0, 0.2);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Updated dark mode tokens for consistency */
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #1a1a1a;
+  --card-foreground: #fafafa;
+  --popover: #0a0a0a;
+  --popover-foreground: #fafafa;
+  /* Updated dark mode primary color to white for contrast */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #262626;
+  --secondary-foreground: #a3a3a3;
+  --muted: #1a1a1a;
+  --muted-foreground: #737373;
+  /* Updated dark mode accent color to white for contrast */
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #262626;
+  --input: #1a1a1a;
+  /* Updated dark mode ring color to match new white primary color */
+  --ring: rgba(255, 255, 255, 0.2);
+  /* Added dark mode light grey highlight colors */
+  --highlight: #1a1a1a;
+  --highlight-foreground: #fafafa;
+  --highlight-border: #404040;
+
+  /* Dark mode status and priority colors */
+  --status-open: #fbbf24;
+  --status-open-bg: #451a03;
+  --priority-medium: #f97316;
+  --priority-medium-bg: #431407;
+  --priority-high: #ef4444;
+  --priority-high-bg: #450a0a;
+  --priority-urgent: #dc2626;
+  --priority-urgent-bg: #450a0a;
+  --success: #10b981;
+  --success-bg: #064e3b;
+
+  --chart-1: #f97316;
+  --chart-2: #fafafa;
+  --chart-3: #ef4444;
+  --chart-4: #ffffff;
+  --chart-5: #737373;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #1a1a1a;
+  --sidebar-primary-foreground: #fafafa;
+  /* Updated dark mode sidebar accent to match new white primary color */
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #262626;
+  /* Updated dark mode sidebar ring to match new white primary color */
+  --sidebar-ring: rgba(255, 255, 255, 0.2);
 }
 
 @theme inline {
-  /* Added Inter font configuration */
-  --font-sans: var(--font-inter);
+  /* Updated font configuration to use Inter instead of Geist */
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -95,6 +144,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  /* Added highlight color tokens for Tailwind usage */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-highlight-border: var(--highlight-border);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -112,25 +165,46 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Added Kroolo-specific color tokens for Tailwind usage */
+  --color-status-open: var(--status-open);
+  --color-status-open-bg: var(--status-open-bg);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-medium-bg: var(--priority-medium-bg);
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-bg: var(--priority-high-bg);
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-urgent-bg: var(--priority-urgent-bg);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* Removed border-border and outline properties that were adding unwanted borders to all elements */
+    @apply border-0;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-    /* Prevent any overflow changes that could affect layout */
-    overflow-x: hidden;
-    /* Ensure consistent width calculation */
-    width: 100vw;
-    max-width: 100%;
+    /* Updated font-family to use Inter variable */
+    font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Prevent layout shifts from dropdown overlays */
-  .dropdown-overlay-open {
-    overflow: hidden !important;
-    padding-right: 0 !important;
+  /* Updated global font family rules to use Inter variable */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  div,
+  button,
+  input,
+  textarea,
+  select,
+  label {
+    font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 }

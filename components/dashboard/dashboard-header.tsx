@@ -17,7 +17,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { Search, Plus } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/notification-bell"
-import { getAvatarProps } from "@/lib/avatar-utils"
 
 interface DashboardHeaderProps {
   user: any
@@ -33,31 +32,28 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   }
 
   const employeeNavItems = [
-    { href: "/bsm/dashboard", label: "Dashboard" },
-    { href: "/bsm/tickets", label: "Tickets" },
-    { href: "/bsm/workflows", label: "Workflows" },
-    { href: "/bsm/services", label: "Service Catalog" },
-    { href: "/bsm/analytics", label: "Analytics" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/tickets", label: "Tickets" },
+    { href: "/workflows", label: "Workflows" },
+    { href: "/services", label: "Service Catalog" },
+    { href: "/analytics", label: "Analytics" },
   ]
 
   const customerNavItems = [
-    { href: "/bsm/dashboard", label: "Dashboard" },
-    { href: "/bsm/tickets", label: "Support" },
-    { href: "/bsm/services", label: "Services" },
-    { href: "/bsm/analytics", label: "Reports" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/tickets", label: "Support" },
+    { href: "/services", label: "Services" },
+    { href: "/analytics", label: "Reports" },
   ]
 
   const navItems = isEmployeeMode ? employeeNavItems : customerNavItems
-
-  const displayName = profile?.display_name || `${profile?.first_name} ${profile?.last_name}` || user.email
-  const avatarProps = getAvatarProps(displayName)
 
   return (
     <header className="border-b border-border bg-background">
       <div className="container mx-auto px-6 py-3 max-w-7xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Link href="/bsm/dashboard" className="flex items-center space-x-3">
+            <Link href="/dashboard" className="flex items-center space-x-3">
               <Image src="/images/kroolo-logo.png" alt="Kroolo" width={120} height={32} className="h-8 w-auto" />
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-muted-foreground">BSM</span>
@@ -96,9 +92,9 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={displayName} />
-                    <AvatarFallback className={`${avatarProps.colorClass} text-white text-xs font-semibold`}>
-                      {avatarProps.initials}
+                    <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={profile?.display_name} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {profile?.first_name?.[0] || user.email[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

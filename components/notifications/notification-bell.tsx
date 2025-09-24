@@ -40,11 +40,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 relative hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150"
-        >
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 relative">
           <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">

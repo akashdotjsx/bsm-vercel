@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Laptop,
   Shield,
@@ -30,6 +31,10 @@ import {
   ArrowRight,
   FileText,
   Settings,
+  Plus,
+  MoreVertical,
+  Edit,
+  Trash2,
 } from "lucide-react"
 
 const employeeServices = [
@@ -199,10 +204,16 @@ export function ServiceCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("popularity")
 
-  const services = mode === "employee" ? employeeServices : customerServices
+  const [services, setServices] = useState(mode === "employee" ? employeeServices : customerServices)
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false)
+  const [showEditServiceModal, setShowEditServiceModal] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
+  const [selectedCategoryForService, setSelectedCategoryForService] = useState("")
   const [selectedService, setSelectedService] = useState(null)
   const [selectedServiceCategory, setSelectedServiceCategory] = useState(null)
+  const [newCategory, setNewCategory] = useState({ name: "", description: "", color: "bg-blue-500" })
+  const [newService, setNewService] = useState({ name: "", description: "", sla: "", popularity: 3 })
   const [requestForm, setRequestForm] = useState({
     requestName: "",
     priority: "Medium",
@@ -215,6 +226,61 @@ export function ServiceCatalog() {
     costCenter: "",
     department: "",
   })
+
+  const handleAddCategory = () => {
+    const newCat = {
+      id: newCategory.name.toLowerCase().replace(/\s+/g, "-"),
+      name: newCategory.name,
+      description: newCategory.description,
+      icon: Settings,
+      color: newCategory.color,
+      services: [],
+    }
+    setServices([...services, newCat])
+    setNewCategory({ name: "", description: "", color: "bg-blue-500" })
+    setShowAddCategoryModal(false)
+    alert("Service category added successfully!")
+  }
+
+  const handleAddService = () => {
+    const updatedServices = services.map((category) => {
+      if (category.id === selectedCategoryForService) {
+        return {
+          ...category,
+          services: [...category.services, newService],
+        }
+      }
+      return category
+    })
+    setServices(updatedServices)
+    setNewService({ name: "", description: "", sla: "", popularity: 3 })
+    setShowAddServiceModal(false)
+    alert("Service added successfully!")
+  }
+
+  const handleEditService = () => {
+    const updatedServices = services.map((category) => ({
+      ...category,
+      services: category.services.map((service) => (service === selectedService ? newService : service)),
+    }))
+    setServices(updatedServices)
+    setShowEditServiceModal(false)
+    alert("Service updated successfully!")
+  }
+
+  const handleDeleteService = (categoryId, serviceName) => {
+    const updatedServices = services.map((category) => {
+      if (category.id === categoryId) {
+        return {
+          ...category,
+          services: category.services.filter((service) => service.name !== serviceName),
+        }
+      }
+      return category
+    })
+    setServices(updatedServices)
+    alert("Service deleted successfully!")
+  }
 
   const handleServiceRequest = () => {
     console.log("[v0] Service request submitted:", {
@@ -247,31 +313,20 @@ export function ServiceCatalog() {
     alert("Service request submitted successfully! You will receive a confirmation email shortly.")
   }
 
-  const filteredServices = services
-    .map((category) => {
-      if (selectedCategory !== "all" && category.id !== selectedCategory) return null
-
-      let filteredCategoryServices = category.services
-
-      if (searchTerm) {
-        filteredCategoryServices = category.services.filter(
+  const filteredServices = services.filter((category) => {
+    if (selectedCategory !== "all" && category.id !== selectedCategory) return false
+    if (searchTerm) {
+      return (
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.services.some(
           (service) =>
             service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             service.description.toLowerCase().includes(searchTerm.toLowerCase()),
         )
-
-        // Only include category if it has matching services or if category name matches
-        if (filteredCategoryServices.length === 0 && !category.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-          return null
-        }
-      }
-
-      return {
-        ...category,
-        services: filteredCategoryServices,
-      }
-    })
-    .filter(Boolean)
+      )
+    }
+    return true
+  })
 
   return (
     <div className="space-y-6 text-[13px]">
@@ -280,6 +335,74 @@ export function ServiceCatalog() {
           <h1 className="text-2xl font-semibold tracking-tight">Service Catalog</h1>
           <p className="text-[13px] text-muted-foreground">Browse and request services from various departments</p>
         </div>
+        <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
+          <DialogTrigger asChild>
+            <Button className="text-[13px]">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Category
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Service Category</DialogTitle>
+              <DialogDescription className="text-[13px]">
+                Create a new service category to organize your services.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="category-name" className="text-[13px]">
+                  Category Name
+                </Label>
+                <Input
+                  id="category-name"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                  placeholder="e.g., IT Services"
+                  className="text-[13px]"
+                />
+              </div>
+              <div>
+                <Label htmlFor="category-description" className="text-[13px]">
+                  Description
+                </Label>
+                <Textarea
+                  id="category-description"
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  placeholder="Brief description of the category"
+                  className="text-[13px]"
+                />
+              </div>
+              <div>
+                <Label htmlFor="category-color" className="text-[13px]">
+                  Color
+                </Label>
+                <Select
+                  value={newCategory.color}
+                  onValueChange={(value) => setNewCategory({ ...newCategory, color: value })}
+                >
+                  <SelectTrigger className="text-[13px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bg-blue-500">Blue</SelectItem>
+                    <SelectItem value="bg-green-500">Green</SelectItem>
+                    <SelectItem value="bg-yellow-500">Yellow</SelectItem>
+                    <SelectItem value="bg-purple-500">Purple</SelectItem>
+                    <SelectItem value="bg-red-500">Red</SelectItem>
+                    <SelectItem value="bg-orange-500">Orange</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleAddCategory} className="text-[13px]">
+                Add Category
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -333,6 +456,92 @@ export function ServiceCatalog() {
                       <CardDescription className="text-[13px]">{category.description}</CardDescription>
                     </div>
                   </div>
+                  <Dialog open={showAddServiceModal} onOpenChange={setShowAddServiceModal}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedCategoryForService(category.id)}
+                        className="text-[13px]"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Service
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Service to {category.name}</DialogTitle>
+                        <DialogDescription className="text-[13px]">
+                          Create a new service in this category.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="service-name" className="text-[13px]">
+                            Service Name
+                          </Label>
+                          <Input
+                            id="service-name"
+                            value={newService.name}
+                            onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                            placeholder="e.g., Laptop Request"
+                            className="text-[13px]"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="service-description" className="text-[13px]">
+                            Description
+                          </Label>
+                          <Textarea
+                            id="service-description"
+                            value={newService.description}
+                            onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                            placeholder="Brief description of the service"
+                            className="text-[13px]"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="service-sla" className="text-[13px]">
+                            SLA
+                          </Label>
+                          <Input
+                            id="service-sla"
+                            value={newService.sla}
+                            onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
+                            placeholder="e.g., 3-5 days"
+                            className="text-[13px]"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="service-popularity" className="text-[13px]">
+                            Popularity (1-5)
+                          </Label>
+                          <Select
+                            value={newService.popularity.toString()}
+                            onValueChange={(value) =>
+                              setNewService({ ...newService, popularity: Number.parseInt(value) })
+                            }
+                          >
+                            <SelectTrigger className="text-[13px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 Star</SelectItem>
+                              <SelectItem value="2">2 Stars</SelectItem>
+                              <SelectItem value="3">3 Stars</SelectItem>
+                              <SelectItem value="4">4 Stars</SelectItem>
+                              <SelectItem value="5">5 Stars</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleAddService} className="text-[13px]">
+                          Add Service
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
@@ -356,6 +565,33 @@ export function ServiceCatalog() {
                                 <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                               ))}
                             </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedService(service)
+                                    setNewService(service)
+                                    setShowEditServiceModal(true)
+                                  }}
+                                  className="text-[13px]"
+                                >
+                                  <Edit className="h-3 w-3 mr-2" />
+                                  Edit Service
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteService(category.id, service.name)}
+                                  className="text-[13px] text-red-600"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-2" />
+                                  Delete Service
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                         <p className="text-[13px] text-muted-foreground mb-3">{service.description}</p>
@@ -624,6 +860,75 @@ export function ServiceCatalog() {
           )
         })}
       </div>
+
+      <Dialog open={showEditServiceModal} onOpenChange={setShowEditServiceModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Service</DialogTitle>
+            <DialogDescription className="text-[13px]">Update the service details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-service-name" className="text-[13px]">
+                Service Name
+              </Label>
+              <Input
+                id="edit-service-name"
+                value={newService.name}
+                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-description" className="text-[13px]">
+                Description
+              </Label>
+              <Textarea
+                id="edit-service-description"
+                value={newService.description}
+                onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-sla" className="text-[13px]">
+                SLA
+              </Label>
+              <Input
+                id="edit-service-sla"
+                value={newService.sla}
+                onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-popularity" className="text-[13px]">
+                Popularity (1-5)
+              </Label>
+              <Select
+                value={newService.popularity?.toString()}
+                onValueChange={(value) => setNewService({ ...newService, popularity: Number.parseInt(value) })}
+              >
+                <SelectTrigger className="text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Star</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditService} className="text-[13px]">
+              Update Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {filteredServices.length === 0 && (
         <div className="text-center py-12">
