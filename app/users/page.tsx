@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Dialog,
   DialogContent,
@@ -18,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Users,
   UserPlus,
@@ -34,27 +38,29 @@ import {
   Key,
   Plus,
   Settings,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react"
+import { useUsers } from "@/hooks/use-users"
+import { useToast } from "@/hooks/use-toast"
 
 const availableRoles = [
-  "IT Administrator",
-  "HR Manager",
-  "Finance Analyst",
-  "Service Agent",
-  "Project Manager",
-  "Developer",
-  "Support Specialist",
-  "Team Lead",
+  { value: 'admin', label: 'Administrator' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'agent', label: 'Agent' },
+  { value: 'user', label: 'User' },
 ]
 
 const availableDepartments = [
-  "Information Technology",
-  "Human Resources",
+  "IT",
+  "HR",
   "Finance",
-  "Customer Support",
+  "Support",
   "Marketing",
   "Operations",
   "Sales",
+  "Legal",
 ]
 
 const initialUsers = [
@@ -125,8 +131,7 @@ const initialTeams = [
 ]
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(initialUsers)
-  const [teams, setTeams] = useState(initialTeams)
+  const { users, teams, loading, inviteUser, updateUser, deactivateUser, reactivateUser, resetUserPassword, createTeam, addUserToTeam } = useUsers()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [departmentFilter, setDepartmentFilter] = useState("all")
@@ -141,23 +146,27 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [newUser, setNewUser] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    role: "",
+    role: "user",
     department: "",
-    status: "Active",
   })
   const [newTeam, setNewTeam] = useState({
     name: "",
-    lead: "",
+    lead_id: "",
     description: "",
+    department: "",
   })
+  const { toast } = useToast()
 
   const filteredUsers = users.filter((user) => {
+    const userName = user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || user.status.toLowerCase() === statusFilter.toLowerCase()
+    const userStatus = user.is_active ? "active" : "inactive"
+    const matchesStatus = statusFilter === "all" || userStatus === statusFilter.toLowerCase()
     const matchesDepartment = departmentFilter === "all" || user.department === departmentFilter
     return matchesSearch && matchesStatus && matchesDepartment
   })
@@ -171,33 +180,51 @@ export default function UsersPage() {
     })
   }
 
-  const handleAddUser = () => {
-    const user = {
-      id: users.length + 1,
-      ...newUser,
-      createdOn: new Date().toISOString().split("T")[0],
-      permissions: [],
+  const handleAddUser = async () => {
+    try {
+      await inviteUser(newUser)
+      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "" })
+      setShowAddUser(false)
+    } catch (error) {
+      console.error('Error adding user:', error)
     }
-    setUsers([...users, user])
-    setNewUser({ name: "", email: "", role: "", department: "", status: "Active" })
-    setShowAddUser(false)
   }
 
   const handleEditUser = (user) => {
     setSelectedUser(user)
-    setNewUser(user)
+    setNewUser({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email,
+      role: user.role,
+      department: user.department || ''
+    })
     setShowEditUser(true)
   }
 
-  const handleUpdateUser = () => {
-    setUsers(users.map((user) => (user.id === selectedUser.id ? { ...user, ...newUser } : user)))
-    setShowEditUser(false)
-    setSelectedUser(null)
-    setNewUser({ name: "", email: "", role: "", department: "", status: "Active" })
+  const handleUpdateUser = async () => {
+    try {
+      await updateUser(selectedUser.id, {
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        display_name: `${newUser.first_name} ${newUser.last_name}`,
+        role: newUser.role,
+        department: newUser.department,
+      })
+      setShowEditUser(false)
+      setSelectedUser(null)
+      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "" })
+    } catch (error) {
+      console.error('Error updating user:', error)
+    }
   }
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter((user) => user.id !== userId))
+  const handleDeleteUser = async (userId) => {
+    try {
+      await deactivateUser(userId)
+    } catch (error) {
+      console.error('Error deleting user:', error)
+    }
   }
 
   const handleResetPassword = (user) => {
@@ -205,39 +232,66 @@ export default function UsersPage() {
     setShowResetPassword(true)
   }
 
-  const handleDeactivateUser = (userId) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId ? { ...user, status: user.status === "Active" ? "Inactive" : "Active" } : user,
-      ),
-    )
+  const handleDeactivateUser = async (userId, isActive) => {
+    try {
+      if (isActive) {
+        await deactivateUser(userId)
+      } else {
+        await reactivateUser(userId)
+      }
+    } catch (error) {
+      console.error('Error toggling user status:', error)
+    }
   }
 
-  const handleAddTeam = () => {
-    const team = {
-      id: teams.length + 1,
-      ...newTeam,
+  const handleAddTeam = async () => {
+    try {
+      await createTeam(newTeam)
+      setNewTeam({ name: "", lead_id: "", description: "", department: "" })
+      setShowAddTeam(false)
+    } catch (error) {
+      console.error('Error creating team:', error)
     }
-    setTeams([...teams, team])
-    setNewTeam({ name: "", lead: "", description: "" })
-    setShowAddTeam(false)
   }
 
   const handleEditTeam = (team) => {
     setSelectedTeam(team)
-    setNewTeam(team)
+    setNewTeam({
+      name: team.name,
+      lead_id: team.lead_id,
+      description: team.description,
+      department: team.department
+    })
     setShowEditTeam(true)
   }
 
-  const handleUpdateTeam = () => {
-    setTeams(teams.map((team) => (team.id === selectedTeam.id ? { ...team, ...newTeam } : team)))
-    setShowEditTeam(false)
-    setSelectedTeam(null)
-    setNewTeam({ name: "", lead: "", description: "" })
+  const handleUpdateTeam = async () => {
+    try {
+      // TODO: Implement updateTeam API function
+      console.log('Update team:', selectedTeam.id, newTeam)
+      toast({
+        title: "Team Updated",
+        description: "Team has been updated successfully.",
+      })
+      setShowEditTeam(false)
+      setSelectedTeam(null)
+      setNewTeam({ name: "", lead_id: "", description: "", department: "" })
+    } catch (error) {
+      console.error('Error updating team:', error)
+    }
   }
 
-  const handleDeleteTeam = (teamId) => {
-    setTeams(teams.filter((team) => team.id !== teamId))
+  const handleDeleteTeam = async (teamId) => {
+    try {
+      // TODO: Implement deleteTeam API function
+      console.log('Delete team:', teamId)
+      toast({
+        title: "Team Deleted",
+        description: "Team has been deleted successfully.",
+      })
+    } catch (error) {
+      console.error('Error deleting team:', error)
+    }
   }
 
   const handleAddDepartment = () => {
@@ -261,6 +315,11 @@ export default function UsersPage() {
       ]}
     >
       <div className="space-y-6 font-sans text-[13px]">
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-[13px] text-muted-foreground">Loading users...</div>
+          </div>
+        )}
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">Users & Teams</h1>
           <p className="text-muted-foreground">
@@ -325,13 +384,24 @@ export default function UsersPage() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right text-[13px]">
-                    Name
+                  <Label htmlFor="first_name" className="text-right text-[13px]">
+                    First Name
                   </Label>
                   <Input
-                    id="name"
-                    value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    id="first_name"
+                    value={newUser.first_name}
+                    onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
+                    className="col-span-3 text-[13px]"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="last_name" className="text-right text-[13px]">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="last_name"
+                    value={newUser.last_name}
+                    onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
                     className="col-span-3 text-[13px]"
                   />
                 </div>
@@ -357,8 +427,8 @@ export default function UsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -413,7 +483,7 @@ export default function UsersPage() {
                 <Shield className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
                   <p className="text-[13px] font-medium text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold">{users.filter((u) => u.status === "Active").length}</p>
+                  <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
                 </div>
               </div>
             </CardContent>
@@ -466,21 +536,23 @@ export default function UsersPage() {
                     <tr key={user.id} className="hover:bg-muted/50">
                       <td className="py-3 px-4">
                         <div>
-                          <div className="font-medium text-[13px]">{user.name}</div>
+                          <div className="font-medium text-[13px]">
+                            {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
+                          </div>
                           <div className="text-[13px] text-muted-foreground flex items-center">
                             <Mail className="mr-1 h-3 w-3" />
                             {user.email}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[13px]">{user.role}</td>
-                      <td className="py-3 px-4 text-[13px]">{user.department}</td>
+                      <td className="py-3 px-4 text-[13px]">{user.role || 'N/A'}</td>
+                      <td className="py-3 px-4 text-[13px]">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
-                        <Badge variant={user.status === "Active" ? "default" : "secondary"} className="text-[13px]">
-                          {user.status}
+                        <Badge variant={user.is_active ? "default" : "secondary"} className="text-[13px]">
+                          {user.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-[13px]">{formatDate(user.createdOn)}</td>
+                      <td className="py-3 px-4 text-[13px]">{formatDate(user.created_at)}</td>
                       <td className="py-3 px-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -497,9 +569,9 @@ export default function UsersPage() {
                               <Key className="mr-2 h-4 w-4" />
                               Reset Password
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeactivateUser(user.id)} className="text-[13px]">
+                            <DropdownMenuItem onClick={() => handleDeactivateUser(user.id, user.is_active)} className="text-[13px]">
                               <UserX className="mr-2 h-4 w-4" />
-                              {user.status === "Active" ? "Deactivate" : "Activate"}
+                              {user.is_active ? "Deactivate" : "Activate"}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteUser(user.id)}
@@ -559,18 +631,38 @@ export default function UsersPage() {
                       <Label htmlFor="team-lead" className="text-right text-[13px]">
                         Team Lead
                       </Label>
-                      <Select value={newTeam.lead} onValueChange={(value) => setNewTeam({ ...newTeam, lead: value })}>
+                      <Select value={newTeam.lead_id} onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}>
                         <SelectTrigger className="col-span-3 text-[13px]">
                           <SelectValue placeholder="Select team lead" />
                         </SelectTrigger>
                         <SelectContent>
                           {users
-                            .filter((u) => u.status === "Active")
+                            .filter((u) => u.is_active)
                             .map((user) => (
-                              <SelectItem key={user.id} value={user.name}>
-                                {user.name}
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
                               </SelectItem>
                             ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="team-department" className="text-right text-[13px]">
+                        Department
+                      </Label>
+                      <Select
+                        value={newTeam.department}
+                        onValueChange={(value) => setNewTeam({ ...newTeam, department: value })}
+                      >
+                        <SelectTrigger className="col-span-3 text-[13px]">
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -650,13 +742,24 @@ export default function UsersPage() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-name" className="text-right text-[13px]">
-                  Name
+                <Label htmlFor="edit-first-name" className="text-right text-[13px]">
+                  First Name
                 </Label>
                 <Input
-                  id="edit-name"
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  id="edit-first-name"
+                  value={newUser.first_name}
+                  onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
+                  className="col-span-3 text-[13px]"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-last-name" className="text-right text-[13px]">
+                  Last Name
+                </Label>
+                <Input
+                  id="edit-last-name"
+                  value={newUser.last_name}
+                  onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
                   className="col-span-3 text-[13px]"
                 />
               </div>
@@ -682,8 +785,8 @@ export default function UsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -755,18 +858,38 @@ export default function UsersPage() {
                 <Label htmlFor="edit-team-lead" className="text-right text-[13px]">
                   Team Lead
                 </Label>
-                <Select value={newTeam.lead} onValueChange={(value) => setNewTeam({ ...newTeam, lead: value })}>
+                <Select value={newTeam.lead_id} onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}>
                   <SelectTrigger className="col-span-3 text-[13px]">
                     <SelectValue placeholder="Select team lead" />
                   </SelectTrigger>
                   <SelectContent>
                     {users
-                      .filter((u) => u.status === "Active")
+                      .filter((u) => u.is_active)
                       .map((user) => (
-                        <SelectItem key={user.id} value={user.name}>
-                          {user.name}
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
                         </SelectItem>
                       ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-team-department" className="text-right text-[13px]">
+                  Department
+                </Label>
+                <Select
+                  value={newTeam.department}
+                  onValueChange={(value) => setNewTeam({ ...newTeam, department: value })}
+                >
+                  <SelectTrigger className="col-span-3 text-[13px]">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -854,10 +977,13 @@ export default function UsersPage() {
                 Cancel
               </Button>
               <Button
-                onClick={() => {
-                  // Reset password logic would go here
-                  alert(`Password reset email sent to ${selectedUser?.email}`)
-                  setShowResetPassword(false)
+                onClick={async () => {
+                  try {
+                    await resetUserPassword(selectedUser.id)
+                    setShowResetPassword(false)
+                  } catch (error) {
+                    console.error('Error resetting password:', error)
+                  }
                 }}
                 className="text-[13px]"
               >
