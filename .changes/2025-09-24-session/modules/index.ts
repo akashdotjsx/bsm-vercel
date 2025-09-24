@@ -1,7 +1,0 @@
-export * as Config from "./config/env"
-export * as RBAC from "./auth/rbac"
-export * as Tickets from "./tickets/application/service"
-export * as Users from "./users/application/service"
-export * as Orgs from "./orgs/application/service"
-export * as Roles from "./roles/application/service"
-export * as Teams from "./teams/application/service"
