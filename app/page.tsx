@@ -28,8 +28,8 @@ export default function LandingPage() {
   }, [])
 
   const handleSignIn = () => {
-    console.log("[v0] Sign in button clicked, navigating to dashboard")
-    router.push("/dashboard")
+    console.log("[v0] Sign in button clicked, navigating to login")
+    router.push("/auth/login")
   }
 
   console.log("[v0] Landing page component rendering")

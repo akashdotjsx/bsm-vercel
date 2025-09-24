@@ -11,14 +11,14 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
 
-export default function Page() {
-  const [email, setEmail] = useState("admin@kroolo.com")
-  const [password, setPassword] = useState("KrooloAdmin123!")
+export default function RealAuthLogin() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
-  const { setUser } = useStore()
+  const { setUser, setLoading } = useStore()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,6 +70,7 @@ export default function Page() {
         name: profile.display_name || `${profile.first_name} ${profile.last_name}`,
         avatar: profile.avatar_url,
         role: profile.role,
+        organization: profile.organization,
       })
 
       // Update last login
@@ -111,12 +112,6 @@ export default function Page() {
     }
   }
 
-  // Demo bypass - keep for development but hide in production
-  const handleBypass = () => {
-    console.log("[DEV] Demo bypass - this should be removed in production")
-    router.push("/dashboard")
-  }
-
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
       <div className="w-full max-w-sm">
@@ -149,6 +144,7 @@ export default function Page() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="h-10"
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -163,13 +159,16 @@ export default function Page() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-10"
+                      disabled={isLoading}
                     />
                   </div>
+                  
                   {error && (
                     <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                       {error}
                     </div>
                   )}
+
                   <Button type="submit" className="w-full h-10" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
@@ -184,24 +183,8 @@ export default function Page() {
                   >
                     Forgot your password?
                   </Button>
-
-                  {/* Development only - remove in production */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <>
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t border-border" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">Dev Only</span>
-                        </div>
-                      </div>
-                      <Button type="button" variant="outline" className="w-full h-10 bg-transparent" onClick={handleBypass}>
-                        Continue as Demo User (Dev)
-                      </Button>
-                    </>
-                  )}
                 </div>
+
                 <div className="mt-6 text-center text-sm">
                   <span className="text-muted-foreground">
                     Need an account?{" "}
