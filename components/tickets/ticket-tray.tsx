@@ -2,290 +2,227 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { createBrowserClient } from "@supabase/ssr"
 import {
   X,
   Bell,
+  Clock,
   Copy,
   Link,
   Paperclip,
   Bold,
   Italic,
   Underline,
+  ListIcon,
+  ListOrdered,
   Plus,
   Trash2,
+  Edit,
   Send,
   Upload,
   Download,
   Building,
+  Phone,
+  Mail,
+  MessageSquare,
   FileText,
   History,
   Search,
+  UserPlus,
   AtSign,
-  Calendar,
-  User,
 } from "lucide-react"
 
 interface TicketTrayProps {
   isOpen: boolean
   onClose: () => void
-  onSave?: () => void
   ticket?: any
 }
 
-export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps) {
+export function TicketTray({ isOpen, onClose, ticket }: TicketTrayProps) {
   const [activeTab, setActiveTab] = useState("details")
-  const [description, setDescription] = useState("")
-  const [isWatching, setIsWatching] = useState(false)
-  const [newChecklistItem, setNewChecklistItem] = useState("")
+  const [description, setDescription] = useState(ticket?.description || "")
   const [newComment, setNewComment] = useState("")
-  const [taskName, setTaskName] = useState("")
+  const [newChecklistItem, setNewChecklistItem] = useState("")
   const [showAccountSearch, setShowAccountSearch] = useState(false)
   const [accountSearchQuery, setAccountSearchQuery] = useState("")
   const [showMentionDropdown, setShowMentionDropdown] = useState(false)
   const [mentionQuery, setMentionQuery] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [editingChecklistItem, setEditingChecklistItem] = useState<number | null>(null)
+  const [isWatching, setIsWatching] = useState(false)
 
-  const [users, setUsers] = useState<any[]>([])
-  const [teams, setTeams] = useState<any[]>([])
-  const [accounts, setAccounts] = useState<any[]>([])
-  const [departments, setDepartments] = useState<any[]>([])
-  const [serviceCategories, setServiceCategories] = useState<any[]>([])
-  const [serviceTypes, setServiceTypes] = useState<any[]>([])
-  const [priorities, setPriorities] = useState<any[]>([])
-  const [contacts, setContacts] = useState<any[]>([])
-  const [accountStatuses, setAccountStatuses] = useState<any[]>([])
+  const teamMembers = [
+    { id: 1, name: "John Smith", email: "john.smith@company.com", avatar: "JS" },
+    { id: 2, name: "Sarah Wilson", email: "sarah.wilson@company.com", avatar: "SW" },
+    { id: 3, name: "Mike Chen", email: "mike.chen@company.com", avatar: "MC" },
+    { id: 4, name: "Lisa Anderson", email: "lisa.anderson@company.com", avatar: "LA" },
+    { id: 5, name: "Robert Taylor", email: "robert.taylor@company.com", avatar: "RT" },
+  ]
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
-
-  const generateTicketId = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("tickets")
-        .select("ticket_number")
-        .order("created_at", { ascending: false })
-        .limit(1)
-
-      if (error) {
-        console.error("[v0] Error fetching last ticket:", error)
-        return `TK-${Math.floor(Math.random() * 9999) + 1}`
-      }
-
-      let nextNumber = 1
-      if (data && data.length > 0 && data[0].ticket_number) {
-        const lastNumber = Number.parseInt(data[0].ticket_number.split("-")[1]) || 0
-        nextNumber = lastNumber + 1
-      }
-
-      return `TK-${nextNumber.toString().padStart(4, "0")}`
-    } catch (error) {
-      console.error("[v0] Error generating ticket ID:", error)
-      return `TK-${Math.floor(Math.random() * 9999) + 1}`
-    }
-  }
-
-  const fetchData = async () => {
-    setIsLoading(true)
-    try {
-      console.log("[v0] Fetching data from database...")
-
-      // Fetch users from profiles table
-      const { data: usersData, error: usersError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email, display_name")
-        .eq("is_active", true)
-
-      if (usersError) {
-        console.error("[v0] Error fetching users:", usersError)
-      } else {
-        const formattedUsers =
-          usersData?.map((user) => ({
-            id: user.id,
-            name: user.display_name || `${user.first_name} ${user.last_name}`,
-            email: user.email,
-            avatar: (user.first_name?.[0] || "") + (user.last_name?.[0] || ""),
-          })) || []
-        setUsers(formattedUsers)
-        console.log("[v0] Users loaded:", formattedUsers.length)
-      }
-
-      // Fetch departments
-      const { data: deptData, error: deptError } = await supabase.from("departments").select("id, name")
-
-      if (deptError) {
-        console.error("[v0] Error fetching departments:", deptError)
-      } else {
-        setDepartments(deptData || [])
-        console.log("[v0] Departments loaded:", deptData?.length || 0)
-      }
-
-      // Fetch teams
-      const { data: teamsData, error: teamsError } = await supabase
-        .from("teams")
-        .select("id, name")
-        .eq("is_active", true)
-
-      if (teamsError) {
-        console.error("[v0] Error fetching teams:", teamsError)
-      } else {
-        setTeams(teamsData || [])
-        console.log("[v0] Teams loaded:", teamsData?.length || 0)
-      }
-
-      // Fetch service categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from("service_categories")
-        .select("id, name")
-        .eq("is_active", true)
-
-      if (categoriesError) {
-        console.error("[v0] Error fetching service categories:", categoriesError)
-      } else {
-        setServiceCategories(categoriesData || [])
-        console.log("[v0] Service categories loaded:", categoriesData?.length || 0)
-      }
-
-      // Fetch service types
-      const { data: typesData, error: typesError } = await supabase
-        .from("service_types")
-        .select("id, name, service_category_id")
-        .eq("is_active", true)
-
-      if (typesError) {
-        console.error("[v0] Error fetching service types:", typesError)
-      } else {
-        setServiceTypes(typesData || [])
-        console.log("[v0] Service types loaded:", typesData?.length || 0)
-      }
-
-      // Fetch priority matrix
-      const { data: prioritiesData, error: prioritiesError } = await supabase
-        .from("priority_matrix")
-        .select("id, name, level, color")
-        .eq("is_active", true)
-        .order("level", { ascending: true })
-
-      if (prioritiesError) {
-        console.error("[v0] Error fetching priorities:", prioritiesError)
-      } else {
-        setPriorities(prioritiesData || [])
-        console.log("[v0] Priorities loaded:", prioritiesData?.length || 0)
-      }
-
-      // Fetch accounts
-      const { data: accountsData, error: accountsError } = await supabase
-        .from("accounts")
-        .select("id, name, email, phone")
-        .eq("is_active", true)
-
-      if (accountsError) {
-        console.error("[v0] Error fetching accounts:", accountsError)
-      } else {
-        setAccounts(accountsData || [])
-        console.log("[v0] Accounts loaded:", accountsData?.length || 0)
-      }
-
-      // Fetch account statuses
-      const { data: statusData, error: statusError } = await supabase
-        .from("account_status")
-        .select("id, name, color")
-        .eq("is_active", true)
-
-      if (statusError) {
-        console.error("[v0] Error fetching account statuses:", statusError)
-      } else {
-        setAccountStatuses(statusData || [])
-        console.log("[v0] Account statuses loaded:", statusData?.length || 0)
-      }
-
-      // Fetch contacts
-      const { data: contactsData, error: contactsError } = await supabase
-        .from("contacts")
-        .select(`
-          id, 
-          first_name, 
-          last_name, 
-          email, 
-          phone, 
-          title, 
-          department,
-          account_id,
-          accounts(name)
-        `)
-        .eq("is_active", true)
-
-      if (contactsError) {
-        console.error("[v0] Error fetching contacts:", contactsError)
-      } else {
-        setContacts(contactsData || [])
-        console.log("[v0] Contacts loaded:", contactsData?.length || 0)
-      }
-    } catch (error) {
-      console.error("[v0] Error fetching data:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchData()
-    }
-  }, [isOpen])
-
-  const getCurrentUser = () => {
-    // In a real app, this would come from auth context
-    return (
-      users.find((user) => user.email === "current@user.com") ||
-      (users.length > 0 ? users[0] : { name: "Current User", email: "current@user.com" })
-    )
-  }
+  const availableAccounts = [
+    {
+      id: 2,
+      name: "Jennifer Davis",
+      email: "jennifer.davis@acme.com",
+      phone: "+1 (555) 234-5678",
+      role: "IT Manager",
+      department: "IT Operations",
+      organization: "Acme Corp",
+      status: "Active",
+    },
+    {
+      id: 3,
+      name: "Michael Brown",
+      email: "michael.brown@acme.com",
+      phone: "+1 (555) 345-6789",
+      role: "Security Engineer",
+      department: "IT Security",
+      organization: "Acme Corp",
+      status: "Active",
+    },
+  ]
 
   const [ticketData, setTicketData] = useState({
-    id: ticket?.id || "",
-    title: ticket?.title || taskName || "New Ticket",
-    type: ticket?.type || "Incident",
+    id: ticket?.id || "#5081",
+    title: ticket?.title || "Cross side scripting Vuln",
+    type: ticket?.type || "Task",
     status: ticket?.status || "Open",
     priority: ticket?.priority || "Medium",
-    reportedBy: ticket?.reportedBy || "Current User",
+    reportedBy: ticket?.reportedBy || "M",
     assignee: ticket?.assignee?.name || "",
-    requester: ticket?.requester || "Current User",
-    organization: ticket?.organization || "",
-    department: ticket?.department || "",
-    category: ticket?.category || "",
-    subcategory: ticket?.subcategory || "",
-    team: ticket?.team || "",
-    serviceCategory: ticket?.serviceCategory || "",
-    serviceType: ticket?.serviceType || "",
-    createdDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-    dueDate: ticket?.dueDate || "",
+    requester: ticket?.requester || "Richard Jeffries",
+    organization: ticket?.organization || "Acme Corp",
+    department: ticket?.department || "IT Security",
+    category: ticket?.category || "Security",
+    subcategory: ticket?.subcategory || "Vulnerability",
+    createdDate: "May 12, 2024",
+    dueDate: "May 21, 2024",
     estimatedTime: "8",
     actualTime: "6.5",
-    tags: ticket?.tags || [],
-    accounts: ticket?.accounts || [],
-    checklist: ticket?.checklist || [],
-    comments: ticket?.comments || [],
-    files: ticket?.files || [],
-    history: ticket?.history || [],
+    tags: ["security", "urgent", "web-app"],
+    accounts: [
+      {
+        id: 1,
+        name: "Richard Jeffries",
+        email: "richard.jeffries@acme.com",
+        phone: "+1 (555) 123-4567",
+        role: "Security Analyst",
+        department: "IT Security",
+        organization: "Acme Corp",
+        lastContact: "2 hours ago",
+        status: "Active",
+      },
+    ],
+    checklist: [
+      { id: 1, text: "Reproduce the vulnerability", completed: true, assignee: "John Smith", dueDate: "2024-05-15" },
+      { id: 2, text: "Assess impact and severity", completed: true, assignee: "Sarah Wilson", dueDate: "2024-05-16" },
+      { id: 3, text: "Develop security patch", completed: false, assignee: "Mike Chen", dueDate: "2024-05-18" },
+      {
+        id: 4,
+        text: "Test patch in staging environment",
+        completed: false,
+        assignee: "Lisa Anderson",
+        dueDate: "2024-05-20",
+      },
+      { id: 5, text: "Deploy to production", completed: false, assignee: "Robert Taylor", dueDate: "2024-05-21" },
+    ],
+    comments: [
+      {
+        id: 1,
+        author: "Richard Jeffries",
+        avatar: "RJ",
+        timestamp: "2 hours ago",
+        content:
+          "I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.",
+        type: "comment",
+      },
+      {
+        id: 2,
+        author: "John Smith",
+        avatar: "JS",
+        timestamp: "1 hour ago",
+        content:
+          "Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.",
+        type: "comment",
+      },
+      {
+        id: 3,
+        author: "System",
+        avatar: "S",
+        timestamp: "45 minutes ago",
+        content: "Status changed from 'New' to 'In Progress'",
+        type: "system",
+      },
+    ],
+    files: [
+      {
+        id: 1,
+        name: "vulnerability-report.pdf",
+        size: "2.4 MB",
+        uploadedBy: "Richard Jeffries",
+        uploadedAt: "2 hours ago",
+        type: "pdf",
+      },
+      {
+        id: 2,
+        name: "screenshot-xss-poc.png",
+        size: "856 KB",
+        uploadedBy: "Richard Jeffries",
+        uploadedAt: "2 hours ago",
+        type: "image",
+      },
+      {
+        id: 3,
+        name: "security-patch.zip",
+        size: "1.2 MB",
+        uploadedBy: "Mike Chen",
+        uploadedAt: "30 minutes ago",
+        type: "archive",
+      },
+    ],
+    history: [
+      {
+        id: 1,
+        action: "Ticket created",
+        user: "Richard Jeffries",
+        timestamp: "May 12, 2024 09:15 AM",
+        details: "Initial vulnerability report submitted",
+      },
+      {
+        id: 2,
+        action: "Priority changed",
+        user: "John Smith",
+        timestamp: "May 12, 2024 10:30 AM",
+        details: "Changed from Medium to High priority",
+      },
+      {
+        id: 3,
+        action: "Assigned",
+        user: "John Smith",
+        timestamp: "May 12, 2024 10:32 AM",
+        details: "Assigned to Mike Chen for patch development",
+      },
+      {
+        id: 4,
+        action: "Status updated",
+        user: "Mike Chen",
+        timestamp: "May 12, 2024 02:15 PM",
+        details: "Status changed from New to In Progress",
+      },
+      {
+        id: 5,
+        action: "Comment added",
+        user: "Sarah Wilson",
+        timestamp: "May 13, 2024 11:20 AM",
+        details: "Added impact assessment details",
+      },
+    ],
   })
-
-  useEffect(() => {
-    if (!ticket && isOpen && !ticketData.id) {
-      generateTicketId().then((id) => {
-        setTicketData((prev) => ({ ...prev, id }))
-      })
-    }
-  }, [isOpen, ticket])
 
   const tabs = [
     { id: "details", label: "Details" },
@@ -346,7 +283,6 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
   }
 
   const handleLinkAccount = (account: any) => {
-    console.log("[v0] Linking account:", account)
     setTicketData({
       ...ticketData,
       accounts: [...ticketData.accounts, { ...account, lastContact: "Just linked" }],
@@ -363,7 +299,6 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
     })
     setShowAccountSearch(false)
     setAccountSearchQuery("")
-    console.log("[v0] Account linked successfully, updated ticket data")
   }
 
   const handleEditAccount = (accountId: number) => {
@@ -595,78 +530,6 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
     })
   }
 
-  const handleSaveTicket = async () => {
-    try {
-      console.log("[v0] Saving new ticket:", ticketData)
-      setIsLoading(true)
-
-      const currentUser = getCurrentUser()
-
-      const response = await fetch("/api/tickets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: ticketData.title,
-          description: description || "",
-          status: ticketData.status,
-          priority: ticketData.priority,
-          type: ticketData.type,
-          category: ticketData.serviceCategory || "",
-          subcategory: ticketData.serviceType || "",
-          assignee_id: users.find((u) => u.name === ticketData.assignee)?.id || null,
-          organization_id: accounts.find((a) => a.name === ticketData.organization)?.id || null,
-          requester_id: currentUser.id || null,
-          urgency: ticketData.priority,
-          impact: ticketData.priority,
-          severity: ticketData.priority,
-          channel: "Web",
-          ticket_number: ticketData.id,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to create ticket")
-      }
-
-      const result = await response.json()
-
-      if (result.success) {
-        console.log("[v0] Ticket saved successfully:", result.ticket)
-
-        // Add to history
-        setTicketData((prev) => ({
-          ...prev,
-          history: [
-            {
-              id: Date.now(),
-              action: "Ticket created",
-              user: currentUser.name,
-              timestamp: new Date().toLocaleString(),
-              details: "Initial ticket created",
-            },
-            ...prev.history,
-          ],
-        }))
-
-        // Call onSave callback to refresh the tickets list
-        if (onSave) {
-          await onSave()
-        }
-
-        onClose()
-      } else {
-        throw new Error(result.error || "Failed to create ticket")
-      }
-    } catch (error) {
-      console.error("[v0] Error saving ticket:", error)
-      alert("Error creating ticket. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   if (!isOpen) return null
 
   return (
@@ -677,29 +540,14 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
         <div className="p-6 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              {!ticket ? (
-                <Input
-                  placeholder="Enter task name..."
-                  value={taskName}
-                  onChange={(e) => {
-                    setTaskName(e.target.value)
-                    setTicketData({ ...ticketData, title: e.target.value })
-                  }}
-                  className="text-xl font-semibold border-none p-0 h-auto focus-visible:ring-0"
-                />
-              ) : (
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
-              )}
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0"
-                onClick={() => {
-                  navigator.clipboard.writeText(ticketData.id)
-                  alert(`Ticket ID ${ticketData.id} copied to clipboard`)
-                }}
+                onClick={handleCopyTicketId}
                 title="Copy Ticket ID"
               >
                 <Copy className="h-4 w-4" />
@@ -708,7 +556,7 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
                 variant="ghost"
                 size="sm"
                 className={`h-8 w-8 p-0 ${isWatching ? "text-blue-600" : ""}`}
-                onClick={() => setIsWatching(!isWatching)}
+                onClick={handleToggleWatcher}
                 title={isWatching ? "Stop watching" : "Watch ticket"}
               >
                 <Bell className={`h-4 w-4 ${isWatching ? "fill-current" : ""}`} />
@@ -717,11 +565,7 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0"
-                onClick={() => {
-                  const ticketLink = `${window.location.origin}/tickets/${ticketData.id}`
-                  navigator.clipboard.writeText(ticketLink)
-                  alert("Ticket link copied to clipboard")
-                }}
+                onClick={handleCopyTicketLink}
                 title="Copy Ticket Link"
               >
                 <Link className="h-4 w-4" />
@@ -763,109 +607,33 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
         <div className="flex-1 overflow-y-auto">
           {activeTab === "details" && (
             <div className="p-6 space-y-6">
-              {isLoading && (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">Loading data...</p>
-                </div>
-              )}
-
               {/* Description Section */}
               <div className="space-y-3">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">Description</span>
 
+                {/* Rich Text Editor Toolbar */}
                 <div className="flex items-center gap-1 p-2 bg-gray-50 rounded-t-md">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      const textarea = document.querySelector(
-                        'textarea[placeholder="Add Description"]',
-                      ) as HTMLTextAreaElement
-                      if (textarea) {
-                        const start = textarea.selectionStart
-                        const end = textarea.selectionEnd
-                        const selectedText = description.substring(start, end)
-                        const newText =
-                          description.substring(0, start) + `**${selectedText}**` + description.substring(end)
-                        setDescription(newText)
-                      }
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Bold className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      const textarea = document.querySelector(
-                        'textarea[placeholder="Add Description"]',
-                      ) as HTMLTextAreaElement
-                      if (textarea) {
-                        const start = textarea.selectionStart
-                        const end = textarea.selectionEnd
-                        const selectedText = description.substring(start, end)
-                        const newText =
-                          description.substring(0, start) + `*${selectedText}*` + description.substring(end)
-                        setDescription(newText)
-                      }
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Italic className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      const textarea = document.querySelector(
-                        'textarea[placeholder="Add Description"]',
-                      ) as HTMLTextAreaElement
-                      if (textarea) {
-                        const start = textarea.selectionStart
-                        const end = textarea.selectionEnd
-                        const selectedText = description.substring(start, end)
-                        const newText =
-                          description.substring(0, start) + `<u>${selectedText}</u>` + description.substring(end)
-                        setDescription(newText)
-                      }
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Underline className="h-4 w-4" />
                   </Button>
                   <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      const link = prompt("Enter link URL:")
-                      if (link) {
-                        setDescription((prev) => prev + `\n[Link](${link})`)
-                      }
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <ListIcon className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <ListOrdered className="h-4 w-4" />
+                  </Button>
+                  <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Link className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      const input = document.createElement("input")
-                      input.type = "file"
-                      input.accept = ".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0]
-                        if (file) {
-                          setDescription((prev) => prev + `\n[Attachment: ${file.name}]`)
-                        }
-                      }
-                      input.click()
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Paperclip className="h-4 w-4" />
                   </Button>
                 </div>
@@ -881,54 +649,39 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Requested By</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-                        {getCurrentUser().name?.charAt(0) || "U"}
-                      </div>
-                      <span className="text-sm">{getCurrentUser().name}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Assignee</span>
+                    <span className="text-sm font-medium text-gray-700">Type</span>
                     <Select
-                      value={ticketData.assignee}
-                      onValueChange={(value) => setTicketData({ ...ticketData, assignee: value })}
+                      value={ticketData.type}
+                      onValueChange={(value) => setTicketData({ ...ticketData, type: value })}
                     >
                       <SelectTrigger className="w-40 h-9">
-                        <SelectValue placeholder="Select assignee" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.name}>
-                            <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                                {user.avatar}
-                              </div>
-                              {user.name}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Task">Task</SelectItem>
+                        <SelectItem value="Incident">Incident</SelectItem>
+                        <SelectItem value="Request">Request</SelectItem>
+                        <SelectItem value="Problem">Problem</SelectItem>
+                        <SelectItem value="Change">Change</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Team</span>
+                    <span className="text-sm font-medium text-gray-700">Status</span>
                     <Select
-                      value={ticketData.team}
-                      onValueChange={(value) => setTicketData({ ...ticketData, team: value })}
+                      value={ticketData.status}
+                      onValueChange={(value) => setTicketData({ ...ticketData, status: value })}
                     >
                       <SelectTrigger className="w-40 h-9">
-                        <SelectValue placeholder="Select team" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {teams.map((team) => (
-                          <SelectItem key={team.id} value={team.name}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Open">Open</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Resolved">Resolved</SelectItem>
+                        <SelectItem value="Closed">Closed</SelectItem>
+                        <SelectItem value="On Hold">On Hold</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -943,75 +696,88 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {priorities.map((priority) => (
-                          <SelectItem key={priority.id} value={priority.name}>
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: priority.color }} />
-                              {priority.name}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Urgent">Urgent</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Category</span>
+                    <Input
+                      value={ticketData.category}
+                      onChange={(e) => setTicketData({ ...ticketData, category: e.target.value })}
+                      className="w-40 h-9 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Reported By</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                        {ticketData.reportedBy}
+                      </div>
+                      <span className="text-sm">{ticketData.requester}</span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Assignee</span>
+                    <Select
+                      value={ticketData.assignee}
+                      onValueChange={(value) => setTicketData({ ...ticketData, assignee: value })}
+                    >
+                      <SelectTrigger className="w-40 h-9">
+                        <SelectValue placeholder="Assign" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="John Smith">John Smith</SelectItem>
+                        <SelectItem value="Sarah Wilson">Sarah Wilson</SelectItem>
+                        <SelectItem value="Mike Chen">Mike Chen</SelectItem>
+                        <SelectItem value="Lisa Anderson">Lisa Anderson</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Organization</span>
+                    <Input
+                      value={ticketData.organization}
+                      onChange={(e) => setTicketData({ ...ticketData, organization: e.target.value })}
+                      className="w-40 h-9 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">Department</span>
-                    <Select
+                    <Input
                       value={ticketData.department}
-                      onValueChange={(value) => setTicketData({ ...ticketData, department: value })}
-                    >
-                      <SelectTrigger className="w-40 h-9">
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept.id} value={dept.name}>
-                            {dept.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(e) => setTicketData({ ...ticketData, department: e.target.value })}
+                      className="w-40 h-9 text-sm"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Service Category</span>
-                    <Select
-                      value={ticketData.serviceCategory}
-                      onValueChange={(value) => setTicketData({ ...ticketData, serviceCategory: value })}
-                    >
-                      <SelectTrigger className="w-40 h-9">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serviceCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <span className="text-sm font-medium text-gray-700">Due Date</span>
+                    <Input
+                      type="date"
+                      value={ticketData.dueDate}
+                      onChange={(e) => setTicketData({ ...ticketData, dueDate: e.target.value })}
+                      className="w-40 h-9 text-sm"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Service Type</span>
-                    <Select
-                      value={ticketData.serviceType}
-                      onValueChange={(value) => setTicketData({ ...ticketData, serviceType: value })}
-                    >
-                      <SelectTrigger className="w-40 h-9">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {serviceTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.name}>
-                            {type.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <span className="text-sm font-medium text-gray-700">Estimated Hours</span>
+                    <Input
+                      value={ticketData.estimatedTime}
+                      onChange={(e) => setTicketData({ ...ticketData, estimatedTime: e.target.value })}
+                      className="w-40 h-9 text-sm"
+                    />
                   </div>
                 </div>
               </div>
@@ -1023,44 +789,17 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
                   {ticketData.tags.map((tag, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {tag}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1"
-                        onClick={() => {
-                          const newTags = ticketData.tags.filter((_, i) => i !== index)
-                          setTicketData({ ...ticketData, tags: newTags })
-                        }}
-                      >
+                      <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1">
                         <X className="h-3 w-3" />
                       </Button>
                     </Badge>
                   ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 text-xs bg-transparent"
-                    onClick={() => {
-                      const newTag = prompt("Enter tag name:")
-                      if (newTag) {
-                        setTicketData({ ...ticketData, tags: [...ticketData.tags, newTag] })
-                      }
-                    }}
-                  >
+                  <Button variant="outline" size="sm" className="h-6 text-xs bg-transparent">
                     <Plus className="h-3 w-3 mr-1" />
                     Add Tag
                   </Button>
                 </div>
               </div>
-
-              {/* Save Button for new tickets */}
-              {!ticket && (
-                <div className="flex justify-end pt-4 border-t">
-                  <Button onClick={handleSaveTicket} disabled={!ticketData.title.trim() || isLoading}>
-                    {isLoading ? "Creating..." : "Create Ticket"}
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
@@ -1082,47 +821,40 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
                       placeholder="Search accounts to link..."
                       value={accountSearchQuery}
                       onChange={(e) => setAccountSearchQuery(e.target.value)}
+                      className="flex-1"
                     />
-                    <Button size="sm" onClick={() => setShowAccountSearch(false)}>
+                    <Button variant="outline" size="sm" onClick={() => setShowAccountSearch(false)}>
                       Cancel
                     </Button>
                   </div>
-
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {accounts
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {availableAccounts
                       .filter(
                         (account) =>
                           account.name.toLowerCase().includes(accountSearchQuery.toLowerCase()) ||
-                          account.email?.toLowerCase().includes(accountSearchQuery.toLowerCase()),
+                          account.email.toLowerCase().includes(accountSearchQuery.toLowerCase()),
                       )
                       .map((account) => (
                         <div
                           key={account.id}
-                          className="flex items-center justify-between p-3 bg-white rounded border hover:bg-gray-50 cursor-pointer"
-                          onClick={() => {
-                            setTicketData({
-                              ...ticketData,
-                              accounts: [
-                                ...ticketData.accounts,
-                                {
-                                  id: account.id,
-                                  name: account.name,
-                                  email: account.email,
-                                  phone: account.phone,
-                                  status: "Active",
-                                  lastContact: "Just linked",
-                                },
-                              ],
-                            })
-                            setShowAccountSearch(false)
-                            setAccountSearchQuery("")
-                          }}
+                          className="flex items-center justify-between p-2 bg-white rounded cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleLinkAccount(account)}
                         >
-                          <div>
-                            <div className="font-medium">{account.name}</div>
-                            <div className="text-sm text-gray-500">{account.email}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                              {account.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{account.name}</p>
+                              <p className="text-xs text-gray-500">{account.email}</p>
+                            </div>
                           </div>
-                          <Button size="sm">Link</Button>
+                          <Button size="sm" variant="outline">
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                   </div>
@@ -1130,41 +862,54 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
               )}
 
               <div className="space-y-4">
-                {ticketData.accounts.map((account, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <Building className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <div className="font-medium">{account.name}</div>
-                            <div className="text-sm text-gray-500">{account.email}</div>
-                          </div>
+                {ticketData.accounts.map((account) => (
+                  <div key={account.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                          {account.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
                         </div>
-
-                        {contacts
-                          .filter((contact) => contact.account_id === account.id)
-                          .map((contact, contactIndex) => (
-                            <div key={contactIndex} className="ml-8 text-sm text-gray-600">
-                              <div>
-                                {contact.title} - {contact.department}
-                              </div>
-                              <div>
-                                {contact.first_name} {contact.last_name}
-                              </div>
-                            </div>
-                          ))}
+                        <div>
+                          <h4 className="font-medium">{account.name}</h4>
+                          <p className="text-sm text-gray-500">
+                            {account.role} • {account.department}
+                          </p>
+                        </div>
                       </div>
+                      <Badge variant={account.status === "Active" ? "default" : "secondary"}>{account.status}</Badge>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            account.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {account.status}
-                        </div>
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span>{account.email}</span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span>{account.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-gray-400" />
+                        <span>{account.organization}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span>Last contact: {account.lastContact}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEditAccount(account.id)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleContactAccount(account)}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contact
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -1175,246 +920,219 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
           {activeTab === "checklist" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Checklist</h3>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    const newItem = prompt("Enter checklist item:")
-                    if (newItem) {
-                      setTicketData({
-                        ...ticketData,
-                        checklist: [
-                          ...ticketData.checklist,
-                          {
-                            id: Date.now(),
-                            text: newItem,
-                            completed: false,
-                            assignee: "",
-                            dueDate: "",
-                          },
-                        ],
-                      })
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
+                <h3 className="text-lg font-medium">Task Checklist</h3>
+                <div className="text-sm text-gray-500">
+                  {ticketData.checklist.filter((item) => item.completed).length} of {ticketData.checklist.length}{" "}
+                  completed
+                </div>
               </div>
 
               <div className="space-y-3">
-                {ticketData.checklist.map((item, index) => (
-                  <div key={item.id || index} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <Checkbox
-                      checked={item.completed}
-                      onCheckedChange={(checked) => {
-                        setTicketData({
-                          ...ticketData,
-                          checklist: ticketData.checklist.map((checkItem, i) =>
-                            i === index ? { ...checkItem, completed: !!checked } : checkItem,
-                          ),
-                        })
-                      }}
-                    />
-
-                    <div className="flex-1">
-                      <div className={`${item.completed ? "line-through text-gray-500" : ""}`}>{item.text}</div>
-
-                      <div className="flex items-center gap-4 mt-2">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <Select
-                            value={item.assignee}
-                            onValueChange={(value) => {
-                              setTicketData({
-                                ...ticketData,
-                                checklist: ticketData.checklist.map((checkItem, i) =>
-                                  i === index ? { ...checkItem, assignee: value } : checkItem,
-                                ),
-                              })
-                            }}
-                          >
-                            <SelectTrigger className="w-32 h-8">
-                              <SelectValue placeholder="Assignee" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {users.map((user) => (
-                                <SelectItem key={user.id} value={user.name}>
-                                  {user.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <Input
-                            type="date"
-                            value={item.dueDate}
-                            onChange={(e) => {
-                              setTicketData({
-                                ...ticketData,
-                                checklist: ticketData.checklist.map((checkItem, i) =>
-                                  i === index ? { ...checkItem, dueDate: e.target.value } : checkItem,
-                                ),
-                              })
-                            }}
-                            className="w-32 h-8"
-                          />
-                        </div>
+                {ticketData.checklist.map((item) => (
+                  <div key={item.id} className="bg-gray-50 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={item.completed} onCheckedChange={() => toggleChecklistItem(item.id)} />
+                      <div className="flex-1">
+                        <p className={`text-sm ${item.completed ? "line-through text-gray-500" : ""}`}>{item.text}</p>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDeleteChecklistItem(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        setTicketData({
-                          ...ticketData,
-                          checklist: ticketData.checklist.filter((_, i) => i !== index),
-                        })
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="grid grid-cols-2 gap-3 pl-7">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500">Assignee</label>
+                        <Select
+                          value={item.assignee}
+                          onValueChange={(value) => handleUpdateChecklistItem(item.id, { assignee: value })}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Assign to..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teamMembers.map((member) => (
+                              <SelectItem key={member.id} value={member.name}>
+                                {member.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500">Due Date</label>
+                        <Input
+                          type="date"
+                          value={item.dueDate}
+                          onChange={(e) => handleUpdateChecklistItem(item.id, { dueDate: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add new checklist item..."
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  className="flex-1"
+                  onKeyPress={(e) => e.key === "Enter" && handleAddChecklistItem()}
+                />
+                <Button onClick={handleAddChecklistItem}>
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
 
           {activeTab === "comments" && (
             <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Comments & Updates</h3>
+                <Button size="sm">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Internal Note
+                </Button>
+              </div>
+
               <div className="space-y-4">
-                {ticketData.comments.map((comment, index) => (
-                  <div key={comment.id || index} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                {ticketData.comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium ${
+                        comment.type === "system" ? "bg-gray-500" : "bg-blue-500"
+                      }`}
+                    >
                       {comment.avatar}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{comment.author}</span>
                         <span className="text-xs text-gray-500">{comment.timestamp}</span>
+                        {comment.type === "system" && (
+                          <Badge variant="secondary" className="text-xs">
+                            System
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-sm text-gray-700">{comment.content}</div>
+                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{comment.content}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 border-t pt-4 relative">
                 <div className="relative">
                   <Textarea
-                    placeholder="Add a comment... Use @ to mention someone"
+                    placeholder="Add a comment... Use @ to mention team members"
                     value={newComment}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setNewComment(value)
-
-                      // Check for @ mentions
-                      const lastAtIndex = value.lastIndexOf("@")
-                      if (lastAtIndex !== -1 && lastAtIndex === value.length - 1) {
-                        setShowMentionDropdown(true)
-                        setMentionQuery("")
-                      } else if (lastAtIndex !== -1 && value.charAt(lastAtIndex + 1) !== " ") {
-                        const query = value.substring(lastAtIndex + 1)
-                        if (query.includes(" ")) {
-                          setShowMentionDropdown(false)
-                        } else {
-                          setMentionQuery(query)
-                          setShowMentionDropdown(true)
-                        }
-                      } else {
-                        setShowMentionDropdown(false)
-                      }
-                    }}
+                    onChange={(e) => handleCommentChange(e.target.value)}
                     className="min-h-[80px]"
                   />
-
                   {showMentionDropdown && (
-                    <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                      {users
-                        .filter((user) => user.name.toLowerCase().includes(mentionQuery.toLowerCase()))
-                        .map((user) => (
+                    <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                      {teamMembers
+                        .filter((member) => member.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+                        .map((member) => (
                           <div
-                            key={user.id}
+                            key={member.id}
                             className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
-                            onClick={() => {
-                              const lastAtIndex = newComment.lastIndexOf("@")
-                              const beforeMention = newComment.substring(0, lastAtIndex)
-                              const afterMention = `@${user.name} `
-                              setNewComment(beforeMention + afterMention)
-                              setShowMentionDropdown(false)
-                            }}
+                            onClick={() => handleSelectMention(member)}
                           >
                             <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                              {user.avatar}
+                              {member.avatar}
                             </div>
-                            <span className="text-sm">{user.name}</span>
+                            <div>
+                              <p className="text-sm font-medium">{member.name}</p>
+                              <p className="text-xs text-gray-500">{member.email}</p>
+                            </div>
                           </div>
                         ))}
                     </div>
                   )}
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setShowMentionDropdown(!showMentionDropdown)}
-                    >
-                      <AtSign className="h-4 w-4" />
+                <div className="flex justify-between">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Attach
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        const input = document.createElement("input")
-                        input.type = "file"
-                        input.accept = ".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                        input.onchange = (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0]
-                          if (file) {
-                            setNewComment((prev) => prev + `\n[Attachment: ${file.name}]`)
-                          }
-                        }
-                        input.click()
-                      }}
-                    >
-                      <Paperclip className="h-4 w-4" />
+                    <Button variant="outline" size="sm">
+                      <AtSign className="h-4 w-4 mr-2" />
+                      Mention
                     </Button>
                   </div>
-
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (newComment.trim()) {
-                        const comment = {
-                          id: Date.now(),
-                          author: getCurrentUser().name,
-                          avatar: getCurrentUser().name?.charAt(0) || "U",
-                          timestamp: "Just now",
-                          content: newComment,
-                          type: "comment",
-                        }
-                        setTicketData({
-                          ...ticketData,
-                          comments: [...ticketData.comments, comment],
-                        })
-                        setNewComment("")
-                      }
-                    }}
-                    disabled={!newComment.trim()}
-                  >
+                  <Button onClick={handleAddComment}>
                     <Send className="h-4 w-4 mr-2" />
-                    Comment
+                    Send
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "files" && (
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Attachments</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                    accept=".pdf,.xls,.xlsx,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
+                  />
+                  <Button size="sm" onClick={() => document.getElementById("file-upload")?.click()}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload File
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {ticketData.files.map((file) => (
+                  <div key={file.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center">
+                      {getFileIcon(file.name)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{file.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {file.size} • Uploaded by {file.uploadedBy} • {file.uploadedAt}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleFileDownload(file)}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleFileDelete(file.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                onClick={() => document.getElementById("file-upload")?.click()}
+              >
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 mb-2">Drag and drop files here, or click to browse</p>
+                <p className="text-xs text-gray-400 mb-2">Allowed types: PDF, Excel, Word, PowerPoint, PNG, JPG</p>
+                <Button variant="outline" size="sm">
+                  Choose Files
+                </Button>
               </div>
             </div>
           )}
@@ -1423,118 +1141,33 @@ export function TicketTray({ isOpen, onClose, onSave, ticket }: TicketTrayProps)
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Activity History</h3>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
               </div>
 
               <div className="space-y-4">
                 {ticketData.history.map((entry, index) => (
-                  <div key={entry.id || index} className="flex gap-3 pb-4 border-b last:border-b-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      <History className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{entry.action}</span>
-                        <span className="text-xs text-gray-500">by {entry.user}</span>
+                  <div key={entry.id} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <History className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div className="text-xs text-gray-500 mb-1">{entry.timestamp}</div>
-                      <div className="text-sm text-gray-700">{entry.details}</div>
+                      {index < ticketData.history.length - 1 && <div className="w-px h-8 bg-gray-200 mt-2"></div>}
                     </div>
-                  </div>
-                ))}
-
-                {ticketData.history.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <History className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No activity history yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Files tab remains the same */}
-          {activeTab === "files" && (
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Files & Attachments</h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.xls,.xlsx,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
-                    onChange={(e) => {
-                      const files = e.target.files
-                      if (files) {
-                        Array.from(files).forEach((file) => {
-                          const newFile = {
-                            id: Date.now() + Math.random(),
-                            name: file.name,
-                            size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-                            uploadedBy: getCurrentUser().name,
-                            uploadedAt: "Just now",
-                            type: file.name.split(".").pop()?.toLowerCase() || "file",
-                          }
-                          setTicketData((prev) => ({
-                            ...prev,
-                            files: [...prev.files, newFile],
-                          }))
-                        })
-                      }
-                    }}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <Button size="sm" onClick={() => document.getElementById("file-upload")?.click()}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Files
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {ticketData.files.map((file, index) => (
-                  <div key={file.id || index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-gray-400" />
-                      <div>
-                        <div className="font-medium text-sm">{file.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {file.size} • Uploaded by {file.uploadedBy} • {file.uploadedAt}
+                    <div className="flex-1 pb-4">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-sm">{entry.action}</span>
+                          <span className="text-xs text-gray-500">by {entry.user}</span>
                         </div>
+                        <p className="text-xs text-gray-500 mb-1">{entry.timestamp}</p>
+                        <p className="text-sm text-gray-700">{entry.details}</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => alert(`Download functionality for: ${file.name}`)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => {
-                          setTicketData((prev) => ({
-                            ...prev,
-                            files: prev.files.filter((_, i) => i !== index),
-                          }))
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}
-
-                {ticketData.files.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No files attached yet</p>
-                  </div>
-                )}
               </div>
             </div>
           )}

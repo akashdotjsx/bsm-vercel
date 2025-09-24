@@ -1,8 +1,6 @@
 "use client"
 
 import type React from "react"
-
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,41 +8,33 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import Image from "next/image"
 
 export default function Page() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("admin@kroolo.com")
+  const [password, setPassword] = useState("KrooloAdmin123!")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  const handleBypass = () => {
+    console.log("[v0] Bypassing authentication, redirecting to dashboard")
+    router.push("/dashboard")
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/bsm/dashboard`,
-        },
-      })
-      if (error) throw error
-      router.push("/bsm/dashboard")
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    console.log("[v0] Demo login attempt")
 
-  const handleBypass = () => {
-    console.log("[v0] Bypassing authentication, redirecting to dashboard")
-    router.push("/bsm/dashboard")
+    // Simulate loading
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    console.log("[v0] Demo login successful, redirecting to dashboard")
+    router.push("/dashboard")
+    setIsLoading(false)
   }
 
   return (
@@ -52,11 +42,7 @@ export default function Page() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-4 mb-6">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kroolo%20Logo-kuyVfAB5iW8WooZbrbQmPXSHHTVv6Q.png"
-              alt="Kroolo Logo"
-              className="h-10 w-auto"
-            />
+            <Image src="/images/kroolo-logo.png" alt="Kroolo Logo" width={120} height={40} className="h-10 w-auto" />
             <div className="text-center">
               <h1 className="text-2xl font-semibold text-foreground">Business Service Management</h1>
               <p className="text-sm text-muted-foreground">AI-Native Enterprise Platform</p>
@@ -121,10 +107,9 @@ export default function Page() {
                     Continue as Demo User
                   </Button>
                 </div>
-                <div className="mt-4 text-center text-sm">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/auth/sign-up" className="underline underline-offset-4">
-                    Sign up
+                <div className="mt-6 text-center text-sm">
+                  <Link href="/auth/sign-up" className="text-primary hover:underline">
+                    Need an account? Contact your administrator
                   </Link>
                 </div>
               </form>

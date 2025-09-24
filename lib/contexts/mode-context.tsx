@@ -8,8 +8,6 @@ interface ModeContextType {
   mode: Mode
   setMode: (mode: Mode) => void
   toggleMode: () => void
-  isEmployeeMode: boolean
-  isCustomerMode: boolean
 }
 
 const ModeContext = createContext<ModeContextType | undefined>(undefined)
@@ -39,22 +37,7 @@ export function ModeProvider({ children }: ModeProviderProps) {
     setMode(newMode)
   }
 
-  const isEmployeeMode = mode === "employee"
-  const isCustomerMode = mode === "customer"
-
-  return (
-    <ModeContext.Provider
-      value={{
-        mode,
-        setMode,
-        toggleMode,
-        isEmployeeMode,
-        isCustomerMode,
-      }}
-    >
-      {children}
-    </ModeContext.Provider>
-  )
+  return <ModeContext.Provider value={{ mode, setMode, toggleMode }}>{children}</ModeContext.Provider>
 }
 
 export function useMode() {

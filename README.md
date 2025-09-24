@@ -1,2 +1,0 @@
-# kroolo-bsm
-kroolo-bsm

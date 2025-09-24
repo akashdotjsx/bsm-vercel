@@ -15,8 +15,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Kroolo BSM - Executive Dashboard",
-  description: "Executive leadership dashboard for business service management platform",
+  title: "Kroolo BSM - AI-Native Business Service Management",
+  description: "Enterprise service management platform for employee and customer support",
   generator: "v0.app",
 }
 
@@ -33,7 +33,7 @@ export default function RootLayout({
             <NotificationProvider>
               <Suspense fallback={<div>Loading...</div>}>
                 <SearchProvider>
-                  <div className="min-h-screen">{children}</div>
+                  <div className="h-screen">{children}</div>
                 </SearchProvider>
               </Suspense>
             </NotificationProvider>

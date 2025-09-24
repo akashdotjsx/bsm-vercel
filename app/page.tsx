@@ -24,20 +24,15 @@ export default function LandingPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Users can now see the website before choosing to enter the platform
-  }, [router])
+    console.log("[v0] Landing page mounted and rendering")
+  }, [])
 
   const handleSignIn = () => {
-    router.push("/bsm/dashboard")
+    console.log("[v0] Sign in button clicked, navigating to dashboard")
+    router.push("/dashboard")
   }
 
-  const handleGetStarted = () => {
-    router.push("/bsm/dashboard")
-  }
-
-  const handleViewDemo = () => {
-    router.push("/platform")
-  }
+  console.log("[v0] Landing page component rendering")
 
   const features = [
     {
@@ -137,15 +132,11 @@ export default function LandingPage() {
               enterprises.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button
-                size="lg"
-                onClick={handleGetStarted}
-                className="bg-foreground text-background hover:bg-foreground/90"
-              >
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" onClick={handleViewDemo}>
+              <Button variant="outline" size="lg">
                 View Demo
               </Button>
             </div>
@@ -213,11 +204,7 @@ export default function LandingPage() {
               Join thousands of organizations already using Kroolo BSM to deliver exceptional service experiences.
             </p>
             <div className="mt-8">
-              <Button
-                size="lg"
-                onClick={handleGetStarted}
-                className="bg-foreground text-background hover:bg-foreground/90"
-              >
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
                 Start Your Journey
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
