@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "build": "node scripts/init-dev.js && next build",
+    "dev": "node scripts/init-dev.js && next dev",
+    "dev:quick": "next dev",
+    "dev:unsafe": "node scripts/init-dev.js --skip-validation && next dev",
+    "dev:setup": "node scripts/init-dev.js --create-missing",
     "lint": "next lint",
     "start": "next start",
     "test:db": "node scripts/init-dev.js --test",
     "test:db:full": "node scripts/init-dev.js --test",
     "init:check": "node scripts/init-dev.js",
-    "db:verify": "node scripts/init-dev.js"
+    "schema:validate": "node scripts/init-dev.js",
+    "schema:create": "node scripts/init-dev.js --create-missing",
+    "db:verify": "node scripts/init-dev.js",
+    "db:create": "node scripts/init-dev.js --create-missing"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
