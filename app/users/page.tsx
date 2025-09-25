@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { PlatformLayout } from "@/components/layout/platform-layout"
+import { AdminLayout } from "@/components/layout/protected-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -306,7 +306,7 @@ export default function UsersPage() {
   }
 
   return (
-    <PlatformLayout
+    <AdminLayout
       title="Users & Teams"
       description="Manage users, teams, and access permissions"
       breadcrumbs={[
@@ -993,6 +993,6 @@ export default function UsersPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </PlatformLayout>
+    </AdminLayout>
   )
 }

@@ -13,22 +13,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { useMode } from "@/lib/contexts/mode-context"
+import { useAuth } from "@/lib/contexts/auth-context"
 import Link from "next/link"
 import Image from "next/image"
 import { Search, Plus } from "lucide-react"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 
-interface DashboardHeaderProps {
-  user: any
-  profile: any
-}
-
-export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const router = useRouter()
   const { isEmployeeMode, isCustomerMode } = useMode()
+  const { user, profile, organization, signOut, loading } = useAuth()
 
   const handleSignOut = async () => {
-    router.push("/auth/login")
+    try {
+      await signOut()
+      router.push("/auth/login")
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
   }
 
   const employeeNavItems = [
@@ -94,7 +96,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={profile?.display_name} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {profile?.first_name?.[0] || user.email[0].toUpperCase()}
+                      {profile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -103,11 +105,11 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {profile?.display_name || `${profile?.first_name} ${profile?.last_name}`}
+                      {profile?.display_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || user?.email || 'User'}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email || ''}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {profile?.department} • {profile?.role}
+                      {profile?.department ? `${profile.department} • ` : ''}{profile?.role || 'User'}
                     </p>
                   </div>
                 </DropdownMenuLabel>
