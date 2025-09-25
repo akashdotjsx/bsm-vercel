@@ -32,7 +32,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .history
-
+.git
 # Env files
 .env
 .env.*
