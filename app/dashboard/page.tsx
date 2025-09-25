@@ -2,6 +2,7 @@
 
 import { BusinessIntelligence } from "@/components/dashboard/business-intelligence"
 import { PlatformLayout } from "@/components/layout/platform-layout"
+import { AuthDebug } from "@/components/debug/auth-debug"
 
 export default function DashboardPage() {
   console.log("[v0] Dashboard page loading")
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   return (
     <PlatformLayout>
       <BusinessIntelligence />
+      <AuthDebug />
     </PlatformLayout>
   )
 }

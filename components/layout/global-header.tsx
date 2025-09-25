@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 import { GlobalSearch } from "@/components/search/global-search"
 import { useRouter } from "next/navigation"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useAuth } from "@/lib/contexts/auth-context"
 
 export function GlobalHeader() {
   const { theme, setTheme } = useTheme()
@@ -19,14 +20,16 @@ export function GlobalHeader() {
   const { notifications } = useNotifications()
   const router = useRouter()
   const isMobile = useIsMobile()
+  const { user, profile, organization, signOut, loading } = useAuth()
 
+  // Format user data from profile
   const userData = {
-    name: "Shashank Singh",
-    email: "shashank@kroolo.com",
-    account: "Kroolo",
-    id: "45739289",
-    plan: "Business",
-    role: "System Admin", // Can be "System Admin", "Org Admin", or "User"
+    name: profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User',
+    email: user?.email || '',
+    account: organization?.name || 'Organization',
+    id: profile?.id?.slice(-8) || 'N/A',
+    plan: organization?.subscription_tier || 'Basic',
+    role: profile?.role === 'admin' ? 'System Admin' : profile?.role === 'manager' ? 'Org Admin' : profile?.role || 'User',
     localTime: new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -34,7 +37,16 @@ export function GlobalHeader() {
     }),
   }
 
-  const isAdmin = userData.role === "System Admin" || userData.role === "Org Admin"
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
+  }
 
   const handleSettingsClick = () => {
     router.push("/settings")
@@ -208,7 +220,10 @@ export function GlobalHeader() {
 
               <div className="my-2 border-t border-gray-100 dark:border-gray-100/10"></div>
 
-              <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer rounded-md hover:bg-destructive/10 transition-colors">
+              <DropdownMenuItem 
+                className="flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer rounded-md hover:bg-destructive/10 transition-colors"
+                onClick={handleLogout}
+              >
                 <LogOut className="h-4 w-4 text-red-500" />
                 <span className="text-red-600 dark:text-red-400 font-medium">Log out</span>
               </DropdownMenuItem>

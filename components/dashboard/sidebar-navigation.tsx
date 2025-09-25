@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useMode } from "@/lib/contexts/mode-context"
+import { useAuth } from "@/lib/contexts/auth-context"
 import {
   Ticket,
   Workflow,
@@ -71,6 +72,7 @@ const administrationItems = [
 export function SidebarNavigation() {
   const pathname = usePathname()
   const { mode } = useMode()
+  const { profile, organization } = useAuth()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
@@ -158,7 +160,7 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-        {mode === "employee" && (
+        {mode === "employee" && (profile?.role === 'admin' || profile?.role === 'manager') && (
           <div className="px-4 pb-4">
             <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
               ADMINISTRATION
@@ -191,14 +193,16 @@ export function SidebarNavigation() {
       <div className="flex-shrink-0 p-4 border-t border-sidebar-border">
         <div className="bg-sidebar-primary rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-sidebar-primary-foreground">Enterprise Plan</span>
+            <span className="text-sm font-medium text-sidebar-primary-foreground">
+              {organization?.subscription_tier || 'Basic'} Plan
+            </span>
           </div>
           <Button
             size="sm"
             className="w-full bg-sidebar-accent hover:bg-sidebar-accent/90 text-sidebar-accent-foreground text-xs font-medium"
           >
             <ArrowUpRight className="mr-1 h-3 w-3" />
-            Manage License
+            {profile?.role === 'admin' ? 'Manage License' : 'View License'}
           </Button>
         </div>
       </div>
