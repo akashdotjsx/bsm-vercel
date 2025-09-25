@@ -123,12 +123,12 @@ async function discoverTablesManually() {
 }
 
 async function createTableDiscoveryFunction() {
-  console.log('🛠️  Setting up table discovery function...')
+  console.log('🔠️  Setting up table discovery function...')
   
   try {
-    // Create helper function for table discovery
-    const { error } = await supabase.rpc('create_table_discovery_function', {
-      sql_code: `
+    // Create the function directly using SQL execution
+    const { error } = await supabase.rpc('exec_sql', {
+      sql: `
         CREATE OR REPLACE FUNCTION get_public_tables()
         RETURNS TABLE(table_name text)
         LANGUAGE sql
@@ -144,11 +144,14 @@ async function createTableDiscoveryFunction() {
       `
     })
     
-    if (!error) {
-      console.log('✅ Table discovery function created')
+    if (error) {
+      console.log(`⚠️  RPC function creation failed: ${error.message}`)
+      console.log('ℹ️  Will use alternative discovery methods')
+    } else {
+      console.log('✅ Table discovery RPC function created successfully')
     }
   } catch (err) {
-    console.log('ℹ️  Using alternative discovery method')
+    console.log(`ℹ️  Using alternative discovery method: ${err.message}`)
   }
 }
 
@@ -226,29 +229,274 @@ async function verifyTables() {
   return { existingTables: existingTables.length, missingTables: missingTables.length }
 }
 
-async function runBasicSchema() {
-  console.log('📊 Running basic schema setup...')
+async function runSchemaValidation(allowAutoCreation = false) {
+  console.log('🔍 VALIDATING SCHEMA: database-config/db.sql is the source of truth...')
   
   try {
     const schemaPath = './database-config/db.sql'
     
     if (!existsSync(schemaPath)) {
-      console.warn('⚠️  Schema file not found at ./database-config/db.sql')
-      return
+      console.error('🚨 CRITICAL: Schema file not found at ./database-config/db.sql')
+      console.error('   This is the SINGLE SOURCE OF TRUTH for your database schema')
+      process.exit(1)
     }
     
     const schema = readFileSync(schemaPath, 'utf8')
+    console.log(`✅ Schema file loaded (${schema.length} characters)`)
     
-    if (schema.includes('WARNING: This schema is for context only')) {
-      console.log('ℹ️  Schema file is for context only - skipping execution')
-      return
+    // Parse expected tables from schema
+    const expectedTables = parseSchemaForTables(schema)
+    console.log(`📋 Schema defines ${expectedTables.length} tables`)
+    
+    // Get actual database state
+    const actualTables = await getDatabaseTables()
+    console.log(`🗃️  Database contains ${actualTables.length} tables`)
+    
+    // Validate schema compliance
+    const validation = validateSchemaCompliance(expectedTables, actualTables)
+    
+    if (!validation.isValid) {
+      if (allowAutoCreation && validation.missingTables.length > 0 && validation.extraTables.length === 0) {
+        // Only missing tables, and auto-creation is allowed
+        console.log('\n⚠️  SCHEMA MISMATCH DETECTED - but auto-creation is enabled')
+        console.log(`   🔨 Will create ${validation.missingTables.length} missing tables from schema`)
+        validation.missingTables.forEach(table => {
+          console.log(`   + ${table}`)
+        })
+        return validation // Allow continuation
+      }
+      
+      console.error('\n🚨 SCHEMA VALIDATION FAILED:')
+      console.error('   database-config/db.sql is the SINGLE SOURCE OF TRUTH')
+      console.error('   Your database schema does NOT match the source of truth')
+      
+      if (validation.missingTables.length > 0) {
+        console.error('\n❌ MISSING TABLES (defined in db.sql but not in database):')
+        validation.missingTables.forEach(table => {
+          console.error(`   - ${table}`)
+        })
+      }
+      
+      if (validation.extraTables.length > 0) {
+        console.error('\n⚠️  EXTRA TABLES (in database but not in db.sql):')
+        validation.extraTables.forEach(table => {
+          console.error(`   - ${table}`)
+        })
+      }
+      
+      console.error('\n🛑 STOPPING BUILD/DEVELOPMENT')
+      console.error('   Fix your schema by:')
+      console.error('   1. Update database-config/db.sql if needed')
+      console.error('   2. Run migrations to align database with schema')
+      if (!allowAutoCreation) {
+        console.error('   3. Or run with --create-missing to auto-create missing tables')
+      }
+      
+      process.exit(1)
     }
     
-    console.log(`✅ Schema file loaded (${schema.length} characters)`)
-    console.log('ℹ️  For safety, schema execution is manual - use Supabase dashboard or CLI')
+    console.log('✅ SCHEMA VALIDATION PASSED: Database matches db.sql source of truth')
+    return validation
     
   } catch (error) {
-    console.warn('⚠️  Schema processing failed:', error.message)
+    console.error('🚨 SCHEMA VALIDATION ERROR:', error.message)
+    process.exit(1)
+  }
+}
+
+function parseSchemaForTables(schema) {
+  // Extract CREATE TABLE statements
+  const createTableRegex = /CREATE TABLE\s+(?:public\.)?([\w_]+)/gi
+  const matches = [...schema.matchAll(createTableRegex)]
+  return matches.map(match => match[1])
+}
+
+async function getDatabaseTables() {
+  try {
+    console.log('  🔎 Discovering actual database tables...')
+    
+    // Method 1: Try RPC function first
+    const { data: schemaData, error: schemaError } = await supabase
+      .rpc('get_public_tables')
+    
+    if (!schemaError && schemaData && schemaData.length > 0) {
+      const tables = schemaData.map(row => row.table_name)
+      console.log(`  ✅ Found ${tables.length} tables via RPC`)
+      return tables
+    }
+    
+    // Method 2: Try PostgREST introspection
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, {
+        headers: {
+          'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+        }
+      })
+      
+      if (response.ok) {
+        const openapi = await response.json()
+        const tables = Object.keys(openapi.definitions || {})
+        if (tables.length > 0) {
+          console.log(`  ✅ Found ${tables.length} tables via REST introspection`)
+          return tables
+        }
+      }
+    } catch (restError) {
+      console.log('  ⚠️  REST introspection failed')
+    }
+    
+    // Method 3: Manual discovery by testing known table names
+    console.log('  🔎 Falling back to manual table discovery...')
+    const knownTables = parseSchemaForTables(readFileSync('./database-config/db.sql', 'utf8'))
+    const discoveredTables = []
+    
+    for (const tableName of knownTables) {
+      try {
+        const { error } = await supabase
+          .from(tableName)
+          .select('*')
+          .limit(0)
+        
+        if (!error) {
+          discoveredTables.push(tableName)
+        }
+      } catch (err) {
+        // Table doesn't exist, continue
+      }
+    }
+    
+    console.log(`  ✅ Manual discovery found ${discoveredTables.length} existing tables`)
+    return discoveredTables
+    
+  } catch (error) {
+    console.warn(`  ⚠️  Database discovery error: ${error.message}`)
+    return []
+  }
+}
+
+function validateSchemaCompliance(expectedTables, actualTables) {
+  const expectedSet = new Set(expectedTables)
+  const actualSet = new Set(actualTables)
+  
+  const missingTables = expectedTables.filter(table => !actualSet.has(table))
+  const extraTables = actualTables.filter(table => !expectedSet.has(table))
+  
+  const isValid = missingTables.length === 0 && extraTables.length === 0
+  
+  return {
+    isValid,
+    missingTables,
+    extraTables,
+    expectedCount: expectedTables.length,
+    actualCount: actualTables.length
+  }
+}
+
+async function runBasicSchema(createMissing = false) {
+  if (!createMissing) {
+    console.log('ℹ️  Skipping table creation (use --create-missing to auto-create)')
+    return
+  }
+  
+  console.log('🔨 Creating missing tables from SCHEMA SOURCE OF TRUTH...')
+  
+  try {
+    const schemaPath = './database-config/db.sql'
+    const schema = readFileSync(schemaPath, 'utf8')
+    
+    await createMissingTables(schema)
+    
+  } catch (error) {
+    console.error('🚨 Schema execution failed:', error.message)
+    process.exit(1)
+  }
+}
+
+async function createMissingTables(schema) {
+  try {
+    // Extract CREATE TABLE statements
+    const createTableRegex = /CREATE TABLE[\s\S]*?;/gi
+    const createStatements = schema.match(createTableRegex) || []
+    
+    console.log(`🔍 Found ${createStatements.length} CREATE TABLE statements`)
+    
+    let created = 0
+    let skipped = 0
+    
+    for (const statement of createStatements) {
+      // Extract table name
+      const tableNameMatch = statement.match(/CREATE TABLE\s+(?:public\.)?([\w_]+)/i)
+      if (!tableNameMatch) continue
+      
+      const tableName = tableNameMatch[1]
+      
+      // Check if table already exists
+      const { data: existingTable, error: checkError } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(0)
+      
+      if (!checkError) {
+        console.log(`   ✅ Table ${tableName} already exists - skipping`)
+        skipped++
+        continue
+      }
+      
+      // Skip if error is not "table doesn't exist"
+      if (!checkError.message.includes('does not exist') && 
+          !checkError.message.includes('relation') &&
+          checkError.code !== 'PGRST116') {
+        console.log(`   ⚠️  ${tableName}: ${checkError.message} - skipping`)
+        skipped++
+        continue
+      }
+      
+      // Table doesn't exist, try to create it
+      console.log(`   🔨 Creating table: ${tableName}`)
+      
+      // Clean up the SQL statement
+      let cleanStatement = statement
+        .replace(/USER-DEFINED/g, 'text') // Replace custom types with text
+        .replace(/DEFAULT 'active'::organization_status/g, "DEFAULT 'active'")
+        .replace(/DEFAULT 'basic'::organization_tier/g, "DEFAULT 'basic'")
+        .replace(/DEFAULT 'user'::user_role/g, "DEFAULT 'user'")
+        .replace(/DEFAULT 'draft'::service_status/g, "DEFAULT 'draft'")
+        .replace(/DEFAULT 'medium'::urgency_level/g, "DEFAULT 'medium'")
+        .replace(/DEFAULT 'medium'::ticket_priority/g, "DEFAULT 'medium'")
+        .replace(/DEFAULT 'pending'::request_status/g, "DEFAULT 'pending'")
+        .replace(/DEFAULT 'new'::ticket_status/g, "DEFAULT 'new'")
+        .replace(/DEFAULT 'web'::channel_type/g, "DEFAULT 'web'")
+        .replace(/DEFAULT 'draft'::workflow_status/g, "DEFAULT 'draft'")
+        .replace(/::[\w_]+/g, '') // Remove all type casts
+      
+      try {
+        const { error: createError } = await supabase.rpc('exec_sql', {
+          sql: cleanStatement
+        })
+        
+        if (createError) {
+          console.log(`   ❌ Failed to create ${tableName}: ${createError.message}`)
+        } else {
+          console.log(`   ✨ Successfully created table: ${tableName}`)
+          created++
+        }
+      } catch (sqlError) {
+        console.log(`   ❌ SQL execution failed for ${tableName}: ${sqlError.message}`)
+      }
+    }
+    
+    console.log(`
+🏁 Schema creation summary:`)
+    console.log(`   ✨ Tables created: ${created}`)
+    console.log(`   ✅ Tables skipped (already exist): ${skipped}`)
+    
+    if (created > 0) {
+      console.log(`\n✨ Created ${created} missing tables! Your database is now ready.`)
+    }
+    
+  } catch (error) {
+    console.error(`🚨 Schema creation error:`, error.message)
   }
 }
 
@@ -1207,16 +1455,42 @@ process.on('SIGTERM', async () => {
 // Main execution
 async function main() {
   const runTests = process.argv.includes('--test')
+  const createMissing = process.argv.includes('--create-missing')
+  const skipValidation = process.argv.includes('--skip-validation')
   const startTime = Date.now()
   
-  console.log('🔧 Starting Kroolo BSM DYNAMIC development environment initialization...\n')
+  if (createMissing && !runTests) {
+    console.log('🚀 Starting Kroolo BSM DEVELOPMENT mode with auto-table creation...\n')
+  } else if (runTests) {
+    console.log('🧪 Starting Kroolo BSM CRUD testing with schema validation...\n')
+  } else {
+    console.log('🔧 Starting Kroolo BSM development environment with STRICT SCHEMA VALIDATION...\n')
+  }
   
   try {
     await createTableDiscoveryFunction()
     await initializeClients()
+    
+    // CRITICAL: Schema validation as single source of truth
+    if (!skipValidation) {
+      console.log('\n🔒 ENFORCING SCHEMA VALIDATION (database-config/db.sql is source of truth)')
+      const schemaValidation = await runSchemaValidation(createMissing)
+      
+      if (createMissing && schemaValidation.missingTables.length > 0) {
+        console.log(`\n🔨 Creating ${schemaValidation.missingTables.length} missing tables from schema...`)
+        await runBasicSchema(true)
+        
+        // Re-validate after creation
+        console.log('\n🔄 Re-validating schema after table creation...')
+        await runSchemaValidation(false) // No creation on re-validation
+      }
+    } else {
+      console.log('\n⚠️  SCHEMA VALIDATION SKIPPED - using legacy discovery')
+    }
+    
+    // Legacy table discovery for compatibility
     const discoveryStats = await discoverTables()
     const tableStats = await verifyTables()
-    await runBasicSchema()
     const dbStats = await printStats()
     const testResults = await verifyCRUD(runTests)
     
@@ -1228,13 +1502,14 @@ async function main() {
     
     const duration = Math.round((Date.now() - startTime) / 1000)
     
-    console.log('\n🎉 DYNAMIC development environment initialization complete!')
+    console.log('\n🎉 Kroolo BSM environment initialization complete!')
     console.log(`⏱️  Total time: ${duration}s`)
     
     // Summary
-    console.log('\n📊 DYNAMIC Summary:')
-    console.log(`   🔍 Tables discovered: ${discoveryStats.total}`)
-    console.log(`   🗃️  Tables verified: ${tableStats.existingTables}/${ALL_TABLES.length}`)
+    console.log('\n📊 SCHEMA COMPLIANCE Summary:')
+    console.log(`   📝 Source of truth: database-config/db.sql`)
+    console.log(`   🔍 Schema validation: ${skipValidation ? 'SKIPPED' : 'ENFORCED'}`)
+    console.log(`   🗃️  Database tables: ${tableStats.existingTables}/${ALL_TABLES.length}`)
     console.log(`   🧪 Safe for CRUD: ${discoveryStats.safe}`)
     if (runTests && testResults) {
       console.log(`   ✅ CRUD tests passed: ${testResults.passed}`)
@@ -1243,8 +1518,10 @@ async function main() {
       console.log(`   🧹 Test data: All cleaned up automatically`)
     }
     
-    if (tableStats.missingTables > 0) {
-      console.log('\n⚠️  Some discovered tables are missing. Run your schema migrations to create them.')
+    if (tableStats.missingTables > 0 && !createMissing) {
+      console.log('\n⚠️  SCHEMA MISMATCH DETECTED')
+      console.log('   Run with --create-missing to auto-create missing tables')
+      console.log('   Or update your database-config/db.sql if tables should be removed')
     }
     
   } catch (error) {
