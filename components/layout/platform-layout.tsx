@@ -27,7 +27,7 @@ export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
 
       <div className="flex flex-1 pt-12">
         {!isMobile && (
-          <div className="w-64 bg-sidebar border-r border-sidebar-border h-full flex flex-col fixed left-0 top-12 z-40 shadow-sm">
+          <div className="w-64 bg-sidebar border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm">
             <SidebarNavigation />
           </div>
         )}
