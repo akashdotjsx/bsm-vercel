@@ -72,11 +72,8 @@ const administrationItems = [
 export function SidebarNavigation() {
   const pathname = usePathname()
   const { mode } = useMode()
-  const { profile, organization, canView, permissions } = useAuth()
+  const { profile, organization, canView } = useAuth()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
-  
-  console.log('🧭 SidebarNavigation - Current permissions:', permissions.map(p => p.permission_name))
-  console.log('🧭 SidebarNavigation - Mode:', mode)
 
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
   const sectionTitle = mode === "customer" ? "Customer Support" : "SERVICE MANAGEMENT"
@@ -98,12 +95,9 @@ export function SidebarNavigation() {
           <nav className="space-y-2">
             {navigationItems.filter(item => {
               if (!item.permission) {
-                console.log(`🧭 Item ${item.name} has no permission requirement - showing`)
                 return true // No permission required
               }
-              const visible = canView(item.permission)
-              console.log(`🧭 Item ${item.name} requires permission ${item.permission} - ${visible ? 'showing' : 'hiding'}`)
-              return visible
+              return canView(item.permission)
             }).map((item) => {
               const Icon = item.icon
               const isExpanded = expandedMenus.includes(item.name)
@@ -171,11 +165,7 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-        {mode === "employee" && (() => {
-          const canViewAdmin = canView('administration')
-          console.log('🧭 Administration section - canView("administration"):', canViewAdmin)
-          return canViewAdmin
-        })() && (
+        {mode === "employee" && canView('administration') && (
           <div className="px-4 pb-4">
             <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
               ADMINISTRATION
@@ -183,12 +173,9 @@ export function SidebarNavigation() {
             <nav className="space-y-2">
               {administrationItems.filter(item => {
                 if (!item.permission) {
-                  console.log(`🧭 Admin item ${item.name} has no permission requirement - showing`)
                   return true
                 }
-                const visible = canView(item.permission)
-                console.log(`🧭 Admin item ${item.name} requires permission ${item.permission} - ${visible ? 'showing' : 'hiding'}`)
-                return visible
+                return canView(item.permission)
               }).map((item) => {
                 const Icon = item.icon
                 return (
