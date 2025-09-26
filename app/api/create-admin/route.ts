@@ -1,10 +1,33 @@
 import { createConfirmedAdminUser } from "@/lib/supabase/admin"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     console.log("[v0] Admin user creation API called")
-    const result = await createConfirmedAdminUser()
+    
+    // Get parameters from request body - all required
+    const body = await request.json()
+    const { email, password, firstName, lastName, department, organizationId } = body
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      return NextResponse.json(
+        { 
+          error: "Missing required fields", 
+          message: "email, password, firstName, and lastName are required" 
+        }, 
+        { status: 400 }
+      )
+    }
+
+    const result = await createConfirmedAdminUser({
+      email,
+      password,
+      firstName,
+      lastName,
+      department: department || "IT",
+      organizationId
+    })
 
     console.log("[v0] Admin user creation result:", result)
 

@@ -10,14 +10,25 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   },
 })
 
-export async function createConfirmedAdminUser() {
+interface AdminUserParams {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+  department?: string
+  organizationId?: string
+}
+
+export async function createConfirmedAdminUser(params: AdminUserParams) {
   try {
     console.log("[v0] Starting admin user creation process")
+
+    const { email, password, firstName, lastName, department = "IT", organizationId } = params
 
     // First, try to delete any existing user with this email
     console.log("[v0] Checking for existing users")
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers.users.find((user) => user.email === "shashank@kroolo.com")
+    const existingUser = existingUsers.users.find((user) => user.email === email)
 
     if (existingUser) {
       console.log("[v0] Found existing user, deleting:", existingUser.id)
@@ -28,12 +39,12 @@ export async function createConfirmedAdminUser() {
     // Create user with confirmed email using admin API
     console.log("[v0] Creating new admin user with email_confirm: true")
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: "shashank@kroolo.com",
-      password: "BSMTest@!23", // Updated password to BSMTest@!23
+      email,
+      password,
       email_confirm: true, // This confirms the email immediately
       user_metadata: {
-        first_name: "Shashank",
-        last_name: "Admin",
+        first_name: firstName,
+        last_name: lastName,
         role: "admin",
       },
     })
@@ -53,14 +64,27 @@ export async function createConfirmedAdminUser() {
     // Create profile in our profiles table
     if (data.user) {
       console.log("[v0] Creating profile for user:", data.user.id)
+      
+      // If no organizationId provided, get the first available organization
+      let finalOrganizationId = organizationId
+      if (!finalOrganizationId) {
+        const { data: orgs } = await supabaseAdmin.from("organizations").select("id").limit(1)
+        finalOrganizationId = orgs?.[0]?.id
+        if (!finalOrganizationId) {
+          console.error("[v0] No organizations found in database")
+          return { success: false, error: "No organizations available" }
+        }
+      }
+
       const { error: profileError } = await supabaseAdmin.from("profiles").insert({
         id: data.user.id,
-        email: "shashank@kroolo.com",
-        first_name: "Shashank",
-        last_name: "Admin",
-        display_name: "Shashank Admin",
+        organization_id: finalOrganizationId,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: `${firstName} ${lastName}`,
         role: "admin",
-        department: "IT",
+        department,
         is_active: true,
         timezone: "UTC",
         created_at: new Date().toISOString(),
