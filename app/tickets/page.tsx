@@ -860,7 +860,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   variant="ghost"
                   size="sm"
                   className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => setShowTicketTray(true)}
+                  onClick={() => window.location.href = '/tickets/create'}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Add Ticket
@@ -930,7 +930,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 <Upload className="h-4 w-4 mr-2" />
                 Import
               </Button>
-              <Button onClick={() => setShowTicketTray(true)} className="h-9 font-sans text-[13px]">
+              <Button 
+                onClick={() => window.location.href = '/tickets/create'} 
+                className="h-9 font-sans text-[13px]"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Ticket
               </Button>

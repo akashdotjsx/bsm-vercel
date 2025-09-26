@@ -1,0 +1,329 @@
+import { useState, useEffect, useCallback } from 'react'
+import { ticketAPI, Ticket, TicketComment, TicketAttachment, ChecklistItem, CreateTicketData, UpdateTicketData } from '@/lib/api/tickets'
+
+export function useTickets(params: {
+  page?: number
+  limit?: number
+  status?: string
+  priority?: string
+  type?: string
+  assignee_id?: string
+  search?: string
+} = {}) {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0
+  })
+
+  const fetchTickets = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.getTickets(params)
+      setTickets(data.tickets)
+      setPagination(data.pagination)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch tickets')
+    } finally {
+      setLoading(false)
+    }
+  }, [params])
+
+  useEffect(() => {
+    fetchTickets()
+  }, [fetchTickets])
+
+  const createTicket = useCallback(async (data: CreateTicketData) => {
+    try {
+      const newTicket = await ticketAPI.createTicket(data)
+      setTickets(prev => [newTicket, ...prev])
+      return newTicket
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create ticket')
+      throw err
+    }
+  }, [])
+
+  const updateTicket = useCallback(async (id: string, data: UpdateTicketData) => {
+    try {
+      const updatedTicket = await ticketAPI.updateTicket(id, data)
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === id ? updatedTicket : ticket
+      ))
+      return updatedTicket
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update ticket')
+      throw err
+    }
+  }, [])
+
+  const deleteTicket = useCallback(async (id: string) => {
+    try {
+      await ticketAPI.deleteTicket(id)
+      setTickets(prev => prev.filter(ticket => ticket.id !== id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete ticket')
+      throw err
+    }
+  }, [])
+
+  return {
+    tickets,
+    loading,
+    error,
+    pagination,
+    fetchTickets,
+    createTicket,
+    updateTicket,
+    deleteTicket
+  }
+}
+
+export function useTicket(id: string) {
+  const [ticket, setTicket] = useState<Ticket | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchTicket = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.getTicket(id)
+      setTicket(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch ticket')
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (id) {
+      fetchTicket()
+    }
+  }, [fetchTicket])
+
+  const updateTicket = useCallback(async (data: UpdateTicketData) => {
+    try {
+      const updatedTicket = await ticketAPI.updateTicket(id, data)
+      setTicket(updatedTicket)
+      return updatedTicket
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update ticket')
+      throw err
+    }
+  }, [id])
+
+  return {
+    ticket,
+    loading,
+    error,
+    fetchTicket,
+    updateTicket
+  }
+}
+
+export function useTicketComments(ticketId: string) {
+  const [comments, setComments] = useState<TicketComment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchComments = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.getComments(ticketId)
+      setComments(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch comments')
+    } finally {
+      setLoading(false)
+    }
+  }, [ticketId])
+
+  useEffect(() => {
+    if (ticketId) {
+      fetchComments()
+    }
+  }, [fetchComments])
+
+  const addComment = useCallback(async (content: string, isInternal = false) => {
+    try {
+      const newComment = await ticketAPI.addComment(ticketId, content, isInternal)
+      setComments(prev => [...prev, newComment])
+      return newComment
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add comment')
+      throw err
+    }
+  }, [ticketId])
+
+  return {
+    comments,
+    loading,
+    error,
+    fetchComments,
+    addComment
+  }
+}
+
+export function useTicketAttachments(ticketId: string) {
+  const [attachments, setAttachments] = useState<TicketAttachment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchAttachments = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.getAttachments(ticketId)
+      setAttachments(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch attachments')
+    } finally {
+      setLoading(false)
+    }
+  }, [ticketId])
+
+  useEffect(() => {
+    if (ticketId) {
+      fetchAttachments()
+    }
+  }, [fetchAttachments])
+
+  const uploadAttachment = useCallback(async (file: File, isPublic = false) => {
+    try {
+      const newAttachment = await ticketAPI.uploadAttachment(ticketId, file, isPublic)
+      setAttachments(prev => [...prev, newAttachment])
+      return newAttachment
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload attachment')
+      throw err
+    }
+  }, [ticketId])
+
+  const downloadAttachment = useCallback(async (attachmentId: string) => {
+    try {
+      return await ticketAPI.downloadAttachment(ticketId, attachmentId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to download attachment')
+      throw err
+    }
+  }, [ticketId])
+
+  return {
+    attachments,
+    loading,
+    error,
+    fetchAttachments,
+    uploadAttachment,
+    downloadAttachment
+  }
+}
+
+export function useTicketChecklist(ticketId: string) {
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchChecklist = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.getChecklist(ticketId)
+      setChecklist(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch checklist')
+    } finally {
+      setLoading(false)
+    }
+  }, [ticketId])
+
+  useEffect(() => {
+    if (ticketId) {
+      fetchChecklist()
+    }
+  }, [fetchChecklist])
+
+  const addChecklistItem = useCallback(async (text: string, assigneeId?: string, dueDate?: string) => {
+    try {
+      const newItem = await ticketAPI.addChecklistItem(ticketId, text, assigneeId, dueDate)
+      setChecklist(prev => [...prev, newItem])
+      return newItem
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add checklist item')
+      throw err
+    }
+  }, [ticketId])
+
+  const updateChecklistItem = useCallback(async (itemId: string, updates: {
+    text?: string
+    completed?: boolean
+    assignee_id?: string
+    due_date?: string
+  }) => {
+    try {
+      const updatedItem = await ticketAPI.updateChecklistItem(ticketId, itemId, updates)
+      setChecklist(prev => prev.map(item => 
+        item.id === itemId ? updatedItem : item
+      ))
+      return updatedItem
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update checklist item')
+      throw err
+    }
+  }, [ticketId])
+
+  const deleteChecklistItem = useCallback(async (itemId: string) => {
+    try {
+      await ticketAPI.deleteChecklistItem(ticketId, itemId)
+      setChecklist(prev => prev.filter(item => item.id !== itemId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete checklist item')
+      throw err
+    }
+  }, [ticketId])
+
+  return {
+    checklist,
+    loading,
+    error,
+    fetchChecklist,
+    addChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem
+  }
+}
+
+export function useProfiles() {
+  const [profiles, setProfiles] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const searchProfiles = useCallback(async (query: string, department?: string, role?: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await ticketAPI.searchProfiles(query, department, role)
+      setProfiles(data)
+      return data
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search profiles')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  return {
+    profiles,
+    loading,
+    error,
+    searchProfiles
+  }
+}
