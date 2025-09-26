@@ -75,17 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
 
-  // Debug logging
-  console.log('🏗️ AuthProvider render - Current state:', {
-    user: user?.email || 'null',
-    profile: profile?.display_name || 'null',
-    organization: organization?.name || 'null',
-    loading
-  })
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
-      console.log('🔍 Fetching profile for user ID:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -93,11 +85,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (error) {
-        console.error('❌ Error fetching profile:', error)
+        console.error('Error fetching profile:', error)
         return null
       }
 
-      console.log('✅ Profile fetched successfully:', data)
       return data
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -127,46 +118,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserPermissions = async (userId: string) => {
     try {
-      console.log('🔐 Starting to load permissions for user:', userId)
-      console.log('🔐 RBAC API available:', !!rbacApi)
       setPermissionsLoading(true)
-      
-      console.log('🔐 Calling getUserPermissions...')
-      const userPermissionsPromise = rbacApi.getUserPermissions(userId)
-      console.log('🔐 Calling getUserRoles...')
-      const userRolesPromise = rbacApi.getUserRoles(userId)
-      
       const [userPermissions, roles] = await Promise.all([
-        userPermissionsPromise,
-        userRolesPromise
+        rbacApi.getUserPermissions(userId),
+        rbacApi.getUserRoles(userId)
       ])
       
-      console.log('🔐 Raw permissions received:', userPermissions)
-      console.log('🔐 User roles received:', roles)
-      console.log('🔐 Permissions type:', typeof userPermissions, 'Array?', Array.isArray(userPermissions))
-      console.log('🔐 Roles type:', typeof roles, 'Array?', Array.isArray(roles))
-      
       if (!Array.isArray(userPermissions)) {
-        console.error('❌ userPermissions is not an array:', userPermissions)
         throw new Error('Invalid permissions response')
       }
       
       const grantedPermissions = userPermissions.filter(p => p && p.granted === true)
-      console.log('🔐 Granted permissions count:', grantedPermissions.length)
-      console.log('🔐 First 5 granted permissions:', grantedPermissions.slice(0, 5))
-      
       setPermissions(grantedPermissions)
       setUserRoles(Array.isArray(roles) ? roles : [])
-      
-      console.log('🔐 Permissions state updated - new count:', grantedPermissions.length)
     } catch (error) {
-      console.error('❌ Error loading user permissions:', error)
-      console.error('❌ Error details:', error instanceof Error ? error.message : String(error))
-      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack')
+      console.error('Error loading user permissions:', error)
       setPermissions([])
       setUserRoles([])
     } finally {
-      console.log('🔐 Setting permissionsLoading to false')
       setPermissionsLoading(false)
     }
   }
@@ -211,9 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Permission checking functions
   const hasPermission = (permissionName: string): boolean => {
-    const result = permissions.some(p => p.permission_name === permissionName && p.granted)
-    console.log(`🔐 hasPermission('${permissionName}'):`, result, 'permissions count:', permissions.length)
-    return result
+    return permissions.some(p => p.permission_name === permissionName && p.granted)
   }
 
   const hasAnyPermission = (permissionNames: string[]): boolean => {
@@ -221,13 +188,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const canView = (module: string): boolean => {
-    const result = hasAnyPermission([
+    return hasAnyPermission([
       `${module}.view`,
       `${module}.edit`, 
       `${module}.full_edit`
     ])
-    console.log(`🔐 canView('${module}'):`, result)
-    return result
   }
 
   const canEdit = (module: string): boolean => {
@@ -267,93 +232,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    console.log('🔄 AuthProvider useEffect starting...', { isMounted })
     
     // Check if we're in browser (client-side)
     if (typeof window === 'undefined') {
-      console.log('❌ Server-side rendering detected, skipping auth init')
       return
     }
-    
-    // Check localStorage for existing session data
-    const checkLocalStorage = () => {
-      try {
-        console.log('🗄️ Checking localStorage...')
-        const keys = Object.keys(localStorage).filter(key => key.includes('supabase'))
-        console.log('🗄️ LocalStorage supabase keys:', keys)
-        keys.forEach(key => {
-          const value = localStorage.getItem(key)
-          console.log(`🔑 ${key}:`, value ? 'exists' : 'null')
-        })
-      } catch (error) {
-        console.error('❌ Error checking localStorage:', error)
-      }
-    }
-    
-    checkLocalStorage()
     
     // Get initial session
     const getSession = async () => {
       try {
-        console.log('🔍 Getting initial session...', { isMounted })
-        console.log('🔍 Supabase client:', !!supabase)
-        
-        const sessionResult = await supabase.auth.getSession()
-        console.log('📋 Initial session result:', { 
-          hasData: !!sessionResult.data, 
-          hasSession: !!sessionResult.data.session, 
-          error: sessionResult.error, 
-          user: sessionResult.data.session?.user?.email 
-        })
-        
-        const { data: { session }, error } = sessionResult
+        const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error('❌ Error getting session:', error)
+          console.error('Error getting session:', error)
           throw error
         }
         
         if (session?.user && isMounted) {
-          console.log('✅ Initial session found for user:', session.user.email, 'ID:', session.user.id)
           setUser(session.user)
-          
-          console.log('🔍 Fetching profile for user ID:', session.user.id)
           const userProfile = await fetchProfile(session.user.id)
           
           if (isMounted) {
-            console.log('👤 Profile fetch result:', userProfile ? userProfile.display_name : 'null')
             setProfile(userProfile)
             
             if (userProfile?.organization_id) {
-              console.log('🏢 Fetching organization:', userProfile.organization_id)
               const org = await fetchOrganization(userProfile.organization_id)
               if (isMounted) {
-                console.log('🏢 Organization fetch result:', org ? org.name : 'null')
                 setOrganization(org)
               }
             }
             
             // Load permissions and roles
-            console.log('🔐 Starting permission loading for user:', session.user.id)
-            try {
-              await loadUserPermissions(session.user.id)
-              console.log('🔐 Permission loading completed')
-            } catch (permError) {
-              console.error('❌ Error loading permissions:', permError)
-            }
+            await loadUserPermissions(session.user.id)
           }
-        } else {
-          console.log('❌ No initial session found', { hasSession: !!session, isMounted })
         }
       } catch (error) {
-        console.error('💥 Error in getSession:', error)
-        console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack')
+        console.error('Error in getSession:', error)
       } finally {
         if (isMounted) {
-          console.log('⏹️ Setting loading to false')
           setLoading(false)
-        } else {
-          console.log('⏹️ Component unmounted, not setting loading to false')
         }
       }
     }
@@ -363,13 +280,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
-        
         if (session?.user) {
-          console.log('🔄 Auth state changed - setting user:', session.user.email)
           setUser(session.user)
           const userProfile = await fetchProfile(session.user.id)
-          console.log('🔄 Auth state changed - profile set to:', userProfile)
           setProfile(userProfile)
 
           if (userProfile?.organization_id) {
@@ -380,7 +293,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Load permissions and roles
           await loadUserPermissions(session.user.id)
         } else {
-          console.log('🔄 Auth state changed - clearing user data')
           setUser(null)
           setProfile(null)
           setOrganization(null)
