@@ -1,13 +1,11 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Create a single instance of the client to be used throughout the auth context
+const supabase = createClient()
 
 interface Profile {
   id: string
@@ -60,6 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Debug logging
+  console.log('🏗️ AuthProvider render - Current state:', {
+    user: user?.email || 'null',
+    profile: profile?.display_name || 'null',
+    organization: organization?.name || 'null',
+    loading
+  })
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
@@ -139,22 +145,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAgent = profile?.role === 'agent' || profile?.role === 'manager' || profile?.role === 'admin'
 
   useEffect(() => {
+    let isMounted = true
+    console.log('🔄 AuthProvider useEffect starting...')
+    
+    // Check localStorage for existing session data
+    const checkLocalStorage = () => {
+      try {
+        const keys = Object.keys(localStorage).filter(key => key.includes('supabase'))
+        console.log('🗄️ LocalStorage supabase keys:', keys)
+        keys.forEach(key => {
+          const value = localStorage.getItem(key)
+          console.log(`🔑 ${key}:`, value ? 'exists' : 'null')
+        })
+      } catch (error) {
+        console.error('Error checking localStorage:', error)
+      }
+    }
+    
+    checkLocalStorage()
+    
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setUser(session.user)
-        const userProfile = await fetchProfile(session.user.id)
-        setProfile(userProfile)
-
-        if (userProfile?.organization_id) {
-          const org = await fetchOrganization(userProfile.organization_id)
-          setOrganization(org)
+      try {
+        console.log('🔍 Getting initial session...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('📋 Initial session result:', { session: !!session, error, user: session?.user?.email })
+        
+        if (error) {
+          console.error('❌ Error getting session:', error)
+        }
+        
+        if (session?.user && isMounted) {
+          console.log('✅ Initial session found:', session.user.email)
+          setUser(session.user)
+          const userProfile = await fetchProfile(session.user.id)
+          
+          if (isMounted) {
+            console.log('👤 Setting profile:', userProfile?.display_name)
+            setProfile(userProfile)
+            
+            if (userProfile?.organization_id) {
+              const org = await fetchOrganization(userProfile.organization_id)
+              if (isMounted) {
+                console.log('🏢 Setting organization:', org?.name)
+                setOrganization(org)
+              }
+            }
+          }
+        } else {
+          console.log('❌ No initial session found')
+        }
+      } catch (error) {
+        console.error('💥 Error getting initial session:', error)
+      } finally {
+        if (isMounted) {
+          console.log('⏹️ Setting loading to false')
+          setLoading(false)
         }
       }
-      
-      setLoading(false)
     }
 
     getSession()
@@ -186,7 +234,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const value = {

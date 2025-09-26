@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,15 +10,40 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
+import { useAuth } from "@/lib/contexts/auth-context"
 
 export default function Page() {
   const [email, setEmail] = useState("admin@kroolo.com")
   const [password, setPassword] = useState("KrooloAdmin123!")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
+  const { user, loading } = useAuth()
+  
+  // Auto-redirect if user is already authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('User already authenticated, redirecting to dashboard')
+      router.push('/dashboard')
+      return
+    }
+    setCheckingAuth(false)
+  }, [user, loading, router])
+  
+  // Show loading while checking authentication status
+  if (loading || checkingAuth) {
+    return (
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+          <span className="text-sm text-muted-foreground">Checking authentication...</span>
+        </div>
+      </div>
+    )
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

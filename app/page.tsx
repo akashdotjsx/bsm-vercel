@@ -18,14 +18,41 @@ import {
   Zap,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useAuth } from "@/lib/contexts/auth-context"
 
 export default function LandingPage() {
   const router = useRouter()
+  const { user, loading } = useAuth()
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
     console.log("[v0] Landing page mounted and rendering")
-  }, [])
+    
+    // Auto-redirect if user is already authenticated
+    if (!loading && user) {
+      console.log('User already authenticated, redirecting to dashboard')
+      router.push('/dashboard')
+      return
+    }
+    
+    // Not authenticated, show landing page
+    if (!loading) {
+      setCheckingAuth(false)
+    }
+  }, [user, loading, router])
+  
+  // Show loading while checking authentication status
+  if (loading || checkingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+          <span className="text-sm text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    )
+  }
 
   const handleSignIn = () => {
     console.log("[v0] Sign in button clicked, navigating to login")
