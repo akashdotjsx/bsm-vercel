@@ -485,3 +485,71 @@ CREATE TABLE public.workflows (
   CONSTRAINT workflows_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
   CONSTRAINT workflows_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.roles (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying(255) NOT NULL,
+  description text,
+  is_system_role boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT roles_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_role_per_org UNIQUE (organization_id, name),
+  CONSTRAINT roles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT roles_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.permissions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying(255) NOT NULL UNIQUE,
+  display_name character varying(255) NOT NULL,
+  description text,
+  module USER-DEFINED NOT NULL,
+  action USER-DEFINED NOT NULL,
+  resource_pattern character varying(255),
+  is_system_permission boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT permissions_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_permission UNIQUE (module, action, resource_pattern)
+);
+CREATE TABLE public.role_permissions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  role_id uuid NOT NULL,
+  permission_id uuid NOT NULL,
+  granted boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT role_permissions_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_role_permission UNIQUE (role_id, permission_id),
+  CONSTRAINT role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id),
+  CONSTRAINT role_permissions_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permissions(id)
+);
+CREATE TABLE public.user_roles (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  role_id uuid NOT NULL,
+  assigned_by uuid,
+  assigned_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  is_active boolean DEFAULT true,
+  CONSTRAINT user_roles_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_user_role UNIQUE (user_id, role_id),
+  CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id),
+  CONSTRAINT user_roles_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.user_permissions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  permission_id uuid NOT NULL,
+  granted boolean NOT NULL,
+  assigned_by uuid,
+  assigned_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  reason text,
+  CONSTRAINT user_permissions_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_user_permission UNIQUE (user_id, permission_id),
+  CONSTRAINT user_permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_permissions_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permissions(id),
+  CONSTRAINT user_permissions_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.profiles(id)
+);

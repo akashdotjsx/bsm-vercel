@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminLayout } from "@/components/layout/protected-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,9 +41,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  ShieldCheck,
 } from "lucide-react"
 import { useUsers } from "@/hooks/use-users"
 import { useToast } from "@/hooks/use-toast"
+import { RoleEditModal } from "@/components/rbac/role-edit-modal"
+import { rbacApi } from "@/lib/api/rbac"
+import type { Role } from "@/lib/types/rbac"
 
 const availableRoles = [
   { value: 'admin', label: 'Administrator' },
@@ -141,6 +145,9 @@ export default function UsersPage() {
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [showManageDepartments, setShowManageDepartments] = useState(false)
   const [showResetPassword, setShowResetPassword] = useState(false)
+  const [showEditRole, setShowEditRole] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(null)
+  const [roles, setRoles] = useState([])
   const [departments, setDepartments] = useState(availableDepartments)
   const [newDepartment, setNewDepartment] = useState("")
   const [selectedUser, setSelectedUser] = useState(null)
@@ -159,6 +166,19 @@ export default function UsersPage() {
     department: "",
   })
   const { toast } = useToast()
+
+  // Load roles on component mount
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const allRoles = await rbacApi.getRoles()
+        setRoles(allRoles)
+      } catch (error) {
+        console.error('Error loading roles:', error)
+      }
+    }
+    loadRoles()
+  }, [])
 
   const filteredUsers = users.filter((user) => {
     const userName = user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
@@ -303,6 +323,51 @@ export default function UsersPage() {
 
   const handleDeleteDepartment = (dept) => {
     setDepartments(departments.filter((d) => d !== dept))
+  }
+
+  const handleEditUserRole = (user) => {
+    // Find the user's current role in our roles list
+    const userRole = roles.find(role => 
+      role.name.toLowerCase().replace(' ', '_') === user.role?.toLowerCase() ||
+      role.name === user.role
+    )
+    setSelectedUser(user)
+    setSelectedRole(userRole || null)
+    setShowEditRole(true)
+  }
+
+  const handleRoleSave = async (savedRole) => {
+    try {
+      // Update the user's role in the profiles table (legacy field)
+      const roleMapping = {
+        'System Administrator': 'admin',
+        'Manager': 'manager', 
+        'Agent': 'agent',
+        'User': 'user'
+      }
+      
+      const legacyRole = roleMapping[savedRole.name] || 'user'
+      
+      await updateUser(selectedUser.id, {
+        role: legacyRole
+      })
+      
+      // Refresh roles list
+      const allRoles = await rbacApi.getRoles()
+      setRoles(allRoles)
+      
+      toast({
+        title: "Role Updated",
+        description: `User role has been updated to ${savedRole.name}`,
+      })
+    } catch (error) {
+      console.error('Error updating user role:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
@@ -564,6 +629,10 @@ export default function UsersPage() {
                             <DropdownMenuItem onClick={() => handleEditUser(user)} className="text-[13px]">
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditUserRole(user)} className="text-[13px]">
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              Manage Role
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleResetPassword(user)} className="text-[13px]">
                               <Key className="mr-2 h-4 w-4" />
@@ -992,6 +1061,18 @@ export default function UsersPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Role Edit Modal */}
+        <RoleEditModal
+          isOpen={showEditRole}
+          onClose={() => {
+            setShowEditRole(false)
+            setSelectedRole(null)
+            setSelectedUser(null)
+          }}
+          role={selectedRole}
+          onSave={handleRoleSave}
+        />
       </div>
     </AdminLayout>
   )

@@ -42,15 +42,15 @@ const customerViewItems = [
 ]
 
 const employeeViewItems = [
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Accounts", href: "/accounts", icon: Building },
-  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true },
-  { name: "Workflows", href: "/workflows", icon: Workflow },
-  { name: "Asset Management", href: "/assets", icon: HardDrive },
-  { name: "Services", href: "/services", icon: Settings },
-  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Notifications", href: "/notifications", icon: Bell },
+  { name: "Dashboard", href: "/dashboard", icon: BarChart3, permission: null },
+  { name: "Accounts", href: "/accounts", icon: Building, permission: 'users' },
+  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true, permission: 'tickets' },
+  { name: "Workflows", href: "/workflows", icon: Workflow, permission: 'workflows' },
+  { name: "Asset Management", href: "/assets", icon: HardDrive, permission: 'assets' },
+  { name: "Services", href: "/services", icon: Settings, permission: 'services' },
+  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen, permission: 'knowledge_base' },
+  { name: "Analytics", href: "/analytics", icon: BarChart3, permission: 'analytics' },
+  { name: "Notifications", href: "/notifications", icon: Bell, permission: null },
 ]
 
 const ticketSubmenuItems = [
@@ -60,20 +60,23 @@ const ticketSubmenuItems = [
 ]
 
 const administrationItems = [
-  { name: "Integrations", href: "/integrations", icon: Zap },
-  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle },
-  { name: "SLA Management", href: "/admin/sla", icon: Clock },
-  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle },
-  { name: "Service Catalog", href: "/admin/catalog", icon: Building2 },
-  { name: "Users & Teams", href: "/users", icon: Users },
-  { name: "Security & Access", href: "/admin/security", icon: Shield },
+  { name: "Integrations", href: "/integrations", icon: Zap, permission: 'integrations' },
+  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: 'workflows' },
+  { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: 'sla_policies' },
+  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: 'tickets' },
+  { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: 'services' },
+  { name: "Users & Teams", href: "/users", icon: Users, permission: 'users' },
+  { name: "Security & Access", href: "/admin/security", icon: Shield, permission: 'security' },
 ]
 
 export function SidebarNavigation() {
   const pathname = usePathname()
   const { mode } = useMode()
-  const { profile, organization } = useAuth()
+  const { profile, organization, canView, permissions } = useAuth()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  
+  console.log('🧭 SidebarNavigation - Current permissions:', permissions.map(p => p.permission_name))
+  console.log('🧭 SidebarNavigation - Mode:', mode)
 
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
   const sectionTitle = mode === "customer" ? "Customer Support" : "SERVICE MANAGEMENT"
@@ -93,7 +96,15 @@ export function SidebarNavigation() {
             {sectionTitle}
           </h2>
           <nav className="space-y-2">
-            {navigationItems.map((item) => {
+            {navigationItems.filter(item => {
+              if (!item.permission) {
+                console.log(`🧭 Item ${item.name} has no permission requirement - showing`)
+                return true // No permission required
+              }
+              const visible = canView(item.permission)
+              console.log(`🧭 Item ${item.name} requires permission ${item.permission} - ${visible ? 'showing' : 'hiding'}`)
+              return visible
+            }).map((item) => {
               const Icon = item.icon
               const isExpanded = expandedMenus.includes(item.name)
               const isTicketsPath = pathname.startsWith("/tickets")
@@ -160,13 +171,25 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-        {mode === "employee" && (profile?.role === 'admin' || profile?.role === 'manager') && (
+        {mode === "employee" && (() => {
+          const canViewAdmin = canView('administration')
+          console.log('🧭 Administration section - canView("administration"):', canViewAdmin)
+          return canViewAdmin
+        })() && (
           <div className="px-4 pb-4">
             <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
               ADMINISTRATION
             </h2>
             <nav className="space-y-2">
-              {administrationItems.map((item) => {
+              {administrationItems.filter(item => {
+                if (!item.permission) {
+                  console.log(`🧭 Admin item ${item.name} has no permission requirement - showing`)
+                  return true
+                }
+                const visible = canView(item.permission)
+                console.log(`🧭 Admin item ${item.name} requires permission ${item.permission} - ${visible ? 'showing' : 'hiding'}`)
+                return visible
+              }).map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
