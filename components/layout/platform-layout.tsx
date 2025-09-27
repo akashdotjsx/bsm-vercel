@@ -20,6 +20,7 @@ interface PlatformLayoutProps {
 export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  
 
   return (
     <div className="h-full bg-background flex flex-col">
@@ -27,7 +28,9 @@ export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
 
       <div className="flex flex-1 pt-12">
         {!isMobile && (
-          <div className="w-64 bg-sidebar border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm">
+          <div 
+            className="w-64 border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar"
+          >
             <SidebarNavigation />
           </div>
         )}
@@ -45,7 +48,7 @@ export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
           </Sheet>
         )}
 
-        <div className={`flex-1 flex flex-col ${!isMobile ? "ml-64" : ""}`}>
+        <div className={`flex-1 flex flex-col ${!isMobile ? "ml-64" : ""}`} style={{ marginLeft: !isMobile ? '16rem' : '0' }}>
           {breadcrumb && (
             <div className="bg-muted border-b border-border px-4 md:px-6 py-2">
               <div className="flex items-center space-x-2 text-xs md:text-sm text-muted-foreground">
@@ -65,7 +68,9 @@ export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
             </div>
           )}
 
-          <main className="flex-1 p-4 md:p-6 bg-muted/30 overflow-auto">{children}</main>
+          <main className="flex-1 p-4 md:p-6 bg-muted/30 overflow-auto">
+            {children}
+          </main>
         </div>
       </div>
     </div>

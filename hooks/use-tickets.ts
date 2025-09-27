@@ -32,7 +32,7 @@ export function useTickets(params: {
     } finally {
       setLoading(false)
     }
-  }, [params])
+  }, [params.page, params.limit, params.status, params.priority, params.type, params.assignee_id, params.search])
 
   useEffect(() => {
     fetchTickets()
@@ -297,6 +297,31 @@ export function useTicketChecklist(ticketId: string) {
     addChecklistItem,
     updateChecklistItem,
     deleteChecklistItem
+  }
+}
+
+export function useCreateTicket() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const createTicket = useCallback(async (data: CreateTicketData) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const newTicket = await ticketAPI.createTicket(data)
+      return newTicket
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create ticket')
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  return {
+    createTicket,
+    loading,
+    error
   }
 }
 
