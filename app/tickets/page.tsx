@@ -3,7 +3,7 @@
 import type React from "react"
 
 import dynamic from "next/dynamic"
-import { useState, useCallback, useMemo, Suspense } from "react"
+import { useState, useCallback, useMemo, Suspense, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-// import { useDataFetcher } from "@/lib/hooks/use-data-fetcher"
+import { useTickets } from "@/hooks/use-tickets"
+import { useTicketTypes } from "@/hooks/use-ticket-types"
+import { format } from "date-fns"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -195,26 +197,36 @@ const columns = [
 ]
 
 export default function TicketsPage() {
-  const { tickets, setTickets, loading, setLoading, user } = useStore()
-
-  // const {
-  //   data: fetchedTickets,
-  //   loading: dataLoading,
-  //   error,
-  //   refetch,
-  // } = useDataFetcher({
-  //   table: "tickets",
-  //   select: "*",
-  //   orderBy: { column: "created_at", ascending: false },
-  //   cache: true,
-  //   cacheTTL: 5 * 60 * 1000, // 5 minutes cache
-  // })
-
-  console.log("[v0] Using mock tickets data to avoid RLS policy recursion")
-
+  const { user } = useStore()
+  
+  // State for filters
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+  
+  // Use real data from API
+  const { 
+    tickets, 
+    loading, 
+    error, 
+    pagination, 
+    refetch,
+    updateTicket
+  } = useTickets({
+    page: 1,
+    limit: 50,
+    status: selectedStatus === "all" ? undefined : selectedStatus,
+    priority: selectedPriority === "all" ? undefined : selectedPriority,
+    type: selectedType === "all" ? undefined : selectedType,
+    search: searchTerm || undefined
+  })
+
+  // Get dynamic ticket types from database
+  const { ticketTypes, loading: typesLoading } = useTicketTypes()
+
+  // Debug logging
+  console.log('Tickets data:', { tickets, loading, error, pagination })
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [currentView, setCurrentView] = useState<"list" | "kanban">("list")
   const [showTicketTray, setShowTicketTray] = useState(false)
@@ -225,7 +237,9 @@ export default function TicketsPage() {
   const [kanbanGroupBy, setKanbanGroupBy] = useState<"type" | "status" | "priority" | "category">("type")
   const [draggedTicket, setDraggedTicket] = useState<any>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
-  const [localTickets, setLocalTickets] = useState(mockTickets)
+  const [localTickets, setLocalTickets] = useState<any[]>([])
+  
+  // Use real tickets data from API instead of mock data
 
   const [showAIChat, setShowAIChat] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
@@ -236,22 +250,53 @@ export default function TicketsPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
 
-  const filteredTickets = useMemo(() => {
-    const ticketsToFilter = localTickets
-    return ticketsToFilter.filter((ticket) => {
-      const matchesSearch =
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesType = selectedType === "all" || ticket.type === selectedType
-      const matchesPriority = selectedPriority === "all" || ticket.priority === selectedPriority
-      const matchesAssignee =
-        ticketView === "all" ||
-        (ticketView === "my" && ticket.assignee?.name === user?.display_name) ||
-        (ticketView === "my" && ticket.assignee?.name === "John Smith") // Fallback for demo
+  // Transform real ticket data to match the expected format
+  const transformedTickets = useMemo(() => {
+    if (!tickets) return []
+    
+    return tickets.map((ticket) => ({
+      id: `#${ticket.ticket_number}`, // Display ID for UI
+      dbId: ticket.id, // Database ID for API calls
+      title: ticket.title,
+      description: ticket.description || "",
+      company: ticket.requester?.organization?.name || "Unknown",
+      companyLogo: ticket.requester?.organization?.name?.[0] || "U",
+      companyColor: "bg-blue-500",
+      customer: ticket.requester?.display_name || "Unknown",
+      reportedBy: ticket.requester?.display_name || "Unknown",
+      reportedByAvatar: ticket.requester?.first_name?.[0] + ticket.requester?.last_name?.[0] || "U",
+      assignee: ticket.assignee ? {
+        name: ticket.assignee.display_name,
+        avatar: ticket.assignee.first_name?.[0] + ticket.assignee.last_name?.[0] || "U"
+      } : null,
+      status: ticket.status,
+      timestamp: format(new Date(ticket.created_at), "MMM d, yyyy"),
+      date: format(new Date(ticket.created_at), "MMM d, yyyy"),
+      reportedDate: format(new Date(ticket.created_at), "MMM d, yyyy"),
+      dueDate: ticket.due_date ? format(new Date(ticket.due_date), "MMM d, yyyy") : "No due date",
+      comments: 0, // Will be updated when we implement comments
+      attachments: 0, // Will be updated when we implement attachments
+      priority: ticket.priority,
+      type: ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : "Unknown",
+      notes: ticket.custom_fields?.notes || "",
+      category: ticket.category || "",
+      subcategory: ticket.subcategory || "",
+      urgency: ticket.urgency,
+      impact: ticket.impact
+    }))
+  }, [tickets])
 
-      return matchesSearch && matchesType && matchesPriority && matchesAssignee
-    })
-  }, [searchTerm, selectedType, selectedPriority, ticketView, user, localTickets])
+  // Initialize local tickets when transformedTickets changes
+  useEffect(() => {
+    if (transformedTickets.length > 0) {
+      setLocalTickets(transformedTickets)
+    }
+  }, [transformedTickets])
+
+  const filteredTickets = useMemo(() => {
+    // Use local tickets for Kanban view, transformed tickets for list view
+    return currentView === "kanban" ? localTickets : (transformedTickets || [])
+  }, [localTickets, transformedTickets, currentView])
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
@@ -480,7 +525,38 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 </tr>
               </thead>
               <tbody>
-                {filteredTickets.map((ticket, index) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                        Loading tickets...
+                      </div>
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center">
+                      <div className="text-red-600">
+                        Error loading tickets: {error}
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredTickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center">
+                      <div className="text-muted-foreground">
+                        No tickets found. <button 
+                          onClick={() => window.location.href = '/tickets/create'} 
+                          className="text-blue-600 hover:underline"
+                        >
+                          Create your first ticket
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
                     className={`border-b border-border hover:bg-muted/50 ${index % 2 === 0 ? "bg-background" : "bg-muted/20"}`}
@@ -513,12 +589,21 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     </td>
                     <td className="p-3 border-r border-border">
                       <div className="flex items-center justify-center">
-                        <div
-                          className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
-                          title={ticket.assignee.name}
-                        >
-                          {ticket.assignee.avatar}
-                        </div>
+                        {ticket.assignee ? (
+                          <div
+                            className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                            title={ticket.assignee.name}
+                          >
+                            {ticket.assignee.avatar}
+                          </div>
+                        ) : (
+                          <div
+                            className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium"
+                            title="Unassigned"
+                          >
+                            ?
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="p-3 border-r border-border">
@@ -544,7 +629,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                                 : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                         }`}
                       >
-                        {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+                        {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                       </span>
                     </td>
                     <td className="p-3 border-r border-border">
@@ -585,7 +670,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                       </DropdownMenu>
                     </td>
                   </tr>
-                ))}
+                ))
+                )}
               </tbody>
             </table>
           </div>
@@ -618,33 +704,77 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   }, [])
 
   const handleDrop = useCallback(
-    (e: React.DragEvent, targetColumn: string) => {
+    async (e: React.DragEvent, targetColumn: string) => {
       e.preventDefault()
       setDragOverColumn(null)
 
       if (draggedTicket) {
-        setLocalTickets((prevTickets) => {
-          return prevTickets.map((ticket) => {
-            if (ticket.id === draggedTicket.id) {
-              const updatedTicket = { ...ticket }
-              if (kanbanGroupBy === "type") {
-                updatedTicket.type = targetColumn
-              } else if (kanbanGroupBy === "status") {
-                updatedTicket.status = targetColumn
-              } else if (kanbanGroupBy === "priority") {
-                updatedTicket.priority = targetColumn
+        const updatedTickets = localTickets.map((ticket) => {
+          if (ticket.id === draggedTicket.id) {
+            const updatedTicket = { ...ticket }
+            if (kanbanGroupBy === "type") {
+              // Use the display label for local state
+              updatedTicket.type = targetColumn
+            } else if (kanbanGroupBy === "status") {
+              updatedTicket.status = targetColumn
+            } else if (kanbanGroupBy === "priority") {
+              updatedTicket.priority = targetColumn
+            } else if (kanbanGroupBy === "category") {
+              // Map category values back to types for display
+              const categoryMap: { [key: string]: string } = {
+                technical: "Incident",
+                billing: "Request", 
+                general: "General Query",
+                feature: "Change"
               }
-              return updatedTicket
+              updatedTicket.type = categoryMap[targetColumn] || targetColumn
             }
-            return ticket
-          })
+            return updatedTicket
+          }
+          return ticket
         })
+
+        // Update local state immediately for responsive UI
+        setLocalTickets(updatedTickets)
+
+        // Try to update the ticket in the API
+        try {
+          const ticketToUpdate = updatedTickets.find(t => t.id === draggedTicket.id)
+          if (ticketToUpdate && ticketToUpdate.dbId) {
+            // Use the database ID for API calls
+            const ticketId = ticketToUpdate.dbId
+            
+            const updateData: any = {}
+            if (kanbanGroupBy === "status") {
+              updateData.status = targetColumn
+            } else if (kanbanGroupBy === "priority") {
+              updateData.priority = targetColumn
+            } else if (kanbanGroupBy === "type") {
+              // Find the ticket type value for the target column
+              const ticketType = ticketTypes.find(type => type.label === targetColumn)
+              if (ticketType) {
+                updateData.type = ticketType.value
+              } else {
+                updateData.type = targetColumn.toLowerCase()
+              }
+            }
+
+            if (Object.keys(updateData).length > 0) {
+              await updateTicket(ticketId, updateData)
+              console.log("[v0] Ticket updated in API:", ticketId, updateData)
+            }
+          }
+        } catch (error) {
+          console.error("[v0] Failed to update ticket in API:", error)
+          // Revert local state on API failure
+          setLocalTickets(transformedTickets)
+        }
 
         console.log("[v0] Ticket moved:", draggedTicket.id, "to", targetColumn)
         setDraggedTicket(null)
       }
     },
-    [draggedTicket, kanbanGroupBy],
+    [draggedTicket, kanbanGroupBy, localTickets, updateTicket, transformedTickets, ticketTypes],
   )
 
   const getKanbanColumns = useCallback(() => {
@@ -670,16 +800,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           { id: "general", title: "General", count: 0, color: "border-t-purple-400" },
           { id: "feature", title: "Feature Request", count: 0, color: "border-t-orange-400" },
         ]
-      default: // type
-        return [
-          { id: "Incident", title: "Incident", count: 0, color: "border-t-red-400" },
-          { id: "Request", title: "Request", count: 0, color: "border-t-blue-400" },
-          { id: "Problem", title: "Problem", count: 0, color: "border-t-orange-400" },
-          { id: "Change", title: "Change", count: 0, color: "border-t-green-400" },
-          { id: "General Query", title: "General Query", count: 0, color: "border-t-purple-400" },
-        ]
+      default: // type - use dynamic ticket types from database
+        return ticketTypes.map(type => ({
+          id: type.label, // Use the display label for matching
+          title: type.label,
+          count: 0,
+          color: type.color
+        }))
     }
-  }, [kanbanGroupBy])
+  }, [kanbanGroupBy, ticketTypes])
 
   const getTicketsByGroup = useCallback(
     (groupValue: string) => {
@@ -698,82 +827,111 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               "General Query": "general",
             }
             return categoryMap[ticket.type] === groupValue
-          default: // type
+          default: // type - match with dynamic ticket types
+            // Find the corresponding ticket type value for the group
+            const ticketType = ticketTypes.find(type => type.label === groupValue)
+            if (ticketType) {
+              return ticket.type === ticketType.label
+            }
+            // Fallback to exact match for backward compatibility
             return ticket.type === groupValue
         }
       })
     },
-    [filteredTickets, kanbanGroupBy],
+    [filteredTickets, kanbanGroupBy, ticketTypes],
   )
 
   const renderKanbanView = useCallback(
-    () => (
-      <div className="space-y-6 font-sans">
-        <div className="flex items-center gap-4 py-2 border-b border-border">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              className="pl-10 h-9 w-48 border-0 bg-muted/50 text-[13px]"
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
+    () => {
+      const kanbanColumns = getKanbanColumns()
+      const numColumns = kanbanColumns.length > 0 ? kanbanColumns.length : 1
+      
+      // Create responsive grid classes
+      const getGridClass = (cols: number) => {
+        if (cols <= 2) return 'grid-cols-1 md:grid-cols-2'
+        if (cols <= 3) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        if (cols <= 4) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+        if (cols <= 5) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+        return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+      }
+      
+      const gridColsClass = getGridClass(numColumns)
+      
+      return (
+        <div className="space-y-6 font-sans">
+          <div className="flex items-center gap-4 py-2 border-b border-border">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 h-9 w-48 border-0 bg-muted/50 text-[13px]"
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+            </div>
+
+            <Select
+              value={kanbanGroupBy}
+              onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
+            >
+              <SelectTrigger className="w-48 h-9 text-[13px]">
+                <SelectValue placeholder="Group By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="type">Group By: Type</SelectItem>
+                <SelectItem value="status">Group By: Status</SelectItem>
+                <SelectItem value="priority">Group By: Priority</SelectItem>
+                <SelectItem value="category">Group By: Category</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-32 h-9 text-[13px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {ticketTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.label}>
+                    {type.label}s
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+              Date Range
+            </Button>
+
+            <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+              <SelectTrigger className="w-40 h-9 text-[13px]">
+                <SelectValue placeholder="All Priorities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+              <Filter className="h-4 w-4 mr-2" />
+              Add filter
+            </Button>
           </div>
 
-          <Select
-            value={kanbanGroupBy}
-            onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
-          >
-            <SelectTrigger className="w-48 h-9 text-[13px]">
-              <SelectValue placeholder="Group By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="type">Group By: Type</SelectItem>
-              <SelectItem value="status">Group By: Status</SelectItem>
-              <SelectItem value="priority">Group By: Priority</SelectItem>
-              <SelectItem value="category">Group By: Category</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-32 h-9 text-[13px]">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Incident">Incidents</SelectItem>
-              <SelectItem value="Request">Requests</SelectItem>
-              <SelectItem value="Problem">Problems</SelectItem>
-              <SelectItem value="Change">Changes</SelectItem>
-              <SelectItem value="General Query">General Queries</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
-            Date Range
-          </Button>
-
-          <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-            <SelectTrigger className="w-40 h-9 text-[13px]">
-              <SelectValue placeholder="All Priorities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
-            <Filter className="h-4 w-4 mr-2" />
-            Add filter
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-5 gap-6">
-          {getKanbanColumns().map((column) => (
+          <div className={`grid ${gridColsClass} gap-6`}>
+            {typesLoading ? (
+              <div className={`col-span-${numColumns} flex items-center justify-center py-8`}>
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-muted-foreground">Loading ticket types...</span>
+                </div>
+              </div>
+            ) : (
+              kanbanColumns.map((column) => (
             <div
               key={column.id}
               className={`space-y-4 transition-all duration-200 ${
@@ -832,7 +990,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                                   : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                           }`}
                         >
-                          {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+                          {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                         </span>
                         <div className="w-4 h-4 rounded border border-muted-foreground/30"></div>
                       </div>
@@ -867,10 +1025,11 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 </Button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
-    ),
+      )
+    },
     [
       filteredTickets,
       searchTerm,
@@ -879,12 +1038,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       kanbanGroupBy,
       dragOverColumn,
       draggedTicket,
+      typesLoading,
+      getKanbanColumns,
       handleDragStart,
       handleDragOver,
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      getKanbanColumns,
       getTicketsByGroup,
       handleTicketClick,
     ],
@@ -901,7 +1061,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   {ticketView === "all" ? "All Tickets" : "My Tickets"}
                 </h1>
                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded text-sm font-medium font-sans">
-                  {filteredTickets.length}
+                  {loading ? "..." : filteredTickets.length}
                 </span>
               </div>
               <p className="text-muted-foreground text-sm font-sans">

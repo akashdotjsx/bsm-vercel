@@ -33,12 +33,12 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 
 const customerViewItems = [
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Customers", href: "/customers", icon: Users },
-  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true },
-  { name: "Live Chat", href: "/live-chat", icon: MessageSquare },
-  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Dashboard", href: "/dashboard", icon: BarChart3, permission: null },
+  { name: "Customers", href: "/customers", icon: Users, permission: null },
+  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true, permission: null },
+  { name: "Live Chat", href: "/live-chat", icon: MessageSquare, permission: null },
+  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen, permission: null },
+  { name: "Analytics", href: "/analytics", icon: BarChart3, permission: null },
 ]
 
 const employeeViewItems = [
@@ -85,7 +85,7 @@ export function SidebarNavigation() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col bg-sidebar">
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sidebar-border scrollbar-track-transparent">
         <div className="p-4">

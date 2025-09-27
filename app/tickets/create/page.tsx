@@ -51,6 +51,8 @@ import { PlatformLayout } from "@/components/layout/platform-layout"
 import { format } from "date-fns"
 import { useTickets, useTicketChecklist, useTicketComments, useTicketAttachments, useProfiles } from "@/hooks/use-tickets"
 import { CreateTicketData } from "@/lib/api/tickets"
+import { employeeServices, customerServices, ServiceCategory, Service } from "@/lib/types/services"
+import { useMode } from "@/lib/contexts/mode-context"
 
 export default function CreateTicketPage() {
   // Form state
@@ -60,8 +62,8 @@ export default function CreateTicketPage() {
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "critical" | "urgent">("medium")
   const [urgency, setUrgency] = useState<"low" | "medium" | "high" | "critical">("medium")
   const [impact, setImpact] = useState<"low" | "medium" | "high" | "critical">("medium")
-  const [category, setCategory] = useState("")
-  const [subcategory, setSubcategory] = useState("")
+  const [serviceCategory, setServiceCategory] = useState("")
+  const [service, setService] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
   const [teamId, setTeamId] = useState("")
   const [dueDate, setDueDate] = useState<Date>()
@@ -78,6 +80,12 @@ export default function CreateTicketPage() {
   // Hooks for real data
   const { createTicket } = useTickets()
   const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
+  const { mode } = useMode()
+  
+  // Service catalog data
+  const serviceCategories = mode === "employee" ? employeeServices : customerServices
+  const selectedCategory = serviceCategories.find(cat => cat.id === serviceCategory)
+  const availableServices = selectedCategory?.services || []
   
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<Array<{
@@ -196,8 +204,8 @@ export default function CreateTicketPage() {
         priority,
         urgency,
         impact,
-        category: category || undefined,
-        subcategory: subcategory || undefined,
+        category: serviceCategory || undefined,
+        subcategory: service || undefined,
         assignee_id: assigneeId || undefined,
         team_id: teamId || undefined,
         due_date: dueDate?.toISOString(),
@@ -208,10 +216,8 @@ export default function CreateTicketPage() {
       const newTicket = await createTicket(ticketData)
       console.log("Ticket created:", newTicket)
       
-      // Redirect to the created ticket detail page
-      if (newTicket && newTicket.id) {
-        window.location.href = `/tickets/${newTicket.id}`
-      }
+      // Redirect back to tickets list page
+      window.location.href = `/tickets`
       
     } catch (error) {
       console.error("Error creating ticket:", error)
@@ -414,23 +420,45 @@ export default function CreateTicketPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      placeholder="e.g., Technical, Billing, General"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                    />
+                    <Label htmlFor="serviceCategory">Service Category</Label>
+                    <Select value={serviceCategory} onValueChange={(value) => {
+                      setServiceCategory(value)
+                      setService("") // Reset service when category changes
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceCategories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subcategory">Subcategory</Label>
-                    <Input
-                      id="subcategory"
-                      placeholder="e.g., Software, Hardware, Account"
-                      value={subcategory}
-                      onChange={(e) => setSubcategory(e.target.value)}
-                    />
+                    <Label htmlFor="service">Service</Label>
+                    <Select 
+                      value={service} 
+                      onValueChange={setService}
+                      disabled={!serviceCategory}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={serviceCategory ? "Select service" : "Select category first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableServices.map((serviceItem, index) => (
+                          <SelectItem key={index} value={serviceItem.name}>
+                            <div className="flex flex-col">
+                              <span>{serviceItem.name}</span>
+                              <span className="text-xs text-muted-foreground">{serviceItem.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
