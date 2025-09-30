@@ -147,6 +147,64 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Assign user to the appropriate RBAC role
+    try {
+      // Map the legacy role names to RBAC role names
+      const roleMap = {
+        'admin': 'System Administrator',
+        'manager': 'Manager', 
+        'agent': 'Agent',
+        'user': 'User'
+      }
+      
+      const rbacRoleName = roleMap[role as keyof typeof roleMap] || 'User'
+      
+      // Find the role ID (try organization-specific first, then system roles)
+      let { data: roleData, error: roleError } = await supabaseAdmin
+        .from('roles')
+        .select('id')
+        .eq('name', rbacRoleName)
+        .eq('organization_id', organization_id)
+        .single()
+      
+      // If no org-specific role found, try system roles
+      if (roleError || !roleData) {
+        const { data: systemRoleData, error: systemRoleError } = await supabaseAdmin
+          .from('roles')
+          .select('id')
+          .eq('name', rbacRoleName)
+          .eq('is_system_role', true)
+          .single()
+        
+        roleData = systemRoleData
+        roleError = systemRoleError
+      }
+      
+      if (roleError || !roleData) {
+        console.warn(`Role '${rbacRoleName}' not found, user will need manual role assignment`)
+      } else {
+        // Assign the role to the user
+        const { error: userRoleError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role_id: roleData.id,
+            assigned_by: userId, // Self-assignment during creation
+            assigned_at: new Date().toISOString(),
+            is_active: true
+          })
+        
+        if (userRoleError) {
+          console.error('Error assigning role to user:', userRoleError)
+        } else {
+          console.log(`Successfully assigned '${rbacRoleName}' role to user ${email}`)
+        }
+      }
+    } catch (roleAssignmentError) {
+      console.error('Error during role assignment:', roleAssignmentError)
+      // Don't fail the entire user creation process if role assignment fails
+    }
+
     // If we didn't successfully send an invite email during user creation, try additional methods
     if (!inviteResult) {
       try {

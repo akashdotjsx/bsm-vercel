@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     if (scope === 'own') {
       // Users see only their own requests
       query = query.eq('requester_id', user.id)
-    } else if (scope === 'team' && profile.role in ['manager', 'admin']) {
+    } else if (scope === 'team' && ['manager', 'admin'].includes(profile.role)) {
       // Managers see their team's requests + their own
       // This relies on RLS policies to enforce proper access
     } else if (scope === 'all' && profile.role === 'admin') {

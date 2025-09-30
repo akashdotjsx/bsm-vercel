@@ -15,9 +15,11 @@ interface PlatformLayoutProps {
     label: string
     href?: string
   }[]
+  title?: string
+  description?: string
 }
 
-export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
+export function PlatformLayout({ children, breadcrumb, title, description }: PlatformLayoutProps) {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
@@ -69,6 +71,12 @@ export function PlatformLayout({ children, breadcrumb }: PlatformLayoutProps) {
           )}
 
           <main className="flex-1 p-4 md:p-6 bg-muted/30 overflow-auto">
+            {(title || description) && (
+              <div className="space-y-2 mb-6">
+                {title && <h1 className="text-3xl font-bold">{title}</h1>}
+                {description && <p className="text-muted-foreground">{description}</p>}
+              </div>
+            )}
             {children}
           </main>
         </div>
