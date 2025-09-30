@@ -233,4 +233,17 @@
   .scrollbar-track-transparent::-webkit-scrollbar-track {
     background: transparent;
   }
+  
+  /* Calculate scrollbar width as CSS variable */
+  :root {
+    --scrollbar-width: calc(100vw - 100%);
+  }
+  
+  /* Simple fix: Apply scrollbar-gutter to navbar */
+  header {
+    scrollbar-gutter: stable;
+    /* Force consistent width */
+    width: calc(100vw - 15px);
+    max-width: calc(100vw - 15px);
+  }
 }
