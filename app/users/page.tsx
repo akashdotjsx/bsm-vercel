@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { AdminLayout } from "@/components/layout/protected-layout"
+import { PlatformLayout } from "@/components/layout/platform-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -371,10 +371,10 @@ export default function UsersPage() {
   }
 
   return (
-    <AdminLayout
+    <PlatformLayout
       title="Users & Teams"
       description="Manage users, teams, and access permissions"
-      breadcrumbs={[
+      breadcrumb={[
         { label: "Service Management", href: "/dashboard" },
         { label: "Users & Teams", href: "/users" },
       ]}
@@ -385,12 +385,6 @@ export default function UsersPage() {
             <div className="text-[13px] text-muted-foreground">Loading users...</div>
           </div>
         )}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Users & Teams</h1>
-          <p className="text-muted-foreground">
-            Manage user accounts, teams, and access permissions across your organization
-          </p>
-        </div>
 
         {/* Header Actions */}
         <div className="flex items-center justify-between">
@@ -1074,6 +1068,6 @@ export default function UsersPage() {
           onSave={handleRoleSave}
         />
       </div>
-    </AdminLayout>
+    </PlatformLayout>
   )
 }

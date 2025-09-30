@@ -112,38 +112,8 @@ export class UserManagementAPI {
         console.log('API endpoint not available, falling back to demonstration mode')
       }
 
-      // Fallback: Create a demonstration entry to show the UI working
-      // In a real application, this would be handled by your server-side admin API
-      const demoUser = {
-        id: crypto.randomUUID(),
-        organization_id: orgId,
-        email: userData.email,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        display_name: `${userData.first_name} ${userData.last_name}`,
-        role: userData.role,
-        department: userData.department,
-        manager_id: userData.manager_id,
-        is_active: false, // Pending activation
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        avatar_url: null,
-        phone: null,
-        timezone: 'UTC',
-        last_login: null,
-        preferences: {}
-      }
-
-      // Store in localStorage for demonstration purposes
-      const pendingUsers = JSON.parse(localStorage.getItem('pendingUsers') || '[]')
-      pendingUsers.push(demoUser)
-      localStorage.setItem('pendingUsers', JSON.stringify(pendingUsers))
-
-      return {
-        success: true,
-        message: `User ${userData.email} invitation created (Demo Mode). In production, this would create the user in Supabase with admin privileges. The user appears as 'Inactive' until activated by an admin.`,
-        user: demoUser
-      }
+      // If API endpoint is not available, throw an error
+      throw new Error('User creation API endpoint is not available. Please implement the /api/create-user endpoint to create new users.')
     } catch (error) {
       console.error('Error inviting user:', error)
       throw error

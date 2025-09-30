@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
+import { ServiceRequestDetails } from "@/components/services/service-request-details"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,9 +16,14 @@ interface ServiceRequest {
   request_number: string
   title: string
   description: string
+  business_justification?: string
   status: string
   priority: string
+  urgency?: string
   created_at: string
+  estimated_delivery_date?: string
+  cost_center?: string
+  form_data?: any
   requester: {
     first_name: string
     last_name: string
@@ -26,6 +32,17 @@ interface ServiceRequest {
   }
   service: {
     name: string
+    estimated_delivery_days?: number
+  }
+  assignee?: {
+    first_name: string
+    last_name: string
+    email: string
+  }
+  approver?: {
+    first_name: string
+    last_name: string
+    email: string
   }
 }
 
@@ -43,28 +60,40 @@ export default function TeamRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/service-requests?scope=team')
+      if (response.ok) {
+        const data = await response.json()
+        setRequests(data.serviceRequests || [])
+      } else {
+        toast.error('Failed to load team requests')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to load team requests')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/service-requests?scope=team')
-        if (response.ok) {
-          const data = await response.json()
-          setRequests(data.serviceRequests || [])
-        } else {
-          toast.error('Failed to load team requests')
-        }
-      } catch (e) {
-        console.error(e)
-        toast.error('Failed to load team requests')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchRequests()
   }, [])
+
+  const handleViewDetails = (request: ServiceRequest) => {
+    console.log('Team requests - View Details clicked:', request.id, request.title)
+    setSelectedRequest(request)
+    setShowDetails(true)
+  }
+
+  const handleRequestUpdate = () => {
+    fetchRequests()
+  }
 
   const filtered = requests.filter(r => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false
@@ -132,8 +161,16 @@ export default function TeamRequestsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm"><Eye className="h-4 w-4 mr-2" />View</Button>
-                      <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDetails(r)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />View
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -142,6 +179,15 @@ export default function TeamRequestsPage() {
           )}
         </div>
       </div>
+      
+      {selectedRequest && (
+        <ServiceRequestDetails
+          request={selectedRequest}
+          open={showDetails}
+          onOpenChange={setShowDetails}
+          onUpdate={handleRequestUpdate}
+        />
+      )}
     </PlatformLayout>
   )
 }

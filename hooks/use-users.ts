@@ -15,11 +15,7 @@ export function useUsers() {
       setError(null)
       const userData = await userAPI.getUsers()
       
-      // Add demo users from localStorage for demonstration
-      const pendingUsers = JSON.parse(localStorage.getItem('pendingUsers') || '[]')
-      const allUsers = [...userData, ...pendingUsers]
-      
-      setUsers(allUsers)
+      setUsers(userData)
     } catch (err) {
       setError(err.message)
       toast({

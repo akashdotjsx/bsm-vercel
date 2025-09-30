@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
+import { ServiceRequestDetails } from "@/components/services/service-request-details"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,11 +27,14 @@ interface ServiceRequest {
   request_number: string
   title: string
   description: string
+  business_justification?: string
   status: string
   priority: string
   urgency: string
   created_at: string
   estimated_delivery_date: string
+  cost_center?: string
+  form_data?: any
   requester: {
     first_name: string
     last_name: string
@@ -77,6 +81,27 @@ export default function AdminServiceRequestsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [count, setCount] = useState(0)
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/service-requests?scope=all&limit=100')
+      if (response.ok) {
+        const data = await response.json()
+        setRequests(data.serviceRequests || [])
+        setCount(data.count || 0)
+      } else {
+        toast.error('Failed to load service requests')
+      }
+    } catch (error) {
+      console.error('Error fetching service requests:', error)
+      toast.error('Failed to load service requests')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isAdmin) {
@@ -84,27 +109,19 @@ export default function AdminServiceRequestsPage() {
       return
     }
 
-    const fetchRequests = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/service-requests?scope=all&limit=100')
-        if (response.ok) {
-          const data = await response.json()
-          setRequests(data.serviceRequests || [])
-          setCount(data.count || 0)
-        } else {
-          toast.error('Failed to load service requests')
-        }
-      } catch (error) {
-        console.error('Error fetching service requests:', error)
-        toast.error('Failed to load service requests')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchRequests()
   }, [isAdmin])
+
+  const handleViewDetails = (request: ServiceRequest) => {
+    console.log('View Details clicked for request:', request.id, request.title)
+    setSelectedRequest(request)
+    setShowDetails(true)
+    console.log('Modal state set - showDetails:', true, 'selectedRequest:', request.id)
+  }
+
+  const handleRequestUpdate = () => {
+    fetchRequests()
+  }
 
   const filteredRequests = requests.filter(request => {
     if (statusFilter !== "all" && request.status !== statusFilter) return false
@@ -364,7 +381,15 @@ export default function AdminServiceRequestsPage() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          console.log('BUTTON CLICKED!')
+                          alert('Button clicked!')
+                          handleViewDetails(request)
+                        }}
+                      >
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
@@ -379,6 +404,15 @@ export default function AdminServiceRequestsPage() {
           )}
         </div>
       </div>
+
+      {selectedRequest && (
+        <ServiceRequestDetails
+          request={selectedRequest}
+          open={showDetails}
+          onOpenChange={setShowDetails}
+          onUpdate={handleRequestUpdate}
+        />
+      )}
     </PlatformLayout>
   )
 }

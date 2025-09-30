@@ -76,35 +76,35 @@ export function AdminLayout({
   breadcrumbs?: { label: string; href?: string }[]
 }) {
   return (
-    <div className="space-y-6">
-      {(title || description || breadcrumbs) && (
-        <div className="space-y-2">
-          {breadcrumbs && (
-            <nav className="text-sm">
-              {breadcrumbs.map((crumb, index) => (
-                <span key={crumb.label}>
-                  {crumb.href ? (
-                    <a href={crumb.href} className="text-muted-foreground hover:text-foreground">
-                      {crumb.label}
-                    </a>
-                  ) : (
-                    <span className="text-foreground">{crumb.label}</span>
-                  )}
-                  {index < breadcrumbs.length - 1 && (
-                    <span className="mx-2 text-muted-foreground">/</span>
-                  )}
-                </span>
-              ))}
-            </nav>
-          )}
-          {title && <h1 className="text-3xl font-bold">{title}</h1>}
-          {description && <p className="text-muted-foreground">{description}</p>}
-        </div>
-      )}
-      <ProtectedLayout requiredPermissions={['administration.view', 'users.view']} breadcrumb={breadcrumb}>
+    <ProtectedLayout requiredPermissions={['administration.view', 'users.view']} breadcrumb={breadcrumb}>
+      <div className="space-y-6">
+        {(title || description || breadcrumbs) && (
+          <div className="space-y-2">
+            {breadcrumbs && (
+              <nav className="text-sm">
+                {breadcrumbs.map((crumb, index) => (
+                  <span key={crumb.label}>
+                    {crumb.href ? (
+                      <a href={crumb.href} className="text-muted-foreground hover:text-foreground">
+                        {crumb.label}
+                      </a>
+                    ) : (
+                      <span className="text-foreground">{crumb.label}</span>
+                    )}
+                    {index < breadcrumbs.length - 1 && (
+                      <span className="mx-2 text-muted-foreground">/</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+            {title && <h1 className="text-3xl font-bold">{title}</h1>}
+            {description && <p className="text-muted-foreground">{description}</p>}
+          </div>
+        )}
         {children}
-      </ProtectedLayout>
-    </div>
+      </div>
+    </ProtectedLayout>
   )
 }
 
