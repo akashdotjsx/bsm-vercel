@@ -8,6 +8,7 @@ import { NotificationProvider } from "@/lib/contexts/notification-context"
 import { SearchProvider } from "@/lib/contexts/search-context"
 import { AuthProvider } from "@/lib/contexts/auth-context"
 import { Suspense } from "react"
+import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,17 +31,19 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <ModeProvider>
-              <NotificationProvider>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <SearchProvider>
-                    <div className="h-screen">{children}</div>
-                  </SearchProvider>
-                </Suspense>
-              </NotificationProvider>
-            </ModeProvider>
-          </AuthProvider>
+          <NavbarFixProvider>
+            <AuthProvider>
+              <ModeProvider>
+                <NotificationProvider>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <SearchProvider>
+                      <div className="h-screen">{children}</div>
+                    </SearchProvider>
+                  </Suspense>
+                </NotificationProvider>
+              </ModeProvider>
+            </AuthProvider>
+          </NavbarFixProvider>
         </ThemeProvider>
       </body>
     </html>
