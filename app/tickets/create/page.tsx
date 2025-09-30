@@ -51,8 +51,10 @@ import { PlatformLayout } from "@/components/layout/platform-layout"
 import { format } from "date-fns"
 import { useTickets, useTicketChecklist, useTicketComments, useTicketAttachments, useProfiles } from "@/hooks/use-tickets"
 import { CreateTicketData } from "@/lib/api/tickets"
-import { employeeServices, customerServices, ServiceCategory, Service } from "@/lib/types/services"
+import { ServiceCategory, Service } from "@/lib/types/services"
 import { useMode } from "@/lib/contexts/mode-context"
+import { useServiceCategories } from "@/lib/hooks/use-service-categories"
+import { categoryIconMap, getBgColorClass, formatSLA } from "@/lib/utils/icon-map"
 
 export default function CreateTicketPage() {
   // Form state
@@ -81,9 +83,26 @@ export default function CreateTicketPage() {
   const { createTicket } = useTickets()
   const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
   const { mode } = useMode()
+  const { categories: supabaseCategories, loading: categoriesLoading } = useServiceCategories()
   
-  // Service catalog data
-  const serviceCategories = mode === "employee" ? employeeServices : customerServices
+  // Convert Supabase categories to the expected format
+  const serviceCategories = supabaseCategories.map(cat => {
+    const IconComponent = categoryIconMap[cat.icon || 'settings'] || Settings
+    return {
+      id: cat.id,
+      name: cat.name,
+      description: cat.description || "",
+      icon: IconComponent,
+      color: getBgColorClass(cat.color || 'blue'),
+      services: (cat.services || []).map(service => ({
+        name: service.name,
+        description: service.description || "",
+        sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
+        popularity: service.popularity_score || 1
+      }))
+    }
+  })
+  
   const selectedCategory = serviceCategories.find(cat => cat.id === serviceCategory)
   const availableServices = selectedCategory?.services || []
   
@@ -426,14 +445,20 @@ export default function CreateTicketPage() {
                       setService("") // Reset service when category changes
                     }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select service category" />
+                        <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select service category"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {serviceCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                        {categoriesLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading categories...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          serviceCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -443,20 +468,34 @@ export default function CreateTicketPage() {
                     <Select 
                       value={service} 
                       onValueChange={setService}
-                      disabled={!serviceCategory}
+                      disabled={!serviceCategory || categoriesLoading}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={serviceCategory ? "Select service" : "Select category first"} />
+                        <SelectValue placeholder={
+                          categoriesLoading ? "Loading..." : 
+                          serviceCategory ? "Select service" : 
+                          "Select category first"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableServices.map((serviceItem, index) => (
-                          <SelectItem key={index} value={serviceItem.name}>
-                            <div className="flex flex-col">
-                              <span>{serviceItem.name}</span>
-                              <span className="text-xs text-muted-foreground">{serviceItem.description}</span>
-                            </div>
+                        {categoriesLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading services...
                           </SelectItem>
-                        ))}
+                        ) : availableServices.length === 0 ? (
+                          <SelectItem value="no-services" disabled>
+                            No services available in this category
+                          </SelectItem>
+                        ) : (
+                          availableServices.map((serviceItem, index) => (
+                            <SelectItem key={index} value={serviceItem.name}>
+                              <div className="flex flex-col">
+                                <span>{serviceItem.name}</span>
+                                <span className="text-xs text-muted-foreground">{serviceItem.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
