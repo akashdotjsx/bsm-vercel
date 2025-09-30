@@ -2,6 +2,28 @@
 
 import { useState } from "react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
+import { useServiceCategories } from "@/lib/hooks/use-service-categories"
+import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
+
+// Helper function to parse SLA string to days
+function parseSlaToDays(sla: string): number {
+  if (sla.includes('hours') || sla.includes('hour')) {
+    return 1 // Round up to 1 day for hours
+  } else if (sla.includes('Same day')) {
+    return 1
+  } else if (sla.includes('days')) {
+    const match = sla.match(/(\d+)-?(\d+)?\s*days?/)
+    if (match) {
+      return parseInt(match[2] || match[1]) // Use max if range, otherwise the number
+    }
+  } else if (sla.includes('weeks') || sla.includes('week')) {
+    const match = sla.match(/(\d+)-?(\d+)?\s*weeks?/)
+    if (match) {
+      return (parseInt(match[2] || match[1]) * 7) // Convert weeks to days
+    }
+  }
+  return 3 // Default fallback
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -57,6 +79,7 @@ interface Category {
 
 export default function ServiceCatalogAdminPage() {
   const router = useRouter()
+  const { categories: supabaseCategories, loading, error, addCategory, refetch } = useServiceCategories()
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [showEditCategory, setShowEditCategory] = useState(false)
   const [showDeleteCategory, setShowDeleteCategory] = useState(false)
@@ -80,7 +103,28 @@ export default function ServiceCatalogAdminPage() {
     popularity: 3,
   })
 
-  const [categories, setCategories] = useState<Category[]>([
+  // Convert Supabase categories to the expected format
+  const categories: Category[] = supabaseCategories.map(cat => {
+    const IconComponent = categoryIconMap[cat.icon] || Settings
+    return {
+      id: cat.id,
+      name: cat.name,
+      description: cat.description || "",
+      services: (cat.services || []).map(service => ({
+        id: service.id,
+        name: service.name,
+        description: service.description || "",
+        sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
+        popularity: service.popularity_score || 1
+      })),
+      owner: "System", // Default owner since it's not in the database
+      status: "Active" as const,
+      icon: IconComponent,
+      color: getBgColorClass(cat.color),
+    }
+  })
+
+  const [fallbackCategories, setFallbackCategories] = useState<Category[]>([
     {
       id: "1",
       name: "IT Services",
@@ -183,20 +227,20 @@ export default function ServiceCatalogAdminPage() {
     },
   ])
 
-  const handleAddCategory = () => {
-    const category: Category = {
-      id: Date.now().toString(),
-      name: newCategory.name,
-      description: newCategory.description,
-      services: [],
-      owner: newCategory.owner,
-      status: newCategory.status,
-      icon: Settings,
-      color: newCategory.color,
+  const handleAddCategory = async () => {
+    try {
+      await addCategory({
+        name: newCategory.name,
+        description: newCategory.description,
+        icon: "Settings",
+        color: newCategory.color,
+        services: [],
+      })
+      setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
+      setShowAddCategory(false)
+    } catch (error) {
+      console.error("Error adding category:", error)
     }
-    setCategories([...categories, category])
-    setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
-    setShowAddCategory(false)
   }
 
   const handleEditCategory = () => {
@@ -220,50 +264,86 @@ export default function ServiceCatalogAdminPage() {
     }
   }
 
-  const handleAddService = () => {
-    const updatedCategories = categories.map((category) => {
-      if (category.id === selectedCategoryForService) {
-        return {
-          ...category,
-          services: [...category.services, newService],
-        }
-      }
-      return category
-    })
-    setCategories(updatedCategories)
-    setNewService({ name: "", description: "", sla: "", popularity: 3 })
-    setShowAddService(false)
-  }
+  const handleAddService = async () => {
+    if (selectedCategoryForService) {
+      try {
+        const response = await fetch('/api/services', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: newService.name,
+            description: newService.description,
+            category_id: selectedCategoryForService,
+            estimated_delivery_days: parseSlaToDays(newService.sla),
+            popularity_score: newService.popularity
+          }),
+        })
 
-  const handleEditService = () => {
-    if (selectedService && selectedCategory) {
-      const updatedCategories = categories.map((category) => {
-        if (category.id === selectedCategory.id) {
-          return {
-            ...category,
-            services: category.services.map((service) => (service === selectedService ? newService : service)),
-          }
+        if (!response.ok) {
+          throw new Error('Failed to add service')
         }
-        return category
-      })
-      setCategories(updatedCategories)
-      setShowEditService(false)
-      setSelectedService(null)
-      setNewService({ name: "", description: "", sla: "", popularity: 3 })
+
+        // Refresh the categories to get the updated data
+        await refetch()
+        
+        setNewService({ name: "", description: "", sla: "", popularity: 3 })
+        setShowAddService(false)
+      } catch (error) {
+        console.error('Error adding service:', error)
+      }
     }
   }
 
-  const handleDeleteService = (categoryId: string, serviceName: string) => {
-    const updatedCategories = categories.map((category) => {
-      if (category.id === categoryId) {
-        return {
-          ...category,
-          services: category.services.filter((service) => service.name !== serviceName),
+  const handleEditService = async () => {
+    if (selectedService && selectedCategory) {
+      try {
+        const response = await fetch('/api/services', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: selectedService.id,
+            name: newService.name,
+            description: newService.description,
+            estimated_delivery_days: parseSlaToDays(newService.sla),
+            popularity_score: newService.popularity
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update service')
         }
+
+        // Refresh the categories to get the updated data
+        await refetch()
+        
+        setShowEditService(false)
+        setSelectedService(null)
+        setNewService({ name: "", description: "", sla: "", popularity: 3 })
+      } catch (error) {
+        console.error('Error updating service:', error)
       }
-      return category
-    })
-    setCategories(updatedCategories)
+    }
+  }
+
+  const handleDeleteService = async (serviceId: string) => {
+    try {
+      const response = await fetch(`/api/services?id=${serviceId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete service')
+      }
+
+      // Refresh the categories to get the updated data
+      await refetch()
+    } catch (error) {
+      console.error('Error deleting service:', error)
+    }
   }
 
   const openEditDialog = (category: Category) => {
@@ -451,7 +531,10 @@ export default function ServiceCatalogAdminPage() {
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
                               {Array.from({ length: service.popularity }).map((_, i) => (
-                                <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                <Star 
+                                  key={i} 
+                                  className="h-3 w-3 fill-yellow-400 text-yellow-400" 
+                                />
                               ))}
                             </div>
                             <DropdownMenu>
@@ -469,7 +552,7 @@ export default function ServiceCatalogAdminPage() {
                                   Edit Service
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleDeleteService(category.id, service.name)}
+                                  onClick={() => handleDeleteService(service.id)}
                                   className="text-[13px] text-red-600"
                                 >
                                   <Trash2 className="h-3 w-3 mr-2" />
