@@ -47,7 +47,7 @@ const employeeViewItems = [
   { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true, permission: 'tickets' },
   { name: "Workflows", href: "/workflows", icon: Workflow, permission: 'workflows' },
   { name: "Asset Management", href: "/assets", icon: HardDrive, permission: 'assets' },
-  { name: "Services", href: "/services", icon: Settings, permission: 'services' },
+  { name: "Services", href: "/services", icon: Settings, hasSubmenu: true, permission: 'services' },
   { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen, permission: 'knowledge_base' },
   { name: "Analytics", href: "/analytics", icon: BarChart3, permission: 'analytics' },
   { name: "Notifications", href: "/notifications", icon: Bell, permission: null },
@@ -59,12 +59,24 @@ const ticketSubmenuItems = [
   { name: "My Tickets", href: "/tickets/my-tickets", icon: User },
 ]
 
+const servicesSubmenuItems = [
+  { name: "Request Service", href: "/services", icon: Settings },
+  { name: "My Requests", href: "/services/my-requests", icon: Clock },
+]
+
+const servicesSubmenuItemsManager = [
+  { name: "Request Service", href: "/services", icon: Settings },
+  { name: "My Requests", href: "/services/my-requests", icon: Clock },
+  { name: "Team Requests", href: "/services/team-requests", icon: Users },
+]
+
 const administrationItems = [
   { name: "Integrations", href: "/integrations", icon: Zap, permission: 'integrations' },
   { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: 'workflows' },
   { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: 'sla_policies' },
   { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: 'tickets' },
   { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: 'services' },
+  { name: "All Service Requests", href: "/admin/service-requests", icon: List, permission: 'services' },
   { name: "Users & Teams", href: "/users", icon: Users, permission: 'users' },
   { name: "Security & Access", href: "/admin/security", icon: Shield, permission: 'security' },
 ]
@@ -72,7 +84,7 @@ const administrationItems = [
 export function SidebarNavigation() {
   const pathname = usePathname()
   const { mode } = useMode()
-  const { profile, organization, canView } = useAuth()
+  const { profile, organization, canView, loading, permissionsLoading, isAdmin } = useAuth()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
@@ -84,6 +96,28 @@ export function SidebarNavigation() {
     )
   }
 
+  // Helper function to determine if an item should be shown
+  const shouldShowItem = (item: any) => {
+    // Always show items with no permission requirement
+    if (!item.permission) {
+      return true
+    }
+
+    // Admins see all items regardless of per-module permissions
+    if (isAdmin) {
+      return true
+    }
+    
+    // If permissions are still loading, show the item to prevent flickering
+    // This provides a better UX than hiding items and then showing them
+    if (permissionsLoading || loading) {
+      return true
+    }
+    
+    // Once loaded, check actual permissions
+    return canView(item.permission)
+  }
+
   return (
     <div className="w-full h-full flex flex-col bg-sidebar">
       {/* Scrollable content area */}
@@ -93,12 +127,7 @@ export function SidebarNavigation() {
             {sectionTitle}
           </h2>
           <nav className="space-y-2">
-            {navigationItems.filter(item => {
-              if (!item.permission) {
-                return true // No permission required
-              }
-              return canView(item.permission)
-            }).map((item) => {
+            {navigationItems.filter(shouldShowItem).map((item) => {
               const Icon = item.icon
               const isExpanded = expandedMenus.includes(item.name)
               const isTicketsPath = pathname.startsWith("/tickets")
@@ -122,9 +151,9 @@ export function SidebarNavigation() {
                         </div>
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
-                      {isExpanded && (
+              {isExpanded && (
                         <div className="ml-6 mt-1 space-y-1">
-                          {ticketSubmenuItems.map((subItem) => {
+                          {(item.name === 'Tickets' ? ticketSubmenuItems : (isAdmin || profile?.role === 'manager' ? servicesSubmenuItemsManager : servicesSubmenuItems)).map((subItem) => {
                             const SubIcon = subItem.icon
                             return (
                               <Link
@@ -165,18 +194,13 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-        {mode === "employee" && canView('administration') && (
+        {mode === "employee" && (permissionsLoading || loading || isAdmin || canView('administration')) && (
           <div className="px-4 pb-4">
             <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
               ADMINISTRATION
             </h2>
             <nav className="space-y-2">
-              {administrationItems.filter(item => {
-                if (!item.permission) {
-                  return true
-                }
-                return canView(item.permission)
-              }).map((item) => {
+              {administrationItems.filter(shouldShowItem).map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
