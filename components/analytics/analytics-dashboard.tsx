@@ -24,6 +24,7 @@ import {
 } from "chart.js"
 import { Bar, Pie } from "react-chartjs-2"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement)
 
@@ -69,18 +70,110 @@ const AnalyticsDashboard = () => {
     content: "",
   })
 
+  const supabase = createClient()
+
+  const applyRealtimeKpis = (totalTicketsCount: number) => {
+    setAnalyticsData((prev) => {
+      const base = prev ?? getMockAnalyticsData()
+      return {
+        ...base,
+        kpis: {
+          totalTickets: { value: totalTicketsCount, change: 0, trend: "up" },
+          avgResolutionTime: { value: "0", change: 0, trend: "up" },
+          slaCompliance: { value: "0", change: 0, trend: "up" },
+          customerSatisfaction: { value: "0", change: 0, trend: "up" },
+        },
+      }
+    })
+  }
+
+  const refreshTotalTickets = async () => {
+    const { count, error } = await supabase.from("tickets").select("*", { count: "exact", head: true })
+    if (error) {
+      console.warn("[analytics] Failed to fetch total tickets count:", error.message)
+      applyRealtimeKpis(0)
+      return
+    }
+    applyRealtimeKpis(count ?? 0)
+  }
+
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      console.log("[v0] Analytics Dashboard: Starting data fetch")
-      console.log("[v0] Using mock analytics data to avoid RLS policy recursion")
+      console.log("[analytics] Dashboard: fetching real data from Supabase")
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Load tickets minimal fields for analytics
+      const { data: tickets, error } = await supabase
+        .from("tickets")
+        .select(`
+          id,
+          type,
+          status,
+          priority,
+          created_at,
+          resolved_at,
+          assignee:profiles!tickets_assignee_id_fkey(display_name,department)
+        `)
 
-      setAnalyticsData(getMockAnalyticsData())
-      console.log("[v0] Analytics Dashboard: Data loaded successfully")
+      if (error) {
+        console.error("[analytics] Failed to load tickets for analytics:", error.message)
+        // Build empty analytics structure; graphs will show 'No data'.
+        setAnalyticsData({
+          kpis: {
+            totalTickets: { value: 0, change: 0, trend: "up" },
+            avgResolutionTime: { value: "0", change: 0, trend: "up" },
+            slaCompliance: { value: "0", change: 0, trend: "up" },
+            customerSatisfaction: { value: "0", change: 0, trend: "up" },
+          },
+          ticketsByDepartment: [],
+          ticketsByType: [],
+          ticketsByStatus: [],
+          ticketsByPriority: [],
+          ticketsByAssignee: [],
+          ticketTrends: [],
+          // Preserve the existing SLA Performance card (no changes requested)
+          slaPerformance: getMockAnalyticsData().slaPerformance,
+        })
+      } else {
+        // Compute analytics from real tickets
+        const ticketsByDepartment = groupTicketsBy(
+          tickets || [],
+          "assignee.department",
+          COLORS.departments,
+        )
+        const ticketsByType = groupTicketsBy(tickets || [], "type", COLORS.types)
+        const ticketsByStatus = groupTicketsBy(tickets || [], "status", COLORS.status)
+        const ticketsByPriority = groupTicketsBy(tickets || [], "priority", COLORS.priority)
+        const ticketsByAssignee = groupTicketsBy(
+          (tickets || []).map((t: any) => ({ assignee: { display_name: t.assignee?.display_name || "Unassigned" } })),
+          "assignee.display_name",
+          COLORS.departments,
+        )
+        const ticketTrends = calculateTrends(tickets || [])
+
+        setAnalyticsData({
+          kpis: {
+            totalTickets: { value: tickets?.length || 0, change: 0, trend: "up" },
+            avgResolutionTime: { value: "0", change: 0, trend: "up" },
+            slaCompliance: { value: "0", change: 0, trend: "up" },
+            customerSatisfaction: { value: "0", change: 0, trend: "up" },
+          },
+          ticketsByDepartment,
+          ticketsByType,
+          ticketsByStatus,
+          ticketsByPriority,
+          ticketsByAssignee,
+          ticketTrends,
+          // Preserve the existing SLA Performance card (no changes requested)
+          slaPerformance: getMockAnalyticsData().slaPerformance,
+        })
+      }
+
+      // Hydrate KPI total from count endpoint (authoritative), do not block UI
+      refreshTotalTickets().catch(() => applyRealtimeKpis(0))
+      console.log("[analytics] Dashboard: real data loaded (graphs from Supabase, KPIs realtime)")
     } catch (error) {
       console.error("[v0] Analytics Dashboard: Error fetching analytics:", error)
       setError("Failed to load analytics data")
@@ -163,6 +256,28 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     fetchAnalyticsData()
   }, [dateRange, selectedDepartment])
+
+  // Realtime subscription for tickets count only (keep graphs unchanged)
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-tickets")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tickets" },
+        () => {
+          // Refresh total and re-build graphs from latest data
+          refreshTotalTickets()
+          fetchAnalyticsData()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      try {
+        supabase.removeChannel(channel)
+      } catch {}
+    }
+  }, [])
 
   const handleExport = async (format: "pdf" | "csv") => {
     if (!analyticsData) return
@@ -805,52 +920,17 @@ const AnalyticsDashboard = () => {
 
 const getMockAnalyticsData = (): AnalyticsData => ({
   kpis: {
-    totalTickets: { value: 1247, change: 12.5, trend: "up" },
-    avgResolutionTime: { value: "2.4 hours", change: 8.2, trend: "down" },
-    slaCompliance: { value: "94.8%", change: 2.1, trend: "up" },
-    customerSatisfaction: { value: "4.6/5", change: 0.3, trend: "up" },
+    totalTickets: { value: 0, change: 0, trend: "up" },
+    avgResolutionTime: { value: "0", change: 0, trend: "up" },
+    slaCompliance: { value: "0", change: 0, trend: "up" },
+    customerSatisfaction: { value: "0", change: 0, trend: "up" },
   },
-  ticketsByDepartment: [
-    { name: "IT", value: 342, color: "#3b82f6" },
-    { name: "HR", value: 189, color: "#10b981" },
-    { name: "Finance", value: 156, color: "#f59e0b" },
-    { name: "Legal", value: 98, color: "#7073fc" },
-    { name: "Facilities", value: 87, color: "#f97316" },
-    { name: "Security", value: 65, color: "#ef4444" },
-  ],
-  ticketsByType: [
-    { name: "Incident", value: 456, color: "#ef4444" },
-    { name: "Request", value: 389, color: "#3b82f6" },
-    { name: "Change", value: 234, color: "#f59e0b" },
-    { name: "Problem", value: 168, color: "#10b981" },
-  ],
-  ticketsByStatus: [
-    { name: "Open", value: 234, color: "#f59e0b" },
-    { name: "In Progress", value: 456, color: "#3b82f6" },
-    { name: "Resolved", value: 389, color: "#10b981" },
-    { name: "Closed", value: 168, color: "#6b7280" },
-  ],
-  ticketsByPriority: [
-    { name: "Critical", value: 45, color: "#dc2626" },
-    { name: "High", value: 189, color: "#f97316" },
-    { name: "Medium", value: 567, color: "#eab308" },
-    { name: "Low", value: 446, color: "#22c55e" },
-  ],
-  ticketsByAssignee: [
-    { name: "John Smith", value: 89, color: "#3b82f6" },
-    { name: "Sarah Johnson", value: 76, color: "#10b981" },
-    { name: "Mike Chen", value: 65, color: "#f59e0b" },
-    { name: "Emily Davis", value: 54, color: "#7073fc" },
-    { name: "Unassigned", value: 23, color: "#6b7280" },
-  ],
-  ticketTrends: [
-    { date: "Jan", created: 234, resolved: 189, backlog: 45 },
-    { date: "Feb", created: 267, resolved: 245, backlog: 22 },
-    { date: "Mar", created: 298, resolved: 276, backlog: 22 },
-    { date: "Apr", created: 312, resolved: 298, backlog: 14 },
-    { date: "May", created: 289, resolved: 301, backlog: -12 },
-    { date: "Jun", created: 276, resolved: 289, backlog: -13 },
-  ],
+  ticketsByDepartment: [],
+  ticketsByType: [],
+  ticketsByStatus: [],
+  ticketsByPriority: [],
+  ticketsByAssignee: [],
+  ticketTrends: [],
   slaPerformance: [
     { department: "IT", onTime: 92, breached: 8 },
     { department: "HR", onTime: 96, breached: 4 },
