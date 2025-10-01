@@ -60,6 +60,7 @@ import {
 import { useRouter } from "next/navigation"
 
 interface ServiceRequest {
+  id: string
   name: string
   description: string
   sla: string
@@ -93,7 +94,7 @@ export default function ServiceCatalogAdminPage() {
     name: "",
     description: "",
     owner: "",
-    status: "Active" as const,
+    status: "Active" as "Active" | "Draft" | "Inactive",
     color: "bg-blue-500",
   })
   const [newService, setNewService] = useState({
@@ -105,13 +106,13 @@ export default function ServiceCatalogAdminPage() {
 
   // Convert Supabase categories to the expected format
   const categories: Category[] = supabaseCategories.map(cat => {
-    const IconComponent = categoryIconMap[cat.icon] || Settings
+    const IconComponent = categoryIconMap[cat.icon || 'Settings'] || Settings
     return {
       id: cat.id,
       name: cat.name,
       description: cat.description || "",
       services: (cat.services || []).map(service => ({
-        id: service.id,
+        id: service.id || Math.random().toString(),
         name: service.name,
         description: service.description || "",
         sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
@@ -120,7 +121,7 @@ export default function ServiceCatalogAdminPage() {
       owner: "System", // Default owner since it's not in the database
       status: "Active" as const,
       icon: IconComponent,
-      color: getBgColorClass(cat.color),
+      color: getBgColorClass(cat.color || 'blue'),
     }
   })
 
@@ -130,10 +131,10 @@ export default function ServiceCatalogAdminPage() {
       name: "IT Services",
       description: "Technology and infrastructure services",
       services: [
-        { name: "Laptop Request", description: "Request new laptop or replacement", sla: "3-5 days", popularity: 5 },
-        { name: "Software Installation", description: "Install approved software", sla: "1-2 days", popularity: 4 },
-        { name: "VPN Access", description: "Request VPN access for remote work", sla: "Same day", popularity: 5 },
-        { name: "Password Reset", description: "Reset forgotten passwords", sla: "2 hours", popularity: 3 },
+        { id: "1", name: "Laptop Request", description: "Request new laptop or replacement", sla: "3-5 days", popularity: 5 },
+        { id: "2", name: "Software Installation", description: "Install approved software", sla: "1-2 days", popularity: 4 },
+        { id: "3", name: "VPN Access", description: "Request VPN access for remote work", sla: "Same day", popularity: 5 },
+        { id: "4", name: "Password Reset", description: "Reset forgotten passwords", sla: "2 hours", popularity: 3 },
       ],
       owner: "IT Department",
       status: "Active",
@@ -146,13 +147,15 @@ export default function ServiceCatalogAdminPage() {
       description: "Human resources and employee services",
       services: [
         {
+          id: "5",
           name: "Employment Letter",
           description: "Request employment verification letter",
           sla: "2-3 days",
           popularity: 4,
         },
-        { name: "Leave Request", description: "Submit vacation or sick leave", sla: "1-2 days", popularity: 5 },
+        { id: "6", name: "Leave Request", description: "Submit vacation or sick leave", sla: "1-2 days", popularity: 5 },
         {
+          id: "7",
           name: "Benefits Inquiry",
           description: "Questions about health, dental, retirement",
           sla: "Same day",
@@ -170,13 +173,14 @@ export default function ServiceCatalogAdminPage() {
       description: "Financial and accounting services",
       services: [
         {
+          id: "8",
           name: "Expense Reimbursement",
           description: "Submit expenses for reimbursement",
           sla: "5-7 days",
           popularity: 5,
         },
-        { name: "Purchase Order", description: "Request new purchase order", sla: "3-5 days", popularity: 3 },
-        { name: "Corporate Card", description: "Request corporate credit card", sla: "10-14 days", popularity: 2 },
+        { id: "9", name: "Purchase Order", description: "Request new purchase order", sla: "3-5 days", popularity: 3 },
+        { id: "10", name: "Corporate Card", description: "Request corporate credit card", sla: "10-14 days", popularity: 2 },
       ],
       owner: "Finance Department",
       status: "Active",
@@ -188,9 +192,9 @@ export default function ServiceCatalogAdminPage() {
       name: "Facilities",
       description: "Office and facility management services",
       services: [
-        { name: "Parking Request", description: "Request parking space assignment", sla: "3-5 days", popularity: 3 },
-        { name: "Seating Change", description: "Request desk or office relocation", sla: "5-7 days", popularity: 2 },
-        { name: "ID Badge", description: "Request new or replacement ID badge", sla: "1-2 days", popularity: 4 },
+        { id: "11", name: "Parking Request", description: "Request parking space assignment", sla: "3-5 days", popularity: 3 },
+        { id: "12", name: "Seating Change", description: "Request desk or office relocation", sla: "5-7 days", popularity: 2 },
+        { id: "13", name: "ID Badge", description: "Request new or replacement ID badge", sla: "1-2 days", popularity: 4 },
       ],
       owner: "Facilities Team",
       status: "Active",
@@ -202,9 +206,9 @@ export default function ServiceCatalogAdminPage() {
       name: "Legal Services",
       description: "Legal and compliance services",
       services: [
-        { name: "NDA Request", description: "Non-disclosure agreement preparation", sla: "3-5 days", popularity: 4 },
-        { name: "Contract Review", description: "Legal review of contracts", sla: "5-7 days", popularity: 3 },
-        { name: "Legal Consultation", description: "General legal advice", sla: "2-3 days", popularity: 2 },
+        { id: "14", name: "NDA Request", description: "Non-disclosure agreement preparation", sla: "3-5 days", popularity: 4 },
+        { id: "15", name: "Contract Review", description: "Legal review of contracts", sla: "5-7 days", popularity: 3 },
+        { id: "16", name: "Legal Consultation", description: "General legal advice", sla: "2-3 days", popularity: 2 },
       ],
       owner: "Legal Department",
       status: "Active",
@@ -216,9 +220,9 @@ export default function ServiceCatalogAdminPage() {
       name: "Security",
       description: "Security and risk management services",
       services: [
-        { name: "Access Request", description: "Request building or system access", sla: "2-3 days", popularity: 4 },
-        { name: "Security Review", description: "Security assessment of processes", sla: "7-10 days", popularity: 2 },
-        { name: "Training Request", description: "Security awareness training", sla: "5-7 days", popularity: 3 },
+        { id: "17", name: "Access Request", description: "Request building or system access", sla: "2-3 days", popularity: 4 },
+        { id: "18", name: "Security Review", description: "Security assessment of processes", sla: "7-10 days", popularity: 2 },
+        { id: "19", name: "Training Request", description: "Security awareness training", sla: "5-7 days", popularity: 3 },
       ],
       owner: "Security Team",
       status: "Draft",
@@ -243,24 +247,30 @@ export default function ServiceCatalogAdminPage() {
     }
   }
 
-  const handleEditCategory = () => {
+  const handleEditCategory = async () => {
     if (selectedCategory) {
-      setCategories(
-        categories.map((cat) =>
-          cat.id === selectedCategory.id ? { ...selectedCategory, ...newCategory, icon: selectedCategory.icon } : cat,
-        ),
-      )
-      setShowEditCategory(false)
-      setSelectedCategory(null)
-      setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
+      try {
+        // TODO: Implement API call to update category
+        await refetch()
+        setShowEditCategory(false)
+        setSelectedCategory(null)
+        setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
+      } catch (error) {
+        console.error("Error updating category:", error)
+      }
     }
   }
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (selectedCategory) {
-      setCategories(categories.filter((cat) => cat.id !== selectedCategory.id))
-      setShowDeleteCategory(false)
-      setSelectedCategory(null)
+      try {
+        // TODO: Implement API call to delete category
+        await refetch()
+        setShowDeleteCategory(false)
+        setSelectedCategory(null)
+      } catch (error) {
+        console.error("Error deleting category:", error)
+      }
     }
   }
 
@@ -641,7 +651,7 @@ export default function ServiceCatalogAdminPage() {
                 <Select
                   value={newCategory.status}
                   onValueChange={(value: "Active" | "Draft" | "Inactive") =>
-                    setNewCategory({ ...newCategory, status: value })
+                    setNewCategory({ ...newCategory, status: value as "Active" | "Draft" | "Inactive" })
                   }
                 >
                   <SelectTrigger>
@@ -843,7 +853,7 @@ export default function ServiceCatalogAdminPage() {
                 <Select
                   value={newCategory.status}
                   onValueChange={(value: "Active" | "Draft" | "Inactive") =>
-                    setNewCategory({ ...newCategory, status: value })
+                    setNewCategory({ ...newCategory, status: value as "Active" | "Draft" | "Inactive" })
                   }
                 >
                   <SelectTrigger>
