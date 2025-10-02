@@ -553,3 +553,159 @@ CREATE TABLE public.user_permissions (
   CONSTRAINT user_permissions_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permissions(id),
   CONSTRAINT user_permissions_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.profiles(id)
 );
+
+-- CMDB (Configuration Management Database) Tables
+CREATE TABLE public.asset_types (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  icon character varying,
+  color character varying DEFAULT '#6366f1',
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT asset_types_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_asset_type_per_org UNIQUE (organization_id, name),
+  CONSTRAINT asset_types_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
+);
+
+CREATE TABLE public.assets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  asset_type_id uuid NOT NULL,
+  asset_tag character varying NOT NULL,
+  name character varying NOT NULL,
+  hostname character varying,
+  ip_address inet,
+  mac_address macaddr,
+  operating_system character varying,
+  cpu_info character varying,
+  memory_gb integer,
+  storage_gb integer,
+  status character varying DEFAULT 'active',
+  criticality character varying DEFAULT 'medium',
+  location character varying,
+  owner_id uuid,
+  department character varying,
+  purchase_date date,
+  warranty_expiry date,
+  cost numeric(12,2),
+  vendor character varying,
+  model character varying,
+  serial_number character varying,
+  discovered_by character varying,
+  last_seen_at timestamp with time zone DEFAULT now(),
+  notes text,
+  custom_fields jsonb DEFAULT '{}',
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT assets_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_asset_tag_per_org UNIQUE (organization_id, asset_tag),
+  CONSTRAINT assets_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT assets_asset_type_id_fkey FOREIGN KEY (asset_type_id) REFERENCES public.asset_types(id),
+  CONSTRAINT assets_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.profiles(id),
+  CONSTRAINT valid_status CHECK (status IN ('active', 'inactive', 'maintenance', 'retired', 'disposed')),
+  CONSTRAINT valid_criticality CHECK (criticality IN ('low', 'medium', 'high', 'critical'))
+);
+
+CREATE TABLE public.asset_relationships (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  source_asset_id uuid NOT NULL,
+  target_asset_id uuid NOT NULL,
+  relationship_type character varying NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT asset_relationships_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_asset_relationship UNIQUE (source_asset_id, target_asset_id, relationship_type),
+  CONSTRAINT asset_relationships_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT asset_relationships_source_asset_id_fkey FOREIGN KEY (source_asset_id) REFERENCES public.assets(id),
+  CONSTRAINT asset_relationships_target_asset_id_fkey FOREIGN KEY (target_asset_id) REFERENCES public.assets(id),
+  CONSTRAINT no_self_relationship CHECK (source_asset_id != target_asset_id),
+  CONSTRAINT valid_relationship_type CHECK (relationship_type IN ('depends_on', 'hosts', 'connects_to', 'manages', 'monitors', 'backs_up', 'provides_service_to'))
+);
+
+CREATE TABLE public.business_services (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  service_type character varying DEFAULT 'application',
+  status character varying DEFAULT 'active',
+  criticality character varying DEFAULT 'medium',
+  owner_id uuid,
+  business_owner_id uuid,
+  sla_target_uptime numeric(5,2) DEFAULT 99.9,
+  sla_target_response_time integer,
+  maintenance_window character varying,
+  cost_center character varying,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT business_services_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_service_per_org UNIQUE (organization_id, name),
+  CONSTRAINT business_services_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT business_services_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.profiles(id),
+  CONSTRAINT business_services_business_owner_id_fkey FOREIGN KEY (business_owner_id) REFERENCES public.profiles(id),
+  CONSTRAINT valid_service_status CHECK (status IN ('active', 'inactive', 'maintenance', 'deprecated')),
+  CONSTRAINT valid_service_criticality CHECK (criticality IN ('low', 'medium', 'high', 'critical')),
+  CONSTRAINT valid_service_type CHECK (service_type IN ('application', 'infrastructure', 'platform', 'database', 'network', 'security'))
+);
+
+CREATE TABLE public.service_asset_mappings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  business_service_id uuid NOT NULL,
+  asset_id uuid NOT NULL,
+  dependency_type character varying DEFAULT 'supports',
+  impact_level character varying DEFAULT 'medium',
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT service_asset_mappings_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_service_asset_mapping UNIQUE (business_service_id, asset_id),
+  CONSTRAINT service_asset_mappings_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT service_asset_mappings_business_service_id_fkey FOREIGN KEY (business_service_id) REFERENCES public.business_services(id),
+  CONSTRAINT service_asset_mappings_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES public.assets(id),
+  CONSTRAINT valid_dependency_type CHECK (dependency_type IN ('supports', 'requires', 'provides')),
+  CONSTRAINT valid_impact_level CHECK (impact_level IN ('low', 'medium', 'high', 'critical'))
+);
+
+CREATE TABLE public.discovery_rules (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  rule_type character varying NOT NULL,
+  configuration jsonb NOT NULL DEFAULT '{}',
+  schedule_cron character varying,
+  is_active boolean DEFAULT true,
+  run_count integer DEFAULT 0,
+  success_count integer DEFAULT 0,
+  last_run_at timestamp with time zone,
+  last_success_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT discovery_rules_pkey PRIMARY KEY (id),
+  CONSTRAINT unique_discovery_rule_per_org UNIQUE (organization_id, name),
+  CONSTRAINT discovery_rules_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT discovery_rules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT valid_rule_type CHECK (rule_type IN ('network_scan', 'cloud_discovery', 'agent_based', 'snmp_scan', 'wmi_scan', 'ssh_scan'))
+);
+
+CREATE TABLE public.discovery_logs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  discovery_rule_id uuid NOT NULL,
+  status character varying NOT NULL,
+  started_at timestamp with time zone DEFAULT now(),
+  completed_at timestamp with time zone,
+  assets_discovered integer DEFAULT 0,
+  assets_updated integer DEFAULT 0,
+  error_message text,
+  execution_details jsonb DEFAULT '{}',
+  CONSTRAINT discovery_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT discovery_logs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT discovery_logs_discovery_rule_id_fkey FOREIGN KEY (discovery_rule_id) REFERENCES public.discovery_rules(id),
+  CONSTRAINT valid_discovery_status CHECK (status IN ('running', 'completed', 'failed', 'cancelled'))
+);
