@@ -2,513 +2,374 @@
 
 import { useState } from "react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
-import { useServiceCategories } from "@/lib/hooks/use-service-categories"
-import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
-
-// Helper function to parse SLA string to days
-function parseSlaToDays(sla: string): number {
-  if (sla.includes('hours') || sla.includes('hour')) {
-    return 1 // Round up to 1 day for hours
-  } else if (sla.includes('Same day')) {
-    return 1
-  } else if (sla.includes('days')) {
-    const match = sla.match(/(\d+)-?(\d+)?\s*days?/)
-    if (match) {
-      return parseInt(match[2] || match[1]) // Use max if range, otherwise the number
-    }
-  } else if (sla.includes('weeks') || sla.includes('week')) {
-    const match = sla.match(/(\d+)-?(\d+)?\s*weeks?/)
-    if (match) {
-      return (parseInt(match[2] || match[1]) * 7) // Convert weeks to days
-    }
-  }
-  return 3 // Default fallback
-}
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
-  Building2,
-  Settings,
-  Users,
   Plus,
   MoreHorizontal,
-  Edit,
-  Trash2,
-  Laptop,
-  Shield,
-  DollarSign,
-  Scale,
-  Building,
-  Clock,
-  Star,
   Search,
+  Filter,
+  Sparkles,
+  Upload,
+  ChevronDown,
+  List,
+  Eye,
+  User,
+  Settings,
+  Briefcase,
+  Cog,
+  Book,
+  BarChart3,
+  Bell,
+  Zap,
+  CheckCircle,
+  Clock,
+  Triangle,
+  FileText,
+  Users2,
 } from "lucide-react"
-import { useRouter } from "next/navigation"
 
-interface ServiceRequest {
+interface Ticket {
   id: string
-  name: string
-  description: string
-  sla: string
-  popularity: number
+  title: string
+  ticketNumber: string
+  status: "New" | "In Progress" | "Review" | "Resolved" | "Closed"
+  reportedBy: {
+    name: string
+    initials: string
+    color: string
+  }
+  assignee: {
+    name: string
+    initials: string
+    color: string
+  }
+  reportedDate: string
+  dueDate: string
+  type: "Incident" | "Request" | "General Query" | "Problem"
+  priority: "Low" | "Medium" | "High" | "Urgent"
+  notes: string
 }
 
-interface Category {
-  id: string
-  name: string
-  description: string
-  services: ServiceRequest[]
-  owner: string
-  status: "Active" | "Draft" | "Inactive"
-  icon: any
-  color: string
-}
-
-export default function ServiceCatalogAdminPage() {
-  const router = useRouter()
-  const { categories: supabaseCategories, loading, error, addCategory, refetch } = useServiceCategories()
-  const [showAddCategory, setShowAddCategory] = useState(false)
-  const [showEditCategory, setShowEditCategory] = useState(false)
-  const [showDeleteCategory, setShowDeleteCategory] = useState(false)
-  const [showAddService, setShowAddService] = useState(false)
-  const [showEditService, setShowEditService] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  const [selectedService, setSelectedService] = useState<ServiceRequest | null>(null)
-  const [selectedCategoryForService, setSelectedCategoryForService] = useState("")
+export default function AllTicketsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [newCategory, setNewCategory] = useState({
-    name: "",
-    description: "",
-    owner: "",
-    status: "Active" as "Active" | "Draft" | "Inactive",
-    color: "bg-blue-500",
-  })
-  const [newService, setNewService] = useState({
-    name: "",
-    description: "",
-    sla: "",
-    popularity: 3,
-  })
+  const [activeTab, setActiveTab] = useState("List")
+  const [groupBy, setGroupBy] = useState("None")
 
-  // Convert Supabase categories to the expected format
-  const categories: Category[] = supabaseCategories.map(cat => {
-    const IconComponent = categoryIconMap[cat.icon || 'Settings'] || Settings
-    return {
-      id: cat.id,
-      name: cat.name,
-      description: cat.description || "",
-      services: (cat.services || []).map(service => ({
-        id: service.id || Math.random().toString(),
-        name: service.name,
-        description: service.description || "",
-        sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
-        popularity: service.popularity_score || 1
-      })),
-      owner: "System", // Default owner since it's not in the database
-      status: "Active" as const,
-      icon: IconComponent,
-      color: getBgColorClass(cat.color || 'blue'),
-    }
-  })
-
-  const [fallbackCategories, setFallbackCategories] = useState<Category[]>([
+  // Sample tickets data matching the image
+  const tickets: Ticket[] = [
     {
       id: "1",
-      name: "IT Services",
-      description: "Technology and infrastructure services",
-      services: [
-        { id: "1", name: "Laptop Request", description: "Request new laptop or replacement", sla: "3-5 days", popularity: 5 },
-        { id: "2", name: "Software Installation", description: "Install approved software", sla: "1-2 days", popularity: 4 },
-        { id: "3", name: "VPN Access", description: "Request VPN access for remote work", sla: "Same day", popularity: 5 },
-        { id: "4", name: "Password Reset", description: "Reset forgotten passwords", sla: "2 hours", popularity: 3 },
-      ],
-      owner: "IT Department",
-      status: "Active",
-      icon: Laptop,
-      color: "bg-blue-500",
+      title: "Inability to Save Changes in Profile Settings",
+      ticketNumber: "#5081",
+      status: "New",
+      reportedBy: { name: "RJ", initials: "RJ", color: "bg-red-500" },
+      assignee: { name: "JS", initials: "JS", color: "bg-blue-500" },
+      reportedDate: "Aug 28, 2025",
+      dueDate: "Sep 05, 2025",
+      type: "Incident",
+      priority: "Medium",
+      notes: "Customer reported via email"
     },
     {
       id: "2",
-      name: "HR Services",
-      description: "Human resources and employee services",
-      services: [
-        {
-          id: "5",
-          name: "Employment Letter",
-          description: "Request employment verification letter",
-          sla: "2-3 days",
-          popularity: 4,
-        },
-        { id: "6", name: "Leave Request", description: "Submit vacation or sick leave", sla: "1-2 days", popularity: 5 },
-        {
-          id: "7",
-          name: "Benefits Inquiry",
-          description: "Questions about health, dental, retirement",
-          sla: "Same day",
-          popularity: 3,
-        },
-      ],
-      owner: "HR Department",
-      status: "Active",
-      icon: Users,
-      color: "bg-green-500",
+      title: "Upcoming subscription renewal discussion",
+      ticketNumber: "#5079",
+      status: "New",
+      reportedBy: { name: "RE", initials: "RE", color: "bg-blue-500" },
+      assignee: { name: "SW", initials: "SW", color: "bg-blue-500" },
+      reportedDate: "Aug 28, 2025",
+      dueDate: "Sep 03, 2025",
+      type: "Request",
+      priority: "Low",
+      notes: "Customer contacted via phone"
     },
     {
       id: "3",
-      name: "Finance Services",
-      description: "Financial and accounting services",
-      services: [
-        {
-          id: "8",
-          name: "Expense Reimbursement",
-          description: "Submit expenses for reimbursement",
-          sla: "5-7 days",
-          popularity: 5,
-        },
-        { id: "9", name: "Purchase Order", description: "Request new purchase order", sla: "3-5 days", popularity: 3 },
-        { id: "10", name: "Corporate Card", description: "Request corporate credit card", sla: "10-14 days", popularity: 2 },
-      ],
-      owner: "Finance Department",
-      status: "Active",
-      icon: DollarSign,
-      color: "bg-yellow-500",
+      title: "Dark Mode for the Dashboard",
+      ticketNumber: "#5083",
+      status: "In Progress",
+      reportedBy: { name: "LJ", initials: "LJ", color: "bg-purple-500" },
+      assignee: { name: "MC", initials: "MC", color: "bg-blue-500" },
+      reportedDate: "Aug 29, 2025",
+      dueDate: "Sep 10, 2025",
+      type: "Request",
+      priority: "Medium",
+      notes: "Customer suggested on social media"
     },
     {
       id: "4",
-      name: "Facilities",
-      description: "Office and facility management services",
-      services: [
-        { id: "11", name: "Parking Request", description: "Request parking space assignment", sla: "3-5 days", popularity: 3 },
-        { id: "12", name: "Seating Change", description: "Request desk or office relocation", sla: "5-7 days", popularity: 2 },
-        { id: "13", name: "ID Badge", description: "Request new or replacement ID badge", sla: "1-2 days", popularity: 4 },
-      ],
-      owner: "Facilities Team",
-      status: "Active",
-      icon: Building,
-      color: "bg-orange-500",
+      title: "Cancellation of Zendesk Subscription",
+      ticketNumber: "#5077",
+      status: "In Progress",
+      reportedBy: { name: "RJ", initials: "RJ", color: "bg-green-500" },
+      assignee: { name: "LA", initials: "LA", color: "bg-blue-500" },
+      reportedDate: "Aug 28, 2025",
+      dueDate: "Sep 01, 2025",
+      type: "General Query",
+      priority: "Urgent",
+      notes: "Customer requested via email"
     },
     {
       id: "5",
-      name: "Legal Services",
-      description: "Legal and compliance services",
-      services: [
-        { id: "14", name: "NDA Request", description: "Non-disclosure agreement preparation", sla: "3-5 days", popularity: 4 },
-        { id: "15", name: "Contract Review", description: "Legal review of contracts", sla: "5-7 days", popularity: 3 },
-        { id: "16", name: "Legal Consultation", description: "General legal advice", sla: "2-3 days", popularity: 2 },
-      ],
-      owner: "Legal Department",
-      status: "Active",
-      icon: Scale,
-      color: "bg-purple-500",
+      title: "When is the Salesforce integration released?",
+      ticketNumber: "#5072",
+      status: "Review",
+      reportedBy: { name: "BC", initials: "BC", color: "bg-orange-500" },
+      assignee: { name: "RT", initials: "RT", color: "bg-blue-500" },
+      reportedDate: "Aug 27, 2025",
+      dueDate: "Sep 08, 2025",
+      type: "Problem",
+      priority: "High",
+      notes: "Customer reported via support form"
     },
     {
       id: "6",
-      name: "Security",
-      description: "Security and risk management services",
-      services: [
-        { id: "17", name: "Access Request", description: "Request building or system access", sla: "2-3 days", popularity: 4 },
-        { id: "18", name: "Security Review", description: "Security assessment of processes", sla: "7-10 days", popularity: 2 },
-        { id: "19", name: "Training Request", description: "Security awareness training", sla: "5-7 days", popularity: 3 },
-      ],
-      owner: "Security Team",
-      status: "Draft",
-      icon: Shield,
-      color: "bg-red-500",
-    },
-  ])
-
-  const handleAddCategory = async () => {
-    try {
-      await addCategory({
-        name: newCategory.name,
-        description: newCategory.description,
-        icon: "Settings",
-        color: newCategory.color,
-        services: [],
-      })
-      setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
-      setShowAddCategory(false)
-    } catch (error) {
-      console.error("Error adding category:", error)
+      title: "Issues with article publishing",
+      ticketNumber: "#5080",
+      status: "Review",
+      reportedBy: { name: "TN", initials: "TN", color: "bg-purple-500" },
+      assignee: { name: "ED", initials: "ED", color: "bg-blue-500" },
+      reportedDate: "Aug 28, 2025",
+      dueDate: "Sep 06, 2025",
+      type: "Incident",
+      priority: "High",
+      notes: "Customer reported via chat"
     }
-  }
+  ]
 
-  const handleEditCategory = async () => {
-    if (selectedCategory) {
-      try {
-        // TODO: Implement API call to update category
-        await refetch()
-        setShowEditCategory(false)
-        setSelectedCategory(null)
-        setNewCategory({ name: "", description: "", owner: "", status: "Active", color: "bg-blue-500" })
-      } catch (error) {
-        console.error("Error updating category:", error)
-      }
-    }
-  }
-
-  const handleDeleteCategory = async () => {
-    if (selectedCategory) {
-      try {
-        // TODO: Implement API call to delete category
-        await refetch()
-        setShowDeleteCategory(false)
-        setSelectedCategory(null)
-      } catch (error) {
-        console.error("Error deleting category:", error)
-      }
-    }
-  }
-
-  const handleAddService = async () => {
-    if (selectedCategoryForService) {
-      try {
-        const response = await fetch('/api/services', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: newService.name,
-            description: newService.description,
-            category_id: selectedCategoryForService,
-            estimated_delivery_days: parseSlaToDays(newService.sla),
-            popularity_score: newService.popularity
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to add service')
-        }
-
-        // Refresh the categories to get the updated data
-        await refetch()
-        
-        setNewService({ name: "", description: "", sla: "", popularity: 3 })
-        setShowAddService(false)
-      } catch (error) {
-        console.error('Error adding service:', error)
-      }
-    }
-  }
-
-  const handleEditService = async () => {
-    if (selectedService && selectedCategory) {
-      try {
-        const response = await fetch('/api/services', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: selectedService.id,
-            name: newService.name,
-            description: newService.description,
-            estimated_delivery_days: parseSlaToDays(newService.sla),
-            popularity_score: newService.popularity
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to update service')
-        }
-
-        // Refresh the categories to get the updated data
-        await refetch()
-        
-        setShowEditService(false)
-        setSelectedService(null)
-        setNewService({ name: "", description: "", sla: "", popularity: 3 })
-      } catch (error) {
-        console.error('Error updating service:', error)
-      }
-    }
-  }
-
-  const handleDeleteService = async (serviceId: string) => {
-    try {
-      const response = await fetch(`/api/services?id=${serviceId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete service')
-      }
-
-      // Refresh the categories to get the updated data
-      await refetch()
-    } catch (error) {
-      console.error('Error deleting service:', error)
-    }
-  }
-
-  const openEditDialog = (category: Category) => {
-    setSelectedCategory(category)
-    setNewCategory({
-      name: category.name,
-      description: category.description,
-      owner: category.owner,
-      status: category.status,
-      color: category.color,
-    })
-    setShowEditCategory(true)
-  }
-
-  const openDeleteDialog = (category: Category) => {
-    setSelectedCategory(category)
-    setShowDeleteCategory(true)
-  }
-
-  const openEditServiceDialog = (category: Category, service: ServiceRequest) => {
-    setSelectedCategory(category)
-    setSelectedService(service)
-    setNewService(service)
-    setShowEditService(true)
-  }
-
-  const filteredCategories = categories.filter((category) => {
+  const filteredTickets = tickets.filter((ticket) => {
     if (searchTerm) {
       return (
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.services.some(
-          (service) =>
-            service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            service.description.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.notes.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     return true
   })
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "New":
+        return "bg-blue-500 text-white"
+      case "In Progress":
+        return "bg-yellow-500 text-gray-900"
+      case "Review":
+        return "bg-purple-500 text-white"
+      case "Resolved":
+        return "bg-green-500 text-white"
+      case "Closed":
+        return "bg-gray-500 text-white"
+      default:
+        return "bg-gray-500 text-white"
+    }
+  }
+
+  const getPriorityBadgeColor = (priority: string) => {
+    switch (priority) {
+      case "Low":
+        return "bg-green-500 text-gray-900"
+      case "Medium":
+        return "bg-orange-500 text-gray-900"
+      case "High":
+        return "bg-red-500 text-white"
+      case "Urgent":
+        return "bg-red-500 text-white"
+      default:
+        return "bg-gray-500 text-white"
+    }
+  }
+
+  const getTypeBadgeColor = (type: string) => {
+    return "bg-yellow-500 text-gray-900"
+  }
+
   return (
     <PlatformLayout
-      title="Service Catalog Administration"
-      description="Manage service offerings and catalog configuration"
+      title="All Tickets"
+      description="Manage all support tickets and track customer issues effortlessly."
     >
       <div className="space-y-6 font-sans text-[13px]">
+        {/* Header with title, description, and action buttons */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Service Catalog</h1>
-            <p className="text-[13px] text-muted-foreground">Manage service categories and request types</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900">All Tickets</h1>
+              <p className="text-[13px] text-gray-500">Manage all support tickets and track customer issues effortlessly.</p>
+            </div>
+            <div className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+              {tickets.length}
+            </div>
           </div>
-          <Button size="sm" onClick={() => setShowAddCategory(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Category
+          <div className="flex items-center gap-3">
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white text-sm">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Ask AI
+            </Button>
+            <Button variant="outline" className="text-gray-600 border-gray-300 text-sm">
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
+              <Plus className="h-4 w-4 mr-2" />
+              + Create Ticket
+            </Button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex space-x-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("List")}
+            className={`pb-2 text-sm font-medium ${
+              activeTab === "List" 
+                ? "text-blue-600 border-b-2 border-blue-600" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            List
+          </button>
+          <button
+            onClick={() => setActiveTab("Kanban")}
+            className={`pb-2 text-sm font-medium ${
+              activeTab === "Kanban" 
+                ? "text-blue-600 border-b-2 border-blue-600" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Kanban
+          </button>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <div className="flex items-center gap-4">
+          <Select defaultValue="all-tickets">
+            <SelectTrigger className="w-40 text-sm">
+              <SelectValue />
+              <ChevronDown className="h-4 w-4" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-tickets">All Tickets</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search Ticket"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+          
+          <Button variant="outline" className="text-gray-600 border-gray-300">
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
           </Button>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search categories and services..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 text-[13px]"
-          />
+        {/* Table Toolbar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Select value={groupBy} onValueChange={setGroupBy}>
+              <SelectTrigger className="w-40 text-sm">
+                <List className="h-4 w-4 mr-2" />
+                <SelectValue />
+                <ChevronDown className="h-4 w-4" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="None">Group By: None</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" className="text-gray-600 border-gray-300">
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
+            </Button>
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search items"
+              className="pl-10 w-64 text-sm"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-card shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Building2 className="h-4 w-4 text-blue-500" />
-                <div>
-                  <p className="text-sm font-medium">Total Services</p>
-                  <p className="text-2xl font-bold">{categories.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Settings className="h-4 w-4 text-green-500" />
-                <div>
-                  <p className="text-sm font-medium">Active Services</p>
-                  <p className="text-2xl font-bold">
-                    {categories
-                      .filter((cat) => cat.status === "Active")
-                      .reduce((acc, cat) => acc + cat.services.length, 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-orange-500" />
-                <div>
-                  <p className="text-sm font-medium">Service Owners</p>
-                  <p className="text-2xl font-bold">{new Set(categories.map((cat) => cat.owner)).size}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Building2 className="h-4 w-4 text-purple-500" />
-                <div>
-                  <p className="text-sm font-medium">Categories</p>
-                  <p className="text-2xl font-bold">{categories.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {filteredCategories.map((category) => {
-            const Icon = category.icon
-            return (
-              <Card key={category.id} className="overflow-hidden">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${category.color} text-white`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
+        {/* Tickets Table */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Plus className="h-4 w-4" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredTickets.map((ticket) => (
+                  <tr key={ticket.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-xl">{category.name}</CardTitle>
-                          <Badge variant={category.status === "Active" ? "default" : "outline"}>
-                            {category.status}
-                          </Badge>
-                        </div>
-                        <CardDescription className="text-[13px]">
-                          {category.description} • Owner: {category.owner}
-                        </CardDescription>
+                        <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
+                        <div className="text-sm text-gray-500">{ticket.ticketNumber}</div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCategoryForService(category.id)
-                          setShowAddService(true)
-                        }}
-                        className="text-[13px]"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Service
-                      </Button>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <Badge className={`text-xs px-2 py-1 rounded-full ${getStatusBadgeColor(ticket.status)}`}>
+                        {ticket.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className={`h-8 w-8 rounded-full ${ticket.reportedBy.color} flex items-center justify-center text-white text-xs font-medium`}>
+                          {ticket.reportedBy.initials}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className={`h-8 w-8 rounded-full ${ticket.assignee.color} flex items-center justify-center text-white text-xs font-medium`}>
+                          {ticket.assignee.initials}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {ticket.reportedDate}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {ticket.dueDate}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <Badge className={`text-xs px-2 py-1 rounded-full ${getTypeBadgeColor(ticket.type)}`}>
+                        {ticket.type}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <Badge className={`text-xs px-2 py-1 rounded-full ${getPriorityBadgeColor(ticket.priority)}`}>
+                        {ticket.priority}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {ticket.notes}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -516,384 +377,18 @@ export default function ServiceCatalogAdminPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(category)}>
-                            <Edit className="h-3 w-3 mr-2" />
-                            Edit Category
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openDeleteDialog(category)} className="text-red-600">
-                            <Trash2 className="h-3 w-3 mr-2" />
-                            Delete Category
-                          </DropdownMenuItem>
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {category.services.map((service) => (
-                      <div
-                        key={service.name}
-                        className="p-4 border-gray-100 rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-[13px]">{service.name}</h4>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              {Array.from({ length: service.popularity }).map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className="h-3 w-3 fill-yellow-400 text-yellow-400" 
-                                />
-                              ))}
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => openEditServiceDialog(category, service)}
-                                  className="text-[13px]"
-                                >
-                                  <Edit className="h-3 w-3 mr-2" />
-                                  Edit Service
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteService(service.id)}
-                                  className="text-[13px] text-red-600"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-2" />
-                                  Delete Service
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                        <p className="text-[13px] text-muted-foreground mb-3">{service.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {service.sla}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {category.services.length === 0 && (
-                      <div className="col-span-full text-center py-8 text-muted-foreground text-[13px]">
-                        No services in this category yet. Click "Add Service" to get started.
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
-          <DialogContent className="font-sans">
-            <DialogHeader>
-              <DialogTitle>Add New Category</DialogTitle>
-              <DialogDescription>Create a new service category to organize your services.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Category Name</Label>
-                <Input
-                  id="name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  placeholder="Enter category name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  placeholder="Enter category description"
-                />
-              </div>
-              <div>
-                <Label htmlFor="owner">Category Owner</Label>
-                <Input
-                  id="owner"
-                  value={newCategory.owner}
-                  onChange={(e) => setNewCategory({ ...newCategory, owner: e.target.value })}
-                  placeholder="Enter owner name or department"
-                />
-              </div>
-              <div>
-                <Label htmlFor="color">Color</Label>
-                <Select
-                  value={newCategory.color}
-                  onValueChange={(value) => setNewCategory({ ...newCategory, color: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bg-blue-500">Blue</SelectItem>
-                    <SelectItem value="bg-green-500">Green</SelectItem>
-                    <SelectItem value="bg-yellow-500">Yellow</SelectItem>
-                    <SelectItem value="bg-purple-500">Purple</SelectItem>
-                    <SelectItem value="bg-red-500">Red</SelectItem>
-                    <SelectItem value="bg-orange-500">Orange</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={newCategory.status}
-                  onValueChange={(value: "Active" | "Draft" | "Inactive") =>
-                    setNewCategory({ ...newCategory, status: value as "Active" | "Draft" | "Inactive" })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Draft">Draft</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddCategory(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddCategory}>Add Category</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showAddService} onOpenChange={setShowAddService}>
-          <DialogContent className="font-sans">
-            <DialogHeader>
-              <DialogTitle>Add New Service</DialogTitle>
-              <DialogDescription>Create a new service request type.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="service-name">Service Name</Label>
-                <Input
-                  id="service-name"
-                  value={newService.name}
-                  onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                  placeholder="e.g., Laptop Request"
-                />
-              </div>
-              <div>
-                <Label htmlFor="service-description">Description</Label>
-                <Textarea
-                  id="service-description"
-                  value={newService.description}
-                  onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                  placeholder="Brief description of the service"
-                />
-              </div>
-              <div>
-                <Label htmlFor="service-sla">SLA</Label>
-                <Input
-                  id="service-sla"
-                  value={newService.sla}
-                  onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
-                  placeholder="e.g., 3-5 days"
-                />
-              </div>
-              <div>
-                <Label htmlFor="service-popularity">Popularity (1-5)</Label>
-                <Select
-                  value={newService.popularity.toString()}
-                  onValueChange={(value) => setNewService({ ...newService, popularity: Number.parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 Star</SelectItem>
-                    <SelectItem value="2">2 Stars</SelectItem>
-                    <SelectItem value="3">3 Stars</SelectItem>
-                    <SelectItem value="4">4 Stars</SelectItem>
-                    <SelectItem value="5">5 Stars</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddService(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddService}>Add Service</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showEditService} onOpenChange={setShowEditService}>
-          <DialogContent className="font-sans">
-            <DialogHeader>
-              <DialogTitle>Edit Service</DialogTitle>
-              <DialogDescription>Update the service details.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-service-name">Service Name</Label>
-                <Input
-                  id="edit-service-name"
-                  value={newService.name}
-                  onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-service-description">Description</Label>
-                <Textarea
-                  id="edit-service-description"
-                  value={newService.description}
-                  onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-service-sla">SLA</Label>
-                <Input
-                  id="edit-service-sla"
-                  value={newService.sla}
-                  onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-service-popularity">Popularity (1-5)</Label>
-                <Select
-                  value={newService.popularity?.toString()}
-                  onValueChange={(value) => setNewService({ ...newService, popularity: Number.parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 Star</SelectItem>
-                    <SelectItem value="2">2 Stars</SelectItem>
-                    <SelectItem value="3">3 Stars</SelectItem>
-                    <SelectItem value="4">4 Stars</SelectItem>
-                    <SelectItem value="5">5 Stars</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditService(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEditService}>Update Service</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showEditCategory} onOpenChange={setShowEditCategory}>
-          <DialogContent className="font-sans">
-            <DialogHeader>
-              <DialogTitle>Edit Category</DialogTitle>
-              <DialogDescription>Update the category information.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">Category Name</Label>
-                <Input
-                  id="edit-name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  placeholder="Enter category name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  placeholder="Enter category description"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-owner">Category Owner</Label>
-                <Input
-                  id="edit-owner"
-                  value={newCategory.owner}
-                  onChange={(e) => setNewCategory({ ...newCategory, owner: e.target.value })}
-                  placeholder="Enter owner name or department"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-color">Color</Label>
-                <Select
-                  value={newCategory.color}
-                  onValueChange={(value) => setNewCategory({ ...newCategory, color: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bg-blue-500">Blue</SelectItem>
-                    <SelectItem value="bg-green-500">Green</SelectItem>
-                    <SelectItem value="bg-yellow-500">Yellow</SelectItem>
-                    <SelectItem value="bg-purple-500">Purple</SelectItem>
-                    <SelectItem value="bg-red-500">Red</SelectItem>
-                    <SelectItem value="bg-orange-500">Orange</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-status">Status</Label>
-                <Select
-                  value={newCategory.status}
-                  onValueChange={(value: "Active" | "Draft" | "Inactive") =>
-                    setNewCategory({ ...newCategory, status: value as "Active" | "Draft" | "Inactive" })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Draft">Draft</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditCategory(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEditCategory}>Update Category</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showDeleteCategory} onOpenChange={setShowDeleteCategory}>
-          <DialogContent className="font-sans">
-            <DialogHeader>
-              <DialogTitle>Delete Category</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete "{selectedCategory?.name}"? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeleteCategory(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteCategory}>
-                Delete Category
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </PlatformLayout>
   )

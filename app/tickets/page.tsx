@@ -24,6 +24,8 @@ import {
   ArrowUpDown,
   Send,
   ArrowUp,
+  Sparkles,
+  Download,
 } from "lucide-react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -330,15 +332,15 @@ export default function TicketsPage() {
   const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "new":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+        return "bg-blue-500 text-white"
       case "waiting_on_you":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+        return "bg-yellow-500 text-gray-900"
       case "waiting_on_customer":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+        return "bg-purple-500 text-white"
       case "on_hold":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
+        return "bg-gray-500 text-white"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
+        return "bg-gray-500 text-white"
     }
   }, [])
 
@@ -479,49 +481,23 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           </div>
         </div>
 
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Ticket
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Plus className="h-4 w-4" />
                   </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Status
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Reported By
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Assignee
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Reported Date
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Due Date
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Type
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Priority
-                  </th>
-                  <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    Notes
-                  </th>
-                  <th className="text-center p-3 text-xs font-medium text-muted-foreground w-12">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => setShowCustomColumns(!showCustomColumns)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </th>
-                  <th className="text-center p-3 text-xs font-medium text-muted-foreground w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -559,46 +535,41 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    className={`border-b border-border hover:bg-muted/50 ${index % 2 === 0 ? "bg-background" : "bg-muted/20"}`}
+                    className="bg-white divide-y divide-gray-200 hover:bg-gray-50"
                   >
-                    <td className="p-3 border-r border-border">
-                      <div className="space-y-1">
-                        <div
-                          className="text-[13px] font-normal cursor-pointer hover:text-blue-600 hover:underline"
-                          onClick={() => handleTicketClick(ticket)}
-                        >
-                          {ticket.title}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{ticket.id}</div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
+                        <div className="text-sm text-gray-500">{ticket.id}</div>
                       </div>
                     </td>
-                    <td className="p-3 border-r border-border">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
                         {getStatusText(ticket.status)}
                       </span>
                     </td>
-                    <td className="p-3 border-r border-border">
-                      <div className="flex items-center justify-center">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
                         <div
-                          className={`w-6 h-6 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
+                          className={`h-8 w-8 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
                           title={ticket.reportedBy}
                         >
                           {ticket.reportedByAvatar}
                         </div>
                       </div>
                     </td>
-                    <td className="p-3 border-r border-border">
-                      <div className="flex items-center justify-center">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
                         {ticket.assignee ? (
                           <div
-                            className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                            className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
                             title={ticket.assignee.name}
                           >
                             {ticket.assignee.avatar}
                           </div>
                         ) : (
                           <div
-                            className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium"
+                            className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium"
                             title="Unassigned"
                           >
                             ?
@@ -606,50 +577,50 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         )}
                       </div>
                     </td>
-                    <td className="p-3 border-r border-border">
-                      <span className="text-[13px]">{ticket.reportedDate}</span>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{ticket.reportedDate}</span>
                     </td>
-                    <td className="p-3 border-r border-border">
-                      <span className="text-[13px]">{ticket.dueDate}</span>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{ticket.dueDate}</span>
                     </td>
-                    <td className="p-3 border-r border-border">
-                      <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-xs px-2 py-1 bg-yellow-500 text-gray-900 rounded-full">
                         {ticket.type}
                       </span>
                     </td>
-                    <td className="p-3 border-r border-border">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
-                            ? "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200"
+                            ? "bg-red-500 text-white"
                             : ticket.priority === "high"
-                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                              ? "bg-red-500 text-white"
                               : ticket.priority === "medium"
-                                ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                                : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                ? "bg-orange-500 text-gray-900"
+                                : "bg-green-500 text-gray-900"
                         }`}
                       >
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                       </span>
                     </td>
-                    <td className="p-3 border-r border-border">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         placeholder="Add notes..."
-                        className="h-7 text-xs border-0 bg-transparent focus:bg-background"
+                        className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-gray-500"
                         defaultValue={ticket.notes}
                       />
                     </td>
-                    <td className="p-3 border-r border-border text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {showCustomColumns && (
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                           <Plus className="h-3 w-3" />
                         </Button>
                       )}
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1057,58 +1028,52 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight font-sans">
-                  {ticketView === "all" ? "All Tickets" : "My Tickets"}
+                <h1 className="text-2xl font-semibold tracking-tight font-sans text-gray-900">
+                  All Tickets
                 </h1>
-                <span className="bg-muted text-muted-foreground px-2 py-1 rounded text-sm font-medium font-sans">
+                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
                   {loading ? "..." : filteredTickets.length}
                 </span>
               </div>
-              <p className="text-muted-foreground text-sm font-sans">
-                {ticketView === "all"
-                  ? "Manage all support tickets and track customer issues effortlessly."
-                  : "View and manage tickets assigned to you."}
+              <p className="text-gray-500 text-sm font-sans">
+                Manage all support tickets and track customer issues effortlessly.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <Button
-                variant="outline"
-                size="sm"
+                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
                 onClick={() => setShowAIChat(true)}
-                className="h-9 font-sans text-[13px]"
               >
-                <Bot className="h-4 w-4 mr-2" />
+                <Sparkles className="h-4 w-4 mr-2" />
                 Ask AI
               </Button>
               <Button
                 variant="outline"
-                size="sm"
-                className="h-9 bg-transparent font-sans text-[13px]"
+                className="bg-white text-purple-500 border-purple-300 hover:bg-purple-50 font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
                 onClick={() => setShowImportDialog(true)}
               >
-                <Upload className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-2" />
                 Import
               </Button>
               <Button 
+                className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
                 onClick={() => window.location.href = '/tickets/create'} 
-                className="h-9 font-sans text-[13px]"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Ticket
+                + Create Ticket
               </Button>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-border">
+            <div className="flex items-center justify-between border-b border-gray-200">
               <div className="flex items-center gap-0">
                 <button
                   onClick={() => setCurrentView("list")}
                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     currentView === "list"
                       ? "text-blue-600 border-blue-600"
-                      : "text-muted-foreground border-transparent hover:text-foreground"
+                      : "text-gray-500 border-transparent hover:text-gray-700"
                   }`}
                 >
                   List
@@ -1118,14 +1083,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     currentView === "kanban"
                       ? "text-blue-600 border-blue-600"
-                      : "text-muted-foreground border-transparent hover:text-foreground"
+                      : "text-gray-500 border-transparent hover:text-gray-700"
                   }`}
                 >
                   Kanban
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 pb-3">
+              <div className="flex items-center gap-4 pb-3">
                 <Select value={ticketView} onValueChange={(value: "all" | "my") => setTicketView(value)}>
                   <SelectTrigger className="w-40 h-9 text-sm">
                     <SelectValue />
@@ -1136,21 +1101,52 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   </SelectContent>
                 </Select>
 
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Search Ticket"
-                    className="pl-10 h-9 w-48"
+                    className="pl-10 h-9 text-sm"
                     value={searchTerm}
                     onChange={(e) => handleSearchChange(e.target.value)}
                   />
                 </div>
 
-                <Button variant="outline" size="sm" className="h-9 bg-transparent font-sans text-[13px]">
+                <Button variant="outline" className="text-gray-600 border-gray-300 h-9">
                   <Filter className="h-4 w-4 mr-2" />
                   Filter
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Table Toolbar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Select value={groupBy} onValueChange={setGroupBy}>
+                <SelectTrigger className="w-40 h-9 text-sm">
+                  <List className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Group By: None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Group By: None</SelectItem>
+                  <SelectItem value="status">Group By: Status</SelectItem>
+                  <SelectItem value="priority">Group By: Priority</SelectItem>
+                  <SelectItem value="type">Group By: Type</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button variant="outline" className="text-gray-600 border-gray-300 h-9">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search items"
+                className="pl-10 w-64 h-9 text-sm"
+              />
             </div>
           </div>
 
