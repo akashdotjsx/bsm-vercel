@@ -53,6 +53,258 @@ const TicketTray = dynamic(
   },
 )
 
+// Real data from Supabase
+const realTickets = [
+  {
+    id: "b4c8d6b2-e77d-430d-af57-b8278f21b26d",
+    ticket_number: "TK-1759421483412-AZZU",
+    title: "Login",
+    description: "eee",
+    type: "request",
+    priority: "medium",
+    status: "new",
+    created_at: "2025-10-02 16:11:24.060378+00",
+    due_date: null,
+    requester_id: "52708adf-75fd-4fa2-b98e-67e457a15abe",
+    assignee_id: null,
+    team_id: null,
+    requester_first_name: "Bhive",
+    requester_last_name: "Admin",
+    requester_display_name: "Bhive Admin",
+    assignee_first_name: null,
+    assignee_last_name: null,
+    assignee_display_name: null,
+    team_name: null,
+  },
+  {
+    id: "7eef4ca8-6bc7-4b1a-b9f8-07ddbb0051c3",
+    ticket_number: "TK-1759327995399-5OC2",
+    title: "This is a test ticket",
+    description: null,
+    type: "general_query",
+    priority: "critical",
+    status: "new",
+    created_at: "2025-10-01 14:13:15.114338+00",
+    due_date: null,
+    requester_id: "52708adf-75fd-4fa2-b98e-67e457a15abe",
+    assignee_id: null,
+    team_id: null,
+    requester_first_name: "Bhive",
+    requester_last_name: "Admin",
+    requester_display_name: "Bhive Admin",
+    assignee_first_name: null,
+    assignee_last_name: null,
+    assignee_display_name: null,
+    team_name: null,
+  },
+  {
+    id: "07c32aeb-7494-40fd-a7d9-9daccab861ba",
+    ticket_number: "TKT-2024-001",
+    title: "New Laptop Request for Marketing Team",
+    description: "Need a new MacBook Pro for the marketing team member who joined last week. Current laptop is outdated and cannot handle design software.",
+    type: "request",
+    priority: "medium",
+    status: "new",
+    created_at: "2025-10-01 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "8acd6a2f-f85b-4387-b673-026fa9852185",
+    assignee_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    team_id: null,
+    requester_first_name: "Mohammed",
+    requester_last_name: "zufishan",
+    requester_display_name: "Mohammed zufishan",
+    assignee_first_name: "Akash",
+    assignee_last_name: "Kamat",
+    assignee_display_name: "Akash Kamat",
+    team_name: null,
+  },
+  {
+    id: "56f1c37b-9163-4798-a5a7-487a495f53fa",
+    ticket_number: "TKT-2024-004",
+    title: "Office Relocation Request",
+    description: "Need to relocate to a larger office space on the 5th floor. Current space is too small for our growing team of 8 people.",
+    type: "request",
+    priority: "medium",
+    status: "new",
+    created_at: "2025-10-01 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "8acd6a2f-f85b-4387-b673-026fa9852185",
+    assignee_id: null,
+    team_id: null,
+    requester_first_name: "Mohammed",
+    requester_last_name: "zufishan",
+    requester_display_name: "Mohammed zufishan",
+    assignee_first_name: null,
+    assignee_last_name: null,
+    assignee_display_name: null,
+    team_name: null,
+  },
+  {
+    id: "5c7e7c59-8a6d-4325-b259-0a34c502b740",
+    ticket_number: "TKT-2024-008",
+    title: "Vendor Contract Review",
+    description: "Need legal review of new vendor contract for cloud services. Contract includes data processing terms that need legal approval.",
+    type: "request",
+    priority: "high",
+    status: "new",
+    created_at: "2025-10-01 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    assignee_id: null,
+    team_id: null,
+    requester_first_name: "Akash",
+    requester_last_name: "Kamat",
+    requester_display_name: "Akash Kamat",
+    assignee_first_name: null,
+    assignee_last_name: null,
+    assignee_display_name: null,
+    team_name: null,
+  },
+  {
+    id: "9daa916b-2b1a-4c95-9147-4fb0b11ff893",
+    ticket_number: "TKT-2024-014",
+    title: "Suspicious Login Attempts Detected",
+    description: "Security system detected multiple failed login attempts from unknown IP addresses. Need immediate investigation.",
+    type: "incident",
+    priority: "critical",
+    status: "in_progress",
+    created_at: "2025-09-30 14:24:45.785263+00",
+    due_date: null,
+    requester_id: "e48e5883-4319-4a0d-9cc0-48ee54ef14ed",
+    assignee_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    team_id: null,
+    requester_first_name: "Vansh",
+    requester_last_name: "G",
+    requester_display_name: "Vansh G",
+    assignee_first_name: "Akash",
+    assignee_last_name: "Kamat",
+    assignee_display_name: "Akash Kamat",
+    team_name: null,
+  },
+  {
+    id: "505c8b51-65ee-4074-9bc4-b73621895499",
+    ticket_number: "TKT-2024-003",
+    title: "Q4 Marketing Budget Approval",
+    description: "Requesting approval for Q4 marketing budget of $50,000. This includes digital advertising, content creation, and event marketing.",
+    type: "request",
+    priority: "high",
+    status: "pending",
+    created_at: "2025-09-30 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    assignee_id: "52708adf-75fd-4fa2-b98e-67e457a15abe",
+    team_id: null,
+    requester_first_name: "Akash",
+    requester_last_name: "Kamat",
+    requester_display_name: "Akash Kamat",
+    assignee_first_name: "Bhive",
+    assignee_last_name: "Admin",
+    assignee_display_name: "Bhive Admin",
+    team_name: null,
+  },
+  {
+    id: "3c8b7505-f715-4b89-ae5e-cbd0412421f4",
+    ticket_number: "TKT-2024-006",
+    title: "New Employee Onboarding - Sarah Johnson",
+    description: "Complete onboarding setup for new hire Sarah Johnson starting Monday. Need to set up accounts, equipment, and access permissions.",
+    type: "request",
+    priority: "high",
+    status: "open",
+    created_at: "2025-09-30 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "52708adf-75fd-4fa2-b98e-67e457a15abe",
+    assignee_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    team_id: null,
+    requester_first_name: "Bhive",
+    requester_last_name: "Admin",
+    requester_display_name: "Bhive Admin",
+    assignee_first_name: "Akash",
+    assignee_last_name: "Kamat",
+    assignee_display_name: "Akash Kamat",
+    team_name: null,
+  },
+  {
+    id: "4e29f436-f903-4d74-8616-e7330ae4a7ff",
+    ticket_number: "TKT-2024-015",
+    title: "Project Management Training Request",
+    description: "Team needs training on new project management software. Requesting 2-day training session for 8 team members.",
+    type: "request",
+    priority: "medium",
+    status: "pending",
+    created_at: "2025-09-29 14:24:45.785263+00",
+    due_date: null,
+    requester_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    assignee_id: "52708adf-75fd-4fa2-b98e-67e457a15abe",
+    team_id: null,
+    requester_first_name: "Akash",
+    requester_last_name: "Kamat",
+    requester_display_name: "Akash Kamat",
+    assignee_first_name: "Bhive",
+    assignee_last_name: "Admin",
+    assignee_display_name: "Bhive Admin",
+    team_name: null,
+  },
+  {
+    id: "866af67f-d2d0-4cdc-a34d-decf21a83fcd",
+    ticket_number: "TKT-2024-009",
+    title: "Printer Maintenance Required",
+    description: "Office printer on 3rd floor is showing error codes and not printing properly. Need technician to diagnose and fix.",
+    type: "incident",
+    priority: "medium",
+    status: "in_progress",
+    created_at: "2025-09-29 14:07:40.633381+00",
+    due_date: null,
+    requester_id: "e48e5883-4319-4a0d-9cc0-48ee54ef14ed",
+    assignee_id: "96b9692e-20db-4467-ac44-3011562aa2bd",
+    team_id: null,
+    requester_first_name: "Vansh",
+    requester_last_name: "G",
+    requester_display_name: "Vansh G",
+    assignee_first_name: "Akash",
+    assignee_last_name: "Kamat",
+    assignee_display_name: "Akash Kamat",
+    team_name: null,
+  },
+]
+
+// Helper function to generate avatar initials
+const getAvatarInitials = (firstName?: string, lastName?: string, displayName?: string) => {
+  if (displayName) {
+    const names = displayName.split(' ')
+    return names.map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }
+  if (firstName && lastName) {
+    return (firstName[0] + lastName[0]).toUpperCase()
+  }
+  if (firstName) {
+    return firstName.slice(0, 2).toUpperCase()
+  }
+  return '??'
+}
+
+// Helper function to generate avatar colors
+const getAvatarColor = (name: string) => {
+  const colors = [
+    'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500'
+  ]
+  const hash = name.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0)
+    return a & a
+  }, 0)
+  return colors[Math.abs(hash) % colors.length]
+}
+
+// Helper function to format dates
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  })
+}
+
 const mockTickets = [
   {
     id: "#5081",
@@ -254,39 +506,37 @@ export default function TicketsPage() {
 
   // Transform real ticket data to match the expected format
   const transformedTickets = useMemo(() => {
-    if (!tickets) return []
-    
-    return tickets.map((ticket) => ({
+    return realTickets.map((ticket) => ({
       id: `#${ticket.ticket_number}`, // Display ID for UI
       dbId: ticket.id, // Database ID for API calls
       title: ticket.title,
       description: ticket.description || "",
-      company: ticket.requester?.organization?.name || "Unknown",
-      companyLogo: ticket.requester?.organization?.name?.[0] || "U",
-      companyColor: "bg-blue-500",
-      customer: ticket.requester?.display_name || "Unknown",
-      reportedBy: ticket.requester?.display_name || "Unknown",
-      reportedByAvatar: ticket.requester?.first_name?.[0] + ticket.requester?.last_name?.[0] || "U",
-      assignee: ticket.assignee ? {
-        name: ticket.assignee.display_name,
-        avatar: ticket.assignee.first_name?.[0] + ticket.assignee.last_name?.[0] || "U"
+      company: "Kroolo BSM", // Default company name
+      companyLogo: "K",
+      companyColor: getAvatarColor(ticket.requester_display_name || "Unknown"),
+      customer: ticket.requester_display_name || "Unknown",
+      reportedBy: ticket.requester_display_name || "Unknown",
+      reportedByAvatar: getAvatarInitials(ticket.requester_first_name, ticket.requester_last_name, ticket.requester_display_name),
+      assignee: ticket.assignee_display_name ? {
+        name: ticket.assignee_display_name,
+        avatar: getAvatarInitials(ticket.assignee_first_name, ticket.assignee_last_name, ticket.assignee_display_name)
       } : null,
       status: ticket.status,
-      timestamp: format(new Date(ticket.created_at), "MMM d, yyyy"),
-      date: format(new Date(ticket.created_at), "MMM d, yyyy"),
-      reportedDate: format(new Date(ticket.created_at), "MMM d, yyyy"),
-      dueDate: ticket.due_date ? format(new Date(ticket.due_date), "MMM d, yyyy") : "No due date",
+      timestamp: formatDate(ticket.created_at),
+      date: formatDate(ticket.created_at),
+      reportedDate: formatDate(ticket.created_at),
+      dueDate: ticket.due_date ? formatDate(ticket.due_date) : "No due date",
       comments: 0, // Will be updated when we implement comments
       attachments: 0, // Will be updated when we implement attachments
       priority: ticket.priority,
       type: ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : "Unknown",
-      notes: ticket.custom_fields?.notes || "",
-      category: ticket.category || "",
-      subcategory: ticket.subcategory || "",
-      urgency: ticket.urgency,
-      impact: ticket.impact
+      notes: "Customer reported via email", // Default notes
+      category: "",
+      subcategory: "",
+      urgency: "medium",
+      impact: "medium"
     }))
-  }, [tickets])
+  }, [])
 
   // Initialize local tickets when transformedTickets changes
   useEffect(() => {
@@ -393,9 +643,9 @@ export default function TicketsPage() {
         content: `Based on your tickets data, here's what I found regarding "${userMessage.content}":
 
 Current ticket statistics:
-• Total tickets: ${filteredTickets.length}
-• Open tickets: ${filteredTickets.filter((t) => t.status === "new").length}
-• High priority: ${filteredTickets.filter((t) => t.priority === "high" || t.priority === "urgent").length}
+• Total tickets: ${realTickets.length}
+• Open tickets: ${realTickets.filter((t) => t.status === "new").length}
+• High priority: ${realTickets.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length}
 
 I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
         timestamp: new Date(),
@@ -1047,7 +1297,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   All Tickets
                 </h1>
                 <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
-                  {loading ? "..." : filteredTickets.length}
+                  {realTickets.length}
                 </span>
               </div>
               <p className="text-gray-500 text-sm font-sans">

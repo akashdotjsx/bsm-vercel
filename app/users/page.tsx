@@ -49,6 +49,43 @@ import { RoleEditModal } from "@/components/rbac/role-edit-modal"
 import { rbacApi } from "@/lib/api/rbac"
 import type { Role } from "@/lib/types/rbac"
 
+// Type definitions
+interface User {
+  id: string
+  first_name?: string
+  last_name?: string
+  display_name?: string
+  email: string
+  role: string
+  department?: string
+  is_active: boolean
+  created_at: string
+}
+
+interface Team {
+  id: string
+  name: string
+  description?: string
+  department?: string
+  is_active: boolean
+  created_at: string
+  lead?: {
+    id: string
+    display_name: string
+  }
+  team_members?: Array<{
+    id: string
+    role: string
+    user: {
+      id: string
+      display_name: string
+      email: string
+    }
+  }>
+  members?: number
+  lead_id?: string
+}
+
 const availableRoles = [
   { value: 'admin', label: 'Administrator' },
   { value: 'manager', label: 'Manager' },
@@ -136,6 +173,9 @@ const initialTeams = [
 
 export default function UsersPage() {
   const { users, teams, loading, inviteUser, updateUser, deactivateUser, reactivateUser, resetUserPassword, createTeam, addUserToTeam } = useUsers()
+  
+  // Debug logging
+  console.log('🏠 Users page render - users:', users?.length || 0, 'teams:', teams?.length || 0, 'loading:', loading)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [departmentFilter, setDepartmentFilter] = useState("all")
@@ -146,18 +186,19 @@ export default function UsersPage() {
   const [showManageDepartments, setShowManageDepartments] = useState(false)
   const [showResetPassword, setShowResetPassword] = useState(false)
   const [showEditRole, setShowEditRole] = useState(false)
-  const [selectedRole, setSelectedRole] = useState(null)
-  const [roles, setRoles] = useState([])
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [roles, setRoles] = useState<Role[]>([])
   const [departments, setDepartments] = useState(availableDepartments)
   const [newDepartment, setNewDepartment] = useState("")
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [selectedTeam, setSelectedTeam] = useState(null)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [newUser, setNewUser] = useState({
     first_name: "",
     last_name: "",
     email: "",
     role: "user",
     department: "",
+    status: "Active"
   })
   const [newTeam, setNewTeam] = useState({
     name: "",
@@ -191,7 +232,7 @@ export default function UsersPage() {
     return matchesSearch && matchesStatus && matchesDepartment
   })
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -203,27 +244,29 @@ export default function UsersPage() {
   const handleAddUser = async () => {
     try {
       await inviteUser(newUser)
-      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "" })
+      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "", status: "Active" })
       setShowAddUser(false)
     } catch (error) {
       console.error('Error adding user:', error)
     }
   }
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user)
     setNewUser({
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       email: user.email,
       role: user.role,
-      department: user.department || ''
+      department: user.department || '',
+      status: user.is_active ? 'Active' : 'Inactive'
     })
     setShowEditUser(true)
   }
 
   const handleUpdateUser = async () => {
     try {
+      if (!selectedUser) return
       await updateUser(selectedUser.id, {
         first_name: newUser.first_name,
         last_name: newUser.last_name,
@@ -233,13 +276,13 @@ export default function UsersPage() {
       })
       setShowEditUser(false)
       setSelectedUser(null)
-      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "" })
+      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "", status: "Active" })
     } catch (error) {
       console.error('Error updating user:', error)
     }
   }
 
-  const handleDeleteUser = async (userId) => {
+  const handleDeleteUser = async (userId: string) => {
     try {
       await deactivateUser(userId)
     } catch (error) {
@@ -247,12 +290,12 @@ export default function UsersPage() {
     }
   }
 
-  const handleResetPassword = (user) => {
+  const handleResetPassword = (user: User) => {
     setSelectedUser(user)
     setShowResetPassword(true)
   }
 
-  const handleDeactivateUser = async (userId, isActive) => {
+  const handleDeactivateUser = async (userId: string, isActive: boolean) => {
     try {
       if (isActive) {
         await deactivateUser(userId)
@@ -274,19 +317,20 @@ export default function UsersPage() {
     }
   }
 
-  const handleEditTeam = (team) => {
+  const handleEditTeam = (team: Team) => {
     setSelectedTeam(team)
     setNewTeam({
       name: team.name,
-      lead_id: team.lead_id,
-      description: team.description,
-      department: team.department
+      lead_id: team.lead?.id || '',
+      description: team.description || '',
+      department: team.department || ''
     })
     setShowEditTeam(true)
   }
 
   const handleUpdateTeam = async () => {
     try {
+      if (!selectedTeam) return
       // TODO: Implement updateTeam API function
       console.log('Update team:', selectedTeam.id, newTeam)
       toast({
@@ -301,7 +345,7 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteTeam = async (teamId) => {
+  const handleDeleteTeam = async (teamId: string) => {
     try {
       // TODO: Implement deleteTeam API function
       console.log('Delete team:', teamId)
@@ -321,13 +365,13 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteDepartment = (dept) => {
+  const handleDeleteDepartment = (dept: string) => {
     setDepartments(departments.filter((d) => d !== dept))
   }
 
-  const handleEditUserRole = (user) => {
+  const handleEditUserRole = (user: User) => {
     // Find the user's current role in our roles list
-    const userRole = roles.find(role => 
+    const userRole = roles.find((role: Role) => 
       role.name.toLowerCase().replace(' ', '_') === user.role?.toLowerCase() ||
       role.name === user.role
     )
@@ -336,10 +380,11 @@ export default function UsersPage() {
     setShowEditRole(true)
   }
 
-  const handleRoleSave = async (savedRole) => {
+  const handleRoleSave = async (savedRole: Role) => {
     try {
+      if (!selectedUser) return
       // Update the user's role in the profiles table (legacy field)
-      const roleMapping = {
+      const roleMapping: { [key: string]: string } = {
         'System Administrator': 'admin',
         'Manager': 'manager', 
         'Agent': 'agent',
@@ -373,18 +418,13 @@ export default function UsersPage() {
   return (
     <PlatformLayout
       title="Users & Teams"
-      description="Manage users, teams, and access permissions"
+      description="Manage user accounts, teams, and access permissions across your organization"
       breadcrumb={[
         { label: "Service Management", href: "/dashboard" },
         { label: "Users & Teams", href: "/users" },
       ]}
     >
       <div className="space-y-6 font-sans text-[13px]">
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-[13px] text-muted-foreground">Loading users...</div>
-          </div>
-        )}
 
         {/* Header Actions */}
         <div className="flex items-center justify-between">
@@ -400,8 +440,10 @@ export default function UsersPage() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-32 text-[13px]">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Status" />
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="All Stat" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -429,7 +471,7 @@ export default function UsersPage() {
           </div>
           <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
             <DialogTrigger asChild>
-              <Button className="text-[13px]">
+              <Button className="text-[13px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add User
               </Button>
@@ -528,7 +570,9 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
+                <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
                 <div className="ml-4">
                   <p className="text-[13px] font-medium text-muted-foreground">Total Users</p>
                   <p className="text-2xl font-bold">{users.length}</p>
@@ -539,7 +583,9 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Shield className="h-8 w-8 text-green-600" />
+                <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-emerald-600" />
+                </div>
                 <div className="ml-4">
                   <p className="text-[13px] font-medium text-muted-foreground">Active Users</p>
                   <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
@@ -550,7 +596,9 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-8 w-8 text-purple-600" />
+                <div className="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
                 <div className="ml-4">
                   <p className="text-[13px] font-medium text-muted-foreground">Teams</p>
                   <p className="text-2xl font-bold">{teams.length}</p>
@@ -561,10 +609,18 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-orange-600" />
+                <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                  <Calendar className="h-6 w-6 text-orange-600" />
+                </div>
                 <div className="ml-4">
                   <p className="text-[13px] font-medium text-muted-foreground">New This Month</p>
-                  <p className="text-2xl font-bold">4</p>
+                  <p className="text-2xl font-bold">{users.filter((u) => {
+                    const createdDate = new Date(u.created_at)
+                    const now = new Date()
+                    const thisMonth = now.getMonth()
+                    const thisYear = now.getFullYear()
+                    return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
+                  }).length}</p>
                 </div>
               </div>
             </CardContent>
@@ -574,7 +630,10 @@ export default function UsersPage() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[13px]">Users</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-[13px]">Users</CardTitle>
+              {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
+            </div>
             <CardDescription className="text-[13px]">Manage user accounts and permissions</CardDescription>
           </CardHeader>
           <CardContent>
@@ -607,16 +666,18 @@ export default function UsersPage() {
                       <td className="py-3 px-4 text-[13px]">{user.role || 'N/A'}</td>
                       <td className="py-3 px-4 text-[13px]">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
-                        <Badge variant={user.is_active ? "default" : "secondary"} className="text-[13px]">
-                          {user.is_active ? "Active" : "Inactive"}
-                        </Badge>
+                        {user.is_active ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-emerald-100 text-emerald-700">Active</span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-rose-100 text-rose-700">Inactive</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-[13px]">{formatDate(user.created_at)}</td>
                       <td className="py-3 px-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="px-2 text-muted-foreground hover:bg-transparent">
+                              ...
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="font-sans">
@@ -659,14 +720,17 @@ export default function UsersPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-[13px]">Teams</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-[13px]">Teams</CardTitle>
+                  {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
+                </div>
                 <CardDescription className="text-[13px]">
                   Organize users into teams for better collaboration
                 </CardDescription>
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
-                  <Button className="text-[13px]">
+                  <Button className="text-[13px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Team
                   </Button>
@@ -753,19 +817,20 @@ export default function UsersPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {teams.map((team) => (
-                <Card key={team.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-[13px]">{team.name}</h3>
+                <Card
+                  key={team.id}
+                  className="border border-border/60 rounded-xl shadow-[0_1px_0_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow bg-white"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-medium text-[13px] leading-6 text-foreground">{team.name}</h3>
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-[13px]">
-                          {team.members} members
-                        </Badge>
+                        <span className="inline-flex items-center rounded-full bg-violet-50 text-violet-700 px-3 py-1 text-[12px] font-medium">
+                          {(team as any).members || (team as any).team_members?.length || 0} members
+                        </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <Button variant="ghost" size="sm" className="px-2 text-muted-foreground hover:bg-transparent">…</Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="font-sans">
                             <DropdownMenuItem onClick={() => handleEditTeam(team)} className="text-[13px]">
@@ -787,7 +852,7 @@ export default function UsersPage() {
                     <div className="flex items-center text-[13px]">
                       <Users className="mr-1 h-3 w-3" />
                       <span className="text-muted-foreground">Lead: </span>
-                      <span className="ml-1 font-medium">{team.lead}</span>
+                      <span className="ml-1 font-medium">{(team as any).lead?.display_name || 'N/A'}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -879,7 +944,7 @@ export default function UsersPage() {
                 <Label htmlFor="edit-status" className="text-right text-[13px]">
                   Status
                 </Label>
-                <Select value={newUser.status} onValueChange={(value) => setNewUser({ ...newUser, status: value })}>
+                <Select value={selectedUser?.is_active ? 'Active' : 'Inactive'} onValueChange={(value) => setNewUser({ ...newUser, status: value })}>
                   <SelectTrigger className="col-span-3 text-[13px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -1026,12 +1091,12 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle className="text-[13px]">Reset Password</DialogTitle>
               <DialogDescription className="text-[13px]">
-                Reset password for {selectedUser?.name}. A temporary password will be sent to their email.
+                Reset password for {selectedUser?.display_name || selectedUser?.email}. A temporary password will be sent to their email.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <p className="text-[13px] text-muted-foreground">
-                This will generate a new temporary password and send it to {selectedUser?.email}. The user will be
+                This will generate a new temporary password and send it to {selectedUser?.email || 'N/A'}. The user will be
                 required to change their password on next login.
               </p>
             </div>
@@ -1042,6 +1107,7 @@ export default function UsersPage() {
               <Button
                 onClick={async () => {
                   try {
+                    if (!selectedUser) return
                     await resetUserPassword(selectedUser.id)
                     setShowResetPassword(false)
                   } catch (error) {

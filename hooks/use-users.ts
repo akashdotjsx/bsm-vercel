@@ -1,28 +1,61 @@
 import { useState, useEffect } from 'react'
 import { userAPI } from '@/lib/api/users'
 import { useToast } from '@/hooks/use-toast'
+import { createClient } from '@/lib/supabase/client'
+
+interface User {
+  id: string
+  first_name?: string
+  last_name?: string
+  display_name?: string
+  email: string
+  role: string
+  department?: string
+  is_active: boolean
+  created_at: string
+}
+
+interface Team {
+  id: string
+  name: string
+  description?: string
+  department?: string
+  is_active: boolean
+  created_at: string
+}
 
 export function useUsers() {
-  const [users, setUsers] = useState([])
-  const [teams, setTeams] = useState([])
+  const [users, setUsers] = useState<User[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   const loadUsers = async () => {
     try {
       setLoading(true)
       setError(null)
+      console.log('🔄 Loading users...')
       const userData = await userAPI.getUsers()
+      console.log('📊 Users loaded:', userData?.length || 0, 'users')
       
-      setUsers(userData)
+      setUsers(userData || [])
+      
+      if (!userData || userData.length === 0) {
+        console.log('⚠️ No users found - this might be normal if no users exist yet')
+      }
     } catch (err) {
-      setError(err.message)
-      toast({
-        title: "Error loading users",
-        description: err.message,
-        variant: "destructive"
-      })
+      console.error('❌ Error loading users:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      setError(errorMessage)
+      // Don't show toast for empty data, only for actual errors
+      if (errorMessage !== 'Unknown error') {
+        toast({
+          title: "Error loading users",
+          description: errorMessage,
+          variant: "destructive"
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -30,19 +63,29 @@ export function useUsers() {
 
   const loadTeams = async () => {
     try {
+      console.log('🔄 Loading teams...')
       const teamData = await userAPI.getTeams()
-      setTeams(teamData)
+      console.log('📊 Teams loaded:', teamData?.length || 0, 'teams')
+      setTeams(teamData || [])
+      
+      if (!teamData || teamData.length === 0) {
+        console.log('⚠️ No teams found - this might be normal if no teams exist yet')
+      }
     } catch (err) {
-      console.error('Error loading teams:', err)
-      toast({
-        title: "Error loading teams",
-        description: err.message,
-        variant: "destructive"
-      })
+      console.error('❌ Error loading teams:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      // Don't show toast for empty data, only for actual errors
+      if (errorMessage !== 'Unknown error') {
+        toast({
+          title: "Error loading teams",
+          description: errorMessage,
+          variant: "destructive"
+        })
+      }
     }
   }
 
-  const inviteUser = async (userData) => {
+  const inviteUser = async (userData: any) => {
     try {
       const result = await userAPI.inviteUser(userData)
       // Add the new user to the local state
@@ -55,16 +98,17 @@ export function useUsers() {
       })
       return result
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error inviting user",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const updateUser = async (userId, updates) => {
+  const updateUser = async (userId: string, updates: any) => {
     try {
       const updatedUser = await userAPI.updateUser(userId, updates)
       setUsers(users.map(user => user.id === userId ? updatedUser : user))
@@ -74,16 +118,17 @@ export function useUsers() {
       })
       return updatedUser
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error updating user",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const deactivateUser = async (userId) => {
+  const deactivateUser = async (userId: string) => {
     try {
       const updatedUser = await userAPI.deactivateUser(userId)
       setUsers(users.map(user => user.id === userId ? updatedUser : user))
@@ -93,16 +138,17 @@ export function useUsers() {
       })
       return updatedUser
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error deactivating user",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const reactivateUser = async (userId) => {
+  const reactivateUser = async (userId: string) => {
     try {
       const updatedUser = await userAPI.reactivateUser(userId)
       setUsers(users.map(user => user.id === userId ? updatedUser : user))
@@ -112,16 +158,17 @@ export function useUsers() {
       })
       return updatedUser
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error reactivating user",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const resetUserPassword = async (email) => {
+  const resetUserPassword = async (email: string) => {
     try {
       await userAPI.resetUserPassword(email)
       toast({
@@ -129,16 +176,17 @@ export function useUsers() {
         description: `Password reset email sent to ${email}`,
       })
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error resetting password",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const createTeam = async (teamData) => {
+  const createTeam = async (teamData: any) => {
     try {
       const newTeam = await userAPI.createTeam(teamData)
       setTeams([...teams, newTeam])
@@ -148,16 +196,17 @@ export function useUsers() {
       })
       return newTeam
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error creating team",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
     }
   }
 
-  const addUserToTeam = async (teamId, userId, role = 'member') => {
+  const addUserToTeam = async (teamId: string, userId: string, role: string = 'member') => {
     try {
       await userAPI.addUserToTeam(teamId, userId, role)
       await loadTeams() // Refresh teams
@@ -166,9 +215,10 @@ export function useUsers() {
         description: "User has been added to the team successfully",
       })
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error adding user to team",
-        description: err.message,
+        description: errorMessage,
         variant: "destructive"
       })
       throw err
@@ -176,8 +226,46 @@ export function useUsers() {
   }
 
   useEffect(() => {
+    // Load data immediately
     loadUsers()
     loadTeams()
+
+    // Retry loading after a short delay in case of initial failure
+    const retryTimeout = setTimeout(() => {
+      if (users.length === 0 && teams.length === 0) {
+        console.log('🔄 Retrying data load...')
+        loadUsers()
+        loadTeams()
+      }
+    }, 2000)
+
+    // Realtime subscriptions to keep Users & Teams up to date
+    const supabase = createClient()
+    const profilesChannel = supabase
+      .channel('realtime-profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        console.log('🔄 Profiles changed, reloading...')
+        loadUsers()
+      })
+      .subscribe()
+
+    const teamsChannel = supabase
+      .channel('realtime-teams')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, () => {
+        console.log('🔄 Teams changed, reloading...')
+        loadTeams()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, () => {
+        console.log('🔄 Team members changed, reloading...')
+        loadTeams()
+      })
+      .subscribe()
+
+    return () => {
+      clearTimeout(retryTimeout)
+      try { supabase.removeChannel(profilesChannel) } catch {}
+      try { supabase.removeChannel(teamsChannel) } catch {}
+    }
   }, [])
 
   return {
