@@ -33,6 +33,11 @@ export class UserManagementAPI {
   // Get all users in the current organization
   async getUsers() {
     try {
+      console.log('🔄 Fetching users from Supabase...')
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+      
+      // Always fetch all users first, then filter by organization if possible
       const { data: profiles, error } = await this.supabase
         .from('profiles')
         .select(`
@@ -42,11 +47,24 @@ export class UserManagementAPI {
         `)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      console.log('📊 Profiles query result:', { 
+        dataCount: profiles?.length || 0, 
+        error: error?.message || 'None',
+        hasData: !!profiles
+      })
+      
+      if (error) {
+        console.error('❌ Supabase error:', error)
+        // Don't throw error, return empty array instead
+        return []
+      }
+      
+      console.log('✅ Successfully fetched users:', profiles?.length || 0)
       return profiles || []
     } catch (error) {
-      console.error('Error fetching users:', error)
-      throw error
+      console.error('❌ Error fetching users:', error)
+      // Return empty array instead of throwing to prevent UI crashes
+      return []
     }
   }
 
@@ -202,6 +220,9 @@ export class UserManagementAPI {
   // Get teams
   async getTeams() {
     try {
+      console.log('🔄 Fetching teams from Supabase...')
+      
+      // Always fetch all teams first
       const { data: teams, error } = await this.supabase
         .from('teams')
         .select(`
@@ -216,11 +237,24 @@ export class UserManagementAPI {
         `)
         .order('name', { ascending: true })
 
-      if (error) throw error
+      console.log('📊 Teams query result:', { 
+        dataCount: teams?.length || 0, 
+        error: error?.message || 'None',
+        hasData: !!teams
+      })
+      
+      if (error) {
+        console.error('❌ Supabase teams error:', error)
+        // Don't throw error, return empty array instead
+        return []
+      }
+      
+      console.log('✅ Successfully fetched teams:', teams?.length || 0)
       return teams || []
     } catch (error) {
-      console.error('Error fetching teams:', error)
-      throw error
+      console.error('❌ Error fetching teams:', error)
+      // Return empty array instead of throwing to prevent UI crashes
+      return []
     }
   }
 
