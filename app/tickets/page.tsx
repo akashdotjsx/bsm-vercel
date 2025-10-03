@@ -483,27 +483,24 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Ticket</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Reported By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Assignee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Reported Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Priority</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <Plus className="h-4 w-4" />
-                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center">
+                    <td colSpan={9} className="p-8 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
                         Loading tickets...
@@ -512,7 +509,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center">
+                    <td colSpan={9} className="p-8 text-center">
                       <div className="text-red-600">
                         Error loading tickets: {error}
                       </div>
@@ -520,7 +517,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   </tr>
                 ) : filteredTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center">
+                    <td colSpan={9} className="p-8 text-center">
                       <div className="text-muted-foreground">
                         No tickets found. <button 
                           onClick={() => window.location.href = '/tickets/create'} 
@@ -535,20 +532,37 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    className="bg-white divide-y divide-gray-200 hover:bg-gray-50"
+                    className="bg-white border-b border-gray-200 hover:bg-gray-50 last:border-b-0"
                   >
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
                         <div className="text-sm text-gray-500">{ticket.id}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                        {getStatusText(ticket.status)}
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        ticket.status === "new" 
+                          ? "bg-blue-500 text-white"
+                          : ticket.status === "in_progress"
+                            ? "bg-yellow-500 text-gray-900"
+                            : ticket.status === "review"
+                              ? "bg-purple-500 text-white"
+                              : ticket.status === "pending"
+                                ? "bg-gray-300 text-gray-900"
+                                : ticket.status === "open"
+                                  ? "bg-gray-300 text-gray-900"
+                                  : "bg-gray-500 text-white"
+                      }`}>
+                        {ticket.status === "new" ? "New" : 
+                         ticket.status === "in_progress" ? "In Progress" :
+                         ticket.status === "review" ? "Review" :
+                         ticket.status === "pending" ? "Pending" :
+                         ticket.status === "open" ? "Open" :
+                         ticket.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <div className="flex items-center">
                         <div
                           className={`h-8 w-8 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
@@ -558,7 +572,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <div className="flex items-center">
                         {ticket.assignee ? (
                           <div
@@ -569,7 +583,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                           </div>
                         ) : (
                           <div
-                            className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium"
+                            className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium"
                             title="Unassigned"
                           >
                             ?
@@ -577,18 +591,22 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <span className="text-sm text-gray-900">{ticket.reportedDate}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <span className="text-sm text-gray-900">{ticket.dueDate}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <span className="text-xs px-2 py-1 bg-yellow-500 text-gray-900 rounded-full">
-                        {ticket.type}
+                        {ticket.type === "general_query" ? "General Query" : 
+                         ticket.type === "incident" ? "Incident" :
+                         ticket.type === "request" ? "Request" :
+                         ticket.type === "problem" ? "Problem" :
+                         ticket.type}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
@@ -597,48 +615,45 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                               ? "bg-red-500 text-white"
                               : ticket.priority === "medium"
                                 ? "bg-orange-500 text-gray-900"
-                                : "bg-green-500 text-gray-900"
+                                : ticket.priority === "low"
+                                  ? "bg-green-500 text-gray-900"
+                                  : ticket.priority === "critical"
+                                    ? "bg-green-500 text-gray-900"
+                                    : "bg-gray-500 text-white"
                         }`}
                       >
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <Input
-                        placeholder="Add notes..."
-                        className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-gray-500"
-                        defaultValue={ticket.notes}
-                      />
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {showCustomColumns && (
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Ticket
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate Ticket
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Ticket
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center justify-between">
+                        <Input
+                          placeholder="Add notes..."
+                          className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-gray-500 flex-1"
+                          defaultValue={ticket.notes || "Customer reported via email"}
+                        />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Ticket
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Duplicate Ticket
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Ticket
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1090,65 +1105,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 </button>
               </div>
 
-              <div className="flex items-center gap-4 pb-3">
-                <Select value={ticketView} onValueChange={(value: "all" | "my") => setTicketView(value)}>
-                  <SelectTrigger className="w-40 h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Tickets</SelectItem>
-                    <SelectItem value="my">My Tickets</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search Ticket"
-                    className="pl-10 h-9 text-sm"
-                    value={searchTerm}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                  />
-                </div>
-
-                <Button variant="outline" className="text-gray-600 border-gray-300 h-9">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </div>
             </div>
           </div>
 
-          {/* Table Toolbar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Select value={groupBy} onValueChange={setGroupBy}>
-                <SelectTrigger className="w-40 h-9 text-sm">
-                  <List className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Group By: None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Group By: None</SelectItem>
-                  <SelectItem value="status">Group By: Status</SelectItem>
-                  <SelectItem value="priority">Group By: Priority</SelectItem>
-                  <SelectItem value="type">Group By: Type</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button variant="outline" className="text-gray-600 border-gray-300 h-9">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-            </div>
-            
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search items"
-                className="pl-10 w-64 h-9 text-sm"
-              />
-            </div>
-          </div>
 
           {currentView === "list" && renderListView()}
           {currentView === "kanban" && renderKanbanView()}

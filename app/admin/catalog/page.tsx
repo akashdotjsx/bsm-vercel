@@ -38,14 +38,14 @@ interface Ticket {
   ticketNumber: string
   status: "New" | "In Progress" | "Review" | "Resolved" | "Closed"
   reportedBy: {
-    name: string
+  name: string
     initials: string
     color: string
-  }
+}
   assignee: {
-    name: string
+  name: string
     initials: string
-    color: string
+  color: string
   }
   reportedDate: string
   dueDate: string
@@ -197,7 +197,7 @@ export default function AllTicketsPage() {
         {/* Header with title, description, and action buttons */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div>
+          <div>
               <h1 className="text-2xl font-semibold tracking-tight text-gray-900">All Tickets</h1>
               <p className="text-[13px] text-gray-500">Manage all support tickets and track customer issues effortlessly.</p>
             </div>
@@ -215,10 +215,10 @@ export default function AllTicketsPage() {
               Import
             </Button>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
-              <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
               + Create Ticket
-            </Button>
-          </div>
+          </Button>
+        </div>
         </div>
 
         {/* Tabs */}
@@ -259,19 +259,19 @@ export default function AllTicketsPage() {
           
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
+          <Input
               placeholder="Search Ticket"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 text-sm"
-            />
-          </div>
-          
+          />
+        </div>
+
           <Button variant="outline" className="text-gray-600 border-gray-300">
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-        </div>
+                </div>
 
         {/* Table Toolbar */}
         <div className="flex items-center justify-between">
@@ -291,7 +291,7 @@ export default function AllTicketsPage() {
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-          </div>
+              </div>
           
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -299,8 +299,8 @@ export default function AllTicketsPage() {
               placeholder="Search items"
               className="pl-10 w-64 text-sm"
             />
-          </div>
-        </div>
+                </div>
+              </div>
 
         {/* Tickets Table */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -326,7 +326,7 @@ export default function AllTicketsPage() {
                 {filteredTickets.map((ticket) => (
                   <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div>
+                <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
                         <div className="text-sm text-gray-500">{ticket.ticketNumber}</div>
                       </div>
@@ -340,15 +340,15 @@ export default function AllTicketsPage() {
                       <div className="flex items-center">
                         <div className={`h-8 w-8 rounded-full ${ticket.reportedBy.color} flex items-center justify-center text-white text-xs font-medium`}>
                           {ticket.reportedBy.initials}
-                        </div>
-                      </div>
+                </div>
+              </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className={`h-8 w-8 rounded-full ${ticket.assignee.color} flex items-center justify-center text-white text-xs font-medium`}>
                           {ticket.assignee.initials}
-                        </div>
-                      </div>
+                </div>
+              </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {ticket.reportedDate}
@@ -364,7 +364,7 @@ export default function AllTicketsPage() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Badge className={`text-xs px-2 py-1 rounded-full ${getPriorityBadgeColor(ticket.priority)}`}>
                         {ticket.priority}
-                      </Badge>
+                          </Badge>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       {ticket.notes}
@@ -386,8 +386,8 @@ export default function AllTicketsPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
+              </div>
+            </div>
 
       </div>
     </PlatformLayout>
