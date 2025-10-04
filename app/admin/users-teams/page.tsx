@@ -550,12 +550,12 @@ export default function UsersTeamsPage() {
             {/* Teams Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-gray-900">Teams</h2>
-                <p className="text-sm text-gray-600">Manage team organization and structure</p>
+                <h2 className="text-lg font-medium text-foreground">Teams</h2>
+                <p className="text-sm text-muted-foreground">Manage team organization and structure</p>
               </div>
               <Dialog open={showAddTeamModal} onOpenChange={setShowAddTeamModal}>
                 <DialogTrigger asChild>
-                  <Button className="bg-black text-white hover:bg-gray-800">
+                  <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Team
                   </Button>
@@ -642,11 +642,11 @@ export default function UsersTeamsPage() {
             {/* Teams Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teams.map((team) => (
-                <div key={team.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                <div key={team.id} className="bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{team.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{team.description}</p>
+                      <h3 className="text-lg font-medium text-foreground">{team.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{team.description}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -671,19 +671,19 @@ export default function UsersTeamsPage() {
                     </DropdownMenu>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Users className="w-4 h-4 mr-2" />
                       {team.members} members
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <UserPlus className="w-4 h-4 mr-2" />
                       Lead: {team.lead}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Building className="w-4 h-4 mr-2" />
                       {team.department}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4 mr-2" />
                       Created: {team.created}
                     </div>

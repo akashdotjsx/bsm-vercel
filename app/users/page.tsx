@@ -820,13 +820,13 @@ export default function UsersPage() {
               {teams.map((team) => (
                 <Card
                   key={team.id}
-                  className="border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
+                  className="border border-border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold text-sm">{team.name}</h3>
                       <div className="flex items-center space-x-2">
-                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-white text-gray-600 px-3 py-1 text-xs font-medium">
+                        <span className="inline-flex items-center rounded-full border border-border bg-muted text-muted-foreground px-3 py-1 text-xs font-medium">
                           {(team as any).members || (team as any).team_members?.length || 0} members
                         </span>
                         <DropdownMenu>
