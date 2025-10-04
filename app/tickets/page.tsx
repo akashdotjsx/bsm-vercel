@@ -26,6 +26,7 @@ import {
   ArrowUp,
   Sparkles,
   Download,
+  Cloud,
 } from "lucide-react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -460,27 +461,45 @@ export default function TicketsPage() {
   const [selectedStatus, setSelectedStatus] = useState("all")
   
   // Use real data from API
-  const { 
-    tickets, 
-    loading, 
-    error, 
-    pagination, 
-    refetch,
-    updateTicket
-  } = useTickets({
+  // Memoize the params to prevent unnecessary re-renders
+  const ticketsParams = useMemo(() => ({
     page: 1,
     limit: 50,
     status: selectedStatus === "all" ? undefined : selectedStatus,
     priority: selectedPriority === "all" ? undefined : selectedPriority,
     type: selectedType === "all" ? undefined : selectedType,
     search: searchTerm || undefined
-  })
+  }), [selectedStatus, selectedPriority, selectedType, searchTerm])
+
+  const {
+    tickets, 
+    loading, 
+    error, 
+    pagination, 
+    refetch,
+    updateTicket
+  } = useTickets(ticketsParams)
 
   // Get dynamic ticket types from database
   const { ticketTypes, loading: typesLoading } = useTicketTypes()
 
   // Debug logging
-  console.log('Tickets data:', { tickets, loading, error, pagination })
+  console.log('🏠 Tickets page render:', { 
+    ticketsCount: tickets?.length || 0, 
+    loading, 
+    error, 
+    pagination,
+    hasTickets: tickets && tickets.length > 0
+  })
+
+  // Force re-render when loading state changes
+  useEffect(() => {
+    console.log('🔄 Loading state changed:', loading)
+  }, [loading])
+
+  useEffect(() => {
+    console.log('📊 Tickets state changed:', tickets?.length || 0, 'tickets')
+  }, [tickets])
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [currentView, setCurrentView] = useState<"list" | "kanban">("list")
   const [showTicketTray, setShowTicketTray] = useState(false)
@@ -504,9 +523,11 @@ export default function TicketsPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
 
-  // Transform real ticket data to match the expected format
+  // Transform API ticket data to match the expected format
   const transformedTickets = useMemo(() => {
-    return realTickets.map((ticket) => ({
+    if (!tickets || tickets.length === 0) return []
+    
+    return tickets.map((ticket) => ({
       id: `#${ticket.ticket_number}`, // Display ID for UI
       dbId: ticket.id, // Database ID for API calls
       title: ticket.title,
@@ -536,7 +557,7 @@ export default function TicketsPage() {
       urgency: "medium",
       impact: "medium"
     }))
-  }, [])
+  }, [tickets])
 
   // Initialize local tickets when transformedTickets changes
   useEffect(() => {
@@ -643,9 +664,9 @@ export default function TicketsPage() {
         content: `Based on your tickets data, here's what I found regarding "${userMessage.content}":
 
 Current ticket statistics:
-• Total tickets: ${realTickets.length}
-• Open tickets: ${realTickets.filter((t) => t.status === "new").length}
-• High priority: ${realTickets.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length}
+• Total tickets: ${tickets?.length || 0}
+• Open tickets: ${tickets?.filter((t) => t.status === "new").length || 0}
+• High priority: ${tickets?.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
 
 I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
         timestamp: new Date(),
@@ -731,24 +752,32 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Ticket</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Reported By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Assignee</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Reported Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Due Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">Priority</th>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Ticket</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Reported By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Assignee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Reported Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Priority</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {loading ? (
+                {(() => {
+                  console.log('⚙️ Rendering tickets table with:', { 
+                    currentLoading: loading, 
+                    currentTicketsCount: tickets?.length || 0,
+                    hasTickets: !!tickets,
+                    shouldShowLoading: loading || !tickets
+                  });
+                  return loading || !tickets;
+                })() ? (
                   <tr>
                     <td colSpan={9} className="p-8 text-center">
                       <div className="flex items-center justify-center">
@@ -782,9 +811,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    className="bg-white border-b border-gray-200 hover:bg-gray-50 last:border-b-0"
+                    className="bg-white border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
                   >
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
                         <div className="text-sm text-gray-500">{ticket.id}</div>
@@ -793,16 +822,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         ticket.status === "new" 
-                          ? "bg-blue-500 text-white"
+                          ? "bg-blue-100 text-blue-800"
                           : ticket.status === "in_progress"
-                            ? "bg-yellow-500 text-gray-900"
+                            ? "bg-yellow-100 text-yellow-800"
                             : ticket.status === "review"
-                              ? "bg-purple-500 text-white"
+                              ? "bg-purple-100 text-purple-800"
                               : ticket.status === "pending"
-                                ? "bg-gray-300 text-gray-900"
+                                ? "bg-gray-100 text-gray-800"
                                 : ticket.status === "open"
-                                  ? "bg-gray-300 text-gray-900"
-                                  : "bg-gray-500 text-white"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-gray-100 text-gray-800"
                       }`}>
                         {ticket.status === "new" ? "New" : 
                          ticket.status === "in_progress" ? "In Progress" :
@@ -812,7 +841,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                          ticket.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <div className="flex items-center">
                         <div
                           className={`h-8 w-8 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
@@ -822,7 +851,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <div className="flex items-center">
                         {ticket.assignee ? (
                           <div
@@ -841,14 +870,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <span className="text-sm text-gray-900">{ticket.reportedDate}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <span className="text-sm text-gray-900">{ticket.dueDate}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
-                      <span className="text-xs px-2 py-1 bg-yellow-500 text-gray-900 rounded-full">
+<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
+<span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
                         {ticket.type === "general_query" ? "General Query" : 
                          ticket.type === "incident" ? "Incident" :
                          ticket.type === "request" ? "Request" :
@@ -856,20 +885,20 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                          ticket.type}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${
+className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
-                            ? "bg-red-500 text-white"
+                            ? "bg-red-100 text-red-800"
                             : ticket.priority === "high"
-                              ? "bg-red-500 text-white"
+                              ? "bg-red-100 text-red-800"
                               : ticket.priority === "medium"
-                                ? "bg-orange-500 text-gray-900"
+                                ? "bg-orange-100 text-orange-800"
                                 : ticket.priority === "low"
-                                  ? "bg-green-500 text-gray-900"
+                                  ? "bg-green-100 text-green-800"
                                   : ticket.priority === "critical"
-                                    ? "bg-green-500 text-gray-900"
-                                    : "bg-gray-500 text-white"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
@@ -1297,7 +1326,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   All Tickets
                 </h1>
                 <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
-                  {realTickets.length}
+                  {tickets?.length || 0}
                 </span>
               </div>
               <p className="text-gray-500 text-sm font-sans">
@@ -1307,7 +1336,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
             <div className="flex items-center gap-3">
               <Button
-                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
+className="bg-gradient-to-r from-[#ff4fd8] to-[#6a5cff] hover:opacity-90 text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
                 onClick={() => setShowAIChat(true)}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -1315,14 +1344,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </Button>
               <Button
                 variant="outline"
-                className="bg-white text-purple-500 border-purple-300 hover:bg-purple-50 font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
+className="bg-white text-[#6a5cff] border-[#6a5cff] hover:bg-[#f5f3ff] text-sm h-10 px-5 rounded-lg"
                 onClick={() => setShowImportDialog(true)}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Cloud className="h-4 w-4 mr-2" />
                 Import
               </Button>
               <Button 
-                className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm h-10 px-4 py-2 rounded-lg shadow-lg"
+className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
                 onClick={() => window.location.href = '/tickets/create'} 
               >
                 + Create Ticket
