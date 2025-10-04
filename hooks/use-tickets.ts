@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ticketAPI, Ticket, TicketComment, TicketAttachment, ChecklistItem, CreateTicketData, UpdateTicketData } from '@/lib/api/tickets'
 
 export function useTickets(params: {
@@ -10,6 +10,7 @@ export function useTickets(params: {
   assignee_id?: string
   search?: string
 } = {}) {
+  console.log('🏗️ useTickets hook initialized with params:', params)
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,24 +20,42 @@ export function useTickets(params: {
     total: 0,
     pages: 0
   })
+  // Memoize the params to prevent unnecessary re-renders
+  const stableParams = useMemo(() => ({
+    page: params.page || 1,
+    limit: params.limit || 50,
+    status: params.status,
+    priority: params.priority,
+    type: params.type,
+    assignee_id: params.assignee_id,
+    search: params.search
+  }), [params.page, params.limit, params.status, params.priority, params.type, params.assignee_id, params.search])
 
   const fetchTickets = useCallback(async () => {
     try {
+      console.log('🔄 Starting fetchTickets, setting loading to true')
       setLoading(true)
       setError(null)
-      const data = await ticketAPI.getTickets(params)
-      setTickets(data.tickets)
-      setPagination(data.pagination)
+      console.log('🔄 Fetching tickets with params:', stableParams)
+      const data = await ticketAPI.getTickets(stableParams)
+      console.log('📊 Tickets fetched successfully:', data)
+      console.log('📊 Setting tickets to:', data.tickets?.length || 0, 'tickets')
+      setTickets(data.tickets || [])
+      setPagination(data.pagination || { page: 1, limit: 10, total: 0, pages: 0 })
+      console.log('✅ Tickets state updated, about to set loading to false')
     } catch (err) {
+      console.error('❌ Error fetching tickets:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch tickets')
     } finally {
+      console.log('🔄 Finally block: setting loading to false')
       setLoading(false)
     }
-  }, [params.page, params.limit, params.status, params.priority, params.type, params.assignee_id, params.search])
+  }, [stableParams])
 
   useEffect(() => {
+    console.log('🔄 useEffect triggered, calling fetchTickets')
     fetchTickets()
-  }, [fetchTickets])
+  }, [stableParams])
 
   const createTicket = useCallback(async (data: CreateTicketData) => {
     try {
@@ -77,7 +96,7 @@ export function useTickets(params: {
     loading,
     error,
     pagination,
-    fetchTickets,
+    refetch: fetchTickets,
     createTicket,
     updateTicket,
     deleteTicket

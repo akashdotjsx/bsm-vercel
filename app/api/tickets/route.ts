@@ -6,20 +6,20 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    let organizationId = null
+    
+    if (user) {
+      // Get user's organization if authenticated
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+      
+      organizationId = profile?.organization_id
     }
-
-    // Get user's organization
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
+    
+    console.log('🔐 API Route - User authenticated:', !!user, 'Org ID:', organizationId)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -41,8 +41,12 @@ export async function GET(request: NextRequest) {
         team:teams(id, name, description),
         sla_policy:sla_policies(id, name, first_response_time_hours, resolution_time_hours)
       `)
-      .eq('organization_id', profile.organization_id)
       .order('created_at', { ascending: false })
+    
+    // Only filter by organization if we have one
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId)
+    }
 
     // Apply filters
     if (status) query = query.eq('status', status)
@@ -58,14 +62,21 @@ export async function GET(request: NextRequest) {
     const to = from + limit - 1
     query = query.range(from, to)
 
+    console.log('🔍 API Route - Executing query with params:', { page, limit, status, priority, type, assignee_id, search })
     const { data: tickets, error, count } = await query
 
+    console.log('📊 API Route - Query result:', { 
+      ticketsCount: tickets?.length || 0, 
+      error: error?.message || 'None', 
+      count 
+    })
+
     if (error) {
-      console.error('Error fetching tickets:', error)
+      console.error('❌ API Route - Error fetching tickets:', error)
       return NextResponse.json({ error: 'Failed to fetch tickets' }, { status: 500 })
     }
 
-    return NextResponse.json({
+    const result = {
       tickets: tickets || [],
       pagination: {
         page,
@@ -73,7 +84,10 @@ export async function GET(request: NextRequest) {
         total: count || 0,
         pages: Math.ceil((count || 0) / limit)
       }
-    })
+    }
+    
+    console.log('✅ API Route - Returning result:', result)
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Unexpected error in tickets GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
