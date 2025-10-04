@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNotifications } from "@/lib/contexts/notification-context"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { GlobalSearch } from "@/components/search/global-search"
@@ -17,10 +17,16 @@ import { useAuth } from "@/lib/contexts/auth-context"
 export function GlobalHeader() {
   const { theme, setTheme } = useTheme()
   const [userStatus, setUserStatus] = useState("Online")
+  const [mounted, setMounted] = useState(false)
   const { notifications } = useNotifications()
   const router = useRouter()
   const isMobile = useIsMobile()
   const { user, profile, organization, signOut, loading } = useAuth()
+
+  // Prevent hydration mismatch with theme
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Format user data from profile
   const userData = {
@@ -55,13 +61,18 @@ export function GlobalHeader() {
   return (
     <header className="h-12 md:h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center px-4 md:px-6 gap-3 md:gap-6 fixed top-0 left-0 right-0 z-50">
       <div className="flex items-center gap-2">
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kroolo%20Logo-kuyVfAB5iW8WooZbrbQmPXSHHTVv6Q.png"
-          alt="Kroolo"
-          width={isMobile ? 80 : 100}
-          height={isMobile ? 22 : 28}
-          className={`${isMobile ? "h-5" : "h-7"} w-auto`}
-        />
+        {mounted && (
+          <Image
+            src={theme === 'dark' ? '/images/kroolo-dark-logo2.svg' : '/images/kroolo-light-logo1.svg'}
+            alt="Kroolo"
+            width={isMobile ? 80 : 100}
+            height={isMobile ? 22 : 28}
+            className={`${isMobile ? "h-5" : "h-7"} w-auto`}
+          />
+        )}
+        {!mounted && (
+          <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-gray-200 dark:bg-gray-700 animate-pulse rounded`} />
+        )}
       </div>
 
       <div className="hidden sm:block flex-1">
