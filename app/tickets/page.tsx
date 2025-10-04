@@ -747,23 +747,23 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Ticket</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Reported By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Assignee</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Reported Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Due Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-100">Priority</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
+         <div className="bg-card border border-border rounded-lg overflow-hidden">
+           <div className="overflow-x-auto">
+             <table className="w-full border-collapse">
+               <thead>
+                 <tr className="bg-muted/50 border-b border-border">
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
+                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
+                 </tr>
+               </thead>
+               <tbody className="bg-card">
                 {(() => {
                   console.log('⚙️ Rendering tickets table with:', { 
                     currentLoading: loading, 
@@ -805,40 +805,40 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 ) : (
                   Object.entries(groupedTickets).map(([groupName, groupTickets]) => (
                     <React.Fragment key={groupName}>
-                      {groupBy !== "none" && (
-                        <tr className="bg-gray-100 border-b border-gray-200">
-                          <td colSpan={9} className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-700">{groupName}</span>
-                              <span className="text-sm text-gray-500">({groupTickets.length} tickets)</span>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      {groupTickets.map((ticket, index) => (
-                  <tr
-                    key={ticket.id}
-                          className="bg-white border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
-                  >
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
+                       {groupBy !== "none" && (
+                         <tr className="bg-muted/30 border-b border-border">
+                           <td colSpan={9} className="px-4 py-3">
+                             <div className="flex items-center gap-2">
+                               <span className="font-semibold text-foreground">{groupName}</span>
+                               <span className="text-sm text-muted-foreground">({groupTickets.length} tickets)</span>
+                             </div>
+                           </td>
+                         </tr>
+                       )}
+                       {groupTickets.map((ticket, index) => (
+                   <tr
+                     key={ticket.id}
+                           className="bg-card border-b border-border hover:bg-muted/50 last:border-b-0"
+                   >
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
-                        <div className="text-sm text-gray-500">{ticket.id}</div>
+                        <div className="text-sm font-medium text-foreground">{ticket.title}</div>
+                        <div className="text-sm text-muted-foreground">{ticket.id}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-200">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         ticket.status === "new" 
-                          ? "bg-blue-100 text-blue-800"
+                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
                           : ticket.status === "in_progress"
-                            ? "bg-yellow-100 text-yellow-800"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
                             : ticket.status === "review"
-                              ? "bg-purple-100 text-purple-800"
+                              ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
                               : ticket.status === "pending"
-                                ? "bg-gray-100 text-gray-800"
+                                ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                                 : ticket.status === "open"
-                                  ? "bg-gray-100 text-gray-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                       }`}>
                         {ticket.status === "new" ? "New" : 
                          ticket.status === "in_progress" ? "In Progress" :
@@ -848,7 +848,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                          ticket.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
+                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
                       <div className="flex items-center">
                         <div
                           className={`h-8 w-8 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
@@ -858,50 +858,50 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         </div>
                       </div>
                     </td>
-<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
-                      <div className="flex items-center">
-                        {ticket.assignee ? (
-                          <div
-                            className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
-                            title={ticket.assignee.name}
-                          >
-                            {ticket.assignee.avatar}
-                          </div>
-                        ) : (
-                          <div
-                            className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium"
-                            title="Unassigned"
-                          >
-                            ?
-                          </div>
-                        )}
-                      </div>
-                    </td>
-<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
-                      <span className="text-sm text-gray-900">{ticket.reportedDate}</span>
-                    </td>
-<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
-                      <span className="text-sm text-gray-900">{ticket.dueDate}</span>
-                    </td>
-<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
-<span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-                        {ticket.displayType}
-                      </span>
-                    </td>
-<td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
+ <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+                       <div className="flex items-center">
+                         {ticket.assignee ? (
+                           <div
+                             className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                             title={ticket.assignee.name}
+                           >
+                             {ticket.assignee.avatar}
+                           </div>
+                         ) : (
+                           <div
+                             className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium"
+                             title="Unassigned"
+                           >
+                             ?
+                           </div>
+                         )}
+                       </div>
+                     </td>
+ <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+                       <span className="text-sm text-foreground">{ticket.reportedDate}</span>
+                     </td>
+ <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+                       <span className="text-sm text-foreground">{ticket.dueDate}</span>
+                     </td>
+ <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+ <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                         {ticket.displayType}
+                       </span>
+                     </td>
+ <td className="px-4 py-4 whitespace-nowrap border-r border-border">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
-                            ? "bg-red-100 text-red-800"
+                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                             : ticket.priority === "high"
-                              ? "bg-red-100 text-red-800"
+                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                               : ticket.priority === "medium"
-                                ? "bg-orange-100 text-orange-800"
+                                ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
                                 : ticket.priority === "low"
-                                  ? "bg-green-100 text-green-800"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                   : ticket.priority === "critical"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-gray-100 text-gray-800"
+                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                         }`}
                       >
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
@@ -911,7 +911,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                       <div className="flex items-center justify-between">
                         <Input
                           placeholder="Add notes..."
-                          className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-gray-500 flex-1"
+                          className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-muted-foreground flex-1"
                           defaultValue={ticket.notes || "Customer reported via email"}
                         />
                         <DropdownMenu>
@@ -1331,17 +1331,17 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         <div className="flex-1 space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight font-sans text-gray-900">
-                  All Tickets
-                </h1>
-                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
-                  {tickets?.length || 0}
-                </span>
-              </div>
-              <p className="text-gray-500 text-sm font-sans">
-                Manage all support tickets and track customer issues effortlessly.
-              </p>
+               <div className="flex items-center gap-2">
+                 <h1 className="text-2xl font-semibold tracking-tight font-sans text-foreground">
+                   All Tickets
+                 </h1>
+                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                   {tickets?.length || 0}
+                 </span>
+               </div>
+               <p className="text-muted-foreground text-sm font-sans">
+                 Manage all support tickets and track customer issues effortlessly.
+               </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -1369,33 +1369,33 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-200">
-              <div className="flex items-center gap-0">
-                <button
-                  onClick={() => setCurrentView("list")}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    currentView === "list"
-                      ? "text-blue-600 border-blue-600"
-                      : "text-gray-500 border-transparent hover:text-gray-700"
-                  }`}
-                >
-                  List
-                </button>
-                <button
-                  onClick={() => setCurrentView("kanban")}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    currentView === "kanban"
-                      ? "text-blue-600 border-blue-600"
-                      : "text-gray-500 border-transparent hover:text-gray-700"
-                  }`}
-                >
-                  Kanban
-                </button>
-              </div>
+           <div className="space-y-4">
+             <div className="flex items-center justify-between border-b border-border">
+               <div className="flex items-center gap-0">
+                 <button
+                   onClick={() => setCurrentView("list")}
+                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                     currentView === "list"
+                       ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+                       : "text-muted-foreground border-transparent hover:text-foreground"
+                   }`}
+                 >
+                   List
+                 </button>
+                 <button
+                   onClick={() => setCurrentView("kanban")}
+                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                     currentView === "kanban"
+                       ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+                       : "text-muted-foreground border-transparent hover:text-foreground"
+                   }`}
+                 >
+                   Kanban
+                 </button>
+               </div>
 
-            </div>
-          </div>
+             </div>
+           </div>
 
 
           {currentView === "list" && renderListView()}
@@ -1696,10 +1696,10 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
           <DialogHeader>
             <DialogTitle>Filter Tickets</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
-            {/* Type Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Type</label>
+           <div className="space-y-6">
+             {/* Type Filter */}
+             <div>
+               <label className="text-sm font-medium text-foreground mb-2 block">Type</label>
               <div className="flex flex-wrap gap-2">
                 {['incident', 'request', 'problem', 'change', 'general_query'].map((type) => (
                   <Button
@@ -1722,9 +1722,9 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
               </div>
             </div>
 
-            {/* Priority Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Priority</label>
+             {/* Priority Filter */}
+             <div>
+               <label className="text-sm font-medium text-foreground mb-2 block">Priority</label>
               <div className="flex flex-wrap gap-2">
                 {['low', 'medium', 'high', 'critical', 'urgent'].map((priority) => (
                   <Button
@@ -1747,9 +1747,9 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+             {/* Status Filter */}
+             <div>
+               <label className="text-sm font-medium text-foreground mb-2 block">Status</label>
               <div className="flex flex-wrap gap-2">
                 {['new', 'in_progress', 'pending', 'resolved', 'closed'].map((status) => (
                   <Button
@@ -1772,12 +1772,12 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
               </div>
             </div>
 
-            {/* Date Range Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">From</label>
+             {/* Date Range Filter */}
+             <div>
+               <label className="text-sm font-medium text-foreground mb-2 block">Date Range</label>
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <label className="text-xs text-muted-foreground mb-1 block">From</label>
                   <Input
                     type="date"
                     value={activeFilters.dateRange.from}
@@ -1788,8 +1788,8 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
                     className="text-sm"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">To</label>
+                 <div>
+                   <label className="text-xs text-muted-foreground mb-1 block">To</label>
                   <Input
                     type="date"
                     value={activeFilters.dateRange.to}
