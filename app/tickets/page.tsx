@@ -580,7 +580,8 @@ export default function TicketsPage() {
       comments: 0, // Will be updated when we implement comments
       attachments: 0, // Will be updated when we implement attachments
       priority: ticket.priority,
-      type: ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : "Unknown",
+      type: ticket.type || "Unknown", // Keep original type for grouping
+      displayType: ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : "Unknown", // For display
       notes: "Customer reported via email", // Default notes
       category: "",
       subcategory: "",
@@ -963,7 +964,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           successCount++
           console.log(`✅ Ticket ${i + 1} created successfully`)
           
-        } catch (error) {
+      } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
           console.error(`❌ Error creating ticket ${i + 1}:`, errorMessage)
           importErrors.push(`Row ${i + 1} (${ticket.title}): ${errorMessage}`)
@@ -1171,10 +1172,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         </tr>
                       )}
                       {groupTickets.map((ticket, index) => (
-                        <tr
-                          key={ticket.id}
+                  <tr
+                    key={ticket.id}
                           className="bg-white border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
-                        >
+                  >
                     <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
@@ -1240,16 +1241,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     </td>
 <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
 <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-                        {ticket.type === "general_query" ? "General Query" : 
-                         ticket.type === "incident" ? "Incident" :
-                         ticket.type === "request" ? "Request" :
-                         ticket.type === "problem" ? "Problem" :
-                         ticket.type}
+                        {ticket.displayType}
                       </span>
                     </td>
 <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <span
-className={`text-xs px-2 py-1 rounded-full ${
+                        className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
                             ? "bg-red-100 text-red-800"
                             : ticket.priority === "high"
@@ -1296,10 +1293,10 @@ className={`text-xs px-2 py-1 rounded-full ${
                         </DropdownMenu>
                       </div>
                     </td>
-                        </tr>
+                  </tr>
                       ))}
                     </React.Fragment>
-                  ))
+                ))
                 )}
               </tbody>
             </table>
@@ -1407,6 +1404,7 @@ className={`text-xs px-2 py-1 rounded-full ${
   )
 
   const getKanbanColumns = useCallback(() => {
+    console.log('🎯 getKanbanColumns called with kanbanGroupBy:', kanbanGroupBy)
     switch (kanbanGroupBy) {
       case "status":
         return [
@@ -1429,18 +1427,20 @@ className={`text-xs px-2 py-1 rounded-full ${
           { id: "general", title: "General", count: 0, color: "border-t-purple-400" },
           { id: "feature", title: "Feature Request", count: 0, color: "border-t-orange-400" },
         ]
-      default: // type - use dynamic ticket types from database
-        return ticketTypes.map(type => ({
-          id: type.label, // Use the display label for matching
-          title: type.label,
-          count: 0,
-          color: type.color
-        }))
+      default: // type - use hardcoded ticket types to ensure consistency
+        return [
+          { id: "incident", title: "Incident", count: 0, color: "border-t-red-400" },
+          { id: "request", title: "Request", count: 0, color: "border-t-blue-400" },
+          { id: "problem", title: "Problem", count: 0, color: "border-t-orange-400" },
+          { id: "change", title: "Change", count: 0, color: "border-t-green-400" },
+          { id: "general_query", title: "General Query", count: 0, color: "border-t-purple-400" },
+        ]
     }
-  }, [kanbanGroupBy, ticketTypes])
+  }, [kanbanGroupBy])
 
   const getTicketsByGroup = useCallback(
     (groupValue: string) => {
+      console.log('🎯 getTicketsByGroup called with groupValue:', groupValue, 'kanbanGroupBy:', kanbanGroupBy)
       return filteredTickets.filter((ticket) => {
         switch (kanbanGroupBy) {
           case "status":
@@ -1456,18 +1456,16 @@ className={`text-xs px-2 py-1 rounded-full ${
               "General Query": "general",
             }
             return categoryMap[ticket.type] === groupValue
-          default: // type - match with dynamic ticket types
-            // Find the corresponding ticket type value for the group
-            const ticketType = ticketTypes.find(type => type.label === groupValue)
-            if (ticketType) {
-              return ticket.type === ticketType.label
-            }
+          case "type":
+            // Direct type matching for Kanban view
+            return ticket.type === groupValue
+          default:
             // Fallback to exact match for backward compatibility
             return ticket.type === groupValue
         }
       })
     },
-    [filteredTickets, kanbanGroupBy, ticketTypes],
+    [filteredTickets, kanbanGroupBy],
   )
 
   const renderKanbanView = useCallback(
@@ -1587,7 +1585,11 @@ className={`text-xs px-2 py-1 rounded-full ${
               </div>
 
               <div className="space-y-3 px-4">
-                {getTicketsByGroup(column.id).map((ticket) => (
+                {(() => {
+                  const ticketsInGroup = getTicketsByGroup(column.id)
+                  console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map(t => ({ id: t.id, title: t.title, type: t.type })))
+                  return ticketsInGroup
+                })().map((ticket) => (
                   <Card
                     key={ticket.id}
                     className={`hover:shadow-md transition-all cursor-move border border-border bg-card ${
@@ -1884,22 +1886,22 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
           <div className="space-y-6">
             {/* File Selection */}
             {!importProgress && !importResult && (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Select file to import</label>
-                  <Input
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                    className="cursor-pointer"
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Select file to import</label>
+              <Input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="cursor-pointer"
                     disabled={isImporting}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
-                </div>
+              />
+              <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+            </div>
 
                 <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
                   <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
-                  <ul className="text-xs text-muted-foreground space-y-1">
+              <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• <strong>Required columns:</strong> Title, Priority, Type</li>
                     <li>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</li>
                     <li>• <strong>Priority values:</strong> low, medium, high, urgent, critical</li>
@@ -1907,21 +1909,21 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
                     <li>• <strong>Status values:</strong> new, open, in_progress, pending, resolved, closed</li>
                     <li>• <strong>Maximum file size:</strong> 10MB</li>
                     <li>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</li>
-                  </ul>
-                </div>
+              </ul>
+            </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                    Cancel
-                  </Button>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+                Cancel
+              </Button>
                   <Button 
                     onClick={handleImportTickets} 
                     disabled={!importFile || isImporting}
                     className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
                   >
-                    Import Tickets
-                  </Button>
-                </div>
+                Import Tickets
+              </Button>
+            </div>
               </div>
             )}
 
