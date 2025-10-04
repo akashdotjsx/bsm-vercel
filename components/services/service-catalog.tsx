@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useMode } from "@/lib/contexts/mode-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
+import { useServices } from "@/lib/hooks/use-services"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,7 +54,8 @@ import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/li
 
 export function ServiceCatalog() {
   const { mode } = useMode()
-  const { categories, loading, error, addCategory } = useServiceCategories()
+  const { categories, loading, error, addCategory, refetch } = useServiceCategories()
+  const { addService, updateService, deleteService, loading: serviceLoading, error: serviceError } = useServices()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("popularity")
@@ -114,10 +116,36 @@ export function ServiceCatalog() {
     }
   }
 
-  const handleAddService = () => {
-    // TODO: Implement service creation via API
-    setNewService({ name: "", description: "", sla: "", popularity: 3 })
-    setShowAddServiceModal(false)
+  const handleAddService = async () => {
+    if (!newService.name || !selectedCategoryForService) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    try {
+      const serviceData = {
+        name: newService.name,
+        description: newService.description,
+        category_id: selectedCategoryForService,
+        estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
+        popularity_score: newService.popularity
+      }
+
+      await addService(serviceData)
+      
+      // Reset form and close modal
+      setNewService({ name: "", description: "", sla: "", popularity: 3 })
+      setSelectedCategoryForService("")
+      setShowAddServiceModal(false)
+      
+      // Refresh categories to show the new service
+      await refetch()
+      
+      alert(`Service "${newService.name}" has been added successfully!`)
+    } catch (error) {
+      console.error('Error adding service:', error)
+      alert(`Failed to add service: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   const handleEditService = () => {
@@ -174,6 +202,30 @@ export function ServiceCatalog() {
     }
     return true
   })
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"></div>
+        <span>Loading service catalog...</span>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error && !categories.length) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-600 mb-4">
+          Error loading service catalog: {error}
+        </div>
+        <Button onClick={refetch} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -246,76 +298,98 @@ export function ServiceCatalog() {
 
       {/* Service Categories */}
       <div className="space-y-6">
-        {filteredServices.map((category) => {
-          const Icon = category.icon
-          return (
-            <Card key={category.id} className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${category.color} text-white`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+        {filteredServices.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 mb-4">
+              {searchTerm ? `No categories found matching "${searchTerm}"` : 'No service categories found.'}
+            </div>
+            {!searchTerm && (
+              <Button onClick={() => setShowAddCategoryModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Category
+              </Button>
+            )}
+          </div>
+        ) : (
+          filteredServices.map((category) => {
+            const Icon = category.icon
+            return (
+              <Card key={category.id} className="overflow-hidden">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${category.color} text-white`}>
+                        <Icon className="h-6 w-6" />
                       </div>
-                      <p className="text-gray-600 mt-1">{category.description} • Owner: System</p>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
+                          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                        </div>
+                        <p className="text-gray-600 mt-1">{category.description} • Owner: System</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-sm"
+                        onClick={() => {
+                          setSelectedCategoryForService(category.id)
+                          setShowAddServiceModal(true)
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Service
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="text-sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Service
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {category.services.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {category.services.map((service, index) => (
-                      <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-1">{service.name}</h4>
-                            <p className="text-sm text-gray-600 mb-3">{service.description}</p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                <span>{service.sla}</span>
+                </CardHeader>
+                <CardContent>
+                  {category.services.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {category.services.map((service, index) => (
+                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 mb-1">{service.name}</h4>
+                              <p className="text-sm text-gray-600 mb-3">{service.description}</p>
+                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  <span>{service.sla}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              {Array.from({ length: service.popularity }).map((_, i) => (
-                                <span key={i} className="text-yellow-400">
-                                  ★
-                                </span>
-                              ))}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: service.popularity }).map((_, i) => (
+                                  <span key={i} className="text-yellow-400">
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    No services in this category yet. Click "Add Service" to get started.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No services in this category yet. Click "Add Service" to get started.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })
+        )}
       </div>
 
       {/* Add Category Modal */}
@@ -377,6 +451,92 @@ export function ServiceCatalog() {
           <DialogFooter>
             <Button onClick={handleAddCategory} className="text-[13px]">
               Add Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Service Modal */}
+      <Dialog open={showAddServiceModal} onOpenChange={setShowAddServiceModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Service</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Create a new service in the selected category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="service-name" className="text-[13px]">
+                Service Name
+              </Label>
+              <Input
+                id="service-name"
+                value={newService.name}
+                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                placeholder="e.g., Email Setup"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="service-description" className="text-[13px]">
+                Description
+              </Label>
+              <Textarea
+                id="service-description"
+                value={newService.description}
+                onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                placeholder="Brief description of the service"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="service-sla" className="text-[13px]">
+                SLA (Service Level Agreement)
+              </Label>
+              <Input
+                id="service-sla"
+                value={newService.sla}
+                onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
+                placeholder="e.g., 2 business days"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="service-popularity" className="text-[13px]">
+                Popularity (1-5 stars)
+              </Label>
+              <Select
+                value={newService.popularity.toString()}
+                onValueChange={(value) => setNewService({ ...newService, popularity: parseInt(value) })}
+              >
+                <SelectTrigger className="text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Star</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAddServiceModal(false)}
+              className="text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddService} 
+              className="text-[13px]"
+              disabled={serviceLoading || !newService.name.trim()}
+            >
+              {serviceLoading ? 'Adding...' : 'Add Service'}
             </Button>
           </DialogFooter>
         </DialogContent>
