@@ -471,7 +471,7 @@ export default function UsersPage() {
           </div>
           <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
             <DialogTrigger asChild>
-              <Button className="text-[13px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white">
+              <Button className="text-sm font-semibold">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add User
               </Button>
@@ -570,7 +570,7 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center">
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
@@ -583,7 +583,7 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center">
                   <Shield className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="ml-4">
@@ -596,7 +596,7 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-purple-50 dark:bg-purple-950/20 flex items-center justify-center">
                   <Users className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
@@ -609,7 +609,7 @@ export default function UsersPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
                   <Calendar className="h-6 w-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
@@ -631,48 +631,48 @@ export default function UsersPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-[13px]">Users</CardTitle>
+              <CardTitle className="text-lg font-bold">Users</CardTitle>
               {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
             </div>
-            <CardDescription className="text-[13px]">Manage user accounts and permissions</CardDescription>
+            <CardDescription className="text-sm">Manage user accounts and permissions</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">User</th>
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">Role</th>
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">Department</th>
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">Created On</th>
-                    <th className="text-left py-3 px-4 font-medium text-[13px]">Actions</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 font-semibold text-sm">User</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Department</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Created On</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-muted/50">
                       <td className="py-3 px-4">
                         <div>
-                          <div className="font-medium text-[13px]">
+                          <div className="font-semibold text-sm">
                             {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
                           </div>
-                          <div className="text-[13px] text-muted-foreground flex items-center">
+                          <div className="text-sm text-muted-foreground flex items-center">
                             <Mail className="mr-1 h-3 w-3" />
                             {user.email}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[13px]">{user.role || 'N/A'}</td>
-                      <td className="py-3 px-4 text-[13px]">{user.department || 'N/A'}</td>
+                      <td className="py-3 px-4 text-sm">{user.role || 'N/A'}</td>
+                      <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
                         {user.is_active ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-emerald-100 text-emerald-700">Active</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">Active</span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-rose-100 text-rose-700">Inactive</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">Inactive</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-[13px]">{formatDate(user.created_at)}</td>
+                      <td className="py-3 px-4 text-sm">{formatDate(user.created_at)}</td>
                       <td className="py-3 px-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -721,16 +721,16 @@ export default function UsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-[13px]">Teams</CardTitle>
+                  <CardTitle className="text-lg font-bold">Teams</CardTitle>
                   {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
                 </div>
-                <CardDescription className="text-[13px]">
+                <CardDescription className="text-sm">
                   Organize users into teams for better collaboration
                 </CardDescription>
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
-                  <Button className="text-[13px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white">
+                  <Button className="text-sm font-semibold">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Team
                   </Button>
@@ -819,13 +819,13 @@ export default function UsersPage() {
               {teams.map((team) => (
                 <Card
                   key={team.id}
-                  className="border border-border/60 rounded-xl shadow-[0_1px_0_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow bg-white"
+                  className="hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-medium text-[13px] leading-6 text-foreground">{team.name}</h3>
+                      <h3 className="font-semibold text-sm">{team.name}</h3>
                       <div className="flex items-center space-x-2">
-                        <span className="inline-flex items-center rounded-full bg-violet-50 text-violet-700 px-3 py-1 text-[12px] font-medium">
+                        <span className="inline-flex items-center rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-200 px-3 py-1 text-xs font-medium">
                           {(team as any).members || (team as any).team_members?.length || 0} members
                         </span>
                         <DropdownMenu>
@@ -848,11 +848,11 @@ export default function UsersPage() {
                         </DropdownMenu>
                       </div>
                     </div>
-                    <p className="text-[13px] text-muted-foreground mb-3">{team.description}</p>
-                    <div className="flex items-center text-[13px]">
-                      <Users className="mr-1 h-3 w-3" />
+                    <p className="text-sm text-muted-foreground mb-3">{team.description}</p>
+                    <div className="flex items-center text-sm">
+                      <Users className="mr-1 h-3 w-3 text-muted-foreground" />
                       <span className="text-muted-foreground">Lead: </span>
-                      <span className="ml-1 font-medium">{(team as any).lead?.display_name || 'N/A'}</span>
+                      <span className="ml-1 font-semibold">{(team as any).lead?.display_name || 'N/A'}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -1064,7 +1064,7 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {departments.map((dept) => (
-                  <div key={dept} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+<div key={dept} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900/40 rounded">
                     <span className="text-[13px]">{dept}</span>
                     <Button
                       variant="ghost"
