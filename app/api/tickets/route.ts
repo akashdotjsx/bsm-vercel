@@ -115,6 +115,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('📝 API Route - Creating ticket with data:', body)
+    
     const {
       title,
       description,
@@ -136,32 +138,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Generate ticket number
-    const ticketNumber = `TK-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+    // Generate unique ticket number
+    const timestamp = Date.now()
+    const randomString = Math.random().toString(36).substr(2, 6).toUpperCase()
+    const ticketNumber = `TK-${timestamp}-${randomString}`
+    
+    console.log('🎫 Generated ticket number:', ticketNumber)
+
+    // Prepare ticket data, only including defined values
+    const ticketData: any = {
+      organization_id: profile.organization_id,
+      ticket_number: ticketNumber,
+      title,
+      description,
+      type,
+      priority,
+      urgency,
+      impact,
+      status: 'new',
+      requester_id: user.id,
+      due_date: due_date ? new Date(due_date).toISOString() : null,
+      tags: tags || [],
+      custom_fields,
+      channel: 'web'
+    }
+
+    // Only include optional fields if they have values
+    if (category) ticketData.category = category
+    if (subcategory) ticketData.subcategory = subcategory
+    if (assignee_id) ticketData.assignee_id = assignee_id
+    if (team_id) ticketData.team_id = team_id
+
+    console.log('📝 API Route - Inserting ticket data:', ticketData)
 
     // Create ticket
     const { data: ticket, error } = await supabase
       .from('tickets')
-      .insert({
-        organization_id: profile.organization_id,
-        ticket_number: ticketNumber,
-        title,
-        description,
-        type,
-        category,
-        subcategory,
-        priority,
-        urgency,
-        impact,
-        status: 'new',
-        requester_id: user.id,
-        assignee_id,
-        team_id,
-        due_date: due_date ? new Date(due_date).toISOString() : null,
-        tags,
-        custom_fields,
-        channel: 'web'
-      })
+      .insert(ticketData)
       .select(`
         *,
         requester:profiles!tickets_requester_id_fkey(id, first_name, last_name, display_name, email, avatar_url),
@@ -171,8 +184,29 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error creating ticket:', error)
-      return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 })
+      console.error('❌ API Route - Error creating ticket:', error)
+      console.error('❌ API Route - Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      
+      // Provide more specific error messages based on error codes
+      let errorMessage = 'Failed to create ticket'
+      if (error.code === '23503') {
+        errorMessage = 'Foreign key constraint violation - check if referenced records exist'
+      } else if (error.code === '23505') {
+        errorMessage = 'Duplicate entry - ticket number already exists'
+      } else if (error.code === '23514') {
+        errorMessage = 'Check constraint violation - invalid data values'
+      }
+      
+      return NextResponse.json({ 
+        error: errorMessage, 
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
 
     // Create initial history entry
