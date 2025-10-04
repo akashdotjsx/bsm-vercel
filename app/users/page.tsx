@@ -25,6 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Users,
+  User,
   UserPlus,
   Search,
   Filter,
@@ -469,13 +470,13 @@ export default function UsersPage() {
               Manage Departments
             </Button>
           </div>
-          <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
-            <DialogTrigger asChild>
-              <Button className="text-sm font-semibold">
+           <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+             <DialogTrigger asChild>
+              <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add User
               </Button>
-            </DialogTrigger>
+             </DialogTrigger>
             <DialogContent className="font-sans">
               <DialogHeader>
                 <DialogTitle className="text-[13px]">Add New User</DialogTitle>
@@ -565,67 +566,67 @@ export default function UsersPage() {
           </Dialog>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-[13px] font-medium text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-[13px] font-medium text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-purple-50 dark:bg-purple-950/20 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-[13px] font-medium text-muted-foreground">Teams</p>
-                  <p className="text-2xl font-bold">{teams.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-[13px] font-medium text-muted-foreground">New This Month</p>
-                  <p className="text-2xl font-bold">{users.filter((u) => {
-                    const createdDate = new Date(u.created_at)
-                    const now = new Date()
-                    const thisMonth = now.getMonth()
-                    const thisYear = now.getFullYear()
-                    return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
-                  }).length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+         {/* Stats Cards */}
+         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+           <Card>
+             <CardContent className="p-6">
+               <div className="flex items-center">
+                 <div className="h-12 w-12 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center">
+<User className="h-7 w-7 text-blue-600" />
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-[13px] font-medium text-muted-foreground">Total Users</p>
+                   <p className="text-2xl font-bold">{users.length}</p>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="flex items-center">
+                 <div className="h-12 w-12 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center">
+<Shield className="h-7 w-7 text-emerald-600" />
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-[13px] font-medium text-muted-foreground">Active Users</p>
+                   <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="flex items-center">
+                 <div className="h-12 w-12 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center">
+<Users className="h-7 w-7 text-purple-600" />
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-[13px] font-medium text-muted-foreground">Teams</p>
+                   <p className="text-2xl font-bold">{teams.length}</p>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+           <Card>
+             <CardContent className="p-6">
+               <div className="flex items-center">
+                 <div className="h-12 w-12 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center">
+<Calendar className="h-7 w-7 text-orange-600" />
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-[13px] font-medium text-muted-foreground">New This Month</p>
+                   <p className="text-2xl font-bold">{users.filter((u) => {
+                     const createdDate = new Date(u.created_at)
+                     const now = new Date()
+                     const thisMonth = now.getMonth()
+                     const thisYear = now.getFullYear()
+                     return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
+                   }).length}</p>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+         </div>
 
         {/* Users Table */}
         <Card>
@@ -666,10 +667,10 @@ export default function UsersPage() {
                       <td className="py-3 px-4 text-sm">{user.role || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
-                        {user.is_active ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">Active</span>
+{user.is_active ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Active</span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">Inactive</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Inactive</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-sm">{formatDate(user.created_at)}</td>
@@ -730,7 +731,7 @@ export default function UsersPage() {
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
-                  <Button className="text-sm font-semibold">
+                  <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Team
                   </Button>
@@ -819,13 +820,13 @@ export default function UsersPage() {
               {teams.map((team) => (
                 <Card
                   key={team.id}
-                  className="hover:shadow-md transition-shadow"
+                  className="border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold text-sm">{team.name}</h3>
                       <div className="flex items-center space-x-2">
-                        <span className="inline-flex items-center rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-200 px-3 py-1 text-xs font-medium">
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-white text-gray-600 px-3 py-1 text-xs font-medium">
                           {(team as any).members || (team as any).team_members?.length || 0} members
                         </span>
                         <DropdownMenu>
