@@ -1,6 +1,7 @@
 "use client"
 
-import type React from "react"
+import React from "react"
+import type { FC } from "react"
 
 import dynamic from "next/dynamic"
 import { useState, useCallback, useMemo, Suspense, useEffect } from "react"
@@ -37,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useTickets } from "@/hooks/use-tickets"
 import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
+import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -477,6 +479,7 @@ export default function TicketsPage() {
     error, 
     pagination, 
     refetch,
+    createTicket,
     updateTicket
   } = useTickets(ticketsParams)
 
@@ -522,25 +525,52 @@ export default function TicketsPage() {
   const [aiInput, setAiInput] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  
+  // Filter dialog state
+  const [showFilterDialog, setShowFilterDialog] = useState(false)
+  const [activeFilters, setActiveFilters] = useState<{
+    type: string[]
+    priority: string[]
+    status: string[]
+    assignee: string[]
+    dateRange: { from: string; to: string }
+  }>({
+    type: [],
+    priority: [],
+    status: [],
+    assignee: [],
+    dateRange: { from: '', to: '' }
+  })
 
   // Transform API ticket data to match the expected format
   const transformedTickets = useMemo(() => {
     if (!tickets || tickets.length === 0) return []
     
-    return tickets.map((ticket) => ({
+    console.log('🔄 Transforming tickets:', tickets)
+    
+    return tickets.map((ticket) => {
+      console.log('🎫 Processing ticket:', ticket.title)
+      console.log('🎫 Requester data:', ticket.requester)
+      console.log('🎫 Requester display_name:', ticket.requester?.display_name)
+      console.log('🎫 Requester first_name:', ticket.requester?.first_name)
+      console.log('🎫 Requester last_name:', ticket.requester?.last_name)
+      return {
       id: `#${ticket.ticket_number}`, // Display ID for UI
       dbId: ticket.id, // Database ID for API calls
       title: ticket.title,
       description: ticket.description || "",
       company: "Kroolo BSM", // Default company name
       companyLogo: "K",
-      companyColor: getAvatarColor(ticket.requester_display_name || "Unknown"),
-      customer: ticket.requester_display_name || "Unknown",
-      reportedBy: ticket.requester_display_name || "Unknown",
-      reportedByAvatar: getAvatarInitials(ticket.requester_first_name, ticket.requester_last_name, ticket.requester_display_name),
-      assignee: ticket.assignee_display_name ? {
-        name: ticket.assignee_display_name,
-        avatar: getAvatarInitials(ticket.assignee_first_name, ticket.assignee_last_name, ticket.assignee_display_name)
+      companyColor: getAvatarColor(ticket.requester?.display_name || ticket.requester?.email || "Unknown"),
+      customer: ticket.requester?.display_name || ticket.requester?.email || "Unknown",
+      reportedBy: ticket.requester?.display_name || ticket.requester?.email || "Unknown",
+      reportedByAvatar: getAvatarInitials(ticket.requester?.first_name, ticket.requester?.last_name, ticket.requester?.display_name) || "??",
+      assignee: ticket.assignee?.display_name ? {
+        name: ticket.assignee.display_name,
+        avatar: getAvatarInitials(ticket.assignee.first_name, ticket.assignee.last_name, ticket.assignee.display_name)
       } : null,
       status: ticket.status,
       timestamp: formatDate(ticket.created_at),
@@ -556,7 +586,8 @@ export default function TicketsPage() {
       subcategory: "",
       urgency: "medium",
       impact: "medium"
-    }))
+      }
+    })
   }, [tickets])
 
   // Initialize local tickets when transformedTickets changes
@@ -568,8 +599,70 @@ export default function TicketsPage() {
 
   const filteredTickets = useMemo(() => {
     // Use local tickets for Kanban view, transformed tickets for list view
-    return currentView === "kanban" ? localTickets : (transformedTickets || [])
-  }, [localTickets, transformedTickets, currentView])
+    const baseTickets = currentView === "kanban" ? localTickets : (transformedTickets || [])
+    
+    // Apply client-side filtering for list view (API already handles some filtering)
+    if (currentView === "list") {
+      return baseTickets.filter(ticket => {
+        // Search filter
+        if (searchTerm) {
+          const searchLower = searchTerm.toLowerCase()
+          const matchesSearch = 
+            ticket.title.toLowerCase().includes(searchLower) ||
+            ticket.description.toLowerCase().includes(searchLower) ||
+            ticket.id.toLowerCase().includes(searchLower) ||
+            ticket.reportedBy.toLowerCase().includes(searchLower) ||
+            (ticket.assignee?.name || '').toLowerCase().includes(searchLower)
+          
+          if (!matchesSearch) return false
+        }
+        
+        // Type filter (from active filters)
+        if (activeFilters.type.length > 0) {
+          const ticketType = ticket.type?.toLowerCase() || ''
+          if (!activeFilters.type.some(type => type.toLowerCase() === ticketType)) return false
+        } else if (selectedType !== "all") {
+          const ticketType = ticket.type?.toLowerCase() || ''
+          const selectedTypeLower = selectedType.toLowerCase()
+          if (ticketType !== selectedTypeLower) return false
+        }
+        
+        // Priority filter (from active filters)
+        if (activeFilters.priority.length > 0) {
+          const ticketPriority = ticket.priority?.toLowerCase() || ''
+          if (!activeFilters.priority.some(priority => priority.toLowerCase() === ticketPriority)) return false
+        } else if (selectedPriority !== "all") {
+          const ticketPriority = ticket.priority?.toLowerCase() || ''
+          const selectedPriorityLower = selectedPriority.toLowerCase()
+          if (ticketPriority !== selectedPriorityLower) return false
+        }
+        
+        // Status filter (from active filters)
+        if (activeFilters.status.length > 0) {
+          const ticketStatus = ticket.status?.toLowerCase() || ''
+          if (!activeFilters.status.some(status => status.toLowerCase() === ticketStatus)) return false
+        } else if (selectedStatus !== "all") {
+          const ticketStatus = ticket.status?.toLowerCase() || ''
+          const selectedStatusLower = selectedStatus.toLowerCase()
+          if (ticketStatus !== selectedStatusLower) return false
+        }
+        
+        // Date range filter
+        if (activeFilters.dateRange.from || activeFilters.dateRange.to) {
+          const ticketDate = new Date(ticket.created_at || ticket.date)
+          const fromDate = activeFilters.dateRange.from ? new Date(activeFilters.dateRange.from) : null
+          const toDate = activeFilters.dateRange.to ? new Date(activeFilters.dateRange.to) : null
+          
+          if (fromDate && ticketDate < fromDate) return false
+          if (toDate && ticketDate > toDate) return false
+        }
+        
+        return true
+      })
+    }
+    
+    return baseTickets
+  }, [localTickets, transformedTickets, currentView, searchTerm, selectedType, selectedPriority, selectedStatus, activeFilters])
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
@@ -584,6 +677,49 @@ export default function TicketsPage() {
     },
     [filteredTickets],
   )
+
+  // Group tickets by the selected grouping option
+  const groupedTickets = useMemo(() => {
+    if (groupBy === "none") {
+      return { "All Tickets": filteredTickets }
+    }
+
+    const groups: { [key: string]: any[] } = {}
+    
+    filteredTickets.forEach(ticket => {
+      let groupKey = "Unassigned"
+      
+      switch (groupBy) {
+        case "status":
+          groupKey = ticket.status || "Unknown"
+          break
+        case "priority":
+          groupKey = ticket.priority || "Unknown"
+          break
+        case "type":
+          groupKey = ticket.type || "Unknown"
+          break
+        case "dueDate":
+          groupKey = ticket.dueDate || "No Due Date"
+          break
+        case "reportedBy":
+          groupKey = ticket.reportedBy || "Unknown"
+          break
+        case "assignee":
+          groupKey = ticket.assignee?.name || "Unassigned"
+          break
+        default:
+          groupKey = "All Tickets"
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = []
+      }
+      groups[groupKey].push(ticket)
+    })
+    
+    return groups
+  }, [filteredTickets, groupBy])
 
   const getPriorityColor = useCallback((priority: string) => {
     switch (priority) {
@@ -686,25 +822,222 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     }
   }, [aiInput, filteredTickets])
 
-  const handleImportTickets = useCallback(() => {
-    if (!importFile) return
-
-    // Simulate file processing
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string
-        // In real implementation, parse CSV/Excel file and add tickets
-        console.log("[v0] Processing import file:", importFile.name)
-        alert(`Successfully imported tickets from ${importFile.name}`)
-        setShowImportDialog(false)
-        setImportFile(null)
-      } catch (error) {
-        alert("Error processing import file. Please check the format and try again.")
-      }
+  const handleImportTickets = useCallback(async () => {
+    if (!importFile) {
+      console.error('❌ No file selected')
+      return
     }
-    reader.readAsText(importFile)
-  }, [importFile])
+
+    console.log('🚀 Starting import process for file:', importFile.name)
+    setIsImporting(true)
+    
+    // Reset previous results
+    setImportResult(null)
+    setImportProgress({
+      current: 0,
+      total: 100,
+      status: 'parsing',
+      message: 'Starting import...'
+    })
+
+    try {
+      // Step 1: Validate file
+      console.log('🔍 Step 1: Validating file...')
+      setImportProgress({
+        current: 10,
+        total: 100,
+        status: 'parsing',
+        message: 'Validating file...'
+      })
+
+      const fileValidation = validateFile(importFile)
+      console.log('🔍 File validation result:', fileValidation)
+      
+      if (!fileValidation.valid) {
+        console.error('❌ File validation failed:', fileValidation.error)
+        const errorResult: ImportResult = {
+          success: false,
+          tickets: [],
+          errors: [fileValidation.error || 'Invalid file'],
+          totalRows: 0,
+          validRows: 0,
+          successfullyImportedCount: 0,
+          failedImportCount: 0,
+          parsingErrors: [fileValidation.error || 'Invalid file'],
+          validationErrors: [],
+          importErrors: []
+        }
+        setImportResult(errorResult)
+        setImportProgress({
+          current: 100,
+          total: 100,
+          status: 'error',
+          message: 'File validation failed'
+        })
+        return
+      }
+
+      // Step 2: Parse file
+      console.log('📄 Step 2: Parsing file...')
+      setImportProgress({
+        current: 25,
+        total: 100,
+        status: 'parsing',
+        message: 'Parsing file...'
+      })
+
+      const parseResult = await parseImportFile(importFile)
+      console.log('📊 Parse result:', parseResult)
+
+      // Check if parsing was successful
+      if (parseResult.parsingErrors.length > 0) {
+        console.error('❌ Parsing failed:', parseResult.parsingErrors)
+        setImportResult(parseResult)
+        setImportProgress({
+          current: 100,
+          total: 100,
+          status: 'error',
+          message: 'File parsing failed'
+        })
+        return
+      }
+
+      // Check if we have any valid tickets
+      if (parseResult.tickets.length === 0) {
+        console.error('❌ No valid tickets found after parsing')
+        const noTicketsResult: ImportResult = {
+          ...parseResult,
+          success: false,
+          errors: [...parseResult.errors, 'No valid tickets found in file'],
+          parsingErrors: [...parseResult.parsingErrors, 'No valid tickets found in file']
+        }
+        setImportResult(noTicketsResult)
+        setImportProgress({
+          current: 100,
+          total: 100,
+          status: 'error',
+          message: 'No valid tickets found'
+        })
+        return
+      }
+
+      console.log(`✅ Parsing successful: ${parseResult.tickets.length} valid tickets found`)
+
+      // Step 3: Import tickets
+      console.log('📤 Step 3: Importing tickets...')
+      setImportProgress({
+        current: 50,
+        total: 100,
+        status: 'importing',
+        message: `Importing ${parseResult.tickets.length} tickets...`
+      })
+
+      let successCount = 0
+      const importErrors: string[] = []
+
+      for (let i = 0; i < parseResult.tickets.length; i++) {
+        const ticket = parseResult.tickets[i]
+        
+        try {
+          // Map the ticket data to match the API expectations
+          const ticketData = {
+            title: ticket.title,
+            description: ticket.description || '',
+            priority: ticket.priority,
+            type: ticket.type,
+            // Don't include assignee_id since we only have names, not UUIDs
+            // The system will auto-assign or leave unassigned
+            due_date: ticket.due_date || undefined,
+            tags: [], // Provide empty array for tags
+          }
+          
+          // Remove undefined values to avoid API issues
+          Object.keys(ticketData).forEach(key => {
+            if (ticketData[key as keyof typeof ticketData] === undefined) {
+              delete ticketData[key as keyof typeof ticketData]
+            }
+          })
+          
+          console.log(`📝 Creating ticket ${i + 1}/${parseResult.tickets.length}:`, ticketData.title)
+          await createTicket(ticketData)
+          successCount++
+          console.log(`✅ Ticket ${i + 1} created successfully`)
+          
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          console.error(`❌ Error creating ticket ${i + 1}:`, errorMessage)
+          importErrors.push(`Row ${i + 1} (${ticket.title}): ${errorMessage}`)
+        }
+
+        // Update progress
+        const progress = 50 + ((i + 1) / parseResult.tickets.length) * 40
+        setImportProgress({
+          current: Math.round(progress),
+          total: 100,
+          status: 'importing',
+          message: `Imported ${i + 1} of ${parseResult.tickets.length} tickets...`
+        })
+      }
+
+      // Step 4: Finalize results
+      console.log('📊 Step 4: Finalizing results...')
+      const finalResult: ImportResult = {
+        success: importErrors.length === 0 && successCount > 0,
+        tickets: parseResult.tickets,
+        errors: [...parseResult.errors, ...importErrors],
+        totalRows: parseResult.totalRows,
+        validRows: parseResult.validRows,
+        successfullyImportedCount: successCount,
+        failedImportCount: importErrors.length,
+        parsingErrors: parseResult.parsingErrors,
+        validationErrors: parseResult.validationErrors,
+        importErrors: importErrors
+      }
+
+      console.log('📊 Final import result:', finalResult)
+      setImportResult(finalResult)
+      
+      setImportProgress({
+        current: 100,
+        total: 100,
+        status: finalResult.success ? 'completed' : 'error',
+        message: finalResult.success 
+          ? `Import completed successfully! ${successCount} tickets imported.`
+          : `Import completed with errors. ${successCount} succeeded, ${importErrors.length} failed.`
+      })
+
+      // Refresh tickets list if any were successfully imported
+      if (successCount > 0) {
+        console.log('🔄 Refreshing tickets list...')
+        refetch()
+      }
+
+    } catch (error) {
+      console.error('❌ Unexpected error during import:', error)
+      const errorResult: ImportResult = {
+        success: false,
+        tickets: [],
+        errors: [`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        totalRows: 0,
+        validRows: 0,
+        successfullyImportedCount: 0,
+        failedImportCount: 0,
+        parsingErrors: [`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        validationErrors: [],
+        importErrors: []
+      }
+      setImportResult(errorResult)
+      setImportProgress({
+        current: 100,
+        total: 100,
+        status: 'error',
+        message: 'Unexpected error occurred'
+      })
+    } finally {
+      console.log('🏁 Import process completed')
+      setIsImporting(false)
+    }
+  }, [importFile, createTicket, refetch])
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -716,6 +1049,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   const clearAIChat = () => {
     setAiMessages([])
     setAiInput("")
+  }
+
+  const resetImportState = () => {
+    setImportFile(null)
+    setImportProgress(null)
+    setImportResult(null)
+    setIsImporting(false)
   }
 
   const renderListView = useCallback(
@@ -737,9 +1077,19 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <SelectItem value="assignee">Group By: Assignee</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 text-sm bg-transparent"
+            onClick={() => setShowFilterDialog(true)}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filter
+            {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
+              <span className="ml-1 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
+              </span>
+            )}
           </Button>
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -808,11 +1158,23 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     </td>
                   </tr>
                 ) : (
-                  filteredTickets.map((ticket, index) => (
-                  <tr
-                    key={ticket.id}
-                    className="bg-white border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
-                  >
+                  Object.entries(groupedTickets).map(([groupName, groupTickets]) => (
+                    <React.Fragment key={groupName}>
+                      {groupBy !== "none" && (
+                        <tr className="bg-gray-100 border-b border-gray-200">
+                          <td colSpan={9} className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">{groupName}</span>
+                              <span className="text-sm text-gray-500">({groupTickets.length} tickets)</span>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {groupTickets.map((ticket, index) => (
+                        <tr
+                          key={ticket.id}
+                          className="bg-white border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                        >
                     <td className="px-4 py-4 whitespace-nowrap border-r border-gray-100">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
@@ -934,8 +1296,10 @@ className={`text-xs px-2 py-1 rounded-full ${
                         </DropdownMenu>
                       </div>
                     </td>
-                  </tr>
-                ))
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
                 )}
               </tbody>
             </table>
@@ -943,7 +1307,7 @@ className={`text-xs px-2 py-1 rounded-full ${
         </div>
       </div>
     ),
-    [filteredTickets, groupBy, showCustomColumns, searchTerm, handleTicketClick],
+    [groupedTickets, groupBy, showCustomColumns, searchTerm, handleTicketClick],
   )
 
   const handleDragStart = useCallback((e: React.DragEvent, ticket: any) => {
@@ -1504,43 +1868,317 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent>
+      <Dialog open={showImportDialog} onOpenChange={(open) => {
+        if (!open) {
+          resetImportState()
+        }
+        setShowImportDialog(open)
+      }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-blue-600" />
+              <Cloud className="h-5 w-5 text-[#6a5cff]" />
               Import Tickets
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* File Selection */}
+            {!importProgress && !importResult && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Select file to import</label>
+                  <Input
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                    className="cursor-pointer"
+                    disabled={isImporting}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• <strong>Required columns:</strong> Title, Priority, Type</li>
+                    <li>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</li>
+                    <li>• <strong>Priority values:</strong> low, medium, high, urgent, critical</li>
+                    <li>• <strong>Type values:</strong> incident, request, problem, change, general_query</li>
+                    <li>• <strong>Status values:</strong> new, open, in_progress, pending, resolved, closed</li>
+                    <li>• <strong>Maximum file size:</strong> 10MB</li>
+                    <li>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleImportTickets} 
+                    disabled={!importFile || isImporting}
+                    className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+                  >
+                    Import Tickets
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Progress */}
+            {importProgress && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{importProgress.message}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {importProgress.current}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      importProgress.status === 'error' ? 'bg-red-500' : 
+                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6a5cff]'
+                    }`}
+                    style={{ width: `${importProgress.current}%` }}
+                  />
+                </div>
+                {importProgress.status === 'parsing' && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#6a5cff]"></div>
+                    Parsing file...
+                  </div>
+                )}
+                {importProgress.status === 'importing' && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#6a5cff]"></div>
+                    Creating tickets...
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Results */}
+            {importResult && (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg ${
+                  importResult.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`h-2 w-2 rounded-full ${
+                      importResult.success ? 'bg-green-500' : 'bg-red-500'
+                    }`} />
+                    <h4 className={`font-medium text-sm ${
+                      importResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
+                    }`}>
+                      {importResult.success ? 'Import Successful!' : 'Import Completed with Errors'}
+                    </h4>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p>• Total rows processed: {importResult.totalRows}</p>
+                    <p>• Valid tickets found: {importResult.validRows}</p>
+                    <p>• Successfully imported: {importResult.successfullyImportedCount}</p>
+                    <p>• Failed to import: {importResult.failedImportCount}</p>
+                  </div>
+                </div>
+
+                {importResult.errors.length > 0 && (
+                  <div className="space-y-2">
+                    <h5 className="text-sm font-medium text-red-800 dark:text-red-200">Errors:</h5>
+                    <div className="max-h-32 overflow-y-auto bg-red-50 dark:bg-red-950/20 p-3 rounded-lg">
+                      <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
+                        {importResult.parsingErrors.length > 0 && (
+                          <li className="font-medium">Parsing Errors:</li>
+                        )}
+                        {importResult.parsingErrors.slice(0, 5).map((error, index) => (
+                          <li key={`parse-${index}`}>• {error}</li>
+                        ))}
+                        
+                        {importResult.validationErrors.length > 0 && (
+                          <li className="font-medium mt-2">Validation Errors:</li>
+                        )}
+                        {importResult.validationErrors.slice(0, 5).map((error, index) => (
+                          <li key={`validation-${index}`}>• {error}</li>
+                        ))}
+                        
+                        {importResult.importErrors.length > 0 && (
+                          <li className="font-medium mt-2">Import Errors:</li>
+                        )}
+                        {importResult.importErrors.slice(0, 5).map((error, index) => (
+                          <li key={`import-${index}`}>• {error}</li>
+                        ))}
+                        
+                        {importResult.errors.length > 15 && (
+                          <li className="mt-2">• ... and {importResult.errors.length - 15} more errors</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      resetImportState()
+                      setShowImportDialog(false)
+                    }}
+                  >
+                    Close
+                  </Button>
+                  {importResult.validRows > 0 && (
+                    <Button 
+                      onClick={() => {
+                        resetImportState()
+                        setShowImportDialog(false)
+                      }}
+                      className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+                    >
+                      View Tickets
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Filter Dialog */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Filter Tickets</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* Type Filter */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Select file to import</label>
-              <Input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                className="cursor-pointer"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Type</label>
+              <div className="flex flex-wrap gap-2">
+                {['incident', 'request', 'problem', 'change', 'general_query'].map((type) => (
+                  <Button
+                    key={type}
+                    variant={activeFilters.type.includes(type) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        type: prev.type.includes(type) 
+                          ? prev.type.filter(t => t !== type)
+                          : [...prev.type, type]
+                      }))
+                    }}
+                    className="text-xs"
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
-              <h4 className="font-medium text-sm mb-1">Import Requirements:</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• File must contain columns: Title, Description, Priority, Type</li>
-                <li>• Optional columns: Assignee, Due Date, Status</li>
-                <li>• Maximum file size: 10MB</li>
-              </ul>
+            {/* Priority Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Priority</label>
+              <div className="flex flex-wrap gap-2">
+                {['low', 'medium', 'high', 'critical', 'urgent'].map((priority) => (
+                  <Button
+                    key={priority}
+                    variant={activeFilters.priority.includes(priority) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        priority: prev.priority.includes(priority) 
+                          ? prev.priority.filter(p => p !== priority)
+                          : [...prev.priority, priority]
+                      }))
+                    }}
+                    className="text-xs"
+                  >
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleImportTickets} disabled={!importFile}>
-                Import Tickets
-              </Button>
+            {/* Status Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+              <div className="flex flex-wrap gap-2">
+                {['new', 'in_progress', 'pending', 'resolved', 'closed'].map((status) => (
+                  <Button
+                    key={status}
+                    variant={activeFilters.status.includes(status) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        status: prev.status.includes(status) 
+                          ? prev.status.filter(s => s !== status)
+                          : [...prev.status, status]
+                      }))
+                    }}
+                    className="text-xs"
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                  </Button>
+                ))}
+              </div>
             </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">From</label>
+                  <Input
+                    type="date"
+                    value={activeFilters.dateRange.from}
+                    onChange={(e) => setActiveFilters(prev => ({
+                      ...prev,
+                      dateRange: { ...prev.dateRange, from: e.target.value }
+                    }))}
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">To</label>
+                  <Input
+                    type="date"
+                    value={activeFilters.dateRange.to}
+                    onChange={(e) => setActiveFilters(prev => ({
+                      ...prev,
+                      dateRange: { ...prev.dateRange, to: e.target.value }
+                    }))}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setActiveFilters({
+                  type: [],
+                  priority: [],
+                  status: [],
+                  assignee: [],
+                  dateRange: { from: '', to: '' }
+                })
+              }}
+            >
+              Clear All
+            </Button>
+            <Button 
+              onClick={() => setShowFilterDialog(false)}
+              className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+            >
+              Apply Filters
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
