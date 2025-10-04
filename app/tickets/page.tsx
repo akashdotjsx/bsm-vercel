@@ -829,16 +829,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <td className="px-4 py-4 whitespace-nowrap border-r border-border">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         ticket.status === "new" 
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                          ? "bg-blue-100 text-blue-800"
                           : ticket.status === "in_progress"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                            ? "bg-yellow-100 text-yellow-800"
                             : ticket.status === "review"
-                              ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                              ? "bg-purple-100 text-purple-800"
                               : ticket.status === "pending"
-                                ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                ? "bg-gray-100 text-gray-800"
                                 : ticket.status === "open"
-                                  ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-gray-100 text-gray-800"
                       }`}>
                         {ticket.status === "new" ? "New" : 
                          ticket.status === "in_progress" ? "In Progress" :
@@ -884,7 +884,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                        <span className="text-sm text-foreground">{ticket.dueDate}</span>
                      </td>
  <td className="px-4 py-4 whitespace-nowrap border-r border-border">
- <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
                          {ticket.displayType}
                        </span>
                      </td>
@@ -892,16 +892,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
-                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                            ? "bg-red-100 text-red-800"
                             : ticket.priority === "high"
-                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                              ? "bg-red-100 text-red-800"
                               : ticket.priority === "medium"
-                                ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                                ? "bg-orange-100 text-orange-800"
                                 : ticket.priority === "low"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                  ? "bg-green-100 text-green-800"
                                   : ticket.priority === "critical"
-                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
