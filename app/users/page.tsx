@@ -46,6 +46,7 @@ import {
 } from "lucide-react"
 import { useUsers } from "@/hooks/use-users"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { RoleEditModal } from "@/components/rbac/role-edit-modal"
 import { rbacApi } from "@/lib/api/rbac"
 import type { Role } from "@/lib/types/rbac"
@@ -94,9 +95,10 @@ const availableRoles = [
   { value: 'user', label: 'User' },
 ]
 
-const availableDepartments = [
+// Initial department suggestions - these will be supplemented by actual departments from users
+const initialDepartments = [
   "IT",
-  "HR",
+  "HR", 
   "Finance",
   "Support",
   "Marketing",
@@ -105,78 +107,17 @@ const availableDepartments = [
   "Legal",
 ]
 
-const initialUsers = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@kroolo.com",
-    role: "IT Administrator",
-    department: "Information Technology",
-    status: "Active",
-    createdOn: "2024-09-10",
-    permissions: ["Admin", "Tickets", "Workflows"],
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.johnson@kroolo.com",
-    role: "HR Manager",
-    department: "Human Resources",
-    status: "Active",
-    createdOn: "2024-09-08",
-    permissions: ["HR Services", "Approvals"],
-  },
-  {
-    id: 3,
-    name: "Mike Chen",
-    email: "mike.chen@kroolo.com",
-    role: "Finance Analyst",
-    department: "Finance",
-    status: "Active",
-    createdOn: "2024-09-05",
-    permissions: ["Finance Services", "Reports"],
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    email: "emily.davis@kroolo.com",
-    role: "Service Agent",
-    department: "Customer Support",
-    status: "Inactive",
-    createdOn: "2024-09-01",
-    permissions: ["Tickets", "Knowledge Base"],
-  },
-]
-
-const initialTeams = [
-  {
-    id: 1,
-    name: "IT Support",
-    members: 8,
-    lead: "John Smith",
-    description: "Handles all IT-related service requests and incidents",
-  },
-  {
-    id: 2,
-    name: "HR Operations",
-    members: 5,
-    lead: "Sarah Johnson",
-    description: "Manages employee services and HR workflows",
-  },
-  {
-    id: 3,
-    name: "Finance Team",
-    members: 6,
-    lead: "Mike Chen",
-    description: "Processes financial requests and approvals",
-  },
-]
+// All data is now fetched from the database via useUsers hook
 
 export default function UsersPage() {
-  const { users, teams, loading, inviteUser, updateUser, deactivateUser, reactivateUser, resetUserPassword, createTeam, addUserToTeam } = useUsers()
+  const { user: authUser, profile, loading: authLoading } = useAuth()
+  const { users, teams, loading, inviteUser, updateUser, deactivateUser, reactivateUser, resetUserPassword, createTeam, updateTeam, deleteTeam, addUserToTeam, removeUserFromTeam, updateTeamMemberRole } = useUsers()
   
   // Debug logging
   console.log('🏠 Users page render - users:', users?.length || 0, 'teams:', teams?.length || 0, 'loading:', loading)
+  console.log('🔐 Auth status - user:', !!authUser, 'profile:', !!profile, 'authLoading:', authLoading)
+  console.log('👤 Auth user ID:', authUser?.id, 'Email:', authUser?.email)
+  console.log('🏢 Teams data structure:', teams?.slice(0, 1)) // Log first team to see structure
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [departmentFilter, setDepartmentFilter] = useState("all")
@@ -189,10 +130,15 @@ export default function UsersPage() {
   const [showEditRole, setShowEditRole] = useState(false)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [roles, setRoles] = useState<Role[]>([])
-  const [departments, setDepartments] = useState(availableDepartments)
+  const [departments, setDepartments] = useState(initialDepartments)
   const [newDepartment, setNewDepartment] = useState("")
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [showManageMembers, setShowManageMembers] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [selectedTeamForMembers, setSelectedTeamForMembers] = useState<Team | null>(null)
+  const [selectedUserToAdd, setSelectedUserToAdd] = useState('')
+  const [selectedUserRole, setSelectedUserRole] = useState('member')
   const [newUser, setNewUser] = useState({
     first_name: "",
     last_name: "",
@@ -209,6 +155,33 @@ export default function UsersPage() {
   })
   const { toast } = useToast()
 
+  // If not authenticated, show login prompt
+  if (!authLoading && !authUser) {
+    return (
+      <PlatformLayout
+        title="Users & Teams"
+        description="Manage user accounts, teams, and access permissions across your organization"
+        breadcrumb={[
+          { label: "Service Management", href: "/dashboard" },
+          { label: "Users & Teams", href: "/users" },
+        ]}
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground mb-4">Please log in to access user management</p>
+            <a 
+              href="/auth/login" 
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Go to Login
+            </a>
+          </div>
+        </div>
+      </PlatformLayout>
+    )
+  }
+
   // Load roles on component mount
   useEffect(() => {
     const loadRoles = async () => {
@@ -221,6 +194,32 @@ export default function UsersPage() {
     }
     loadRoles()
   }, [])
+
+  // Update departments when users change
+  useEffect(() => {
+    if (users.length > 0) {
+      const userDepartments = users
+        .map(user => user.department)
+        .filter(dept => dept && dept.trim() !== '')
+        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
+      
+      const allDepartments = [...initialDepartments, ...userDepartments]
+        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
+        .sort()
+      
+      setDepartments(allDepartments)
+    }
+  }, [users])
+
+  // Update selectedTeamForMembers when teams data changes
+  useEffect(() => {
+    if (selectedTeamForMembers && teams.length > 0) {
+      const updatedTeam = teams.find(t => t.id === selectedTeamForMembers.id)
+      if (updatedTeam) {
+        setSelectedTeamForMembers(updatedTeam)
+      }
+    }
+  }, [teams, selectedTeamForMembers])
 
   const filteredUsers = users.filter((user) => {
     const userName = user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
@@ -320,9 +319,10 @@ export default function UsersPage() {
 
   const handleEditTeam = (team: Team) => {
     setSelectedTeam(team)
+    const teamData = team as any
     setNewTeam({
       name: team.name,
-      lead_id: team.lead?.id || '',
+      lead_id: teamData.lead?.id || teamData.lead_id || '',
       description: team.description || '',
       department: team.department || ''
     })
@@ -332,11 +332,11 @@ export default function UsersPage() {
   const handleUpdateTeam = async () => {
     try {
       if (!selectedTeam) return
-      // TODO: Implement updateTeam API function
-      console.log('Update team:', selectedTeam.id, newTeam)
-      toast({
-        title: "Team Updated",
-        description: "Team has been updated successfully.",
+      await updateTeam(selectedTeam.id, {
+        name: newTeam.name,
+        description: newTeam.description,
+        department: newTeam.department,
+        lead_id: newTeam.lead_id
       })
       setShowEditTeam(false)
       setSelectedTeam(null)
@@ -348,12 +348,7 @@ export default function UsersPage() {
 
   const handleDeleteTeam = async (teamId: string) => {
     try {
-      // TODO: Implement deleteTeam API function
-      console.log('Delete team:', teamId)
-      toast({
-        title: "Team Deleted",
-        description: "Team has been deleted successfully.",
-      })
+      await deleteTeam(teamId)
     } catch (error) {
       console.error('Error deleting team:', error)
     }
@@ -413,6 +408,41 @@ export default function UsersPage() {
         description: "Failed to update user role",
         variant: "destructive"
       })
+    }
+  }
+
+  const handleManageMembers = (team: Team) => {
+    // Find the most up-to-date version of this team with member data
+    const currentTeam = teams.find(t => t.id === team.id) || team
+    setSelectedTeamForMembers(currentTeam)
+    setShowManageMembers(true)
+  }
+
+  const handleAddMemberToTeam = async (userId: string, role: string = 'member') => {
+    if (!selectedTeamForMembers) return
+    try {
+      await addUserToTeam(selectedTeamForMembers.id, userId, role)
+      setShowAddMember(false)
+    } catch (error) {
+      console.error('Error adding member to team:', error)
+    }
+  }
+
+  const handleRemoveMemberFromTeam = async (userId: string) => {
+    if (!selectedTeamForMembers) return
+    try {
+      await removeUserFromTeam(selectedTeamForMembers.id, userId)
+    } catch (error) {
+      console.error('Error removing member from team:', error)
+    }
+  }
+
+  const handleUpdateMemberRole = async (userId: string, newRole: string) => {
+    if (!selectedTeamForMembers) return
+    try {
+      await updateTeamMemberRole(selectedTeamForMembers.id, userId, newRole)
+    } catch (error) {
+      console.error('Error updating member role:', error)
     }
   }
 
@@ -764,6 +794,7 @@ export default function UsersPage() {
                           <SelectValue placeholder="Select team lead" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">No Lead</SelectItem>
                           {users
                             .filter((u) => u.is_active)
                             .map((user) => (
@@ -827,13 +858,17 @@ export default function UsersPage() {
                       <h3 className="font-semibold text-sm">{team.name}</h3>
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center rounded-full border border-border bg-muted text-muted-foreground px-3 py-1 text-xs font-medium">
-                          {(team as any).members || (team as any).team_members?.length || 0} members
+                          {(team as any).team_members?.length || 0} members
                         </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="px-2 text-muted-foreground hover:bg-transparent">…</Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="font-sans">
+                        <DropdownMenuContent align="end" className="font-sans">
+                            <DropdownMenuItem onClick={() => handleManageMembers(team)} className="text-[13px]">
+                              <Users className="mr-2 h-4 w-4" />
+                              Manage Members
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEditTeam(team)} className="text-[13px]">
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Team
@@ -853,7 +888,26 @@ export default function UsersPage() {
                     <div className="flex items-center text-sm">
                       <Users className="mr-1 h-3 w-3 text-muted-foreground" />
                       <span className="text-muted-foreground">Lead: </span>
-                      <span className="ml-1 font-semibold">{(team as any).lead?.display_name || 'N/A'}</span>
+                      <span className="ml-1 font-semibold">
+                        {(() => {
+                          // Handle different possible data structures
+                          const teamData = team as any
+                          if (teamData.lead?.display_name) {
+                            return teamData.lead.display_name
+                          }
+                          if (teamData.lead_display_name) {
+                            return teamData.lead_display_name
+                          }
+                          // Fallback - find user by lead_id
+                          if (teamData.lead_id) {
+                            const leadUser = users.find(u => u.id === teamData.lead_id)
+                            if (leadUser) {
+                              return leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email
+                            }
+                          }
+                          return 'N/A'
+                        })()} 
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -992,6 +1046,7 @@ export default function UsersPage() {
                     <SelectValue placeholder="Select team lead" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">No Lead</SelectItem>
                     {users
                       .filter((u) => u.is_active)
                       .map((user) => (
@@ -1134,6 +1189,161 @@ export default function UsersPage() {
           role={selectedRole}
           onSave={handleRoleSave}
         />
+
+        {/* Team Members Management Modal */}
+        <Dialog open={showManageMembers} onOpenChange={setShowManageMembers}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-[16px] font-semibold">
+                Manage Team Members - {selectedTeamForMembers?.name}
+              </DialogTitle>
+              <DialogDescription className="text-[13px]">
+                Add or remove members from this team and manage their roles
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* Add Member Section */}
+              <div className="border-b pb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-[14px] font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || 0})</h3>
+                  <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="text-[12px]">
+                        <UserPlus className="mr-2 h-3 w-3" />
+                        Add Member
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="text-[14px]">Add Team Member</DialogTitle>
+                        <DialogDescription className="text-[12px]">
+                          Select a user to add to {selectedTeamForMembers?.name}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-[12px] font-medium">Select User</Label>
+                          <Select value={selectedUserToAdd} onValueChange={setSelectedUserToAdd}>
+                            <SelectTrigger className="text-[12px]">
+                              <SelectValue placeholder="Choose a user to add" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {users
+                                .filter(user => user.is_active && 
+                                  !((selectedTeamForMembers as any)?.team_members?.some((member: any) => member.user.id === user.id)))
+                                .map((user) => (
+                                  <SelectItem key={user.id} value={user.id} className="text-[12px]">
+                                    {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[12px] font-medium">Role</Label>
+                          <Select value={selectedUserRole} onValueChange={setSelectedUserRole}>
+                            <SelectTrigger className="text-[12px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member" className="text-[12px]">Member</SelectItem>
+                              <SelectItem value="lead" className="text-[12px]">Lead</SelectItem>
+                              <SelectItem value="admin" className="text-[12px]">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => {
+                          setShowAddMember(false)
+                          setSelectedUserToAdd('')
+                          setSelectedUserRole('member')
+                        }} className="text-[12px]">
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            if (selectedUserToAdd) {
+                              handleAddMemberToTeam(selectedUserToAdd, selectedUserRole)
+                              setSelectedUserToAdd('')
+                              setSelectedUserRole('member')
+                            }
+                          }}
+                          disabled={!selectedUserToAdd}
+                          className="text-[12px]"
+                        >
+                          Add Member
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {/* Current Members List */}
+              <div className="space-y-2">
+                {(selectedTeamForMembers as any)?.team_members?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="mx-auto h-12 w-12 mb-2 opacity-50" />
+                    <p className="text-[13px]">No team members yet</p>
+                    <p className="text-[12px] mt-1">Add members to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {((selectedTeamForMembers as any)?.team_members || []).map((member: any) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <span className="text-[10px] font-semibold text-gray-700">
+                              {member.user.display_name?.split(' ').map((n: string) => n[0]).join('') || 
+                               member.user.email.substring(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-[13px] font-medium">{member.user.display_name || member.user.email}</div>
+                            <div className="text-[11px] text-muted-foreground">{member.user.email}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Select 
+                            value={member.role} 
+                            onValueChange={(value) => handleUpdateMemberRole(member.user.id, value)}
+                          >
+                            <SelectTrigger className="w-24 h-7 text-[11px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member" className="text-[11px]">Member</SelectItem>
+                              <SelectItem value="lead" className="text-[11px]">Lead</SelectItem>
+                              <SelectItem value="admin" className="text-[11px]">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveMemberFromTeam(member.user.id)}
+                            className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <DialogFooter className="border-t pt-4">
+              <Button onClick={() => setShowManageMembers(false)} className="text-[13px]">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PlatformLayout>
   )

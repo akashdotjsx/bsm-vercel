@@ -13,7 +13,7 @@ import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 
 export default function Page() {
-  const [email, setEmail] = useState("admin@kroolo.com")
+  const [email, setEmail] = useState("bhive@kroolo.com")
   const [password, setPassword] = useState("KrooloAdmin123!")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)

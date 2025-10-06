@@ -206,6 +206,45 @@ export function useUsers() {
     }
   }
 
+  const updateTeam = async (teamId: string, updates: any) => {
+    try {
+      const updatedTeam = await userAPI.updateTeam(teamId, updates)
+      setTeams(teams.map(team => team.id === teamId ? updatedTeam : team))
+      toast({
+        title: "Team updated",
+        description: "Team has been updated successfully",
+      })
+      return updatedTeam
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      toast({
+        title: "Error updating team",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
+  const deleteTeam = async (teamId: string) => {
+    try {
+      await userAPI.deleteTeam(teamId)
+      setTeams(teams.filter(team => team.id !== teamId))
+      toast({
+        title: "Team deleted",
+        description: "Team has been deleted successfully",
+      })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      toast({
+        title: "Error deleting team",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
   const addUserToTeam = async (teamId: string, userId: string, role: string = 'member') => {
     try {
       await userAPI.addUserToTeam(teamId, userId, role)
@@ -218,6 +257,46 @@ export function useUsers() {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast({
         title: "Error adding user to team",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
+  const removeUserFromTeam = async (teamId: string, userId: string) => {
+    try {
+      await userAPI.removeUserFromTeam(teamId, userId)
+      await loadTeams() // Refresh teams
+      toast({
+        title: "User removed from team",
+        description: "User has been removed from the team successfully",
+      })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      toast({
+        title: "Error removing user from team",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      throw err
+    }
+  }
+
+  const updateTeamMemberRole = async (teamId: string, userId: string, newRole: string) => {
+    try {
+      // Remove the user and add back with new role
+      await userAPI.removeUserFromTeam(teamId, userId)
+      await userAPI.addUserToTeam(teamId, userId, newRole)
+      await loadTeams() // Refresh teams
+      toast({
+        title: "Member role updated",
+        description: "Team member role has been updated successfully",
+      })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      toast({
+        title: "Error updating member role",
         description: errorMessage,
         variant: "destructive"
       })
@@ -281,6 +360,10 @@ export function useUsers() {
     reactivateUser,
     resetUserPassword,
     createTeam,
-    addUserToTeam
+    updateTeam,
+    deleteTeam,
+    addUserToTeam,
+    removeUserFromTeam,
+    updateTeamMemberRole
   }
 }

@@ -285,6 +285,47 @@ export class UserManagementAPI {
     }
   }
 
+  // Update team
+  async updateTeam(teamId: string, updates: {
+    name?: string
+    description?: string
+    department?: string
+    lead_id?: string
+  }) {
+    try {
+      const { data, error } = await this.supabase
+        .from('teams')
+        .update(updates)
+        .eq('id', teamId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error updating team:', error)
+      throw error
+    }
+  }
+
+  // Delete team (soft delete by setting inactive)
+  async deleteTeam(teamId: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('teams')
+        .update({ is_active: false })
+        .eq('id', teamId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error deleting team:', error)
+      throw error
+    }
+  }
+
   // Add user to team
   async addUserToTeam(teamId: string, userId: string, role: string = 'member') {
     try {
