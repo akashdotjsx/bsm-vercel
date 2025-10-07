@@ -361,44 +361,44 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
+<Button
               variant="outline"
               size="sm"
               onClick={() => {
                 setEditForm({ name: "", description: "" })
                 setShowAddCategory(true)
               }}
-              className="text-[13px]"
+              className="text-13"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Category
             </Button>
-            <Button
+<Button
               variant="outline"
               size="sm"
               onClick={() => setShowAIChat(true)}
-              className="bg-[#7073fc] text-white hover:bg-[#5a5dfc] text-[13px]"
+              className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90 text-13"
             >
               <Zap className="h-4 w-4 mr-2" />
               AI Generate Article
             </Button>
-            <Button className="text-[13px]">
+<Button className="text-13">
               <Search className="h-4 w-4 mr-2" />
               Browse All Articles
             </Button>
           </div>
         </div>
 
-        <Card className="border-[#7073fc]/20 bg-gradient-to-r from-[#7073fc]/5 to-transparent">
+<Card className="border-[var(--primary)]/20 bg-gradient-to-r from-[var(--primary)]/5 to-transparent">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Bot className="h-5 w-5 text-[#7073fc]" />
+<Bot className="h-5 w-5 text-[var(--primary)]" />
                 <div>
                   <h3 className="font-medium text-sm">AI Knowledge Intelligence</h3>
                   <p className="text-xs text-muted-foreground">
                     12 content gaps identified • 8 articles need updates •
-                    <span className="text-[#7073fc] font-medium"> 3 auto-generated drafts</span> ready for review
+<span className="text-[var(--primary)] font-medium"> 3 auto-generated drafts</span>
                   </p>
                 </div>
               </div>
@@ -424,7 +424,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
               placeholder="Search for articles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 text-[13px]"
+className="pl-10 h-10 text-13"
             />
           </div>
         </div>
@@ -448,7 +448,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="text-[13px]">
+<DropdownMenuContent align="end" className="text-13">
                       <DropdownMenuItem onClick={() => handleEditCategory(category)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Category
@@ -482,9 +482,9 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
                     </div>
                     <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{category.description}</p>
 
-                    <div className="mb-3 p-2 rounded-md bg-[#7073fc]/5 border border-[#7073fc]/10">
+<div className="mb-3 p-2 rounded-md bg-[var(--primary)]/5 border border-[var(--primary)]/10">
                       <div className="flex items-start gap-2">
-                        <Sparkles className="h-3 w-3 text-[#7073fc] mt-0.5 shrink-0" />
+<Sparkles className="h-3 w-3 text-[var(--primary)] mt-0.5 shrink-0" />
                         <p className="text-xs text-gray-700 leading-relaxed">{category.aiInsights}</p>
                       </div>
                     </div>
@@ -607,7 +607,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
           <DialogHeader className="flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-[#7073fc]" />
+<Bot className="h-5 w-5 text-[var(--primary)]" />
                 <DialogTitle>AI Article Generator</DialogTitle>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowAIChat(false)} className="h-8 w-8 p-0">
@@ -630,7 +630,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
                   >
                     <div className="flex items-start gap-2">
                       {message.role === "assistant" && <Bot className="h-4 w-4 text-[#7073fc] mt-0.5 flex-shrink-0" />}
-                      <p className="text-[13px] leading-relaxed">{message.content}</p>
+<p className="text-13 leading-relaxed">{message.content}</p>
                     </div>
                   </div>
                 </div>
@@ -640,7 +640,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
                 <div className="flex justify-start">
                   <div className="bg-white border shadow-sm p-3 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 text-[#7073fc] animate-spin" />
+<Loader2 className="h-4 w-4 text-[var(--primary)] animate-spin" />
                       <p className="text-[13px] text-muted-foreground">AI is thinking...</p>
                     </div>
                   </div>
@@ -654,7 +654,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   placeholder="Describe the article you'd like me to create..."
-                  className="flex-1 text-[13px]"
+className="flex-1 text-13"
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 />
                 <Button
@@ -667,18 +667,18 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
               </div>
 
               {chatMessages.length >= 4 && !generatedArticle && (
-                <div className="mt-3 p-3 bg-[#7073fc]/5 rounded-lg border border-[#7073fc]/20">
+<div className="mt-3 p-3 bg-[var(--primary)]/5 rounded-lg border border-[var(--primary)]/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-[#7073fc]" />
-                      <p className="text-[13px] text-muted-foreground">
+<Sparkles className="h-4 w-4 text-[var(--primary)]" />
+<p className="text-13 text-muted-foreground">
                         Ready to generate your article based on our conversation
                       </p>
                     </div>
                     <Button
                       onClick={handleGenerateArticle}
                       disabled={isGenerating}
-                      className="bg-[#7073fc] hover:bg-[#5a5dfc] text-[13px]"
+className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-13 text-[var(--primary-foreground)]"
                     >
                       {isGenerating ? (
                         <>

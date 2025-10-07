@@ -3,19 +3,19 @@
 
 :root {
   /* Enterprise Search Frontend Design System */
-  --background: #ffffff;
-  --foreground: #2d2f34;
+  --background: #fafafa;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #2d2f34;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #2d2f34;
   /* Primary purple color system */
   --primary: #7073fc;
   --primary-foreground: #ffffff;
-  --secondary: #f9fafb;
-  --secondary-foreground: #6a707c;
-  --muted: #f8f8f8a8;
-  --muted-foreground: #6a707c;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #525252;
+  --muted: #f4f4f5;
+  --muted-foreground: #737373;
   /* Accent matches primary for consistency */
   --accent: #f9fafb;
   --accent-foreground: #2d2f34;
@@ -68,19 +68,19 @@
   --chart-5: #6a707c;
   --radius: 0.625rem;
 
-  /* Sidebar colors matching Enterprise Search Frontend */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #2d2f34;
-  --sidebar-primary: #f9fafb;
-  --sidebar-primary-foreground: #2d2f34;
-  --sidebar-accent: #eaecf0;
-  --sidebar-accent-foreground: #2d2f34;
-  --sidebar-border: #eaecf0;
+  /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #7073fc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #7073fc;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e5e5e5;
   --sidebar-ring: rgba(112, 115, 252, 0.5);
-  --sidebar-hover: #eaecf0;
-  --sidebar-active: #eaecf0;
-  --menu-hover: #f9fafb;
-  --menu-border: #eaecf0;
+  --sidebar-hover: #f4f4f5;
+  --sidebar-active: #7073fc;
+  --menu-hover: #f4f4f5;
+  --menu-border: #e5e5e5;
   
   /* Scrollbar colors */
   --scrollbar-track: #f1f1f1;

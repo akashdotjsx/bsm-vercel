@@ -43,13 +43,13 @@ const customerViewItems = [
 
 const employeeViewItems = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3, permission: null },
-  { name: "Accounts", href: "/accounts", icon: Building, permission: 'users' },
-  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true, permission: 'tickets' },
-  { name: "Workflows", href: "/workflows", icon: Workflow, permission: 'workflows' },
-  { name: "Asset Management", href: "/assets", icon: HardDrive, permission: 'assets' },
-  { name: "Services", href: "/services", icon: Settings, hasSubmenu: true, permission: 'services' },
-  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen, permission: 'knowledge_base' },
-  { name: "Analytics", href: "/analytics", icon: BarChart3, permission: 'analytics' },
+  { name: "Accounts", href: "/accounts", icon: Building, permission: null },
+  { name: "Tickets", href: "/tickets", icon: Ticket, hasSubmenu: true, permission: null },
+  { name: "Workflows", href: "/workflows", icon: Workflow, permission: null },
+  { name: "Asset Management", href: "/assets", icon: HardDrive, permission: null },
+  { name: "Services", href: "/services", icon: Settings, hasSubmenu: true, permission: null },
+  { name: "Knowledge Base", href: "/knowledge-base", icon: BookOpen, permission: null },
+  { name: "Analytics", href: "/analytics", icon: BarChart3, permission: null },
   { name: "Notifications", href: "/notifications", icon: Bell, permission: null },
 ]
 
@@ -71,14 +71,14 @@ const servicesSubmenuItemsManager = [
 ]
 
 const administrationItems = [
-  { name: "Integrations", href: "/integrations", icon: Zap, permission: 'integrations' },
-  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: 'workflows' },
-  { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: 'sla_policies' },
-  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: 'tickets' },
-  { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: 'services' },
-  { name: "All Service Requests", href: "/admin/service-requests", icon: List, permission: 'services' },
-  { name: "Users & Teams", href: "/users", icon: Users, permission: 'users' },
-  { name: "Security & Access", href: "/admin/security", icon: Shield, permission: 'security' },
+  { name: "Integrations", href: "/integrations", icon: Zap, permission: null },
+  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: null },
+  { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: null },
+  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: null },
+  { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: null },
+  { name: "All Service Requests", href: "/admin/service-requests", icon: List, permission: null },
+  { name: "Users & Teams", href: "/users", icon: Users, permission: null },
+  { name: "Security & Access", href: "/admin/security", icon: Shield, permission: null },
 ]
 
 export function SidebarNavigation() {
@@ -121,9 +121,9 @@ export function SidebarNavigation() {
   return (
     <div className="w-full h-full flex flex-col bg-sidebar">
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sidebar-border scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sidebar-border scrollbar-track-transparent min-h-0">
         <div className="p-4">
-          <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
+          <h2 className="text-[10px] font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-4">
             {sectionTitle}
           </h2>
           <nav className="space-y-2">
@@ -139,10 +139,10 @@ export function SidebarNavigation() {
                       <button
                         onClick={() => toggleSubmenu(item.name)}
                         className={cn(
-                          "flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200",
+                          "flex items-center justify-between w-full px-3 py-2 text-[12px] font-medium rounded-md transition-all duration-200",
                           isTicketsPath
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-primary/50 hover:text-sidebar-foreground",
+                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                         )}
                       >
                         <div className="flex items-center">
@@ -160,7 +160,7 @@ export function SidebarNavigation() {
                                 key={subItem.name}
                                 href={subItem.href}
                                 className={cn(
-                                  "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                                  "flex items-center px-3 py-1.5 text-[11px] font-medium rounded-md transition-all duration-200",
                                   pathname === subItem.href
                                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                     : "text-sidebar-foreground/60 hover:bg-sidebar-primary/30 hover:text-sidebar-foreground",
@@ -178,10 +178,10 @@ export function SidebarNavigation() {
                     <Link
                       href={item.href}
                       className={cn(
-                        "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200",
+                        "flex items-center px-3 py-2 text-[12px] font-medium rounded-md transition-all duration-200",
                         pathname === item.href
                           ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-primary/50 hover:text-sidebar-foreground",
+                          : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                       )}
                     >
                       <Icon className="mr-3 h-4 w-4" />
@@ -194,9 +194,9 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-        {mode === "employee" && (permissionsLoading || loading || isAdmin || canView('administration')) && (
+        {mode === "employee" && (
           <div className="px-4 pb-4">
-            <h2 className="text-xs font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-6">
+            <h2 className="text-[10px] font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-4">
               ADMINISTRATION
             </h2>
             <nav className="space-y-2">
@@ -207,10 +207,10 @@ export function SidebarNavigation() {
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200",
+                      "flex items-center px-3 py-2 text-[12px] font-medium rounded-md transition-all duration-200",
                       pathname === item.href
                         ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-primary/50 hover:text-sidebar-foreground",
+                        : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                     )}
                   >
                     <Icon className="mr-3 h-4 w-4" />
@@ -227,13 +227,13 @@ export function SidebarNavigation() {
       <div className="flex-shrink-0 p-4 border-t border-sidebar-border">
         <div className="bg-sidebar-primary rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-sidebar-primary-foreground">
+            <span className="text-[11px] font-medium text-sidebar-primary-foreground">
               {organization?.subscription_tier || 'Basic'} Plan
             </span>
           </div>
           <Button
             size="sm"
-            className="w-full bg-sidebar-accent hover:bg-sidebar-accent/90 text-sidebar-accent-foreground text-xs font-medium"
+            className="w-full bg-sidebar-accent hover:bg-sidebar-accent/90 text-sidebar-accent-foreground text-[10px] font-medium"
           >
             <ArrowUpRight className="mr-1 h-3 w-3" />
             {profile?.role === 'admin' ? 'Manage License' : 'View License'}

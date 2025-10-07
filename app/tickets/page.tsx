@@ -785,15 +785,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
              <table className="w-full border-collapse">
                <thead>
                  <tr className="bg-muted/50 border-b border-border">
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
-                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
+                   <th className="px-3 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
                  </tr>
                </thead>
                <tbody className="bg-card">
@@ -853,14 +853,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                      key={ticket.id}
                            className="bg-card border-b border-border hover:bg-muted/50 last:border-b-0"
                    >
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <div>
-                        <div className="text-sm font-medium text-foreground">{ticket.title}</div>
-                        <div className="text-sm text-muted-foreground">{ticket.id}</div>
+                        <div className="text-[11px] font-medium text-foreground">{ticket.title}</div>
+                        <div className="text-[10px] text-muted-foreground">{ticket.id}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-medium
                         ticket.status === "new" 
                           ? "bg-blue-100 text-blue-800"
                           : ticket.status === "in_progress"
@@ -881,28 +881,28 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                          ticket.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <div className="flex items-center">
                         <div
-                          className={`h-8 w-8 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
+                          className={`h-6 w-6 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-[9px] font-medium`}
                           title={ticket.reportedBy}
                         >
                           {ticket.reportedByAvatar}
                         </div>
                       </div>
                     </td>
- <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+ <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                        <div className="flex items-center">
                          {ticket.assignee ? (
                            <div
-                             className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                             className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[9px] font-medium"
                              title={ticket.assignee.name}
                            >
                              {ticket.assignee.avatar}
                            </div>
                          ) : (
                            <div
-                             className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium"
+                             className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[9px] font-medium"
                              title="Unassigned"
                            >
                              ?
@@ -910,20 +910,20 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                          )}
                        </div>
                      </td>
- <td className="px-4 py-4 whitespace-nowrap border-r border-border">
-                       <span className="text-sm text-foreground">{ticket.reportedDate}</span>
+ <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+                       <span className="text-[11px] text-foreground">{ticket.reportedDate}</span>
                      </td>
- <td className="px-4 py-4 whitespace-nowrap border-r border-border">
-                       <span className="text-sm text-foreground">{ticket.dueDate}</span>
+ <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+                       <span className="text-[11px] text-foreground">{ticket.dueDate}</span>
                      </td>
- <td className="px-4 py-4 whitespace-nowrap border-r border-border">
-  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
+ <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+  <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-800">
                          {ticket.displayType}
                        </span>
                      </td>
- <td className="px-4 py-4 whitespace-nowrap border-r border-border">
+ <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${
+                        className={`text-[10px] px-2 py-1 rounded-full
                           ticket.priority === "urgent"
                             ? "bg-red-100 text-red-800"
                             : ticket.priority === "high"
@@ -940,11 +940,11 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       <div className="flex items-center justify-between">
                         <Input
                           placeholder="Add notes..."
-                          className="h-7 text-xs border-0 bg-transparent focus:bg-background text-sm text-muted-foreground flex-1"
+                          className="h-6 text-[10px] border-0 bg-transparent focus:bg-background text-muted-foreground flex-1"
                           defaultValue={ticket.notes || "Customer reported via email"}
                         />
                         <DropdownMenu>
@@ -1365,36 +1365,36 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <div className="flex items-start justify-between">
             <div className="space-y-1">
                <div className="flex items-center gap-2">
-                 <h1 className="text-2xl font-semibold tracking-tight font-sans text-foreground">
+                 <h1 className="text-lg font-semibold tracking-tight font-sans text-foreground">
                    All Tickets
                  </h1>
-                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-[10px] font-medium">
                    {tickets?.length || 0}
                  </span>
                </div>
-               <p className="text-muted-foreground text-sm font-sans">
+               <p className="text-muted-foreground text-[12px] font-sans">
                  Manage all support tickets and track customer issues effortlessly.
                </p>
             </div>
 
             <div className="flex items-center gap-3">
 <Button
-className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-sm h-10 px-5 rounded-lg shadow-xs"
+className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-[11px] h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => setShowAIChat(true)}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="h-3 w-3 mr-2" />
                 Ask AI
               </Button>
 <Button
                 variant="outline"
-className="bg-background text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--menu-hover)] text-sm h-10 px-5 rounded-lg"
+className="bg-background text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--menu-hover)] text-[11px] h-8 px-4 rounded-lg"
                 onClick={() => setShowImportDialog(true)}
               >
-                <Cloud className="h-4 w-4 mr-2" />
+                <Cloud className="h-3 w-3 mr-2" />
                 Import
               </Button>
 <Button 
-className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-sm h-10 px-5 rounded-lg shadow-xs"
+className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-[11px] h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => window.location.href = '/tickets/create'} 
               >
                 + Create Ticket
@@ -1407,7 +1407,7 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
                <div className="flex items-center gap-0">
                  <button
                    onClick={() => setCurrentView("list")}
-                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                   className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
                      currentView === "list"
                        ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
                        : "text-muted-foreground border-transparent hover:text-foreground"
@@ -1417,7 +1417,7 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
                  </button>
                  <button
                    onClick={() => setCurrentView("kanban")}
-                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                   className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
                      currentView === "kanban"
                        ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
                        : "text-muted-foreground border-transparent hover:text-foreground"

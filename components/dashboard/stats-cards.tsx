@@ -95,14 +95,14 @@ export function StatsCards() {
       {stats.map((stat, index) => (
         <Card key={index} className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-700">{stat.title}</CardTitle>
+            <CardTitle className="text-[11px] font-medium text-gray-700">{stat.title}</CardTitle>
             <div className="text-base sm:text-lg">{stat.icon}</div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl sm:text-3xl font-bold ${stat.color} mb-1`}>{stat.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className={`text-lg font-bold ${stat.color} mb-1`}>{stat.value}</div>
+            <div className="flex items-center text-[10px] text-gray-700">
               {getTrendIcon(stat.trend)}
-              <span className="ml-1 text-xs sm:text-sm">{stat.change}</span>
+              <span className="ml-1 text-[10px]">{stat.change}</span>
             </div>
           </CardContent>
         </Card>

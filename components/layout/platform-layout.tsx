@@ -31,7 +31,7 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
       <div className="flex flex-1 pt-12">
         {!isMobile && (
           <div 
-            className="w-64 border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar"
+            className="w-64 border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar overflow-hidden"
           >
             <SidebarNavigation />
           </div>
