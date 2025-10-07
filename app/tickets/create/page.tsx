@@ -371,7 +371,7 @@ export default function CreateTicketPage() {
       case "incident":
         return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
       case "request":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+        return "bg-[#6E72FF]/10 text-[#6E72FF] dark:bg-[#6E72FF]/20 dark:text-[#6E72FF]"
       case "problem":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
       case "change":
@@ -412,7 +412,11 @@ export default function CreateTicketPage() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting}
+              className="bg-[#6E72FF] hover:bg-[#5B5FE6] text-white"
+            >
               {isSubmitting ? (
                 <>
                   <div className="h-4 w-4 mr-2 bg-white/20 rounded animate-pulse" />

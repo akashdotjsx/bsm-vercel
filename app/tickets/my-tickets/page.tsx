@@ -205,11 +205,11 @@ export default function MyTicketsPage() {
           <Filter className="h-4 w-4 mr-2" />
           Filter
         </Button>
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search items"
-            className="pl-10 h-9"
+            className="pl-10 h-9 w-48"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -376,10 +376,10 @@ export default function MyTicketsPage() {
   const renderKanbanView = () => (
     <div className="space-y-6">
       <div className="flex items-center gap-4 py-2 border-b border-border">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder="Search items"
             className="pl-10 h-9 w-48 border-0 bg-muted/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

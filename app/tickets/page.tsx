@@ -76,7 +76,7 @@ const getAvatarInitials = (firstName?: string, lastName?: string, displayName?: 
 // Helper function to generate avatar colors
 const getAvatarColor = (name: string) => {
   const colors = [
-    'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+    'bg-red-500', 'bg-[#6E72FF]', 'bg-green-500', 'bg-yellow-500', 
     'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500'
   ]
   const hash = name.split('').reduce((a, b) => {
@@ -187,7 +187,7 @@ export default function TicketsPage() {
   const [groupBy, setGroupBy] = useState("none")
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
-  const [ticketView, setTicketView] = useState<"all" | "my">("all")
+  const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
   
   // Ticket action states
   const [showEditModal, setShowEditModal] = useState(false)
@@ -295,7 +295,22 @@ export default function TicketsPage() {
 
   const filteredTickets = useMemo(() => {
     // Use local tickets for Kanban view, transformed tickets for list view
-    const baseTickets = currentView === "kanban" ? localTickets : (transformedTickets || [])
+    let baseTickets = currentView === "kanban" ? localTickets : (transformedTickets || [])
+    
+    // Apply ticket view filter first (All Tickets, My Tickets, Assigned to Me)
+    if (ticketView === "my" && user) {
+      baseTickets = baseTickets.filter(ticket => 
+        ticket.reportedBy === user.display_name || 
+        ticket.reportedBy === user.email ||
+        ticket.customer === user.display_name ||
+        ticket.customer === user.email
+      )
+    } else if (ticketView === "assigned" && user) {
+      baseTickets = baseTickets.filter(ticket => 
+        ticket.assignee?.name === user.display_name ||
+        ticket.assignee?.name === user.email
+      )
+    }
     
     // Apply client-side filtering for list view (API already handles some filtering)
     if (currentView === "list") {
@@ -358,7 +373,7 @@ export default function TicketsPage() {
     }
     
     return baseTickets
-  }, [localTickets, transformedTickets, currentView, searchTerm, selectedType, selectedPriority, selectedStatus, activeFilters])
+  }, [localTickets, transformedTickets, currentView, searchTerm, selectedType, selectedPriority, selectedStatus, activeFilters, ticketView, user])
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
@@ -435,7 +450,7 @@ export default function TicketsPage() {
   const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "new":
-        return "bg-blue-500 text-white"
+        return "bg-[#6E72FF] text-white"
       case "waiting_on_you":
         return "bg-yellow-500 text-gray-900"
       case "waiting_on_customer":
@@ -470,6 +485,18 @@ export default function TicketsPage() {
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value)
+  }, [])
+
+  const handleClearAllFilters = useCallback(() => {
+    setActiveFilters({
+      type: [],
+      priority: [],
+      status: [],
+      assignee: [],
+      dateRange: { from: '', to: '' }
+    })
+    setSearchTerm("")
+    setTicketView("all")
   }, [])
 
   const handleSendAIMessage = useCallback(async () => {
@@ -885,16 +912,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Filter className="h-3 w-3 mr-2" />
             Filter
             {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
-              <span className="ml-1 bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5">
+              <span className="ml-1 bg-[#6E72FF] text-white text-[10px] rounded-full px-1.5 py-0.5">
                 {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
               </span>
             )}
           </Button>
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-10 h-8 text-[11px]"
+              className="pl-10 h-8 w-48 text-[11px]"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -979,7 +1006,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                       <div className="text-muted-foreground">
                         No tickets found. <button 
                           onClick={() => window.location.href = '/tickets/create'} 
-                          className="text-blue-600 hover:underline"
+                          className="text-[#6E72FF] hover:underline"
                         >
                           Create your first ticket
                         </button>
@@ -1008,7 +1035,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                       <div>
                         <button
                           onClick={() => handleTicketClick(ticket)}
-                          className="text-[11px] font-medium text-foreground hover:text-blue-600 hover:underline cursor-pointer"
+                          className="text-[11px] font-medium text-foreground hover:text-[#6E72FF] hover:underline cursor-pointer"
                         >
                           {ticket.title}
                         </button>
@@ -1018,7 +1045,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <span className={`px-2 py-1 rounded-full text-[10px] font-medium
                         ticket.status === "new" 
-                          ? "bg-blue-100 text-blue-800"
+                          ? "bg-[#6E72FF]/10 text-[#6E72FF]"
                           : ticket.status === "in_progress"
                             ? "bg-yellow-100 text-yellow-800"
                             : ticket.status === "review"
@@ -1051,7 +1078,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                        <div className="flex items-center">
                          {ticket.assignee ? (
                            <div
-                             className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[9px] font-medium"
+                             className="h-6 w-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[9px] font-medium"
                              title={ticket.assignee.name}
                            >
                              {ticket.assignee.avatar}
@@ -1244,7 +1271,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     switch (kanbanGroupBy) {
       case "status":
         return [
-          { id: "new", title: "New", count: 0, color: "border-t-blue-400" },
+          { id: "new", title: "New", count: 0, color: "border-t-[#6E72FF]" },
           { id: "waiting_on_you", title: "In Progress", count: 0, color: "border-t-yellow-400" },
           { id: "waiting_on_customer", title: "Review", count: 0, color: "border-t-purple-400" },
           { id: "on_hold", title: "Done", count: 0, color: "border-t-green-400" },
@@ -1258,7 +1285,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         ]
       case "category":
         return [
-          { id: "technical", title: "Technical", count: 0, color: "border-t-blue-400" },
+          { id: "technical", title: "Technical", count: 0, color: "border-t-[#6E72FF]" },
           { id: "billing", title: "Billing", count: 0, color: "border-t-green-400" },
           { id: "general", title: "General", count: 0, color: "border-t-purple-400" },
           { id: "feature", title: "Feature Request", count: 0, color: "border-t-orange-400" },
@@ -1266,7 +1293,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       default: // type - use hardcoded ticket types to ensure consistency
         return [
           { id: "incident", title: "Incident", count: 0, color: "border-t-red-400" },
-          { id: "request", title: "Request", count: 0, color: "border-t-blue-400" },
+          { id: "request", title: "Request", count: 0, color: "border-t-[#6E72FF]" },
           { id: "problem", title: "Problem", count: 0, color: "border-t-orange-400" },
           { id: "change", title: "Change", count: 0, color: "border-t-green-400" },
           { id: "general_query", title: "General Query", count: 0, color: "border-t-purple-400" },
@@ -1323,10 +1350,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       return (
         <div className="space-y-6 font-sans">
           <div className="flex items-center gap-4 py-2 border-b border-border">
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-<Input
-                placeholder="Search..."
+              <Input
+                placeholder="Search items"
                 className="pl-10 h-9 w-48 border-0 bg-muted/50 text-[13px]"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -1398,7 +1425,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <div
               key={column.id}
               className={`space-y-4 transition-all duration-200 ${
-                dragOverColumn === column.id ? "bg-blue-50 dark:bg-blue-950/20 rounded-lg p-2" : ""
+                dragOverColumn === column.id ? "bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 rounded-lg p-2" : ""
               }`}
               onDragOver={handleDragOver}
               onDragEnter={(e) => handleDragEnter(e, column.id)}
@@ -1407,7 +1434,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             >
               <div
                 className={`border-t-4 ${column.color} bg-card rounded-t-lg ${
-                  dragOverColumn === column.id ? "shadow-lg border-2 border-blue-300 border-dashed" : ""
+                  dragOverColumn === column.id ? "shadow-lg border-2 border-[#6E72FF]/30 border-dashed" : ""
                 }`}
               >
                 <div className="p-4 pb-2">
@@ -1415,7 +1442,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
                   </h3>
                   {dragOverColumn === column.id && draggedTicket && (
-                    <div className="text-xs text-blue-600 font-medium">Drop ticket here</div>
+                    <div className="text-xs text-[#6E72FF] font-medium">Drop ticket here</div>
                   )}
                 </div>
               </div>
@@ -1526,10 +1553,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <div className="space-y-1">
                <div className="flex items-center gap-2">
                  <h1 className="text-[12px] font-semibold tracking-tight font-sans text-foreground">
-                   All Tickets
+                   {ticketView === "all" ? "All Tickets" : 
+                    ticketView === "my" ? "My Tickets" : 
+                    "Assigned to Me"}
                  </h1>
                  <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-[10px] font-medium">
-                   {tickets?.length || 0}
+                   {filteredTickets?.length || 0}
+                   {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
+                     <span className="text-muted-foreground"> of {tickets.length}</span>
+                   )}
                  </span>
                </div>
                <p className="text-muted-foreground text-[10px] font-sans">
@@ -1539,7 +1571,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
             <div className="flex items-center gap-3">
 <Button
-className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-[11px] h-8 px-4 rounded-lg shadow-xs"
+className="bg-gradient-to-r from-[#6E72FF] to-[#FF0078] hover:from-[#6E72FF]/90 hover:to-[#FF0078]/90 text-white text-[11px] h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => setShowAIChat(true)}
               >
                 <Sparkles className="h-3 w-3 mr-2" />
@@ -1547,14 +1579,14 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
               </Button>
 <Button
                 variant="outline"
-className="bg-background text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--menu-hover)] text-[11px] h-8 px-4 rounded-lg"
+className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5 text-[11px] h-8 px-4 rounded-lg"
                 onClick={() => setShowImportDialog(true)}
               >
-                <Cloud className="h-3 w-3 mr-2" />
+                <Download className="h-3 w-3 mr-2" />
                 Import
               </Button>
 <Button 
-className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-[11px] h-8 px-4 rounded-lg shadow-xs"
+className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-[11px] h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => window.location.href = '/tickets/create'} 
               >
                 + Create Ticket
@@ -1569,7 +1601,7 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
                    onClick={() => setCurrentView("list")}
                    className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
                      currentView === "list"
-                       ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+                       ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
                        : "text-muted-foreground border-transparent hover:text-foreground"
                    }`}
                  >
@@ -1579,14 +1611,30 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
                    onClick={() => setCurrentView("kanban")}
                    className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
                      currentView === "kanban"
-                       ? "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+                       ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
                        : "text-muted-foreground border-transparent hover:text-foreground"
                    }`}
                  >
                    Kanban
                  </button>
                </div>
-
+               
+               <div className="flex items-center gap-3">
+                 <Select value={ticketView} onValueChange={setTicketView}>
+                   <SelectTrigger className="w-28 h-7 text-[11px] font-inter text-[#717171] border-border">
+                     <SelectValue>
+                       {ticketView === "all" ? "All Tickets" : 
+                        ticketView === "my" ? "My Tickets" : 
+                        "Assigned to Me"}
+                     </SelectValue>
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="all">All Tickets</SelectItem>
+                     <SelectItem value="my">My Tickets</SelectItem>
+                     <SelectItem value="assigned">Assigned to Me</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
              </div>
            </div>
 
@@ -1609,7 +1657,7 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-blue-600" />
+                <Bot className="h-5 w-5 text-[#6E72FF]" />
 <span className="font-sans text-base">Ask AI about Tickets</span>
               </div>
               <Button
@@ -1639,12 +1687,12 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-
                 <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.type === "user" ? "bg-blue-600 text-white" : "bg-muted text-foreground"
+                      message.type === "user" ? "bg-[#6E72FF] text-white" : "bg-muted text-foreground"
                     }`}
                   >
                     <p className="font-sans text-[13px] whitespace-pre-wrap">{message.content}</p>
                     <p
-                      className={`text-xs mt-1 ${message.type === "user" ? "text-blue-100" : "text-muted-foreground"}`}
+                      className={`text-xs mt-1 ${message.type === "user" ? "text-[#6E72FF]/70" : "text-muted-foreground"}`}
                     >
                       {message.timestamp.toLocaleTimeString()}
                     </p>
@@ -1736,7 +1784,7 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
               <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
             </div>
 
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                <div className="bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 p-4 rounded-lg">
                   <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• <strong>Required columns:</strong> Title, Priority, Type</li>

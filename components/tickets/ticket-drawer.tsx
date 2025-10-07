@@ -191,19 +191,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
               <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
                   value="details"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger
                   value="accounts"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Accounts
                 </TabsTrigger>
                 <TabsTrigger
                   value="checklist"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Checklist
                   {checklist.length > 0 && (
@@ -214,7 +214,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Comments
                   {comments.length > 0 && (
@@ -225,7 +225,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="files"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Files
                   {attachments.length > 0 && (
@@ -236,7 +236,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="history"
-                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   History
                   <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
@@ -637,7 +637,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                     comments.map((comment) => (
                       <div key={comment.id} className="border rounded-lg p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                             {comment.author?.first_name?.[0] || 'U'}{comment.author?.last_name?.[0] || ''}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -806,11 +806,11 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   </div>
                   
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                       JS
                     </div>
                     <div className="flex-1">
-                      <div className="bg-blue-50 rounded-lg p-3">
+                      <div className="bg-[#6E72FF]/10 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[11px] font-medium text-foreground">John Smith</span>
                           <span className="text-[10px] text-muted-foreground">1 hour ago</span>

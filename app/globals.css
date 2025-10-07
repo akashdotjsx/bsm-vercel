@@ -9,8 +9,8 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #2d2f34;
-  /* Primary purple color system */
-  --primary: #7073fc;
+  /* Primary blue color system */
+  --primary: #6E72FF;
   --primary-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #525252;
@@ -25,8 +25,8 @@
   --border: #eaecf0;
   --card-border: #eaecf0; /* added to align component borders */
   --input: #fbfcfd;
-  /* Ring color with purple primary */
-  --ring: rgba(112, 115, 252, 0.5);
+  /* Ring color with blue primary */
+  --ring: rgba(110, 114, 255, 0.5);
   /* Highlight colors */
   --highlight: #f9fafb;
   --highlight-foreground: #2d2f34;
@@ -63,10 +63,10 @@
   --dropdown-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1);
   --select-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06), 0px 0px 1px rgba(0, 0, 0, 0.08);
 
-  --chart-1: #7073fc;
+  --chart-1: #6E72FF;
   --chart-2: #2d2f34;
   --chart-3: #f04438;
-  --chart-4: #7073fc;
+  --chart-4: #6E72FF;
   --chart-5: #6a707c;
   --radius: 0.625rem;
 
@@ -78,7 +78,7 @@
   --sidebar-accent: #f7f7f7;
   --sidebar-accent-foreground: #525252;
   --sidebar-border: #e5e5e5;
-  --sidebar-ring: rgba(112, 115, 252, 0.5);
+  --sidebar-ring: rgba(110, 114, 255, 0.5);
   --sidebar-hover: #f1f1f1;
   --sidebar-active: #ededed;
   --menu-hover: #f4f4f5;
@@ -98,8 +98,8 @@
   --card-foreground: #ffffff;
   --popover: #212222;
   --popover-foreground: #ffffff;
-  /* Primary purple stays the same in dark */
-  --primary: #7073fc;
+  /* Primary blue stays the same in dark */
+  --primary: #6E72FF;
   --primary-foreground: #ffffff;
   --secondary: #282a2f;
   --secondary-foreground: #acb1b9;
@@ -113,7 +113,7 @@
   --border: #2d2f34;
   --card-border: #2d2f34; /* added to align component borders */
   --input: #282a2f;
-  --ring: rgba(112, 115, 252, 0.5);
+  --ring: rgba(110, 114, 255, 0.5);
   --highlight: #282a2f;
   --highlight-foreground: #ffffff;
   --highlight-border: #424447;
@@ -150,10 +150,10 @@
   --active-red: #f04438;
   --active-red-border: #d92d20;
 
-  --chart-1: #7073fc;
+  --chart-1: #6E72FF;
   --chart-2: #ffffff;
   --chart-3: #f04438;
-  --chart-4: #7073fc;
+  --chart-4: #6E72FF;
   --chart-5: #acb1b9;
   
   /* Dark mode sidebar */
@@ -164,7 +164,7 @@
   --sidebar-accent: #424447;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #2d2f34;
-  --sidebar-ring: rgba(112, 115, 252, 0.5);
+  --sidebar-ring: rgba(110, 114, 255, 0.5);
   --sidebar-hover: #424447;
   --sidebar-active: #2d2f34;
   

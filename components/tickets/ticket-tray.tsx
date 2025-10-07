@@ -241,7 +241,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "incident":
         return "bg-red-100 text-red-800"
       case "request":
-        return "bg-blue-100 text-blue-800"
+        return "bg-[#6E72FF]/10 text-[#6E72FF]"
       case "problem":
         return "bg-orange-100 text-orange-800"
       case "change":
@@ -256,7 +256,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "open":
         return "bg-yellow-100 text-yellow-800"
       case "in progress":
-        return "bg-blue-100 text-blue-800"
+        return "bg-[#6E72FF]/10 text-[#6E72FF]"
       case "resolved":
         return "bg-green-100 text-green-800"
       case "closed":
@@ -388,7 +388,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
         return <FileText className="h-5 w-5 text-green-600" />
       case "doc":
       case "docx":
-        return <FileText className="h-5 w-5 text-blue-600" />
+        return <FileText className="h-5 w-5 text-[#6E72FF]" />
       case "ppt":
       case "pptx":
         return <FileText className="h-5 w-5 text-orange-600" />
@@ -557,7 +557,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-8 w-8 p-0 ${isWatching ? "text-blue-600" : ""}`}
+                className={`h-8 w-8 p-0 ${isWatching ? "text-[#6E72FF]" : ""}`}
                 onClick={handleToggleWatcher}
                 title={isWatching ? "Stop watching" : "Watch ticket"}
               >
@@ -718,7 +718,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">Reported By</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                      <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
                         {ticketData.reportedBy}
                       </div>
                       <span className="text-sm">{ticketData.requester}</span>
@@ -843,7 +843,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                           onClick={() => handleLinkAccount(account)}
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                            <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
                               {account.name
                                 .split(" ")
                                 .map((n) => n[0])
@@ -868,7 +868,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   <div key={account.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-[#6E72FF] flex items-center justify-center text-white font-medium">
                           {account.name
                             .split(" ")
                             .map((n) => n[0])
@@ -1010,7 +1010,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   <div key={comment.id} className="flex gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium ${
-                        comment.type === "system" ? "bg-gray-500" : "bg-blue-500"
+                        comment.type === "system" ? "bg-gray-500" : "bg-[#6E72FF]"
                       }`}
                     >
                       {comment.avatar}
@@ -1049,7 +1049,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                             className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
                             onClick={() => handleSelectMention(member)}
                           >
-                            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                            <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs">
                               {member.avatar}
                             </div>
                             <div>
@@ -1153,8 +1153,8 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                 {ticketData.history.map((entry, index) => (
                   <div key={entry.id} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        <History className="h-4 w-4 text-blue-600" />
+                      <div className="w-8 h-8 rounded-full bg-[#6E72FF]/10 flex items-center justify-center">
+                        <History className="h-4 w-4 text-[#6E72FF]" />
                       </div>
                       {index < ticketData.history.length - 1 && <div className="w-px h-8 bg-gray-200 mt-2"></div>}
                     </div>
@@ -1186,7 +1186,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyTicketId} title="Copy Ticket ID">
                   <Copy className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className={`h-8 w-8 p-0 ${isWatching ? "text-blue-600" : ""}`} onClick={handleToggleWatcher} title={isWatching ? "Stop watching" : "Watch ticket"}>
+                <Button variant="ghost" size="sm" className={`h-8 w-8 p-0 ${isWatching ? "text-[#6E72FF]" : ""}`} onClick={handleToggleWatcher} title={isWatching ? "Stop watching" : "Watch ticket"}>
                   <Bell className={`h-4 w-4 ${isWatching ? "fill-current" : ""}`} />
                 </Button>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyTicketLink} title="Copy Ticket Link">
@@ -1312,7 +1312,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700">Reported By</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                        <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
                           {ticketData.reportedBy}
                         </div>
                         <span className="text-sm">{ticketData.requester}</span>
