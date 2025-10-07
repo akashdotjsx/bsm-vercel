@@ -17,12 +17,10 @@ export default function Page() {
   const [password, setPassword] = useState("KrooloAdmin123!")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
-  const { user, loading } = useAuth()
   
   // Force light mode on login page
   useEffect(() => {
@@ -30,29 +28,23 @@ export default function Page() {
     // Force light mode
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
-  }, [])
-
-  // Auto-redirect if user is already authenticated
-  useEffect(() => {
-    if (!loading && user) {
-      console.log('User already authenticated, redirecting to dashboard')
-      router.push('/dashboard')
-      return
+    
+    // Check if user is already authenticated (but don't show loading)
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          console.log('User already authenticated, redirecting to dashboard')
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        // Continue to show login page on error
+      }
     }
-    setCheckingAuth(false)
-  }, [user, loading, router])
-  
-  // Show loading while checking authentication status
-  if (loading || checkingAuth) {
-    return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
-        <div className="flex items-center gap-2">
-          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-          <span className="text-sm text-muted-foreground">Checking authentication...</span>
-        </div>
-      </div>
-    )
-  }
+    
+    checkAuth()
+  }, [router, supabase])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -150,27 +142,27 @@ export default function Page() {
     <div className="flex h-screen w-full bg-white overflow-hidden">
 
       {/* Left side - Login Form */}
-      <div className="flex lg:w-1/2 w-full overflow-y-auto bg-white">
-        <div className="flex flex-col w-full max-w-sm mx-auto p-8 lg:p-12">
-          {/* Top spacer - 30% of viewport height */}
-          <div className="h-[25vh] min-h-12"></div>
+      <div className="flex lg:w-1/2 w-full overflow-hidden bg-white">
+        <div className="flex flex-col w-full max-w-xs mx-auto p-6 lg:p-8">
+          {/* Top spacer - reduced */}
+          <div className="h-[20vh] min-h-8"></div>
           
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Logo and Header */}
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-2">
               {mounted && (
                 <Image 
                   src="/images/kroolo-dark-logo2.svg"
                   alt="Kroolo Logo" 
-                  width={120} 
-                  height={40} 
-                  className="h-12 w-auto mx-auto" 
+                  width={100} 
+                  height={32} 
+                  className="h-10 w-auto mx-auto" 
                 />
               )}
               {!mounted && (
-                <div className="h-12 w-32 bg-gray-200 animate-pulse rounded mx-auto" />
+                <div className="h-10 w-28 bg-gray-200 animate-pulse rounded mx-auto" />
               )}
-              <h1 className="text-xl font-semibold text-gray-900">Sign in with</h1>
+              <h1 className="text-lg font-semibold text-gray-900">Sign in with</h1>
             </div>
 
             {/* Social Login Buttons */}
@@ -178,7 +170,7 @@ export default function Page() {
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full h-11 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full h-10 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
                 onClick={() => alert('Google sign-in coming soon!')}
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -193,7 +185,7 @@ export default function Page() {
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full h-11 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full h-10 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
                 onClick={() => alert('Microsoft sign-in coming soon!')}
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -217,7 +209,7 @@ export default function Page() {
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-900">
                   Email
@@ -229,7 +221,7 @@ export default function Page() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 px-4 bg-white border-gray-300"
+                  className="h-10 px-3 bg-white border-gray-300 text-sm"
                 />
               </div>
               <div className="space-y-1">
@@ -243,7 +235,7 @@ export default function Page() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 px-4 bg-white border-gray-300"
+                  className="h-10 px-3 bg-white border-gray-300 text-sm"
                 />
               </div>
               {error && (
@@ -251,7 +243,7 @@ export default function Page() {
                   {error}
                 </div>
               )}
-              <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
+              <Button type="submit" className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
 
@@ -270,7 +262,7 @@ export default function Page() {
             </form>
 
             {/* Footer Links */}
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1">
               <div className="text-sm">
                 <span className="text-gray-600">
                   Don't have an account?{" "}
@@ -295,7 +287,7 @@ export default function Page() {
       </div>
 
       {/* Right side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: '#ccdafa' }}>
         <Image
           src="/images/login_page_image.png"
           alt="AI WorkOS for All"

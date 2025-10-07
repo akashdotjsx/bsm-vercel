@@ -163,20 +163,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Error signing out:', error)
-      }
-      // Clear all state immediately
-      setUser(null)
-      setProfile(null)
-      setOrganization(null)
-      setPermissions([])
-      setUserRoles([])
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
+    // Clear all state IMMEDIATELY for instant logout
+    setUser(null)
+    setProfile(null)
+    setOrganization(null)
+    setPermissions([])
+    setUserRoles([])
+    
+    // Then handle Supabase signout in background (don't await)
+    supabase.auth.signOut().catch((error) => {
+      console.error('Error signing out from Supabase:', error)
+      // User is already logged out from UI perspective, so this is just cleanup
+    })
   }
 
   // Permission checking functions

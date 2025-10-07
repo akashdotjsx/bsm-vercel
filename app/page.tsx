@@ -27,45 +27,31 @@ import Image from "next/image"
 
 export default function LandingPage() {
   const router = useRouter()
-  const { user, loading } = useAuth()
-  const [showContent, setShowContent] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
   // Prevent hydration mismatch with theme
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    console.log("[v0] Landing page mounted and rendering")
     
-    // Show content immediately after 1 second, regardless of auth state
-    const timer = setTimeout(() => {
-      setShowContent(true)
-    }, 1000)
-    
-    // Auto-redirect if user is already authenticated
-    if (!loading && user) {
-      console.log('User already authenticated, redirecting to dashboard')
-      router.push('/dashboard')
-      return
+    // Check if user is already authenticated (silently, no loading)
+    const checkAuth = async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          console.log('User already authenticated, redirecting to dashboard')
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        // Continue showing landing page on error
+      }
     }
     
-    return () => clearTimeout(timer)
-  }, [user, loading, router])
-  
-  // Show loading briefly, then show content no matter what
-  if (!showContent && loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-          <span className="text-sm text-muted-foreground">Loading...</span>
-        </div>
-      </div>
-    )
-  }
+    checkAuth()
+  }, [router])
 
   const handleSignIn = () => {
     console.log("[v0] Sign in button clicked, navigating to login")
@@ -149,7 +135,7 @@ export default function LandingPage() {
               ) : (
                 <div className="h-8 w-30 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
               )}
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-[12px]">
                 BSM
               </Badge>
             </div>
@@ -163,7 +149,7 @@ export default function LandingPage() {
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               </Button>
-              <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
+              <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
                 Sign In
                 <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
@@ -176,22 +162,22 @@ export default function LandingPage() {
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="secondary" className="mb-6 text-[10px]">
+            <Badge variant="secondary" className="mb-6 text-[12px]">
               AI-Powered Business Service Management
             </Badge>
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
               Transform Your Service Operations with <span className="text-primary">Intelligent Automation</span>
             </h1>
-            <p className="mt-6 text-[12px] leading-6 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-6 text-[14px] leading-6 text-muted-foreground max-w-2xl mx-auto">
               Transform Enterprise Business Service Management for IT, HR, Finance, Legal and others. Built for modern
               enterprises.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
                 Get Started
                 <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
-              <Button variant="outline" size="lg" className="text-[11px]">
+              <Button variant="outline" size="lg" className="text-[12px]">
                 View Demo
               </Button>
             </div>
@@ -211,7 +197,7 @@ export default function LandingPage() {
                   </div>
                 <div className="text-2xl font-bold text-foreground">{stat.value}</div>
               </div>
-              <div className="text-[11px] text-muted-foreground">{stat.label}</div>
+              <div className="text-[12px] text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -225,7 +211,7 @@ export default function LandingPage() {
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Everything you need for modern service management
             </h2>
-            <p className="mt-4 text-[12px] text-muted-foreground">
+            <p className="mt-4 text-[14px] text-muted-foreground">
               Comprehensive platform with AI-powered features designed for enterprise-scale operations
             </p>
           </div>
@@ -237,10 +223,10 @@ export default function LandingPage() {
                   <div className={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${feature.color} mb-4`}>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-[12px]">{feature.title}</CardTitle>
+                  <CardTitle className="text-[14px]">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-[11px] leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="text-[12px] leading-relaxed">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -255,11 +241,11 @@ export default function LandingPage() {
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Ready to transform your service operations?
             </h2>
-            <p className="mt-4 text-[12px] text-muted-foreground">
+            <p className="mt-4 text-[14px] text-muted-foreground">
               Join thousands of organizations already using Kroolo BSM to deliver exceptional service experiences.
             </p>
             <div className="mt-8">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
                 Start Your Journey
                 <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
@@ -284,11 +270,11 @@ export default function LandingPage() {
               ) : (
                 <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
               )}
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-[12px]">
                 BSM
               </Badge>
             </div>
-            <p className="text-[10px] text-muted-foreground">© 2025 Kroolo. All rights reserved.</p>
+            <p className="text-[12px] text-muted-foreground">© 2025 Kroolo. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -45,13 +45,10 @@ export function GlobalHeader() {
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
-      router.push('/auth/login')
-    } catch (error) {
-      console.error('Error during logout:', error)
-    }
+  const handleLogout = () => {
+    // Instant logout - don't await, just clear state and redirect
+    signOut()
+    router.push('/auth/login')
   }
 
   const handleSettingsClick = () => {
