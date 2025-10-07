@@ -738,3 +738,22 @@ CREATE TABLE public.discovery_logs (
   CONSTRAINT discovery_logs_discovery_rule_id_fkey FOREIGN KEY (discovery_rule_id) REFERENCES public.discovery_rules(id),
   CONSTRAINT valid_discovery_status CHECK (status IN ('running', 'completed', 'failed', 'cancelled'))
 );
+
+CREATE TABLE public.search_suggestions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  query text NOT NULL,
+  search_type character varying DEFAULT 'all',
+  result_count integer DEFAULT 0,
+  clicked_result_id uuid,
+  clicked_result_type character varying,
+  ip_address inet,
+  user_agent text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT search_suggestions_pkey PRIMARY KEY (id),
+  CONSTRAINT search_suggestions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT search_suggestions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT valid_search_type CHECK (search_type IN ('all', 'tickets', 'users', 'knowledge', 'services', 'assets')),
+  CONSTRAINT valid_clicked_result_type CHECK (clicked_result_type IN ('ticket', 'user', 'knowledge', 'service', 'asset'))
+);

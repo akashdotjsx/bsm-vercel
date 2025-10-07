@@ -5,6 +5,7 @@ import type { FC } from "react"
 
 import dynamic from "next/dynamic"
 import { useState, useCallback, useMemo, Suspense, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -100,6 +101,7 @@ const formatDate = (dateString: string) => {
 
 export default function TicketsPage() {
   const { user } = useStore()
+  const searchParams = useSearchParams()
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState("")
@@ -149,6 +151,19 @@ export default function TicketsPage() {
   useEffect(() => {
     console.log('📊 Tickets state changed:', tickets?.length || 0, 'tickets')
   }, [tickets])
+
+  // Check for URL parameters to open specific ticket
+  useEffect(() => {
+    const viewTicketId = searchParams?.get('view')
+    if (viewTicketId && tickets && tickets.length > 0) {
+      const ticketToView = tickets.find(ticket => ticket.id === viewTicketId)
+      if (ticketToView) {
+        setSelectedTicket(ticketToView)
+        setShowTicketTray(true)
+        console.log('🔍 Opening ticket from search:', ticketToView.title)
+      }
+    }
+  }, [tickets, searchParams])
 
   // Check for new ticket creation notification
   useEffect(() => {
