@@ -170,10 +170,11 @@ export function useUsers() {
 
   const resetUserPassword = async (email: string) => {
     try {
-      await userAPI.resetUserPassword(email)
+      const result = await userAPI.resetUserPassword(email)
+      const extra = result?.action_link ? ` — Recovery link: ${result.action_link}` : ''
       toast({
-        title: "Password reset sent",
-        description: `Password reset email sent to ${email}`,
+        title: "Password reset initiated",
+        description: `If email delivery is disabled, use the recovery link.${extra}`,
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
