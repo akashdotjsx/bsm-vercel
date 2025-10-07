@@ -16,15 +16,26 @@ import {
   Clock,
   Target,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/contexts/auth-context"
+import { useTheme } from "next-themes"
+import Image from "next/image"
 
 export default function LandingPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
   const [showContent, setShowContent] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme()
+
+  // Prevent hydration mismatch with theme
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     console.log("[v0] Landing page mounted and rendering")
@@ -127,19 +138,34 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kroolo%20Logo-kuyVfAB5iW8WooZbrbQmPXSHHTVv6Q.png"
-                alt="Kroolo Logo"
-                className="h-8 w-auto"
-              />
-              <Badge variant="secondary" className="text-xs">
+              {mounted ? (
+                <Image
+                  src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
+                  alt="Kroolo Logo"
+                  width={120}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              ) : (
+                <div className="h-8 w-30 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+              )}
+              <Badge variant="secondary" className="text-[10px]">
                 BSM
               </Badge>
             </div>
             <div className="flex items-center space-x-3">
-              <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="h-8 w-8 p-0"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
+              <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
                 Sign In
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
             </div>
           </div>
@@ -150,22 +176,22 @@ export default function LandingPage() {
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="secondary" className="mb-6">
+            <Badge variant="secondary" className="mb-6 text-[10px]">
               AI-Powered Business Service Management
             </Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
               Transform Your Service Operations with <span className="text-primary">Intelligent Automation</span>
             </h1>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-6 text-[12px] leading-6 text-muted-foreground max-w-2xl mx-auto">
               Transform Enterprise Business Service Management for IT, HR, Finance, Legal and others. Built for modern
               enterprises.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
                 Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="text-[11px]">
                 View Demo
               </Button>
             </div>
@@ -183,9 +209,9 @@ export default function LandingPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mr-3">
                     {stat.icon}
                   </div>
-                  <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-                </div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+              </div>
+              <div className="text-[11px] text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -196,10 +222,10 @@ export default function LandingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Everything you need for modern service management
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-[12px] text-muted-foreground">
               Comprehensive platform with AI-powered features designed for enterprise-scale operations
             </p>
           </div>
@@ -211,10 +237,10 @@ export default function LandingPage() {
                   <div className={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${feature.color} mb-4`}>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardTitle className="text-[12px]">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-sm leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="text-[11px] leading-relaxed">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -226,16 +252,16 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Ready to transform your service operations?
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-[12px] text-muted-foreground">
               Join thousands of organizations already using Kroolo BSM to deliver exceptional service experiences.
             </p>
             <div className="mt-8">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[11px]">
                 Start Your Journey
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3" />
               </Button>
             </div>
           </div>
@@ -247,16 +273,22 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kroolo%20Logo-kuyVfAB5iW8WooZbrbQmPXSHHTVv6Q.png"
-                alt="Kroolo Logo"
-                className="h-6 w-auto"
-              />
-              <Badge variant="secondary" className="text-xs">
+              {mounted ? (
+                <Image
+                  src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
+                  alt="Kroolo Logo"
+                  width={96}
+                  height={24}
+                  className="h-6 w-auto"
+                />
+              ) : (
+                <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+              )}
+              <Badge variant="secondary" className="text-[10px]">
                 BSM
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 Kroolo. All rights reserved.</p>
+            <p className="text-[10px] text-muted-foreground">© 2025 Kroolo. All rights reserved.</p>
           </div>
         </div>
       </footer>

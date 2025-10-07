@@ -862,8 +862,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       <div className="space-y-4 font-sans">
         <div className="flex items-center gap-4 py-2">
           <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-48 h-9 text-sm bg-transparent">
-              <List className="h-4 w-4 mr-2" />
+            <SelectTrigger className="w-48 h-8 text-[11px] bg-transparent">
+              <List className="h-3 w-3 mr-2" />
               <SelectValue placeholder="Group By: None" />
             </SelectTrigger>
             <SelectContent>
@@ -879,13 +879,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-9 text-sm bg-transparent"
+            className="h-8 text-[11px] bg-transparent"
             onClick={() => setShowFilterDialog(true)}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-3 w-3 mr-2" />
             Filter
             {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
-              <span className="ml-1 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5">
+              <span className="ml-1 bg-blue-500 text-white text-[10px] rounded-full px-1.5 py-0.5">
                 {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
               </span>
             )}
@@ -894,7 +894,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-10 h-9"
+              className="pl-10 h-8 text-[11px]"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -1489,14 +1489,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <div className="flex items-start justify-between">
             <div className="space-y-1">
                <div className="flex items-center gap-2">
-                 <h1 className="text-lg font-semibold tracking-tight font-sans text-foreground">
+                 <h1 className="text-[12px] font-semibold tracking-tight font-sans text-foreground">
                    All Tickets
                  </h1>
                  <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-[10px] font-medium">
                    {tickets?.length || 0}
                  </span>
                </div>
-               <p className="text-muted-foreground text-[12px] font-sans">
+               <p className="text-muted-foreground text-[10px] font-sans">
                  Manage all support tickets and track customer issues effortlessly.
                </p>
             </div>
