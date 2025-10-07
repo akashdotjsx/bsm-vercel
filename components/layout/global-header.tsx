@@ -67,7 +67,7 @@ export function GlobalHeader() {
             className="cursor-pointer hover:opacity-80 transition-opacity"
           >
             <Image
-              src={theme === 'dark' ? '/images/kroolo-dark-logo2.svg' : '/images/kroolo-light-logo1.svg'}
+              src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
               alt="Kroolo"
               width={isMobile ? 80 : 100}
               height={isMobile ? 22 : 28}
@@ -119,11 +119,6 @@ export function GlobalHeader() {
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
         </Button>
 
-        {!isMobile && (
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <HelpCircle className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        )}
 
         <NotificationBell notifications={notifications} />
 
