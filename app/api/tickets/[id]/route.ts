@@ -119,6 +119,9 @@ export async function PUT(
       custom_fields
     } = body
 
+    // Input normalization to avoid enum/nullable issues
+    const norm = (v: any) => (v === "" ? null : v)
+
     // Get current ticket to track changes
     const { data: currentTicket } = await supabase
       .from('tickets')
@@ -139,16 +142,16 @@ export async function PUT(
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (type !== undefined) updateData.type = type
-    if (category !== undefined) updateData.category = category
-    if (subcategory !== undefined) updateData.subcategory = subcategory
+    if (category !== undefined) updateData.category = norm(category)
+    if (subcategory !== undefined) updateData.subcategory = norm(subcategory)
     if (priority !== undefined) updateData.priority = priority
     if (urgency !== undefined) updateData.urgency = urgency
     if (impact !== undefined) updateData.impact = impact
     if (status !== undefined) updateData.status = status
-    if (assignee_id !== undefined) updateData.assignee_id = assignee_id
-    if (team_id !== undefined) updateData.team_id = team_id
+    if (assignee_id !== undefined) updateData.assignee_id = norm(assignee_id)
+    if (team_id !== undefined) updateData.team_id = norm(team_id)
     if (due_date !== undefined) updateData.due_date = due_date ? new Date(due_date).toISOString() : null
-    if (tags !== undefined) updateData.tags = tags
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : []
     if (custom_fields !== undefined) updateData.custom_fields = custom_fields
 
     // Update ticket
@@ -167,7 +170,11 @@ export async function PUT(
 
     if (error) {
       console.error('Error updating ticket:', error)
-      return NextResponse.json({ error: 'Failed to update ticket' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to update ticket',
+        details: error.message,
+        code: (error as any).code || undefined
+      }, { status: 500 })
     }
 
     // Create history entries for changed fields

@@ -49,8 +49,8 @@ const AIAssistantPanel = dynamic(
   },
 )
 
-const TicketTray = dynamic(
-  () => import("@/components/tickets/ticket-tray").then((mod) => ({ default: mod.TicketTray })),
+const TicketDrawer = dynamic(
+  () => import("@/components/tickets/ticket-drawer"),
   {
     loading: () => <LoadingSpinner size="lg" />,
     ssr: false,
@@ -463,9 +463,9 @@ export default function TicketsPage() {
   }, [])
 
   const handleTicketClick = useCallback((ticket: any) => {
-    console.log("[v0] Opening ticket tray for:", ticket.id)
-    setSelectedTicket(ticket)
-    setShowTicketTray(true)
+    console.log("[v0] Navigating to ticket details:", ticket.id)
+    // Navigate to the ticket details page
+    window.location.href = `/tickets/${ticket.id}`
   }, [])
 
   const handleSearchChange = useCallback((value: string) => {
@@ -976,7 +976,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                    >
                     <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <div>
-                        <div className="text-[11px] font-medium text-foreground">{ticket.title}</div>
+                        <button
+                          onClick={() => handleTicketClick(ticket)}
+                          className="text-[11px] font-medium text-foreground hover:text-blue-600 hover:underline cursor-pointer"
+                        >
+                          {ticket.title}
+                        </button>
                         <div className="text-[10px] text-muted-foreground">{ticket.id}</div>
                       </div>
                     </td>
@@ -1987,10 +1992,10 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       </Dialog>
 
       <Suspense fallback={<LoadingSpinner size="lg" />}>
-        <TicketTray
+        <TicketDrawer
           isOpen={showTicketTray}
           onClose={() => {
-            console.log("[v0] Closing ticket tray")
+            console.log("[v0] Closing ticket drawer")
             setShowTicketTray(false)
             setSelectedTicket(null)
           }}

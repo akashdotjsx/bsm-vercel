@@ -130,7 +130,9 @@ export async function POST(request: NextRequest) {
       team_id,
       due_date,
       tags = [],
-      custom_fields = {}
+      custom_fields = {},
+      initial_comments = [],
+      initial_checklist = []
     } = body
 
     // Validate required fields
@@ -210,6 +212,52 @@ export async function POST(request: NextRequest) {
         details: error.message,
         code: error.code
       }, { status: 500 })
+    }
+
+    // Optionally create initial comments
+    if (Array.isArray(initial_comments) && initial_comments.length > 0) {
+      const rows = initial_comments
+        .filter((c: any) => c && typeof c.content === 'string' && c.content.trim() !== '')
+        .map((c: any) => ({
+          ticket_id: ticket.id,
+          author_id: user.id,
+          content: c.content.trim(),
+          is_internal: !!c.is_internal,
+          metadata: {}
+        }))
+      if (rows.length > 0) {
+        const { error: commentErr } = await supabase
+          .from('ticket_comments')
+          .insert(rows)
+        if (commentErr) {
+          // Roll back ticket to avoid partial creation
+          await supabase.from('tickets').delete().eq('id', ticket.id)
+          return NextResponse.json({ error: 'Failed to create initial comments' }, { status: 500 })
+        }
+      }
+    }
+
+    // Optionally create initial checklist
+    if (Array.isArray(initial_checklist) && initial_checklist.length > 0) {
+      const rows = initial_checklist
+        .filter((i: any) => i && typeof i.text === 'string' && i.text.trim() !== '')
+        .map((i: any) => ({
+          ticket_id: ticket.id,
+          text: i.text.trim(),
+          completed: !!i.completed,
+          assignee_id: i.assignee_id || null,
+          due_date: i.due_date ? new Date(i.due_date).toISOString() : null,
+          created_by: user.id
+        }))
+      if (rows.length > 0) {
+        const { error: checklistErr } = await supabase
+          .from('ticket_checklist')
+          .insert(rows)
+        if (checklistErr) {
+          await supabase.from('tickets').delete().eq('id', ticket.id)
+          return NextResponse.json({ error: 'Failed to create initial checklist' }, { status: 500 })
+        }
+      }
     }
 
     // Create initial history entry

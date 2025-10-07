@@ -151,6 +151,17 @@ export interface CreateTicketData {
   due_date?: string
   tags?: string[]
   custom_fields?: Record<string, any>
+  // New: allow creating initial related records in one request
+  initial_comments?: Array<{
+    content: string
+    is_internal?: boolean
+  }>
+  initial_checklist?: Array<{
+    text: string
+    completed?: boolean
+    assignee_id?: string
+    due_date?: string
+  }>
 }
 
 export interface UpdateTicketData extends Partial<CreateTicketData> {

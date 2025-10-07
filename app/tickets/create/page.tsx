@@ -55,6 +55,8 @@ import { ServiceCategory, Service } from "@/lib/types/services"
 import { useMode } from "@/lib/contexts/mode-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { categoryIconMap, getBgColorClass, formatSLA } from "@/lib/utils/icon-map"
+import { useState as useTeamsState, useEffect as useTeamsEffect } from "react"
+import { createClient } from '@/lib/supabase/client'
 
 export default function CreateTicketPage() {
   // Form state
@@ -72,6 +74,9 @@ export default function CreateTicketPage() {
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState("")
   const [customFields, setCustomFields] = useState<Record<string, any>>({})
+  const [estimatedHours, setEstimatedHours] = useState<number | undefined>()
+  const [department, setDepartment] = useState("")
+  const [organization, setOrganization] = useState("")
   
   // UI state
   const [activeTab, setActiveTab] = useState("details")
@@ -82,11 +87,23 @@ export default function CreateTicketPage() {
   const [invalidTitle, setInvalidTitle] = useState(false)
   const [invalidDescription, setInvalidDescription] = useState(false)
   
+  // Teams data
+  const [teams, setTeams] = useState<Array<{id: string, name: string}>>([])
+  const [teamsLoading, setTeamsLoading] = useState(true)
+  
+  // Organizations and departments data
+  const [organizations, setOrganizations] = useState<Array<{id: string, name: string}>>([])
+  const [departments, setDepartments] = useState<string[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  
   // Hooks for real data
   const { createTicket } = useTickets()
   const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
   const { mode } = useMode()
   const { categories: supabaseCategories, loading: categoriesLoading } = useServiceCategories()
+  
+  // Current user info
+  const [currentUser, setCurrentUser] = useState<{id: string, name: string, email: string} | null>(null)
   
   // Convert Supabase categories to the expected format
   const serviceCategories = supabaseCategories.map(cat => {
@@ -108,6 +125,80 @@ export default function CreateTicketPage() {
   
   const selectedCategory = serviceCategories.find(cat => cat.id === serviceCategory)
   const availableServices = selectedCategory?.services || []
+  
+  // Fetch teams, organizations, and departments
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const supabase = createClient()
+        
+        // Fetch teams
+        const { data: teamsData, error: teamsError } = await supabase
+          .from('teams')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name')
+          
+        if (teamsError) {
+          console.error('Error fetching teams:', teamsError)
+        } else {
+          setTeams(teamsData || [])
+        }
+        
+        // Fetch organizations
+        const { data: orgsData, error: orgsError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('status', 'active')
+          .order('name')
+          
+        if (orgsError) {
+          console.error('Error fetching organizations:', orgsError)
+        } else {
+          setOrganizations(orgsData || [])
+        }
+        
+        // Fetch unique departments from profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('department')
+          .not('department', 'is', null)
+          
+        if (profilesError) {
+          console.error('Error fetching departments:', profilesError)
+        } else {
+          const uniqueDepts = [...new Set(profilesData?.map(p => p.department).filter(Boolean) || [])]
+          setDepartments(uniqueDepts.sort())
+        }
+        
+        // Get current user info
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: userData } = await supabase
+            .from('profiles')
+            .select('id, display_name, first_name, last_name, email')
+            .eq('id', user.id)
+            .single()
+            
+          if (userData) {
+            setCurrentUser({
+              id: userData.id,
+              name: userData.display_name || `${userData.first_name} ${userData.last_name}`.trim() || userData.email,
+              email: userData.email
+            })
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setTeamsLoading(false)
+        setDataLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [])
   
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<Array<{
@@ -243,7 +334,23 @@ export default function CreateTicketPage() {
         team_id: teamId || undefined,
         due_date: dueDate?.toISOString(),
         tags: tags.length > 0 ? tags : undefined,
-        custom_fields: Object.keys(customFields).length > 0 ? customFields : undefined,
+        custom_fields: Object.keys(customFields).length > 0 ? {
+          ...customFields,
+          estimated_hours: estimatedHours,
+          department: department,
+          organization_name: organizations.find(o => o.id === organization)?.name
+        } : {
+          estimated_hours: estimatedHours,
+          department: department,
+          organization_name: organizations.find(o => o.id === organization)?.name
+        },
+        initial_comments: comments.map((c) => ({ content: c.content, is_internal: c.isInternal })),
+        initial_checklist: checklistItems.map((i) => ({
+          text: i.text,
+          completed: i.completed,
+          assignee_id: i.assigneeId,
+          due_date: i.dueDate ? i.dueDate.toISOString() : undefined,
+        })),
       }
 
       const newTicket = await createTicket(ticketData)
@@ -416,7 +523,7 @@ export default function CreateTicketPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type">Type</Label>
                     <Select value={type} onValueChange={(value: any) => setType(value)}>
@@ -431,6 +538,19 @@ export default function CreateTicketPage() {
                         <SelectItem value="task">Task</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value="new" disabled>
+                      <SelectTrigger>
+                        <SelectValue placeholder="New" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Status will be set to "New" when created</p>
                   </div>
 
                   <div className="space-y-2">
@@ -546,14 +666,89 @@ export default function CreateTicketPage() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="organization">Organization</Label>
+                    <Select value={organization} onValueChange={setOrganization}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={dataLoading ? "Loading..." : "Select organization"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dataLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading organizations...
+                          </SelectItem>
+                        ) : (
+                          organizations.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              {org.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select value={department} onValueChange={setDepartment}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={dataLoading ? "Loading..." : "Select department"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dataLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading departments...
+                          </SelectItem>
+                        ) : (
+                          departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dueDate">Due Date</Label>
+                    <Input
+                      id="dueDate"
+                      type="datetime-local"
+                      value={dueDate ? dueDate.toISOString().slice(0, 16) : ""}
+                      onChange={(e) => setDueDate(e.target.value ? new Date(e.target.value) : undefined)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="estimatedHours">Estimated Hours</Label>
+                    <Input
+                      id="estimatedHours"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="8"
+                      value={estimatedHours || ""}
+                      onChange={(e) => setEstimatedHours(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    />
+                  </div>
+                </div>
+                
+                {/* Reported By - Read Only */}
                 <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="datetime-local"
-                    value={dueDate ? dueDate.toISOString().slice(0, 16) : ""}
-                    onChange={(e) => setDueDate(e.target.value ? new Date(e.target.value) : undefined)}
-                  />
+                  <Label htmlFor="reportedBy">Reported By</Label>
+                  <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                      {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{currentUser?.name || 'Loading...'}</p>
+                      <p className="text-xs text-muted-foreground">{currentUser?.email || ''}</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -790,12 +985,20 @@ export default function CreateTicketPage() {
                   <Label>Team</Label>
                   <Select value={teamId} onValueChange={setTeamId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select team" />
+                      <SelectValue placeholder={teamsLoading ? "Loading teams..." : "Select team"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="it">IT Support</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="general">General Support</SelectItem>
+                      {teamsLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading teams...
+                        </SelectItem>
+                      ) : (
+                        teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

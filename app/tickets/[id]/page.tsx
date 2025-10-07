@@ -31,7 +31,8 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle,
-  Circle
+  Circle,
+  History
 } from "lucide-react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { useTicket, useTicketComments, useTicketAttachments, useTicketChecklist } from "@/hooks/use-tickets"
@@ -264,9 +265,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                     className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
                   >
                     Accounts
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      1
-                    </Badge>
+                    {/* Hide badge when no accounts - will be dynamic later */}
                   </TabsTrigger>
                   <TabsTrigger
                     value="checklist"
@@ -484,7 +483,30 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                 </div>
               </TabsContent>
 
+              <TabsContent value="accounts" className="p-6">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Linked Accounts</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Link customer accounts or contacts related to this ticket
+                    </p>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Link Account
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
               <TabsContent value="checklist" className="p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Task Checklist</h3>
+                  <span className="text-sm text-muted-foreground">
+                    {checklist.filter(item => item.completed).length} of {checklist.length} completed
+                  </span>
+                </div>
+                
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add checklist item..."
@@ -499,132 +521,280 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                 </div>
 
                 <div className="space-y-2">
-                  {checklist.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleChecklistItem(item.id, !item.completed)}
-                        className="h-6 w-6 p-0"
-                      >
-                        {item.completed ? (
-                          <CheckSquare className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Square className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <span className={`flex-1 ${item.completed ? "line-through text-muted-foreground" : ""}`}>
-                        {item.text}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteChecklistItem(item.id)}
-                        className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  {checklist.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No checklist items yet</p>
+                      <p className="text-sm">Add tasks above to track progress</p>
                     </div>
-                  ))}
+                  ) : (
+                    checklist.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleChecklistItem(item.id, !item.completed)}
+                          className="h-6 w-6 p-0 shrink-0"
+                        >
+                          {item.completed ? (
+                            <CheckSquare className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <span className={`block ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                            {item.text}
+                          </span>
+                          {item.assignee && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <User className="h-3 w-3" />
+                              <span className="text-xs text-muted-foreground">
+                                {item.assignee.display_name}
+                              </span>
+                            </div>
+                          )}
+                          {item.due_date && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Calendar className="h-3 w-3" />
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(item.due_date), "MMM d, yyyy")}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteChecklistItem(item.id)}
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700 shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
               <TabsContent value="comments" className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="internal-comment"
-                      checked={isInternalComment}
-                      onCheckedChange={setIsInternalComment}
-                    />
-                    <Label htmlFor="internal-comment" className="text-sm">
-                      Internal comment
-                    </Label>
-                  </div>
-                  <div className="flex gap-2">
-                    <Textarea
-                      placeholder="Add a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="min-h-20"
-                    />
-                    <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Comments & Updates</h3>
+                  <Button variant="outline" size="sm">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Internal Note
+                  </Button>
                 </div>
-
+                
                 <div className="space-y-3">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-                          {comment.author?.first_name?.[0]}{comment.author?.last_name?.[0]}
-                        </div>
-                        <span className="font-medium text-sm">{comment.author?.display_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.created_at), "MMM d, h:mm a")}
-                        </span>
-                        {comment.is_internal && (
-                          <Badge variant="outline" className="text-xs">
-                            Internal
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
+                  {comments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No comments yet</p>
+                      <p className="text-sm">Start the conversation below</p>
                     </div>
-                  ))}
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="border rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                            {comment.author?.first_name?.[0] || 'U'}{comment.author?.last_name?.[0] || ''}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{comment.author?.display_name || 'Unknown User'}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                              </span>
+                              {comment.is_internal && (
+                                <Badge variant="outline" className="text-xs">
+                                  Internal Note
+                                </Badge>
+                              )}
+                              {comment.is_system && (
+                                <Badge variant="secondary" className="text-xs">
+                                  System
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm whitespace-pre-wrap">{comment.content}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="internal-comment"
+                          checked={isInternalComment}
+                          onCheckedChange={setIsInternalComment}
+                        />
+                        <Label htmlFor="internal-comment" className="text-sm">
+                          Internal Note
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Use @ to mention team members</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Textarea
+                        placeholder="Add a comment... Use @ to mention team members"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-20 resize-none"
+                      />
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          onClick={handleAddComment} 
+                          disabled={!newComment.trim()}
+                          className="h-10"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                        <Upload className="h-3 w-3 mr-1" />
+                        Attach
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                        <User className="h-3 w-3 mr-1" />
+                        Mention
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="files" className="p-6 space-y-4">
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Upload files</p>
-                    <p className="text-xs text-muted-foreground">
-                      Drag and drop files here, or click to select
-                    </p>
-                    <input
-                      type="file"
-                      multiple
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <Button asChild variant="outline" size="sm">
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Choose Files
-                      </label>
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Attachments</h3>
+                  <Button>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload File
+                  </Button>
                 </div>
-
-                {attachments.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Attached Files</h4>
+                
+                {attachments.length > 0 ? (
+                  <div className="space-y-3">
                     {attachments.map((attachment) => (
-                      <div key={attachment.id} className="flex items-center gap-3 p-2 border rounded-lg">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{attachment.filename}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {(attachment.file_size / 1024).toFixed(1)} KB
-                          </p>
+                      <div key={attachment.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                          <FileText className="h-5 w-5 text-red-600" />
                         </div>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium truncate">{attachment.filename}</p>
+                            <Badge variant="secondary" className="text-xs">
+                              {((attachment.file_size || 0) / (1024 * 1024)).toFixed(1)} MB
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>Uploaded by {attachment.uploaded_by?.display_name || 'Unknown'}</span>
+                            <span>{format(new Date(attachment.created_at), "MMM d, h:mm a")}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-medium mb-2">Drag and drop files here, or click to browse</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Allowed types: PDF, Excel, Word, PowerPoint, PNG, JPG
+                      </p>
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        id="file-upload"
+                        accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.png,.jpg,.jpeg"
+                      />
+                      <Button asChild variant="outline">
+                        <label htmlFor="file-upload" className="cursor-pointer">
+                          Choose Files
+                        </label>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="history" className="p-6">
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="h-12 w-12 mx-auto mb-4" />
-                  <p>No history available</p>
+              <TabsContent value="history" className="p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">History</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {/* Sample history entries - these would come from ticket_history table */}
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                      S
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">System</span>
+                          <span className="text-xs text-muted-foreground">45 minutes ago</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                      JS
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">John Smith</span>
+                          <span className="text-xs text-muted-foreground">1 hour ago</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                      RJ
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-green-50 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">Richard Jeffries</span>
+                          <span className="text-xs text-muted-foreground">2 hours ago</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
