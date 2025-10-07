@@ -78,6 +78,9 @@ export default function CreateTicketPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState("")
+  // transient validation flags to flash red borders
+  const [invalidTitle, setInvalidTitle] = useState(false)
+  const [invalidDescription, setInvalidDescription] = useState(false)
   
   // Hooks for real data
   const { createTicket } = useTickets()
@@ -212,13 +215,24 @@ export default function CreateTicketPage() {
   }
 
   const handleSubmit = async () => {
-    if (!title.trim()) return
+    const missingTitle = !title.trim()
+    const missingDescription = !description.trim()
+    if (missingTitle || missingDescription) {
+      // mark invalid and persist until user fixes
+      if (missingTitle) {
+        setInvalidTitle(true)
+      }
+      if (missingDescription) {
+        setInvalidDescription(true)
+      }
+      return
+    }
 
     setIsSubmitting(true)
     try {
       const ticketData: CreateTicketData = {
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: description.trim(),
         type,
         priority,
         urgency,
@@ -234,6 +248,13 @@ export default function CreateTicketPage() {
 
       const newTicket = await createTicket(ticketData)
       console.log("Ticket created:", newTicket)
+      
+      // Store ticket info for toast notification on tickets page
+      localStorage.setItem('newTicketCreated', JSON.stringify({
+        ticketNumber: newTicket.ticket_number,
+        title: newTicket.title,
+        timestamp: Date.now()
+      }))
       
       // Redirect back to tickets list page
       window.location.href = `/tickets`
@@ -301,7 +322,7 @@ export default function CreateTicketPage() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={!title.trim() || isSubmitting}>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -330,19 +351,39 @@ export default function CreateTicketPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="title">Title *</Label>
+                    {invalidTitle && (
+                      <span className="flex items-center text-red-600 text-xs">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        This field is required
+                      </span>
+                    )}
+                  </div>
                   <Input
                     id="title"
                     placeholder="Enter ticket title..."
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-lg"
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setTitle(v)
+                      if (invalidTitle && v.trim() !== '') setInvalidTitle(false)
+                    }}
+                    className={`text-lg ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <div className="border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="description">Description *</Label>
+                    {invalidDescription && (
+                      <span className="flex items-center text-red-600 text-xs">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        This field is required
+                      </span>
+                    )}
+                  </div>
+                  <div className={`rounded-lg border ${invalidDescription ? 'border-red-500 ring-2 ring-red-500' : ''}`}>
                     <div className="flex items-center gap-1 p-2 border-b bg-muted/50">
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                         <Bold className="h-3 w-3" />
@@ -365,7 +406,11 @@ export default function CreateTicketPage() {
                       id="description"
                       placeholder="Describe the issue or request..."
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setDescription(v)
+                        if (invalidDescription && v.trim() !== '') setInvalidDescription(false)
+                      }}
                       className="min-h-32 border-0 rounded-t-none focus-visible:ring-0"
                     />
                   </div>

@@ -10,6 +10,7 @@ import { AuthProvider } from "@/lib/contexts/auth-context"
 import { Suspense } from "react"
 import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
             </AuthProvider>
           </NavbarFixProvider>
           <Toaster />
+          <SonnerToaster />
         </ThemeProvider>
       </body>
     </html>

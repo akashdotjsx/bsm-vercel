@@ -33,6 +33,7 @@ import { PlatformLayout } from "@/components/layout/platform-layout"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { useTickets } from "@/hooks/use-tickets"
@@ -146,6 +147,38 @@ export default function TicketsPage() {
 
   useEffect(() => {
     console.log('📊 Tickets state changed:', tickets?.length || 0, 'tickets')
+  }, [tickets])
+
+  // Check for new ticket creation notification
+  useEffect(() => {
+    const checkForNewTicket = () => {
+      const newTicketData = localStorage.getItem('newTicketCreated')
+      if (newTicketData) {
+        try {
+          const ticketInfo = JSON.parse(newTicketData)
+          // Check if the ticket was created recently (within last 10 seconds)
+          if (Date.now() - ticketInfo.timestamp < 10000) {
+            toast.success(`Ticket #${ticketInfo.ticketNumber} created successfully!`, {
+              description: `"${ticketInfo.title}"`,
+              duration: 5000,
+            })
+          }
+          // Clear the notification
+          localStorage.removeItem('newTicketCreated')
+        } catch (error) {
+          console.error('Error parsing new ticket data:', error)
+          localStorage.removeItem('newTicketCreated')
+        }
+      }
+    }
+
+    // Check immediately when component mounts
+    checkForNewTicket()
+    
+    // Also check when tickets are loaded (in case of page refresh)
+    if (tickets && tickets.length > 0) {
+      checkForNewTicket()
+    }
   }, [tickets])
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [currentView, setCurrentView] = useState<"list" | "kanban">("list")

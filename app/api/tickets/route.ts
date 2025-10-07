@@ -137,6 +137,9 @@ export async function POST(request: NextRequest) {
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
+    if (!description || (typeof description === 'string' && description.trim() === '')) {
+      return NextResponse.json({ error: 'Description is required' }, { status: 400 })
+    }
 
     // Generate unique ticket number
     const timestamp = Date.now()
