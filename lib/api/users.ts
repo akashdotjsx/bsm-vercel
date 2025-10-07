@@ -302,10 +302,33 @@ export class UserManagementAPI {
       return teams || []
     } catch (error) {
       console.error('❌ Error fetching teams:', error)
-      // Return empty array instead of throwing to prevent UI crashes
       return []
     }
   }
+
+  // Create team
+  async createTeam(teamData: { name: string; description?: string; department?: string; lead_id?: string }) {
+    try {
+      const orgId = await this.getCurrentUserOrgId()
+      
+      const { data, error } = await this.supabase
+        .from('teams')
+        .insert({
+          ...teamData,
+          organization_id: orgId,
+          is_active: true
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error creating team:', error)
+      throw error
+    }
+  }
+
 
   // Create team
   async createTeam(teamData: {
@@ -409,6 +432,25 @@ export class UserManagementAPI {
       return { success: true }
     } catch (error) {
       console.error('Error removing user from team:', error)
+      throw error
+    }
+  }
+
+  // Update team member role
+  async updateTeamMemberRole(teamId: string, userId: string, role: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('team_members')
+        .update({ role })
+        .eq('team_id', teamId)
+        .eq('user_id', userId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error updating team member role:', error)
       throw error
     }
   }

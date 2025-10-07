@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Skeleton } from "@/components/ui/skeleton"
+import { UsersPageSkeleton } from "@/components/ui/skeleton-components"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -50,6 +50,10 @@ import { useAuth } from "@/lib/contexts/auth-context"
 import { RoleEditModal } from "@/components/rbac/role-edit-modal"
 import { rbacApi } from "@/lib/api/rbac"
 import type { Role } from "@/lib/types/rbac"
+import { UserAvatar } from "@/components/users/user-avatar"
+import { UserSelector } from "@/components/users/user-selector"
+import { TeamSelector } from "@/components/users/team-selector"
+import { departmentAPI } from "@/lib/api/departments"
 
 // Type definitions
 interface User {
@@ -182,7 +186,7 @@ export default function UsersPage() {
     )
   }
 
-  // Load roles on component mount
+  // Load roles and departments on component mount
   useEffect(() => {
     const loadRoles = async () => {
       try {
@@ -192,15 +196,32 @@ export default function UsersPage() {
         console.error('Error loading roles:', error)
       }
     }
+    
+    const loadDepartments = async () => {
+      try {
+        const allDepartments = await departmentAPI.getAllDepartments()
+        // Combine with initial departments
+        const combined = [...initialDepartments, ...allDepartments]
+          .filter((dept, index, arr) => arr.indexOf(dept) === index)
+          .sort()
+        setDepartments(combined)
+      } catch (error) {
+        console.error('Error loading departments:', error)
+      }
+    }
+    
     loadRoles()
+    loadDepartments()
   }, [])
 
-  // Update departments when users change
+  // Update departments when users change - with null safety
   useEffect(() => {
     if (users.length > 0) {
       const userDepartments = users
         .map(user => user.department)
-        .filter((dept): dept is string => dept !== undefined && dept.trim() !== '')
+        .filter((dept): dept is string => {
+          return dept !== null && dept !== undefined && typeof dept === 'string' && dept.trim() !== ''
+        })
         .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
       
       const allDepartments = [...initialDepartments, ...userDepartments]
@@ -354,15 +375,45 @@ export default function UsersPage() {
     }
   }
 
-  const handleAddDepartment = () => {
-    if (newDepartment && !departments.includes(newDepartment)) {
-      setDepartments([...departments, newDepartment])
-      setNewDepartment("")
+  const handleAddDepartment = async () => {
+    if (newDepartment.trim() && !departments.includes(newDepartment.trim())) {
+      try {
+        await departmentAPI.addDepartment(newDepartment.trim())
+        const updatedDepartments = await departmentAPI.getAllDepartments()
+        setDepartments(updatedDepartments)
+        setNewDepartment("")
+        toast({
+          title: "Department Added",
+          description: `Department "${newDepartment.trim()}" has been added successfully`,
+        })
+      } catch (error) {
+        console.error('Error adding department:', error)
+        toast({
+          title: "Error",
+          description: "Failed to add department",
+          variant: "destructive"
+        })
+      }
     }
   }
 
-  const handleDeleteDepartment = (dept: string) => {
-    setDepartments(departments.filter((d) => d !== dept))
+  const handleDeleteDepartment = async (dept: string) => {
+    try {
+      await departmentAPI.removeDepartment(dept)
+      const updatedDepartments = await departmentAPI.getAllDepartments()
+      setDepartments(updatedDepartments)
+      toast({
+        title: "Department Removed",
+        description: `Department "${dept}" has been removed`,
+      })
+    } catch (error) {
+      console.error('Error removing department:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove department",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleEditUserRole = (user: User) => {
@@ -446,6 +497,22 @@ export default function UsersPage() {
     }
   }
 
+  // If loading and no data, show skeleton
+  if (loading && users.length === 0) {
+    return (
+      <PlatformLayout
+        title="Users & Teams"
+        description="Manage user accounts, teams, and access permissions across your organization"
+        breadcrumb={[
+          { label: "Service Management", href: "/dashboard" },
+          { label: "Users & Teams", href: "/users" },
+        ]}
+      >
+        <UsersPageSkeleton />
+      </PlatformLayout>
+    )
+  }
+
   return (
     <PlatformLayout
       title="Users & Teams"
@@ -455,7 +522,7 @@ export default function UsersPage() {
         { label: "Users & Teams", href: "/users" },
       ]}
     >
-      <div className="space-y-6 font-sans text-[13px]">
+      <div className="space-y-6 font-sans text-[11px]">
 
         {/* Header Actions */}
         <div className="flex items-center justify-between">
@@ -464,13 +531,13 @@ export default function UsersPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search users..."
-                className="pl-10 w-80 text-[13px]"
+                className="pl-10 w-80 text-[11px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 text-[13px]">
+              <SelectTrigger className="w-32 text-[11px]">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="All Stat" />
@@ -483,7 +550,7 @@ export default function UsersPage() {
               </SelectContent>
             </Select>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-48 text-[13px]">
+              <SelectTrigger className="w-48 text-[11px]">
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
@@ -495,7 +562,7 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="text-[13px]">
+            <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="text-[11px]">
               <Settings className="mr-2 h-4 w-4" />
               Manage Departments
             </Button>
@@ -509,21 +576,21 @@ export default function UsersPage() {
              </DialogTrigger>
             <DialogContent className="font-sans">
               <DialogHeader>
-                <DialogTitle className="text-[13px]">Add New User</DialogTitle>
-                <DialogDescription className="text-[13px]">
+                <DialogTitle className="text-[11px]">Add New User</DialogTitle>
+                <DialogDescription className="text-[11px]">
                   Create a new user account with appropriate permissions.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="first_name" className="text-right text-[13px]">
+                  <Label htmlFor="first_name" className="text-right text-[11px]">
                     First Name
                   </Label>
                   <Input
                     id="first_name"
                     value={newUser.first_name}
                     onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
-                    className="col-span-3 text-[13px]"
+                    className="col-span-3 text-[11px]"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -588,7 +655,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddUser} className="text-[13px]">
+                <Button onClick={handleAddUser} className="text-[11px]">
                   Add User
                 </Button>
               </DialogFooter>
@@ -605,7 +672,7 @@ export default function UsersPage() {
 <User className="h-7 w-7 text-blue-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[13px] font-medium text-muted-foreground">Total Users</p>
+                   <p className="text-[11px] font-medium text-muted-foreground">Total Users</p>
                    <p className="text-2xl font-bold">{users.length}</p>
                  </div>
                </div>
@@ -618,7 +685,7 @@ export default function UsersPage() {
 <Shield className="h-7 w-7 text-emerald-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[13px] font-medium text-muted-foreground">Active Users</p>
+                   <p className="text-[11px] font-medium text-muted-foreground">Active Users</p>
                    <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
                  </div>
                </div>
@@ -631,7 +698,7 @@ export default function UsersPage() {
 <Users className="h-7 w-7 text-purple-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[13px] font-medium text-muted-foreground">Teams</p>
+                   <p className="text-[11px] font-medium text-muted-foreground">Teams</p>
                    <p className="text-2xl font-bold">{teams.length}</p>
                  </div>
                </div>
@@ -644,7 +711,7 @@ export default function UsersPage() {
 <Calendar className="h-7 w-7 text-orange-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[13px] font-medium text-muted-foreground">New This Month</p>
+                   <p className="text-[11px] font-medium text-muted-foreground">New This Month</p>
                    <p className="text-2xl font-bold">{users.filter((u) => {
                      const createdDate = new Date(u.created_at)
                      const now = new Date()
@@ -662,8 +729,7 @@ export default function UsersPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-bold">Users</CardTitle>
-              {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
+              <CardTitle className="text-[15px] font-bold">Users</CardTitle>
             </div>
             <CardDescription className="text-sm">Manage user accounts and permissions</CardDescription>
           </CardHeader>
@@ -684,15 +750,14 @@ export default function UsersPage() {
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-muted/50">
                       <td className="py-3 px-4">
-                        <div>
-                          <div className="font-semibold text-sm">
-                            {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
-                          </div>
-                          <div className="text-sm text-muted-foreground flex items-center">
-                            <Mail className="mr-1 h-3 w-3" />
-                            {user.email}
-                          </div>
-                        </div>
+                        <UserAvatar 
+                          user={user} 
+                          size="md" 
+                          showName 
+                          showRole={false}
+                          showStatus
+                          className="min-w-0"
+                        />
                       </td>
                       <td className="py-3 px-4 text-sm">{user.role || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
@@ -752,8 +817,7 @@ export default function UsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg font-bold">Teams</CardTitle>
-                  {loading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>}
+                  <CardTitle className="text-[15px] font-bold">Teams</CardTitle>
                 </div>
                 <CardDescription className="text-sm">
                   Organize users into teams for better collaboration
@@ -789,21 +853,16 @@ export default function UsersPage() {
                       <Label htmlFor="team-lead" className="text-right text-[13px]">
                         Team Lead
                       </Label>
-                      <Select value={newTeam.lead_id} onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}>
-                        <SelectTrigger className="col-span-3 text-[13px]">
-                          <SelectValue placeholder="Select team lead" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">No Lead</SelectItem>
-                          {users
-                            .filter((u) => u.is_active)
-                            .map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                      <UserSelector
+                        users={users}
+                        value={newTeam.lead_id}
+                        onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}
+                        placeholder="Select team lead..."
+                        className="col-span-3"
+                        disabled={loading}
+                        showOnlyActive
+                        filterByRole={["admin", "manager", "agent"]}
+                      />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="team-department" className="text-right text-[13px]">
@@ -847,71 +906,118 @@ export default function UsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {teams.map((team) => (
-                <Card
-                  key={team.id}
-                  className="border border-border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-sm">{team.name}</h3>
-                      <div className="flex items-center space-x-2">
-                        <span className="inline-flex items-center rounded-full border border-border bg-muted text-muted-foreground px-3 py-1 text-xs font-medium">
-                          {(team as any).team_members?.length || 0} members
-                        </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {teams.map((team) => {
+                const teamData = team as any
+                const leadUser = teamData.lead_id ? users.find(u => u.id === teamData.lead_id) : null
+                const teamMembers = teamData.team_members || []
+                
+                return (
+                  <Card
+                    key={team.id}
+                    className="border-0 bg-gradient-to-br from-card via-card to-muted/30 dark:from-card dark:via-card dark:to-muted/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 flex items-center justify-center shadow-lg">
+                          <Users className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-foreground text-[13px] mb-1">{team.name}</h3>
+                          <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{team.description || 'No description provided'}</p>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="outline" className="text-[8px] px-2 py-0.5 bg-accent/50 border-accent">
+                              {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+                            </Badge>
+                            {team.department && (
+                              <Badge variant="outline" className="text-[8px] px-2 py-0.5 bg-muted/50 border-muted">
+                                {team.department}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="px-2 text-muted-foreground hover:bg-transparent">…</Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
                           </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="font-sans">
-                            <DropdownMenuItem onClick={() => handleManageMembers(team)} className="text-[13px]">
-                              <Users className="mr-2 h-4 w-4" />
+                          <DropdownMenuContent align="end" className="font-sans">
+                            <DropdownMenuItem onClick={() => handleManageMembers(team)} className="text-[11px]">
+                              <Users className="mr-2 h-3 w-3" />
                               Manage Members
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditTeam(team)} className="text-[13px]">
-                              <Edit className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem onClick={() => handleEditTeam(team)} className="text-[11px]">
+                              <Edit className="mr-2 h-3 w-3" />
                               Edit Team
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteTeam(team.id)}
-                              className="text-red-600 text-[13px]"
+                              className="text-destructive text-[11px]"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="mr-2 h-3 w-3" />
                               Delete Team
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">{team.description}</p>
-                    <div className="flex items-center text-sm">
-                      <Users className="mr-1 h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">Lead: </span>
-                      <span className="ml-1 font-semibold">
-                        {(() => {
-                          // Handle different possible data structures
-                          const teamData = team as any
-                          if (teamData.lead?.display_name) {
-                            return teamData.lead.display_name
-                          }
-                          if (teamData.lead_display_name) {
-                            return teamData.lead_display_name
-                          }
-                          // Fallback - find user by lead_id
-                          if (teamData.lead_id) {
-                            const leadUser = users.find(u => u.id === teamData.lead_id)
-                            if (leadUser) {
-                              return leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email
-                            }
-                          }
-                          return 'N/A'
-                        })()} 
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+                      {/* Team Lead */}
+                      {leadUser && (
+                        <div className="flex items-center gap-2 mb-4 p-2 bg-accent/30 dark:bg-accent/20 rounded-lg">
+                          <UserAvatar 
+                            user={leadUser}
+                            size="sm"
+                            showStatus
+                          />
+                          <div className="min-w-0">
+                            <p className="text-[9px] text-muted-foreground">Team Lead</p>
+                            <p className="font-medium text-[10px] text-foreground truncate">
+                              {leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Team Members */}
+                      {teamMembers.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-[9px] text-muted-foreground font-medium">Team Members</p>
+                          <div className="flex -space-x-2">
+                            {teamMembers.slice(0, 6).map((member: any, index: number) => (
+                              <UserAvatar 
+                                key={member.user?.id || index}
+                                user={member.user}
+                                size="sm"
+                                className="ring-2 ring-background hover:z-10 hover:scale-110 transition-transform"
+                                showStatus
+                              />
+                            ))}
+                            {teamMembers.length > 6 && (
+                              <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted dark:bg-muted/70 flex items-center justify-center text-[7px] font-bold text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                                +{teamMembers.length - 6}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 border-2 border-dashed border-muted rounded-lg">
+                          <Users className="h-6 w-6 text-muted-foreground mx-auto mb-1" />
+                          <p className="text-[9px] text-muted-foreground">No members added yet</p>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleManageMembers(team)}
+                            className="text-[9px] h-6 mt-1"
+                          >
+                            Add Members
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -1057,21 +1163,16 @@ export default function UsersPage() {
                 <Label htmlFor="edit-team-lead" className="text-right text-[13px]">
                   Team Lead
                 </Label>
-                <Select value={newTeam.lead_id} onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}>
-                  <SelectTrigger className="col-span-3 text-[13px]">
-                    <SelectValue placeholder="Select team lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No Lead</SelectItem>
-                    {users
-                      .filter((u) => u.is_active)
-                      .map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <UserSelector
+                  users={users}
+                  value={newTeam.lead_id}
+                  onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}
+                  placeholder="Select team lead..."
+                  className="col-span-3"
+                  disabled={loading}
+                  showOnlyActive
+                  filterByRole={["admin", "manager", "agent"]}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-team-department" className="text-right text-[13px]">

@@ -359,6 +359,20 @@ CREATE TABLE public.ticket_history (
   CONSTRAINT ticket_history_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
   CONSTRAINT ticket_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.ticket_checklist (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  ticket_id uuid NOT NULL,
+  item_text character varying NOT NULL,
+  is_completed boolean DEFAULT false,
+  completed_by uuid,
+  completed_at timestamp with time zone,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ticket_checklist_pkey PRIMARY KEY (id),
+  CONSTRAINT ticket_checklist_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
+  CONSTRAINT ticket_checklist_completed_by_fkey FOREIGN KEY (completed_by) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.tickets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL,
