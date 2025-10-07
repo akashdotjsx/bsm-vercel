@@ -50,6 +50,10 @@ import {
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { format } from "date-fns"
 import { useTickets, useTicketChecklist, useTicketComments, useTicketAttachments, useProfiles } from "@/hooks/use-tickets"
+import { useUsers } from "@/hooks/use-users"
+import { createClient } from "@/lib/supabase/client"
+import { UserSelector } from "@/components/users/user-selector"
+import { TeamSelector } from "@/components/users/team-selector"
 import { CreateTicketData } from "@/lib/api/tickets"
 import { ServiceCategory, Service } from "@/lib/types/services"
 import { useMode } from "@/lib/contexts/mode-context"
@@ -86,15 +90,11 @@ export default function CreateTicketPage() {
   const [invalidTitle, setInvalidTitle] = useState(false)
   const [invalidDescription, setInvalidDescription] = useState(false)
   
-  // Teams data
-  const [teams, setTeams] = useState<Array<{id: string, name: string}>>([])
-  const [teamsLoading, setTeamsLoading] = useState(true)
-  
   // Organizations and departments data
   const [organizations, setOrganizations] = useState<Array<{id: string, name: string}>>([])
   const [departments, setDepartments] = useState<string[]>([])
   const [dataLoading, setDataLoading] = useState(true)
-  
+
   // Hooks for real data
   const { createTicket } = useTickets()
   const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
@@ -126,24 +126,11 @@ export default function CreateTicketPage() {
   const selectedCategory = serviceCategories.find(cat => cat.id === serviceCategory)
   const availableServices = selectedCategory?.services || []
   
-  // Fetch teams, organizations, and departments
+  // Fetch organizations, departments, and current user
   useEffect(() => {
     const fetchData = async () => {
       try {
         const supabase = createClient()
-        
-        // Fetch teams
-        const { data: teamsData, error: teamsError } = await supabase
-          .from('teams')
-          .select('id, name')
-          .eq('is_active', true)
-          .order('name')
-          
-        if (teamsError) {
-          console.error('Error fetching teams:', teamsError)
-        } else {
-          setTeams(teamsData || [])
-        }
         
         // Fetch organizations
         const { data: orgsData, error: orgsError } = await supabase
@@ -192,7 +179,6 @@ export default function CreateTicketPage() {
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
-        setTeamsLoading(false)
         setDataLoading(false)
       }
     }
@@ -957,7 +943,7 @@ export default function CreateTicketPage() {
                   <Label>Team</Label>
                   <Select value={teamId} onValueChange={setTeamId}>
                     <SelectTrigger>
-                      <SelectValue placeholder={teamsLoading ? "Loading teams..." : "Select team"} />
+                      <SelectValue placeholder={usersLoading ? "Loading teams..." : "Select team"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="it">IT Support</SelectItem>
