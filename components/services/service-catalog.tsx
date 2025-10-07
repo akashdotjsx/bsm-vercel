@@ -51,10 +51,12 @@ import {
   Layers,
 } from "lucide-react"
 import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
+import { useToast } from "@/components/ui/use-toast"
 
 export function ServiceCatalog() {
   const { mode } = useMode()
-  const { categories, loading, error, addCategory, refetch } = useServiceCategories()
+  const { toast } = useToast()
+  const { categories, loading, error, addCategory, updateCategory, deleteCategory, refetch } = useServiceCategories()
   const { addService, updateService, deleteService, loading: serviceLoading, error: serviceError } = useServices()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -81,8 +83,13 @@ export function ServiceCatalog() {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
   const [showAddServiceModal, setShowAddServiceModal] = useState(false)
   const [showEditServiceModal, setShowEditServiceModal] = useState(false)
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false)
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false)
+  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [selectedCategoryForService, setSelectedCategoryForService] = useState("")
+  const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState(null)
+  const [selectedServiceForEdit, setSelectedServiceForEdit] = useState(null)
   const [selectedService, setSelectedService] = useState(null)
   const [selectedServiceCategory, setSelectedServiceCategory] = useState(null)
   const [newCategory, setNewCategory] = useState({ name: "", description: "", color: "bg-blue-500" })
@@ -111,14 +118,27 @@ export function ServiceCatalog() {
       })
       setNewCategory({ name: "", description: "", color: "bg-blue-500" })
       setShowAddCategoryModal(false)
+      toast({
+        title: "Category created",
+        description: `"${newCategory.name}" has been added successfully.`,
+      })
     } catch (error) {
       console.error("Error adding category:", error)
+      toast({
+        title: "Failed to create category",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
     }
   }
 
   const handleAddService = async () => {
     if (!newService.name || !selectedCategoryForService) {
-      alert('Please fill in all required fields')
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -134,6 +154,7 @@ export function ServiceCatalog() {
       await addService(serviceData)
       
       // Reset form and close modal
+      const serviceName = newService.name
       setNewService({ name: "", description: "", sla: "", popularity: 3 })
       setSelectedCategoryForService("")
       setShowAddServiceModal(false)
@@ -141,10 +162,17 @@ export function ServiceCatalog() {
       // Refresh categories to show the new service
       await refetch()
       
-      alert(`Service "${newService.name}" has been added successfully!`)
+      toast({
+        title: "Service created",
+        description: `"${serviceName}" has been added successfully.`,
+      })
     } catch (error) {
       console.error('Error adding service:', error)
-      alert(`Failed to add service: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast({
+        title: "Failed to create service",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -153,8 +181,159 @@ export function ServiceCatalog() {
     setShowEditServiceModal(false)
   }
 
-  const handleDeleteService = (categoryId: string, serviceName: string) => {
-    // TODO: Implement service deletion via API
+  const handleEditCategory = (category) => {
+    setSelectedCategoryForEdit(category)
+    setNewCategory({
+      name: category.name,
+      description: category.description,
+      color: category.color
+    })
+    setShowEditCategoryModal(true)
+  }
+
+  const handleDeleteCategory = (category) => {
+    setSelectedCategoryForEdit(category)
+    setShowDeleteCategoryModal(true)
+  }
+
+  const handleEditServiceClick = (service, category) => {
+    // Find the original service from categories data to get the real ID
+    const originalCategory = categories.find(cat => cat.id === category.id)
+    const originalService = originalCategory?.services?.find(s => s.name === service.name)
+    
+    setSelectedServiceForEdit(originalService || service)
+    setSelectedCategoryForService(category.id)
+    setNewService({
+      name: service.name,
+      description: service.description,
+      sla: service.sla,
+      popularity: service.popularity
+    })
+    setShowEditServiceModal(true)
+  }
+
+  const handleDeleteService = (service, category) => {
+    // Find the original service from categories data to get the real ID
+    const originalCategory = categories.find(cat => cat.id === category.id)
+    const originalService = originalCategory?.services?.find(s => s.name === service.name)
+    
+    setSelectedServiceForEdit(originalService || service)
+    setSelectedCategoryForEdit(category)
+    setShowDeleteServiceModal(true)
+  }
+
+  const handleUpdateCategory = async () => {
+    if (!selectedCategoryForEdit) return
+    
+    try {
+      await updateCategory({
+        id: selectedCategoryForEdit.id,
+        name: newCategory.name,
+        description: newCategory.description,
+        color: newCategory.color,
+        icon: "Settings"
+      })
+      const categoryName = newCategory.name
+      setShowEditCategoryModal(false)
+      setSelectedCategoryForEdit(null)
+      setNewCategory({ name: "", description: "", color: "bg-blue-500" })
+      toast({
+        title: "Category updated",
+        description: `"${categoryName}" has been updated successfully.`,
+      })
+    } catch (error) {
+      console.error('Error updating category:', error)
+      toast({
+        title: "Failed to update category",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!selectedCategoryForEdit) return
+    
+    const categoryName = selectedCategoryForEdit.name
+    const serviceCount = selectedCategoryForEdit.services?.length || 0
+    
+    try {
+      await deleteCategory(selectedCategoryForEdit.id)
+      setShowDeleteCategoryModal(false)
+      setSelectedCategoryForEdit(null)
+      toast({
+        title: "Category deleted",
+        description: serviceCount > 0 
+          ? `"${categoryName}" and ${serviceCount} service${serviceCount === 1 ? '' : 's'} have been deleted.`
+          : `"${categoryName}" has been deleted.`,
+      })
+    } catch (error) {
+      console.error('Error deleting category:', error)
+      toast({
+        title: "Failed to delete category",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateService = async () => {
+    if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
+    
+    try {
+      await updateService({
+        id: selectedServiceForEdit.id,
+        name: newService.name,
+        description: newService.description,
+        estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
+        popularity_score: newService.popularity
+      })
+      
+      // Refresh categories to show the updated service
+      await refetch()
+      
+      const serviceName = newService.name
+      setShowEditServiceModal(false)
+      setSelectedServiceForEdit(null)
+      setNewService({ name: "", description: "", sla: "", popularity: 3 })
+      toast({
+        title: "Service updated",
+        description: `"${serviceName}" has been updated successfully.`,
+      })
+    } catch (error) {
+      console.error('Error updating service:', error)
+      toast({
+        title: "Failed to update service",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleConfirmDeleteService = async () => {
+    if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
+    
+    const serviceName = selectedServiceForEdit.name
+    
+    try {
+      await deleteService(selectedServiceForEdit.id)
+      // Refresh categories to show the changes
+      await refetch()
+      
+      setShowDeleteServiceModal(false)
+      setSelectedServiceForEdit(null)
+      toast({
+        title: "Service deleted",
+        description: `"${serviceName}" has been deleted successfully.`,
+      })
+    } catch (error) {
+      console.error('Error deleting service:', error)
+      toast({
+        title: "Failed to delete service",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleServiceRequest = () => {
@@ -185,7 +364,6 @@ export function ServiceCatalog() {
       department: "",
     })
     setShowRequestModal(false)
-    alert("Service request submitted successfully! You will receive a confirmation email shortly.")
   }
 
   const filteredServices = services.filter((category) => {
@@ -232,8 +410,7 @@ export function ServiceCatalog() {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Service Catalog</h1>
-          <p className="text-gray-600 mt-1">Manage service categories and request types</p>
+          {/* Removed duplicate header - title and description are now handled by PlatformLayout */}
         </div>
         <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
           <DialogTrigger asChild>
@@ -342,9 +519,23 @@ export function ServiceCatalog() {
                         <Plus className="h-4 w-4 mr-2" />
                         Add Service
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Category
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteCategory(category)} className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Category
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardHeader>
@@ -372,9 +563,23 @@ export function ServiceCatalog() {
                                   </span>
                                 ))}
                               </div>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditServiceClick(service, category)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Service
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDeleteService(service, category)} className="text-red-600">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Service
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         </div>
@@ -537,6 +742,198 @@ export function ServiceCatalog() {
               disabled={serviceLoading || !newService.name.trim()}
             >
               {serviceLoading ? 'Adding...' : 'Add Service'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Modal */}
+      <Dialog open={showEditCategoryModal} onOpenChange={setShowEditCategoryModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Service Category</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Update the service category information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-category-name" className="text-[13px]">
+                Category Name
+              </Label>
+              <Input
+                id="edit-category-name"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                placeholder="e.g., IT Services"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-category-description" className="text-[13px]">
+                Description
+              </Label>
+              <Textarea
+                id="edit-category-description"
+                value={newCategory.description}
+                onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                placeholder="Brief description of the category"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-category-color" className="text-[13px]">
+                Color
+              </Label>
+              <Select
+                value={newCategory.color}
+                onValueChange={(value) => setNewCategory({ ...newCategory, color: value })}
+              >
+                <SelectTrigger className="text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bg-blue-500">Blue</SelectItem>
+                  <SelectItem value="bg-green-500">Green</SelectItem>
+                  <SelectItem value="bg-yellow-500">Yellow</SelectItem>
+                  <SelectItem value="bg-purple-500">Purple</SelectItem>
+                  <SelectItem value="bg-red-500">Red</SelectItem>
+                  <SelectItem value="bg-orange-500">Orange</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditCategoryModal(false)} className="text-[13px]">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateCategory} className="text-[13px]">
+              Update Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Category Modal */}
+      <Dialog open={showDeleteCategoryModal} onOpenChange={setShowDeleteCategoryModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              {(() => {
+                const serviceCount = selectedCategoryForEdit?.services?.length || 0
+                if (serviceCount > 0) {
+                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. This action cannot be undone and will remove all services in this category.`
+                } else {
+                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This action cannot be undone.`
+                }
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteCategoryModal(false)} className="text-[13px]">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteCategory} className="text-[13px]">
+              Delete Category {selectedCategoryForEdit?.services?.length > 0 ? `& ${selectedCategoryForEdit.services.length} Service${selectedCategoryForEdit.services.length === 1 ? '' : 's'}` : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Service Modal */}
+      <Dialog open={showEditServiceModal} onOpenChange={setShowEditServiceModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Service</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Update the service information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-service-name" className="text-[13px]">
+                Service Name
+              </Label>
+              <Input
+                id="edit-service-name"
+                value={newService.name}
+                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                placeholder="e.g., Email Setup"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-description" className="text-[13px]">
+                Description
+              </Label>
+              <Textarea
+                id="edit-service-description"
+                value={newService.description}
+                onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                placeholder="Brief description of the service"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-sla" className="text-[13px]">
+                SLA (Service Level Agreement)
+              </Label>
+              <Input
+                id="edit-service-sla"
+                value={newService.sla}
+                onChange={(e) => setNewService({ ...newService, sla: e.target.value })}
+                placeholder="e.g., 2 business days"
+                className="text-[13px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-service-popularity" className="text-[13px]">
+                Popularity (1-5 stars)
+              </Label>
+              <Select
+                value={newService.popularity.toString()}
+                onValueChange={(value) => setNewService({ ...newService, popularity: parseInt(value) })}
+              >
+                <SelectTrigger className="text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Star</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditServiceModal(false)} className="text-[13px]">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateService} className="text-[13px]">
+              Update Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Service Modal */}
+      <Dialog open={showDeleteServiceModal} onOpenChange={setShowDeleteServiceModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Are you sure you want to delete "{selectedServiceForEdit?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteServiceModal(false)} className="text-[13px]">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteService} className="text-[13px]">
+              Delete Service
             </Button>
           </DialogFooter>
         </DialogContent>

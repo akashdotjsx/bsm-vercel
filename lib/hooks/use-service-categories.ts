@@ -58,14 +58,72 @@ export function useServiceCategories() {
       
       const data = await response.json()
       
-      // Add the new category to the local state
-      setCategories(prev => [...prev, data.category])
+      // Add the new category to the top of the list
+      setCategories(prev => [data.category, ...prev])
       
       return data.category
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred'
       setError(errorMessage)
       console.error('Error creating service category:', err)
+      throw err
+    }
+  }
+
+  const updateCategory = async (categoryData: { id: string; name?: string; description?: string; icon?: string; color?: string }) => {
+    try {
+      setError(null)
+      
+      const response = await fetch('/api/service-categories', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(categoryData),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update category')
+      }
+      
+      const data = await response.json()
+      
+      // Update the category in the local state
+      setCategories(prev => prev.map(cat => 
+        cat.id === categoryData.id ? { ...cat, ...data.category } : cat
+      ))
+      
+      return data.category
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      setError(errorMessage)
+      console.error('Error updating service category:', err)
+      throw err
+    }
+  }
+
+  const deleteCategory = async (categoryId: string) => {
+    try {
+      setError(null)
+      
+      const response = await fetch(`/api/service-categories?id=${categoryId}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete category')
+      }
+      
+      // Remove the category from the local state
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId))
+      
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      setError(errorMessage)
+      console.error('Error deleting service category:', err)
       throw err
     }
   }
@@ -79,6 +137,8 @@ export function useServiceCategories() {
     loading,
     error,
     addCategory,
+    updateCategory,
+    deleteCategory,
     refetch: fetchCategories
   }
 }
