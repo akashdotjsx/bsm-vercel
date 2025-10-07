@@ -1166,9 +1166,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <div className="flex items-center gap-4 py-2 border-b border-border">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+<Input
                 placeholder="Search..."
-                className="pl-10 h-9 w-48 border-0 bg-muted/50 text-[13px]"
+                className="pl-10 h-9 w-48 border-0 bg-muted/50 text-13"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />
@@ -1178,7 +1178,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               value={kanbanGroupBy}
               onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
             >
-              <SelectTrigger className="w-48 h-9 text-[13px]">
+<SelectTrigger className="w-48 h-9 text-13">
                 <SelectValue placeholder="Group By" />
               </SelectTrigger>
               <SelectContent>
@@ -1190,7 +1190,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </Select>
 
             <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-32 h-9 text-[13px]">
+<SelectTrigger className="w-32 h-9 text-13">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -1203,12 +1203,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+<Button variant="outline" size="sm" className="h-9 text-13 bg-transparent font-sans">
               Date Range
             </Button>
 
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-              <SelectTrigger className="w-40 h-9 text-[13px]">
+<SelectTrigger className="w-40 h-9 text-13">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
@@ -1220,7 +1220,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+<Button variant="outline" size="sm" className="h-9 text-13 bg-transparent font-sans">
               <Filter className="h-4 w-4 mr-2" />
               Add filter
             </Button>
@@ -1252,7 +1252,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 }`}
               >
                 <div className="p-4 pb-2">
-                  <h3 className="font-medium text-[13px] mb-2 leading-tight font-sans text-foreground">
+<h3 className="font-medium text-13 mb-2 leading-tight font-sans text-foreground">
                     {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
                   </h3>
                   {dragOverColumn === column.id && draggedTicket && (
@@ -1378,23 +1378,23 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-className="bg-gradient-to-r from-[#ff4fd8] to-[#6a5cff] hover:opacity-90 text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
+<Button
+className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-sm h-10 px-5 rounded-lg shadow-xs"
                 onClick={() => setShowAIChat(true)}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Ask AI
               </Button>
-              <Button
+<Button
                 variant="outline"
-className="bg-white text-[#6a5cff] border-[#6a5cff] hover:bg-[#f5f3ff] text-sm h-10 px-5 rounded-lg"
+className="bg-background text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--menu-hover)] text-sm h-10 px-5 rounded-lg"
                 onClick={() => setShowImportDialog(true)}
               >
                 <Cloud className="h-4 w-4 mr-2" />
                 Import
               </Button>
-              <Button 
-className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
+<Button 
+className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-sm h-10 px-5 rounded-lg shadow-xs"
                 onClick={() => window.location.href = '/tickets/create'} 
               >
                 + Create Ticket
@@ -1450,7 +1450,7 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-blue-600" />
-                <span className="font-sans text-[16px]">Ask AI about Tickets</span>
+<span className="font-sans text-base">Ask AI about Tickets</span>
               </div>
               <Button
                 variant="ghost"
@@ -1469,7 +1469,7 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
                   <Bot className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground font-sans text-[13px]">
+<p className="text-muted-foreground font-sans text-13">
                     Ask me anything about your tickets, trends, priorities, or support workflow
                   </p>
                 </div>
@@ -1498,7 +1498,7 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
                 <div className="bg-muted rounded-lg px-4 py-2">
                   <div className="flex items-center gap-2">
                     <LoadingSpinner size="sm" />
-                    <span className="font-sans text-[13px] text-muted-foreground">AI is thinking...</span>
+<span className="font-sans text-13 text-muted-foreground">AI is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -1526,7 +1526,7 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-[13px]"
+className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                   disabled={aiLoading}
                 />
                 <Button
@@ -1556,7 +1556,7 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Cloud className="h-5 w-5 text-[#6a5cff]" />
+<Cloud className="h-5 w-5 text-[var(--primary)]" />
               Import Tickets
             </DialogTitle>
           </DialogHeader>
