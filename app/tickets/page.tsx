@@ -463,9 +463,9 @@ export default function TicketsPage() {
   }, [])
 
   const handleTicketClick = useCallback((ticket: any) => {
-    console.log("[v0] Navigating to ticket details:", ticket.id)
-    // Navigate to the ticket details page
-    window.location.href = `/tickets/${ticket.id}`
+    console.log("[v0] Opening ticket tray for:", ticket.id)
+    setSelectedTicket(ticket)
+    setShowTicketTray(true)
   }, [])
 
   const handleSearchChange = useCallback((value: string) => {
