@@ -139,7 +139,11 @@ export default function SearchPage() {
             {!isSearching && results.length > 0 && (
               <div className="grid gap-4">
                 {results.map((result) => (
-                  <Card key={result.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Card 
+                    key={result.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => window.location.href = result.url}
+                  >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <div className="text-2xl mt-1">{getTypeIcon(result.type)}</div>
@@ -158,6 +162,11 @@ export default function SearchPage() {
                             {result.category && <span>in {result.category}</span>}
                             {result.metadata && (
                               <>
+                                {result.metadata.ticket_number && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {result.metadata.ticket_number}
+                                  </Badge>
+                                )}
                                 {result.metadata.status && (
                                   <Badge variant="outline" className="text-xs">
                                     {result.metadata.status}
@@ -169,6 +178,10 @@ export default function SearchPage() {
                                   </Badge>
                                 )}
                                 {result.metadata.assignee && <span>Assigned to {result.metadata.assignee}</span>}
+                                {result.metadata.department && <span>{result.metadata.department}</span>}
+                                {result.metadata.email && result.type === 'user' && (
+                                  <span className="truncate">{result.metadata.email}</span>
+                                )}
                               </>
                             )}
                           </div>

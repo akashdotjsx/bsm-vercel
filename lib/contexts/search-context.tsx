@@ -218,17 +218,28 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
 
     setIsSearching(true)
 
-    // Simulate API delay for realistic experience
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    try {
+      // Search both tickets and users in parallel
+      const responses = await Promise.allSettled([
+        fetch(`/api/search/tickets?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json()),
+        fetch(`/api/search/users?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json())
+      ])
 
-    // Enhanced search with multiple matching strategies
-    const searchResults = mockSearchData
-      .map((item) => ({
-        ...item,
-        relevance: calculateRelevance(item, term),
-      }))
-      .filter((item) => item.relevance > 0.1) // Only show relevant results
-      .sort((a, b) => {
+      const [ticketsResponse, usersResponse] = responses
+      const allResults: SearchResult[] = []
+
+      // Add ticket results
+      if (ticketsResponse.status === 'fulfilled' && ticketsResponse.value?.tickets) {
+        allResults.push(...ticketsResponse.value.tickets)
+      }
+
+      // Add user results
+      if (usersResponse.status === 'fulfilled' && usersResponse.value?.users) {
+        allResults.push(...usersResponse.value.users)
+      }
+
+      // Sort by relevance and type priority
+      allResults.sort((a, b) => {
         // Primary sort by relevance
         if (Math.abs(a.relevance - b.relevance) > 0.1) {
           return b.relevance - a.relevance
@@ -237,10 +248,14 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
         const typePriority = { ticket: 1, user: 2, knowledge: 3, service: 4, asset: 5, workflow: 6, account: 7 }
         return (typePriority[a.type] || 8) - (typePriority[b.type] || 8)
       })
-      .slice(0, 50) // Increased limit for enterprise search
 
-    setResults(searchResults)
-    setIsSearching(false)
+      setResults(allResults.slice(0, 50))
+    } catch (error) {
+      console.error('Search error:', error)
+      setResults([])
+    } finally {
+      setIsSearching(false)
+    }
   }, 200) // Reduced debounce for faster response
 
   const performSearch = useCallback(
