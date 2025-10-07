@@ -37,7 +37,7 @@ export default function RootLayout({
             <AuthProvider>
               <ModeProvider>
                 <NotificationProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
+                  <Suspense fallback={null}>
                     <SearchProvider>
                       <div className="h-screen">{children}</div>
                     </SearchProvider>

@@ -255,7 +255,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
                 <TabsList className="h-12 bg-transparent border-0 rounded-none w-full justify-start px-6">
                   <TabsTrigger
                     value="details"
-                    className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-13"
                   >
                     Details
                   </TabsTrigger>
@@ -317,7 +317,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <label className="text-sm font-medium text-muted-foreground">Description</label>
-                    <Button size="sm" className="h-7 bg-blue-600 hover:bg-blue-700 text-white text-xs">
+<Button size="sm" className="h-7 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--primary-foreground)] text-xs">
                       Write description
                     </Button>
                   </div>

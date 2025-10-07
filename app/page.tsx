@@ -24,10 +24,15 @@ import { useAuth } from "@/lib/contexts/auth-context"
 export default function LandingPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
     console.log("[v0] Landing page mounted and rendering")
+    
+    // Show content immediately after 1 second, regardless of auth state
+    const timer = setTimeout(() => {
+      setShowContent(true)
+    }, 1000)
     
     // Auto-redirect if user is already authenticated
     if (!loading && user) {
@@ -36,14 +41,11 @@ export default function LandingPage() {
       return
     }
     
-    // Not authenticated, show landing page
-    if (!loading) {
-      setCheckingAuth(false)
-    }
+    return () => clearTimeout(timer)
   }, [user, loading, router])
   
-  // Show loading while checking authentication status
-  if (loading || checkingAuth) {
+  // Show loading briefly, then show content no matter what
+  if (!showContent && loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center gap-2">

@@ -74,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRoles, setUserRoles] = useState<UserRole[]>([])
   const [loading, setLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -232,11 +233,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: NodeJS.Timeout
     
     // Check if we're in browser (client-side)
     if (typeof window === 'undefined') {
+      setLoading(false)
       return
     }
+    
+    // Immediate fallback - set loading to false after 3 seconds no matter what
+    const emergencyTimeout = setTimeout(() => {
+      if (isMounted && !initialized) {
+        console.warn('Auth emergency timeout - forcing loading to false')
+        setLoading(false)
+        setInitialized(true)
+      }
+    }, 3000)
+    
+    // Set a longer timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth loading timeout reached')
+        setLoading(false)
+        setInitialized(true)
+      }
+    }, 10000) // 10 second timeout
     
     // Get initial session
     const getSession = async () => {
@@ -245,25 +266,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error getting session:', error)
-          throw error
+          if (isMounted) {
+            setLoading(false)
+          }
+          return
         }
         
         if (session?.user && isMounted) {
           setUser(session.user)
-          const userProfile = await fetchProfile(session.user.id)
           
-          if (isMounted) {
-            setProfile(userProfile)
+          try {
+            const userProfile = await fetchProfile(session.user.id)
             
-            if (userProfile?.organization_id) {
-              const org = await fetchOrganization(userProfile.organization_id)
-              if (isMounted) {
-                setOrganization(org)
+            if (isMounted) {
+              setProfile(userProfile)
+              
+              if (userProfile?.organization_id) {
+                const org = await fetchOrganization(userProfile.organization_id)
+                if (isMounted) {
+                  setOrganization(org)
+                }
               }
+              
+              // Load permissions and roles
+              await loadUserPermissions(session.user.id)
             }
-            
-            // Load permissions and roles
-            await loadUserPermissions(session.user.id)
+          } catch (profileError) {
+            console.error('Error loading user profile:', profileError)
+            // Continue with loading=false even if profile fails
           }
         }
       } catch (error) {
@@ -271,6 +301,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } finally {
         if (isMounted) {
           setLoading(false)
+          setInitialized(true)
+          clearTimeout(timeoutId)
         }
       }
     }
@@ -301,11 +333,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setLoading(false)
+        setInitialized(true)
       }
     )
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
+      clearTimeout(emergencyTimeout)
       subscription.unsubscribe()
     }
   }, [])

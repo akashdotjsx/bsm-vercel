@@ -202,14 +202,14 @@ export default function AccountsPage() {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Search accounts..." className="pl-10 w-80 text-[13px]" />
+<Input placeholder="Search accounts..." className="pl-10 w-80 text-13" />
             </div>
-            <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+<Button variant="outline" size="sm" className="text-13 bg-transparent">
               <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
           </div>
-          <Button onClick={() => setShowCreateForm(true)} className="text-[13px]">
+<Button onClick={() => setShowCreateForm(true)} className="text-13">
             <Plus className="mr-2 h-4 w-4" />
             Add Account
           </Button>
@@ -266,8 +266,8 @@ export default function AccountsPage() {
         {/* Accounts Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[13px]">Accounts</CardTitle>
-            <CardDescription className="text-[13px]">Manage customer accounts and contact information</CardDescription>
+<CardTitle className="text-13">Accounts</CardTitle>
+<CardDescription className="text-13">Manage customer accounts and contact information</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -290,9 +290,9 @@ export default function AccountsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-64">
                           <div className="p-2">
-                            <Input placeholder="Search field types" className="text-[13px] mb-2" />
+<Input placeholder="Search field types" className="text-13 mb-2" />
                           </div>
-                          <DropdownMenuItem className="text-[13px]">
+<DropdownMenuItem className="text-13">
                             <Search className="mr-2 h-4 w-4" />
                             Add existing field
                           </DropdownMenuItem>
@@ -344,19 +344,19 @@ export default function AccountsPage() {
                         <div>
                           <button
                             onClick={() => router.push(`/accounts/${account.id}`)}
-                            className="font-medium text-[13px] text-blue-600 hover:text-blue-800 hover:underline text-left"
+className="font-medium text-13 text-blue-600 hover:text-blue-800 hover:underline text-left"
                           >
                             {account.name}
                           </button>
-                          <div className="text-[13px] text-muted-foreground flex items-center">
+<div className="text-13 text-muted-foreground flex items-center">
                             <Globe className="mr-1 h-3 w-3" />
                             {account.website}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[13px] border border-gray-100">{account.country}</td>
+<td className="py-3 px-4 text-13 border border-gray-100">{account.country}</td>
                       <td className="py-3 px-4 border border-gray-100">
-                        <div className="flex items-center text-[13px]">
+<div className="flex items-center text-13">
                           {account.supportChannel === "Email" && <Mail className="mr-1 h-3 w-3" />}
                           {account.supportChannel === "Slack" && <MessageSquare className="mr-1 h-3 w-3" />}
                           {account.supportChannel === "Phone" && <Phone className="mr-1 h-3 w-3" />}
@@ -374,7 +374,7 @@ export default function AccountsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 border border-gray-100">{getStatusChip(account.status)}</td>
-                      <td className="py-3 px-4 text-[13px] border border-gray-100">{formatDate(account.createdAt)}</td>
+<td className="py-3 px-4 text-13 border border-gray-100">{formatDate(account.createdAt)}</td>
                       <td className="py-3 px-4 border border-gray-100">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -383,16 +383,16 @@ export default function AccountsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem className="text-[13px]" onClick={() => handleViewAccount(account)}>
+<DropdownMenuItem className="text-13" onClick={() => handleViewAccount(account)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-[13px]" onClick={() => handleEditAccount(account)}>
+<DropdownMenuItem className="text-13" onClick={() => handleEditAccount(account)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Account
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="text-[13px] text-red-600"
+className="text-13 text-red-600"
                               onClick={() => handleDeleteAccount(account)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -414,8 +414,8 @@ export default function AccountsPage() {
         {showCreateForm && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-[13px]">Create New Account</CardTitle>
-              <CardDescription className="text-[13px]">Add a new customer account to the system</CardDescription>
+<CardTitle className="text-13">Create New Account</CardTitle>
+<CardDescription className="text-13">Add a new customer account to the system</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -425,7 +425,7 @@ export default function AccountsPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter account name"
-                    className="text-[13px]"
+className="text-13"
                   />
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export default function AccountsPage() {
                   <select
                     value={formData.supportChannel}
                     onChange={(e) => setFormData({ ...formData, supportChannel: e.target.value })}
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-[13px]"
+className="w-full px-3 py-2 border border-input bg-background rounded-md text-13"
                   >
                     <option value="Email">Email</option>
                     <option value="Slack">Slack</option>
@@ -488,10 +488,10 @@ export default function AccountsPage() {
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-6">
-                <Button variant="outline" onClick={() => setShowCreateForm(false)} className="text-[13px]">
+<Button variant="outline" onClick={() => setShowCreateForm(false)} className="text-13">
                   Cancel
                 </Button>
-                <Button onClick={handleCreateAccount} className="text-[13px]">
+<Button onClick={handleCreateAccount} className="text-13">
                   Create Account
                 </Button>
               </div>

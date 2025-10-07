@@ -9,6 +9,7 @@
     "dev:unsafe": "node scripts/init-dev.js --skip-validation && next dev",
     "dev:setup": "node scripts/init-dev.js --create-missing",
     "lint": "next lint",
+    "lint:ui": "node scripts/ui-token-audit.mjs",
     "start": "next start",
     "test:db": "node scripts/init-dev.js --test",
     "test:db:full": "node scripts/init-dev.js --test",
