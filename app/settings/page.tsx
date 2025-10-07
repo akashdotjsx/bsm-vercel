@@ -378,7 +378,7 @@ export default function SettingsPage() {
   const renderProfileSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Profile</h2>
+        <h2 className="text-[15px] font-semibold">Profile</h2>
         <p className="text-sm text-muted-foreground mt-1">Manage your personal information and account settings</p>
       </div>
 

@@ -930,7 +930,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   <tr>
                     <td colSpan={9} className="p-8 text-center">
                       <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                        <div className="h-6 w-6 mr-2 bg-muted animate-pulse rounded" />
                         Loading tickets...
                       </div>
                     </td>
@@ -1354,7 +1354,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             {typesLoading ? (
               <div className={`col-span-${numColumns} flex items-center justify-center py-8`}>
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
                   <span className="text-sm text-muted-foreground">Loading ticket types...</span>
                 </div>
               </div>
@@ -1748,13 +1748,13 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                 </div>
                 {importProgress.status === 'parsing' && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#6a5cff]"></div>
+                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
                     Parsing file...
                   </div>
                 )}
                 {importProgress.status === 'importing' && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#6a5cff]"></div>
+                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
                     Creating tickets...
                   </div>
                 )}

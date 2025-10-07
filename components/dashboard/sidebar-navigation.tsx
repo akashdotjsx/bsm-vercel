@@ -202,8 +202,6 @@ export function SidebarNavigation() {
                                     : "text-sidebar-foreground/60 hover:bg-sidebar-primary/30 hover:text-sidebar-foreground",
                                 )}
                               >
-                                )}
-                              >
                                 <SubIcon className="mr-3 h-3 w-3" />
                                 {subItem.name}
                               </Link>

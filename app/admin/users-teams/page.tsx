@@ -280,7 +280,7 @@ export default function UsersTeamsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Users & Teams</h1>
+            <h1 className="text-[15px] font-semibold text-gray-900">Users & Teams</h1>
             <p className="text-sm text-gray-600 mt-1">Manage user accounts, permissions, and team organization</p>
           </div>
         </div>

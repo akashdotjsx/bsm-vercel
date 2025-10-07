@@ -55,6 +55,9 @@ import { ServiceCategory, Service } from "@/lib/types/services"
 import { useMode } from "@/lib/contexts/mode-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { categoryIconMap, getBgColorClass, formatSLA } from "@/lib/utils/icon-map"
+import { UserSelector } from "@/components/users/user-selector"
+import { TeamSelector } from "@/components/users/team-selector"
+import { useUsers } from "@/hooks/use-users"
 
 export default function CreateTicketPage() {
   // Form state
@@ -68,6 +71,7 @@ export default function CreateTicketPage() {
   const [service, setService] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
   const [teamId, setTeamId] = useState("")
+  const [watcherIds, setWatcherIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState<Date>()
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState("")
@@ -85,6 +89,7 @@ export default function CreateTicketPage() {
   // Hooks for real data
   const { createTicket } = useTickets()
   const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
+  const { users, teams, loading: usersLoading } = useUsers()
   const { mode } = useMode()
   const { categories: supabaseCategories, loading: categoriesLoading } = useServiceCategories()
   
@@ -314,7 +319,7 @@ export default function CreateTicketPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[16px] font-semibold tracking-tight">Create New Ticket</h1>
+            <h1 className="text-[15px] font-semibold tracking-tight">Create New Ticket</h1>
             <p className="text-[12px] text-muted-foreground">Create a new support ticket with all necessary details</p>
           </div>
           <div className="flex items-center gap-2">
@@ -325,7 +330,7 @@ export default function CreateTicketPage() {
             <Button onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  <div className="h-4 w-4 mr-2 bg-white/20 rounded animate-pulse" />
                   Creating...
                 </>
               ) : (
@@ -344,7 +349,7 @@ export default function CreateTicketPage() {
             {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[13px]">
+                <CardTitle className="flex items-center gap-2 text-[15px]">
                   <FileText className="h-4 w-4" />
                   Basic Information
                 </CardTitle>
@@ -739,7 +744,7 @@ export default function CreateTicketPage() {
             {/* Assignment */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[13px]">
+                <CardTitle className="flex items-center gap-2 text-[15px]">
                   <Users className="h-4 w-4" />
                   Assignment
                 </CardTitle>
@@ -747,43 +752,15 @@ export default function CreateTicketPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Assignee</Label>
-                  <div className="relative">
-                    <Input
-                      placeholder="Search for assignee..."
-                      value={assigneeSearch}
-                      onChange={(e) => handleAssigneeSearch(e.target.value)}
-                      onFocus={() => setShowAssigneeSearch(true)}
-                    />
-                    {showAssigneeSearch && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                        {profilesLoading ? (
-                          <div className="p-3 text-[11px] text-muted-foreground">Searching...</div>
-                        ) : profiles.length > 0 ? (
-                          profiles.map((profile) => (
-                            <button
-                              key={profile.id}
-                              className="w-full text-left p-3 hover:bg-muted flex items-center gap-3"
-                              onClick={() => {
-                                setAssigneeId(profile.id)
-                                setShowAssigneeSearch(false)
-                                setAssigneeSearch(profile.display_name)
-                              }}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
-                                {profile.first_name?.[0]}{profile.last_name?.[0]}
-                              </div>
-                              <div>
-                                <p className="font-medium text-[11px]">{profile.display_name}</p>
-                                <p className="text-[10px] text-muted-foreground">{profile.email}</p>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="p-3 text-[11px] text-muted-foreground">No users found</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  <UserSelector
+                    users={users}
+                    value={assigneeId}
+                    onValueChange={setAssigneeId}
+                    placeholder="Select assignee..."
+                    className="w-full"
+                    disabled={usersLoading}
+                    filterByRole={["admin", "manager", "agent"]} // Only show users who can handle tickets
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -793,11 +770,51 @@ export default function CreateTicketPage() {
                       <SelectValue placeholder="Select team" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="it">IT Support</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="general">General Support</SelectItem>
+                      <SelectItem value="no-team">No Team</SelectItem>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center">
+                              <span className="text-white text-[9px] font-medium">{team.name.substring(0, 2)}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{team.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {team.team_members?.length || 0} members
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Watchers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[15px]">
+                  <Users className="h-4 w-4" />
+                  Watchers
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Select Watchers</Label>
+                  <TeamSelector
+                    teams={teams}
+                    users={users}
+                    selectedUserIds={watcherIds}
+                    onUsersChange={setWatcherIds}
+                    placeholder="Select teams or users to watch this ticket..."
+                    className="w-full"
+                    disabled={usersLoading}
+                  />
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  Watchers will be notified of updates to this ticket
                 </div>
               </CardContent>
             </Card>
@@ -805,7 +822,7 @@ export default function CreateTicketPage() {
             {/* Tags */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[13px]">
+                <CardTitle className="flex items-center gap-2 text-[15px]">
                   <Tag className="h-4 w-4" />
                   Tags
                 </CardTitle>
@@ -842,7 +859,7 @@ export default function CreateTicketPage() {
             {/* AI Suggestions */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[13px]">
+                <CardTitle className="flex items-center gap-2 text-[15px]">
                   <Bot className="h-4 w-4" />
                   AI Suggestions
                 </CardTitle>
