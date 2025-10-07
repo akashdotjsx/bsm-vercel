@@ -50,11 +50,13 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [isSearching, setIsSearching] = useState(false)
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [searchType, setSearchType] = useState<'all' | 'tickets' | 'users'>('all')
+  const [isTyping, setIsTyping] = useState(false)
   
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300)
   
@@ -82,22 +84,54 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     }
   }, [searchType])
 
-  // Fetch suggestions function
+  // Fetch suggestions function with enhanced real-time data
   const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.length < 1) {
+      // For empty query, get recent searches
+      try {
+        setIsFetchingSuggestions(true)
+        const response = await fetch(`/api/search/suggestions?q=&limit=8`)
+        if (response.ok) {
+          const data = await response.json()
+          setSuggestions([])
+          setRecentSearches(data.recent_searches || [])
+        }
+      } catch (error) {
+        console.error('Error fetching recent searches:', error)
+      } finally {
+        setIsFetchingSuggestions(false)
+      }
+      return
+    }
+
     if (query.length < 2) {
       setSuggestions([])
+      setIsFetchingSuggestions(false)
       return
     }
 
     try {
-      const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=8`)
+      setIsFetchingSuggestions(true)
+      const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=10`)
       if (response.ok) {
         const data = await response.json()
         setSuggestions(data.suggestions || [])
         setRecentSearches(data.recent_searches || [])
+        
+        // Log real data stats for debugging
+        if (data.has_real_data) {
+          console.log('🔍 Real-time data:', {
+            tickets: data.has_real_data.tickets,
+            users: data.has_real_data.users,
+            history: data.has_real_data.history,
+            suggestions: data.suggestions?.length || 0
+          })
+        }
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error)
+    } finally {
+      setIsFetchingSuggestions(false)
     }
   }, [])
 
@@ -302,11 +336,23 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
-          placeholder="Search tickets, users..."
-          className="pl-10 h-8 text-[11px] bg-background border-border rounded-md hover:bg-muted transition-colors"
+          placeholder="Search tickets, users... (try: 'dev-', 'fix', 'admin')"
+          className="pl-10 pr-16 h-8 text-[11px] bg-background border-border rounded-md hover:bg-muted transition-colors focus:ring-1 focus:ring-primary/20"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => setIsOpen(true)}
+          onChange={(e) => {
+            const value = e.target.value
+            setSearchTerm(value)
+            setIsTyping(true)
+            // Stop typing indicator after 1 second of no input
+            setTimeout(() => setIsTyping(false), 1000)
+          }}
+          onFocus={() => {
+            setIsOpen(true)
+            // Load recent searches when focused with no query
+            if (!searchTerm) {
+              fetchSuggestions('')
+            }
+          }}
         />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
           <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70">
@@ -352,32 +398,101 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             </div>
           )}
 
-          {/* Loading State */}
-          {isSearching && (
-            <div className="p-4 flex items-center justify-center">
+          {/* Loading States */}
+          {(isSearching || isFetchingSuggestions) && (
+            <div className="p-4 flex items-center justify-center border-b border-border">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-[11px] text-muted-foreground">Searching...</span>
+              <span className="text-[11px] text-muted-foreground">
+                {isSearching ? 'Searching real-time data...' : 'Loading smart suggestions...'}
+              </span>
+              {isTyping && (
+                <div className="ml-2 flex gap-1">
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Suggestions */}
+          {/* Enhanced Suggestions with categorization */}
           {!isSearching && suggestions.length > 0 && (
             <div className="border-b border-border">
               <div className="p-2">
-                <div className="text-[10px] font-medium text-muted-foreground mb-1 px-2">Suggestions</div>
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className={cn(
-                      "flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors text-[11px]",
-                      selectedIndex === index && "bg-muted"
-                    )}
-                  >
-                    <Search className="h-3 w-3 text-muted-foreground" />
-                    <span className="flex-1 truncate">{suggestion}</span>
-                  </button>
-                ))}
+                <div className="flex items-center gap-2 mb-2 px-2">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  <span className="text-[10px] font-medium text-foreground">Smart Suggestions</span>
+                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">
+                    {suggestions.length}
+                  </Badge>
+                </div>
+                {suggestions.map((suggestion, index) => {
+                  // Categorize suggestions based on content
+                  const isTicketNumber = suggestion.match(/^TK-/)
+                  const isDepartment = suggestion.includes('team') || suggestion.includes('department')
+                  const isUserEmail = suggestion.includes('@')
+                  const isPrefixMatch = suggestion.toLowerCase().startsWith(searchTerm.toLowerCase()) && suggestion.length > searchTerm.length
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className={cn(
+                        "flex items-center gap-3 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors text-[11px] group",
+                        selectedIndex === index && "bg-muted ring-1 ring-primary/20"
+                      )}
+                    >
+                      {/* Dynamic icons based on suggestion type */}
+                      <div className="text-muted-foreground group-hover:text-foreground transition-colors">
+                        {isTicketNumber ? (
+                          <Ticket className="h-3 w-3" />
+                        ) : isDepartment ? (
+                          <Users className="h-3 w-3" />
+                        ) : isUserEmail ? (
+                          <User className="h-3 w-3" />
+                        ) : isPrefixMatch ? (
+                          <Zap className="h-3 w-3 text-primary" />
+                        ) : (
+                          <Search className="h-3 w-3" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <span className="truncate group-hover:text-foreground transition-colors">
+                          {/* Highlight matching parts */}
+                          {searchTerm && suggestion.toLowerCase().includes(searchTerm.toLowerCase()) ? (
+                            <>
+                              {suggestion.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, i) => 
+                                part.toLowerCase() === searchTerm.toLowerCase() ? (
+                                  <mark key={i} className="bg-primary/20 text-primary px-0.5 rounded">{part}</mark>
+                                ) : (
+                                  <span key={i}>{part}</span>
+                                )
+                              )}
+                            </>
+                          ) : (
+                            suggestion
+                          )}
+                        </span>
+                        
+                        {/* Suggestion type indicator */}
+                        {(isTicketNumber || isDepartment || isUserEmail) && (
+                          <div className="text-[8px] text-muted-foreground mt-0.5">
+                            {isTicketNumber && 'Ticket'}
+                            {isDepartment && 'Department'}
+                            {isUserEmail && 'User Email'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {isPrefixMatch && (
+                        <Badge variant="secondary" className="text-[7px] px-1 py-0 h-4">
+                          autocomplete
+                        </Badge>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -392,37 +507,84 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                     key={result.id}
                     onClick={() => handleResultClick(result)}
                     className={cn(
-                      "flex items-start gap-3 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors",
-                      selectedIndex === (suggestions.length + index) && "bg-muted"
+                      "flex items-start gap-3 w-full p-3 text-left hover:bg-muted rounded-sm transition-colors border-l-2 border-transparent hover:border-primary/20",
+                      selectedIndex === (suggestions.length + index) && "bg-muted border-primary/40"
                     )}
                   >
-                    <div className="text-muted-foreground mt-0.5">
+                    <div className="text-muted-foreground mt-1">
                       {getResultIcon(result.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] font-medium truncate">{result.title}</span>
-                        <Badge variant="secondary" className={cn("text-[9px] px-1 py-0", getResultTypeColor(result.type))}>
+                        <span className="text-[12px] font-semibold truncate text-foreground">{result.title}</span>
+                        <Badge variant="secondary" className={cn("text-[9px] px-2 py-0.5 font-medium", getResultTypeColor(result.type))}>
                           {result.type}
                         </Badge>
                       </div>
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">
+                      
+                      {/* Enhanced description with context */}
+                      <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
                         {result.description}
                       </p>
+                      
+                      {/* Rich metadata display */}
                       {result.metadata && (
-                        <div className="flex items-center gap-2 mt-1 text-[9px] text-muted-foreground">
+                        <div className="flex items-center gap-3 mt-2 text-[9px] text-muted-foreground">
+                          {/* Status badge */}
                           {result.metadata.status && (
-                            <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">
+                            <Badge variant="outline" className="text-[8px] px-1.5 py-0.5 h-5 font-medium">
                               {result.metadata.status}
                             </Badge>
                           )}
+                          
+                          {/* Priority for tickets */}
+                          {result.metadata.priority && (
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "text-[8px] px-1.5 py-0.5 h-5 font-medium",
+                                result.metadata.priority === 'high' && 'border-red-200 text-red-600',
+                                result.metadata.priority === 'medium' && 'border-yellow-200 text-yellow-600',
+                                result.metadata.priority === 'low' && 'border-green-200 text-green-600'
+                              )}
+                            >
+                              {result.metadata.priority}
+                            </Badge>
+                          )}
+                          
+                          {/* Department */}
                           {result.metadata.department && (
-                            <span>{result.metadata.department}</span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {result.metadata.department}
+                            </span>
+                          )}
+                          
+                          {/* Email for users */}
+                          {result.metadata.email && (
+                            <span className="truncate max-w-[120px]" title={result.metadata.email}>
+                              {result.metadata.email}
+                            </span>
+                          )}
+                          
+                          {/* Ticket number */}
+                          {result.metadata.ticket_number && (
+                            <span className="font-mono text-[8px] bg-muted px-1.5 py-0.5 rounded">
+                              {result.metadata.ticket_number}
+                            </span>
+                          )}
+                          
+                          {/* Creation date */}
+                          {result.metadata.created_at && (
+                            <span className="flex items-center gap-1 ml-auto">
+                              <Clock className="h-3 w-3" />
+                              {new Date(result.metadata.created_at).toLocaleDateString()}
+                            </span>
                           )}
                         </div>
                       )}
                     </div>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-50" />
                   </button>
                 ))}
                 
@@ -453,7 +615,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             </div>
           )}
 
-          {/* Default state - no search term */}
+          {/* Default state - no search term - Show recent searches */}
           {!searchTerm && (
             <div className="p-3">
               <div className="flex items-center gap-2 mb-1">
@@ -461,29 +623,29 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                 <span className="text-[11px] font-medium text-foreground">Enterprise Search</span>
               </div>
               <p className="text-[9px] text-muted-foreground mb-3">
-                Search across tickets, users, and more with real-time suggestions
+                Search across tickets, users, and more with AI-powered suggestions
               </p>
               
-              {/* Recent Searches */}
+              {/* Recent Searches - Show more when no query */}
               {recentSearches.length > 0 && (
                 <div className="space-y-1 mb-3">
-                  <div className="text-[9px] font-medium text-muted-foreground mb-1">Recent searches:</div>
-                  {recentSearches.slice(0, 3).map((search, index) => (
+                  <div className="text-[9px] font-medium text-muted-foreground mb-1">Your recent searches:</div>
+                  {recentSearches.slice(0, 5).map((search, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestionClick(search)}
                       className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors"
                     >
                       <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-foreground">{search}</span>
+                      <span className="text-[10px] text-foreground truncate">{search}</span>
                     </button>
                   ))}
                 </div>
               )}
               
               <div className="space-y-1">
-                <div className="text-[9px] font-medium text-muted-foreground mb-1">Try searching for:</div>
-                {['laptop request', 'John Doe', 'password reset', 'hardware issue'].map((example, index) => (
+                <div className="text-[9px] font-medium text-muted-foreground mb-1">Quick searches:</div>
+                {['dev-', 'fix ', 'deploy', 'admin', 'password reset', 'laptop'].map((example, index) => (
                   <button
                     key={index}
                     onClick={() => setSearchTerm(example)}
@@ -491,6 +653,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                   >
                     <Search className="h-3 w-3 text-muted-foreground" />
                     <span className="text-[10px] text-foreground">{example}</span>
+                    <span className="text-[8px] text-muted-foreground ml-auto">Try typing</span>
                   </button>
                 ))}
               </div>
