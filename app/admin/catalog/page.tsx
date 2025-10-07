@@ -8,10 +8,6 @@ export default function ServiceCatalogAdminPage() {
     <PlatformLayout
       title="Service Catalog"
       description="Manage service categories and offerings for your organization"
-      breadcrumbs={[
-        { label: "Administration", href: "/admin" },
-        { label: "Service Catalog", href: "/admin/catalog" },
-      ]}
     >
       <ServiceCatalog />
     </PlatformLayout>

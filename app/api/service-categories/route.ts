@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       `)
       .eq('organization_id', profile.organization_id)
       .eq('is_active', true)
-      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching service categories:', error)
@@ -108,6 +108,120 @@ export async function GET(request: NextRequest) {
     const filteredCategories = Array.from(categoryMap.values())
 
     return NextResponse.json({ categories: filteredCategories }, { status: 200 })
+  } catch (error) {
+    console.error('Error in service categories API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's organization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.organization_id) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 400 })
+    }
+
+    const body = await request.json()
+    const { id, name, description, icon, color } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'Category ID is required' }, { status: 400 })
+    }
+
+    // Update the service category
+    const { data: category, error } = await supabase
+      .from('service_categories')
+      .update({
+        name,
+        description: description || '',
+        icon: icon || 'Settings',
+        color: color || 'bg-blue-500',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('organization_id', profile.organization_id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating service category:', error)
+      return NextResponse.json({ error: 'Failed to update service category' }, { status: 500 })
+    }
+
+    return NextResponse.json({ category }, { status: 200 })
+  } catch (error) {
+    console.error('Error in service categories API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's organization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.organization_id) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 400 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Category ID is required' }, { status: 400 })
+    }
+
+    // First delete all services in this category (cascade delete)
+    const { error: servicesDeleteError } = await supabase
+      .from('services')
+      .delete()
+      .eq('category_id', id)
+      .eq('organization_id', profile.organization_id)
+
+    if (servicesDeleteError) {
+      console.error('Error deleting services in category:', servicesDeleteError)
+      return NextResponse.json({ error: 'Failed to delete services in category' }, { status: 500 })
+    }
+
+    // Now delete the service category
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', id)
+      .eq('organization_id', profile.organization_id)
+
+    if (error) {
+      console.error('Error deleting service category:', error)
+      return NextResponse.json({ error: 'Failed to delete service category' }, { status: 500 })
+    }
+
+    return NextResponse.json({ message: 'Service category deleted successfully' }, { status: 200 })
   } catch (error) {
     console.error('Error in service categories API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
