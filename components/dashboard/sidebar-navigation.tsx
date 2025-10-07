@@ -160,7 +160,7 @@ export function SidebarNavigation() {
                                 key={subItem.name}
                                 href={subItem.href}
                                 className={cn(
-                                  "flex items-center px-3 py-1.5 text-[11px] font-medium rounded-md transition-all duration-200",
+                                  "flex items-center px-3 py-1.5 text-[10px] font-medium rounded-md transition-all duration-200",
                                   pathname === subItem.href
                                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                     : "text-sidebar-foreground/60 hover:bg-sidebar-primary/30 hover:text-sidebar-foreground",

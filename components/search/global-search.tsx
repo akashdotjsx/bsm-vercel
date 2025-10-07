@@ -104,15 +104,15 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
-          placeholder="Search workspace... (⌘K)"
+          placeholder="Search..."
           className="pl-10 h-8 text-[11px] bg-background border-border rounded-md hover:bg-muted transition-colors"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
         />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70">
+            <span className="text-[9px]">⌘</span>K
           </kbd>
         </div>
       </div>

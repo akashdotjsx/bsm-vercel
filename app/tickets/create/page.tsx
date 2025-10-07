@@ -314,8 +314,8 @@ export default function CreateTicketPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Create New Ticket</h1>
-            <p className="text-muted-foreground">Create a new support ticket with all necessary details</p>
+            <h1 className="text-[16px] font-semibold tracking-tight">Create New Ticket</h1>
+            <p className="text-[12px] text-muted-foreground">Create a new support ticket with all necessary details</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => window.history.back()}>
@@ -344,8 +344,8 @@ export default function CreateTicketPage() {
             {/* Basic Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-[13px]">
+                  <FileText className="h-4 w-4" />
                   Basic Information
                 </CardTitle>
               </CardHeader>
@@ -369,7 +369,7 @@ export default function CreateTicketPage() {
                       setTitle(v)
                       if (invalidTitle && v.trim() !== '') setInvalidTitle(false)
                     }}
-                    className={`text-lg ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
+                    className={`text-[12px] ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
                   />
                 </div>
 
@@ -712,13 +712,13 @@ export default function CreateTicketPage() {
 
                   {attachments.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Attached Files</h4>
+                      <h4 className="text-[11px] font-medium">Attached Files</h4>
                       {attachments.map((attachment) => (
                         <div key={attachment.id} className="flex items-center gap-3 p-2 border rounded-lg">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{attachment.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] font-medium truncate">{attachment.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
                               {(attachment.size / 1024).toFixed(1)} KB
                             </p>
                           </div>
@@ -739,8 +739,8 @@ export default function CreateTicketPage() {
             {/* Assignment */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-[13px]">
+                  <Users className="h-4 w-4" />
                   Assignment
                 </CardTitle>
               </CardHeader>
@@ -757,7 +757,7 @@ export default function CreateTicketPage() {
                     {showAssigneeSearch && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                         {profilesLoading ? (
-                          <div className="p-3 text-sm text-muted-foreground">Searching...</div>
+                          <div className="p-3 text-[11px] text-muted-foreground">Searching...</div>
                         ) : profiles.length > 0 ? (
                           profiles.map((profile) => (
                             <button
@@ -773,13 +773,13 @@ export default function CreateTicketPage() {
                                 {profile.first_name?.[0]}{profile.last_name?.[0]}
                               </div>
                               <div>
-                                <p className="font-medium text-sm">{profile.display_name}</p>
-                                <p className="text-xs text-muted-foreground">{profile.email}</p>
+                                <p className="font-medium text-[11px]">{profile.display_name}</p>
+                                <p className="text-[10px] text-muted-foreground">{profile.email}</p>
                               </div>
                             </button>
                           ))
                         ) : (
-                          <div className="p-3 text-sm text-muted-foreground">No users found</div>
+                          <div className="p-3 text-[11px] text-muted-foreground">No users found</div>
                         )}
                       </div>
                     )}
@@ -805,8 +805,8 @@ export default function CreateTicketPage() {
             {/* Tags */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tag className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-[13px]">
+                  <Tag className="h-4 w-4" />
                   Tags
                 </CardTitle>
               </CardHeader>
@@ -842,23 +842,23 @@ export default function CreateTicketPage() {
             {/* AI Suggestions */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-[13px]">
+                  <Bot className="h-4 w-4" />
                   AI Suggestions
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Suggested Priority</p>
+                  <p className="text-[11px] font-medium mb-1">Suggested Priority</p>
                   <Badge className={getPriorityColor("medium")}>Medium</Badge>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     Based on description analysis
                   </p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Recommended Type</p>
+                  <p className="text-[11px] font-medium mb-1">Recommended Type</p>
                   <Badge className={getTypeColor("request")}>Request</Badge>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     Based on keywords detected
                   </p>
                 </div>

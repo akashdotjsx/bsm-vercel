@@ -62,13 +62,18 @@ export function GlobalHeader() {
     <header className="h-12 md:h-14 bg-[var(--background)] border-b border-[var(--border)] flex items-center px-4 md:px-6 gap-3 md:gap-6 fixed top-0 left-0 right-0 z-50">
       <div className="flex items-center gap-2">
         {mounted && (
-          <Image
-            src={theme === 'dark' ? '/images/kroolo-dark-logo2.svg' : '/images/kroolo-light-logo1.svg'}
-            alt="Kroolo"
-            width={isMobile ? 80 : 100}
-            height={isMobile ? 22 : 28}
-            className={`${isMobile ? "h-5" : "h-7"} w-auto`}
-          />
+          <button
+            onClick={() => router.push('/')}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <Image
+              src={theme === 'dark' ? '/images/kroolo-dark-logo2.svg' : '/images/kroolo-light-logo1.svg'}
+              alt="Kroolo"
+              width={isMobile ? 80 : 100}
+              height={isMobile ? 22 : 28}
+              className={`${isMobile ? "h-5" : "h-7"} w-auto`}
+            />
+          </button>
         )}
         {!mounted && (
           <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-gray-200 dark:bg-gray-700 animate-pulse rounded`} />

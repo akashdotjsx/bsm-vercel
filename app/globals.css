@@ -60,6 +60,8 @@
   /* Shadows */
   --popover-shadow: rgba(62, 62, 62, 0.4) 0px 0px 24px 6px;
   --deep-gray-shadow: 0px 0px 24px 6px rgba(62, 62, 62, 0.4);
+  --dropdown-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1);
+  --select-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06), 0px 0px 1px rgba(0, 0, 0, 0.08);
 
   --chart-1: #7073fc;
   --chart-2: #2d2f34;
@@ -71,14 +73,14 @@
   /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
   --sidebar: #fafafa;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #7073fc;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #7073fc;
-  --sidebar-accent-foreground: #ffffff;
+  --sidebar-primary: #f7f7f7;
+  --sidebar-primary-foreground: #525252;
+  --sidebar-accent: #f7f7f7;
+  --sidebar-accent-foreground: #525252;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: rgba(112, 115, 252, 0.5);
-  --sidebar-hover: #f4f4f5;
-  --sidebar-active: #7073fc;
+  --sidebar-hover: #f1f1f1;
+  --sidebar-active: #ededed;
   --menu-hover: #f4f4f5;
   --menu-border: #e5e5e5;
   
@@ -129,6 +131,8 @@
   /* Shadows for dark mode */
   --popover-shadow: rgba(10, 10, 10) 0px 0px 24px 6px;
   --deep-gray-shadow: 0px 0px 24px 6px rgba(10, 10, 10);
+  --dropdown-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4), 0px 0px 2px rgba(0, 0, 0, 0.3);
+  --select-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3), 0px 0px 2px rgba(0, 0, 0, 0.2);
 
   /* Dark mode status and priority colors */
   --status-open: #fbbf24;
