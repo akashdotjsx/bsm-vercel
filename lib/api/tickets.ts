@@ -237,14 +237,22 @@ export class TicketAPI {
 
   // Delete ticket
   async deleteTicket(id: string): Promise<void> {
+    console.log('🌐 ticketAPI.deleteTicket called with id:', id)
+    console.log('🌐 Making DELETE request to:', `/api/tickets/${id}`)
+    
     const response = await fetch(`/api/tickets/${id}`, {
       method: 'DELETE',
     })
 
+    console.log('🌐 Delete response status:', response.status, response.statusText)
+
     if (!response.ok) {
       const error = await response.json()
+      console.error('🌐 Delete API error:', error)
       throw new Error(error.error || 'Failed to delete ticket')
     }
+    
+    console.log('🌐 Delete API call successful')
   }
 
   // Get ticket comments

@@ -125,7 +125,8 @@ export default function TicketsPage() {
     pagination, 
     refetch,
     createTicket,
-    updateTicket
+    updateTicket,
+    deleteTicket
   } = useTickets(ticketsParams)
 
   // Get dynamic ticket types from database
@@ -187,6 +188,23 @@ export default function TicketsPage() {
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [ticketView, setTicketView] = useState<"all" | "my">("all")
+  
+  // Ticket action states
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [ticketToEdit, setTicketToEdit] = useState<any>(null)
+  const [ticketToDelete, setTicketToDelete] = useState<any>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    type: '',
+    priority: '',
+    status: ''
+  })
   const [kanbanGroupBy, setKanbanGroupBy] = useState<"type" | "status" | "priority" | "category">("type")
   const [draggedTicket, setDraggedTicket] = useState<any>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
@@ -724,6 +742,109 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     }
   }
 
+  // Ticket action handlers
+  const handleEditTicket = (ticket: any) => {
+    setTicketToEdit(ticket)
+    setEditForm({
+      title: ticket.title,
+      description: ticket.description || '',
+      type: ticket.type,
+      priority: ticket.priority,
+      status: ticket.status
+    })
+    setShowEditModal(true)
+  }
+
+  const handleDuplicateTicket = async (ticket: any) => {
+    try {
+      const duplicateData = {
+        title: `${ticket.title} (Copy)`,
+        description: ticket.description,
+        type: ticket.type,
+        priority: ticket.priority,
+        urgency: ticket.urgency || 'medium',
+        impact: ticket.impact || 'medium',
+        category: ticket.category,
+        subcategory: ticket.subcategory,
+        assignee_id: ticket.assignee_id,
+        team_id: ticket.team_id,
+        due_date: ticket.due_date,
+        tags: ticket.tags || [],
+        custom_fields: ticket.custom_fields || {}
+      }
+
+      const newTicket = await createTicket(duplicateData)
+      toast.success(`Ticket #${newTicket.ticket_number} duplicated successfully!`, {
+        description: `"${newTicket.title}" has been created.`,
+        duration: 5000,
+      })
+    } catch (error) {
+      console.error('Error duplicating ticket:', error)
+      toast.error('Failed to duplicate ticket')
+    }
+  }
+
+  const handleDeleteTicket = (ticket: any) => {
+    setTicketToDelete(ticket)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteTicket = async () => {
+    if (!ticketToDelete) return
+
+    console.log('🗑️ DELETE CONFIRMED - Ticket to delete:', {
+      displayId: ticketToDelete.id,
+      dbId: ticketToDelete.dbId,
+      title: ticketToDelete.title
+    })
+
+    setIsDeleting(true)
+    try {
+      console.log('🗑️ Calling deleteTicket with dbId:', ticketToDelete.dbId)
+      await deleteTicket(ticketToDelete.dbId)
+      console.log('✅ deleteTicket completed successfully')
+      toast.success('Ticket deleted successfully!', {
+        description: `Ticket #${ticketToDelete.id} has been removed.`,
+        duration: 5000,
+      })
+      setShowDeleteModal(false)
+      setTicketToDelete(null)
+    } catch (error) {
+      console.error('❌ Error deleting ticket:', error)
+      toast.error('Failed to delete ticket')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleUpdateTicket = async () => {
+    if (!ticketToEdit) return
+
+    setIsUpdating(true)
+    try {
+      const updateData = {
+        title: editForm.title,
+        description: editForm.description,
+        type: editForm.type,
+        priority: editForm.priority,
+        status: editForm.status
+      }
+
+      await updateTicket(ticketToEdit.dbId, updateData)
+      toast.success('Ticket updated successfully!', {
+        description: `Ticket #${ticketToEdit.id} has been updated.`,
+        duration: 5000,
+      })
+      setShowEditModal(false)
+      setTicketToEdit(null)
+    } catch (error) {
+      console.error('Error updating ticket:', error)
+      toast.error('Failed to update ticket')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   const clearAIChat = () => {
     setAiMessages([])
     setAiInput("")
@@ -954,15 +1075,18 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditTicket(ticket)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Ticket
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDuplicateTicket(ticket)}>
                               <Copy className="h-4 w-4 mr-2" />
                               Duplicate Ticket
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
+                            <DropdownMenuItem 
+                              className="text-red-600" 
+                              onClick={() => handleDeleteTicket(ticket)}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete Ticket
                             </DropdownMenuItem>
@@ -1873,6 +1997,140 @@ className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-
           ticket={selectedTicket}
         />
       </Suspense>
+
+      {/* Edit Ticket Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Ticket</DialogTitle>
+          </DialogHeader>
+          {ticketToEdit && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="mt-1"
+                  rows={4}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Type</label>
+                  <Select 
+                    value={editForm.type} 
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="request">Request</SelectItem>
+                      <SelectItem value="incident">Incident</SelectItem>
+                      <SelectItem value="problem">Problem</SelectItem>
+                      <SelectItem value="change">Change</SelectItem>
+                      <SelectItem value="task">Task</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Priority</label>
+                  <Select 
+                    value={editForm.priority} 
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select 
+                    value={editForm.status} 
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowEditModal(false)}
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateTicket}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Ticket Modal */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Ticket</DialogTitle>
+          </DialogHeader>
+          {ticketToDelete && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete ticket <strong>#{ticketToDelete.id}</strong>? 
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDeleteTicket}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Ticket'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </PlatformLayout>
   )
 }

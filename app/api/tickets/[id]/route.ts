@@ -209,12 +209,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('🗑️ DELETE API called with ticket ID:', params.id)
+    
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
+      console.log('❌ No user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('✅ User authenticated:', user.id)
 
     // Get user's organization
     const { data: profile } = await supabase
@@ -224,8 +229,26 @@ export async function DELETE(
       .single()
 
     if (!profile) {
+      console.log('❌ Profile not found for user:', user.id)
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
+
+    console.log('✅ User organization:', profile.organization_id)
+
+    // Check if ticket exists first
+    const { data: existingTicket } = await supabase
+      .from('tickets')
+      .select('id, ticket_number, title')
+      .eq('id', params.id)
+      .eq('organization_id', profile.organization_id)
+      .single()
+
+    if (!existingTicket) {
+      console.log('❌ Ticket not found:', params.id)
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+    }
+
+    console.log('✅ Ticket found:', existingTicket.ticket_number, existingTicket.title)
 
     // Delete ticket (this will cascade to related records)
     const { error } = await supabase
@@ -235,13 +258,14 @@ export async function DELETE(
       .eq('organization_id', profile.organization_id)
 
     if (error) {
-      console.error('Error deleting ticket:', error)
+      console.error('❌ Error deleting ticket:', error)
       return NextResponse.json({ error: 'Failed to delete ticket' }, { status: 500 })
     }
 
+    console.log('✅ Ticket deleted successfully from database')
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Unexpected error in ticket DELETE:', error)
+    console.error('❌ Unexpected error in ticket DELETE:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -82,10 +82,19 @@ export function useTickets(params: {
   }, [])
 
   const deleteTicket = useCallback(async (id: string) => {
+    console.log('🔧 useTickets.deleteTicket called with id:', id)
     try {
+      console.log('🔧 Calling ticketAPI.deleteTicket...')
       await ticketAPI.deleteTicket(id)
-      setTickets(prev => prev.filter(ticket => ticket.id !== id))
+      console.log('🔧 API call successful, updating local state...')
+      setTickets(prev => {
+        const filtered = prev.filter(ticket => ticket.id !== id)
+        console.log('🔧 Filtered tickets:', filtered.length, 'from', prev.length)
+        return filtered
+      })
+      console.log('🔧 Local state updated')
     } catch (err) {
+      console.error('🔧 Error in deleteTicket:', err)
       setError(err instanceof Error ? err.message : 'Failed to delete ticket')
       throw err
     }
