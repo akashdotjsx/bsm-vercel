@@ -35,6 +35,8 @@ import {
 } from "lucide-react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { useTicket, useTicketComments, useTicketAttachments, useTicketChecklist } from "@/hooks/use-tickets"
+import { UserSelector } from "@/components/users/user-selector"
+import { useUsers } from "@/hooks/use-users"
 import { format } from "date-fns"
 
 interface TicketDetailPageProps {
@@ -64,6 +66,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const { comments, addComment } = useTicketComments(params.id)
   const { attachments, uploadAttachment } = useTicketAttachments(params.id)
   const { checklist, addChecklistItem, updateChecklistItem, deleteChecklistItem } = useTicketChecklist(params.id)
+  const { users, loading: usersLoading } = useUsers()
 
   // Initialize edit values when ticket loads
   useEffect(() => {
@@ -424,18 +427,27 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                   <div className="flex items-center gap-4">
                     <label className="text-sm font-medium text-muted-foreground w-24">Assignee</label>
                     <div className="flex items-center gap-2">
-                      {ticket.assignee ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-                            {ticket.assignee.first_name?.[0]}{ticket.assignee.last_name?.[0]}
-                          </div>
-                          <span className="text-sm">{ticket.assignee.display_name}</span>
-                        </div>
+                      {isEditing ? (
+                        <UserSelector
+                          users={users}
+                          value={editAssignee}
+                          onValueChange={setEditAssignee}
+                          placeholder="Select assignee..."
+                          className="w-48"
+                          disabled={usersLoading}
+                          filterByRole={["admin", "manager", "agent"]}
+                        />
                       ) : (
-                        <Button variant="ghost" className="h-auto p-0 text-blue-600 hover:bg-transparent">
-                          <User className="h-4 w-4 mr-2" />
-                          Assign
-                        </Button>
+                        ticket.assignee ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                              {ticket.assignee.first_name?.[0]}{ticket.assignee.last_name?.[0]}
+                            </div>
+                            <span className="text-sm">{ticket.assignee.display_name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Unassigned</span>
+                        )
                       )}
                     </div>
                   </div>

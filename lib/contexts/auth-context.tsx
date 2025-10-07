@@ -243,14 +243,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Mark as hydrated to prevent flash
     setIsHydrated(true)
     
-    // Emergency timeout - always set loading to false after 5 seconds
+    // Emergency timeout - always set loading to false after 2 seconds
     const emergencyTimeout = setTimeout(() => {
-      if (isMounted && loading) {
+      if (isMounted) {
         console.warn('🚨 Auth emergency timeout - forcing loading to false')
         setLoading(false)
         setInitialized(true)
       }
-    }, 5000)
+    }, 2000)
     
     // Get initial session
     const getSession = async () => {
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     organization,
     permissions,
     userRoles,
-    loading: loading || !isHydrated,
+    loading,
     permissionsLoading,
     signOut,
     refreshProfile,
