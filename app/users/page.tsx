@@ -999,7 +999,23 @@ export default function UsersPage() {
                 <Label htmlFor="edit-status" className="text-right text-[13px]">
                   Status
                 </Label>
-                <Select value={selectedUser?.is_active ? 'Active' : 'Inactive'} onValueChange={(value) => setNewUser({ ...newUser, status: value })}>
+                <Select
+                  value={newUser.status}
+                  onValueChange={async (value) => {
+                    setNewUser({ ...newUser, status: value })
+                    if (selectedUser) {
+                      try {
+                        if (value === 'Inactive') {
+                          await deactivateUser(selectedUser.id)
+                        } else if (value === 'Active') {
+                          await reactivateUser(selectedUser.id)
+                        }
+                      } catch (e) {
+                        console.error('Error toggling user active state:', e)
+                      }
+                    }
+                  }}
+                >
                   <SelectTrigger className="col-span-3 text-[13px]">
                     <SelectValue />
                   </SelectTrigger>
