@@ -45,9 +45,9 @@ export function GlobalHeader() {
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
-  const handleLogout = () => {
-    // Instant logout - don't await, just clear state and redirect
-    signOut()
+  const handleLogout = async () => {
+    // Ensure session cookie is cleared before redirect to avoid auth flicker
+    await signOut()
     router.push('/auth/login')
   }
 

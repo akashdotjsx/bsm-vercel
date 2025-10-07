@@ -163,18 +163,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    // Clear all state IMMEDIATELY for instant logout
-    setUser(null)
-    setProfile(null)
-    setOrganization(null)
-    setPermissions([])
-    setUserRoles([])
-    
-    // Then handle Supabase signout in background (don't await)
-    supabase.auth.signOut().catch((error) => {
+    try {
+      // Actively clear the Supabase session so middleware/client both see logged-out state
+      await supabase.auth.signOut()
+    } catch (error) {
       console.error('Error signing out from Supabase:', error)
-      // User is already logged out from UI perspective, so this is just cleanup
-    })
+    } finally {
+      // Always clear local auth state
+      setUser(null)
+      setProfile(null)
+      setOrganization(null)
+      setPermissions([])
+      setUserRoles([])
+    }
   }
 
   // Permission checking functions

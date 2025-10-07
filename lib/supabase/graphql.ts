@@ -15,23 +15,31 @@ export async function executeGraphQLQuery<T = any>(
   const supabase = createBrowserClient()
   
   // Get the session for authentication
-  const { data: { session } } = await supabase.auth.getSession()
+  let { data: { session } } = await supabase.auth.getSession()
   
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ...(session?.access_token && {
-        'Authorization': `Bearer ${session.access_token}`
-      })
-    },
-    body: JSON.stringify({
-      query,
-      variables
+  const doRequest = async (token?: string) => {
+    const res = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      body: JSON.stringify({ query, variables })
     })
-  })
-  
+    return res
+  }
+
+  // First attempt
+  let response = await doRequest(session?.access_token)
+
+  // If unauthorized, try to refresh session once
+  if (response.status === 401) {
+    const refreshed = await supabase.auth.getSession()
+    session = refreshed.data.session
+    response = await doRequest(session?.access_token)
+  }
+
   return response.json()
 }
 
@@ -46,23 +54,31 @@ export async function executeGraphQLQueryServer<T = any>(
   const supabase = await createServerClient()
   
   // Get the session for authentication
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ...(session?.access_token && {
-        'Authorization': `Bearer ${session.access_token}`
-      })
-    },
-    body: JSON.stringify({
-      query,
-      variables
+  let { data: { session } } = await supabase.auth.getSession()
+
+  const doRequest = async (token?: string) => {
+    const res = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      body: JSON.stringify({ query, variables })
     })
-  })
-  
+    return res
+  }
+
+  // First attempt
+  let response = await doRequest(session?.access_token)
+
+  // If unauthorized, refresh and retry once
+  if (response.status === 401) {
+    const refreshed = await supabase.auth.getSession()
+    session = refreshed.data.session
+    response = await doRequest(session?.access_token)
+  }
+
   return response.json()
 }
 
