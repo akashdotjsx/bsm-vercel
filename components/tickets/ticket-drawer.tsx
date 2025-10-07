@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useTicket, useTicketComments, useTicketAttachments, useTicketChecklist } from "@/hooks/use-tickets"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
+import { useUsers } from "@/hooks/use-users"
+import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
 import { 
@@ -46,6 +48,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   const { attachments, uploadAttachment } = useTicketAttachments(ticketId)
   const { checklist, addChecklistItem, updateChecklistItem, deleteChecklistItem } = useTicketChecklist(ticketId)
   const { categories: supabaseCategories } = useServiceCategories()
+  const { users, teams } = useUsers()
 
   // State for editing
   const [isEditing, setIsEditing] = useState(false)
@@ -69,8 +72,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     urgency: "medium",
     category: "",
     subcategory: "",
-    assignee_id: "",
-    team_id: "",
+    assignee_ids: [] as string[], // Changed to array to support teams
     due_date: "",
     tags: [] as string[],
   })
@@ -79,6 +81,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
   useEffect(() => {
     if (!dbTicket) return
+    // Convert single assignee to array format for compatibility
+    const assigneeIds = dbTicket.assignee_id ? [dbTicket.assignee_id] : []
     setForm({
       title: dbTicket.title || "",
       description: dbTicket.description || "",
@@ -89,8 +93,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       urgency: dbTicket.urgency || "medium",
       category: dbTicket.category || "",
       subcategory: dbTicket.subcategory || "",
-      assignee_id: dbTicket.assignee_id || "",
-      team_id: dbTicket.team_id || "",
+      assignee_ids: assigneeIds,
       due_date: dbTicket.due_date || "",
       tags: Array.isArray(dbTicket.tags) ? dbTicket.tags : [],
     })
@@ -106,6 +109,13 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     setSaving(true)
     try {
       const payload: any = { ...form }
+      // Convert assignee_ids array back to single assignee_id for API
+      if (form.assignee_ids.length > 0) {
+        payload.assignee_id = form.assignee_ids[0] // Use first assignee for now
+      } else {
+        payload.assignee_id = null
+      }
+      delete payload.assignee_ids // Remove the array field
       // Normalize due_date to ISO if present
       if (payload.due_date) {
         payload.due_date = new Date(payload.due_date).toISOString()
@@ -158,14 +168,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-transparent" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex" style={{ top: '60px' }}>
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col h-full relative z-10">
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-6 bg-background flex items-center justify-between">
           <div>
-            <h2 className="text-[14px] font-semibold">{dbTicket?.title || "Ticket"}</h2>
-            {dbTicket?.ticket_number && (
-              <p className="text-[11px] text-muted-foreground">#{dbTicket.ticket_number} • Created {dbTicket?.created_at ? format(new Date(dbTicket.created_at), "MMM d, y h:mm a") : ""}</p>
+            <h2 className="text-[16px] font-semibold text-foreground mb-1">{dbTicket?.title || ticket?.title || "Loading..."}</h2>
+            {(dbTicket?.ticket_number || ticket?.id) && (
+              <p className="text-[11px] text-muted-foreground">#{dbTicket?.ticket_number || ticket?.id} • Created {dbTicket?.created_at ? format(new Date(dbTicket.created_at), "MMM d, y h:mm a") : ""}</p>
             )}
           </div>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
@@ -173,67 +183,63 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
           </Button>
         </div>
 
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : error ? (
-          <div className="p-6 text-red-600 text-sm">{String(error)}</div>
+        {error ? (
+          <div className="p-6 text-red-600 text-[11px]">{String(error)}</div>
         ) : (
           <Tabs defaultValue="details" className="flex-1 flex flex-col">
-            <div className="border-b px-6">
-              <TabsList className="bg-transparent border-0 rounded-none w-full justify-start px-0">
+            <div className="px-6 bg-muted/30">
+              <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
                   value="details"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger
                   value="accounts"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Accounts
                 </TabsTrigger>
                 <TabsTrigger
                   value="checklist"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Checklist
                   {checklist.length > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
                       {checklist.length}
                     </Badge>
                   )}
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Comments
                   {comments.length > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
                       {comments.length}
                     </Badge>
                   )}
                 </TabsTrigger>
                 <TabsTrigger
                   value="files"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Files
                   {attachments.length > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
+                    <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
                       {attachments.length}
                     </Badge>
                   )}
                 </TabsTrigger>
                 <TabsTrigger
                   value="history"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
+                  className="data-[state=active]:bg-background data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   History
-                  <Badge variant="secondary" className="ml-2 text-xs">
+                  <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
                     5
                   </Badge>
                 </TabsTrigger>
@@ -245,122 +251,143 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 {isEditing ? (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Title</label>
-                      <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
+                      <Input 
+                        value={form.title} 
+                        onChange={(e) => setForm({ ...form, title: e.target.value })} 
+                        className="text-[11px] h-8"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Description</label>
-                      <Textarea rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
+                      <Textarea 
+                        rows={4} 
+                        value={form.description} 
+                        onChange={(e) => setForm({ ...form, description: e.target.value })} 
+                        className="text-[11px] resize-none"
+                        placeholder="Describe the issue or request in detail..."
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Type</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
                         <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger className="h-8">
+                            <SelectValue className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="request">Request</SelectItem>
-                            <SelectItem value="incident">Incident</SelectItem>
-                            <SelectItem value="problem">Problem</SelectItem>
-                            <SelectItem value="change">Change</SelectItem>
-                            <SelectItem value="task">Task</SelectItem>
+                            <SelectItem value="request" className="text-[11px]">Request</SelectItem>
+                            <SelectItem value="incident" className="text-[11px]">Incident</SelectItem>
+                            <SelectItem value="problem" className="text-[11px]">Problem</SelectItem>
+                            <SelectItem value="change" className="text-[11px]">Change</SelectItem>
+                            <SelectItem value="task" className="text-[11px]">Task</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Priority</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
                         <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger className="h-8">
+                            <SelectValue className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="critical">Critical</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
+                            <SelectItem value="urgent" className="text-[11px]">Urgent</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Status</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
                         <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger className="h-8">
+                            <SelectValue className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="open">Open</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="resolved">Resolved</SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
-                            <SelectItem value="on_hold">On Hold</SelectItem>
+                            <SelectItem value="new" className="text-[11px]">New</SelectItem>
+                            <SelectItem value="open" className="text-[11px]">Open</SelectItem>
+                            <SelectItem value="in_progress" className="text-[11px]">In Progress</SelectItem>
+                            <SelectItem value="resolved" className="text-[11px]">Resolved</SelectItem>
+                            <SelectItem value="closed" className="text-[11px]">Closed</SelectItem>
+                            <SelectItem value="on_hold" className="text-[11px]">On Hold</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Due date</label>
-                        <DateTimePicker
-                          value={form.due_date ? new Date(form.due_date) : undefined}
-                          onChange={(d) => setForm({ ...form, due_date: d ? d.toISOString() : "" })}
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
+                        <TeamSelector
+                          teams={teams}
+                          users={users}
+                          selectedUserIds={form.assignee_ids}
+                          onUsersChange={(userIds) => setForm({ ...form, assignee_ids: userIds })}
+                          placeholder="Assign to user or team..."
+                          className="h-8 text-[11px]"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Category</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due date</label>
+                        <DateTimePicker
+                          value={form.due_date ? new Date(form.due_date) : undefined}
+                          onChange={(d) => setForm({ ...form, due_date: d ? d.toISOString() : "" })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
                         <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={supabaseCategories.length ? "Select category" : "Loading..."} />
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder={supabaseCategories.length ? "Select category" : "Loading..."} className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
                             {supabaseCategories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                              <SelectItem key={cat.id} value={cat.id} className="text-[11px]">{cat.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Subcategory</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Subcategory</label>
                         <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })} disabled={!form.category}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={!form.category ? "Select category first" : (availableServices.length ? "Select service" : "No services") } />
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder={!form.category ? "Select category first" : (availableServices.length ? "Select service" : "No services")} className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
                             {availableServices.map((s: any) => (
-                              <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+                              <SelectItem key={s.name} value={s.name} className="text-[11px]">{s.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Urgency</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
                         <Select value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger className="h-8">
+                            <SelectValue className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="critical">Critical</SelectItem>
+                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Impact</label>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
                         <Select value={form.impact} onValueChange={(v) => setForm({ ...form, impact: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger className="h-8">
+                            <SelectValue className="text-[11px]" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="critical">Critical</SelectItem>
+                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -368,54 +395,118 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Ticket Details</h3>
-                      <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Title</label>
-                        <p className="text-sm">{dbTicket?.title}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Status</label>
-                        <p className="text-sm">{dbTicket?.status}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Priority</label>
-                        <p className="text-sm">{dbTicket?.priority}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Type</label>
-                        <p className="text-sm">{dbTicket?.type}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Urgency</label>
-                        <p className="text-sm">{dbTicket?.urgency}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Impact</label>
-                        <p className="text-sm">{dbTicket?.impact}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-sm font-medium text-muted-foreground">Description</label>
-                        <p className="text-sm whitespace-pre-wrap">{dbTicket?.description || "No description provided"}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Reported by</label>
-                        <p className="text-sm">{requesterName}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Due Date</label>
-                        <p className="text-sm">
-                          {dbTicket?.due_date ? format(new Date(dbTicket.due_date), "MMM d, yyyy h:mm a") : "Not set"}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-[14px] font-semibold text-foreground">Ticket Details</h3>
+                          <Button variant="outline" size="sm" className="text-[11px] h-8 px-4" onClick={() => setIsEditing(true)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
+                            {dbTicket?.title || ticket?.title ? (
+                              <p className="text-[11px] text-foreground mt-1">{dbTicket?.title || ticket?.title}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-3/4" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
+                            {dbTicket?.status || ticket?.status ? (
+                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.status || ticket?.status}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-16" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
+                            {dbTicket?.priority || ticket?.priority ? (
+                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.priority || ticket?.priority}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
+                            {dbTicket?.type || ticket?.type || ticket?.displayType ? (
+                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.type || ticket?.type || ticket?.displayType}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-14" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
+                            {(() => {
+                              // Get assignee information
+                              const assigneeId = dbTicket?.assignee_id || ticket?.assignee?.id
+                              const assigneeName = dbTicket?.assignee?.display_name || ticket?.assignee?.name
+                              
+                              if (assigneeId && assigneeName) {
+                                return <p className="text-[11px] text-foreground mt-1">{assigneeName}</p>
+                              } else if (assigneeName) {
+                                return <p className="text-[11px] text-foreground mt-1">{assigneeName}</p>
+                              } else if (assigneeId) {
+                                // Find user in the users array
+                                const assignedUser = users.find(u => u.id === assigneeId)
+                                return (
+                                  <p className="text-[11px] text-foreground mt-1">
+                                    {assignedUser?.display_name || assignedUser?.first_name || assignedUser?.email || 'Assigned User'}
+                                  </p>
+                                )
+                              } else {
+                                return <p className="text-[11px] text-muted-foreground mt-1">Unassigned</p>
+                              }
+                            })()}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reported by</label>
+                            {requesterName || ticket?.reportedBy ? (
+                              <p className="text-[11px] text-foreground mt-1">{requesterName || ticket?.reportedBy}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-20" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due Date</label>
+                            {dbTicket?.due_date || ticket?.dueDate ? (
+                              <p className="text-[11px] text-foreground mt-1">
+                                {dbTicket?.due_date ? format(new Date(dbTicket.due_date), "MMM d, yyyy h:mm a") : ticket?.dueDate || "Not set"}
+                              </p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-24" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
+                            {dbTicket?.urgency || ticket?.urgency ? (
+                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.urgency || ticket?.urgency}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
+                            {dbTicket?.impact || ticket?.impact ? (
+                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.impact || ticket?.impact}</p>
+                            ) : (
+                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
+                            )}
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
+                            {dbTicket?.description || ticket?.description ? (
+                              <p className="text-[11px] text-foreground whitespace-pre-wrap mt-1 leading-relaxed">{dbTicket?.description || ticket?.description}</p>
+                            ) : (
+                              <div className="mt-1 space-y-2">
+                                <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                                <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
+                                <div className="h-4 bg-muted animate-pulse rounded w-4/6" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
                     {form.tags.length > 0 && (
                       <div className="space-y-2">
@@ -435,12 +526,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 <div className="text-center py-8">
                   <div className="mb-4">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Linked Accounts</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <h3 className="text-[11px] font-semibold mb-2 text-foreground">No Linked Accounts</h3>
+                    <p className="text-[10px] text-muted-foreground mb-4">
                       Link customer accounts or contacts related to this ticket
                     </p>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
+                    <Button className="text-[10px] h-7 px-3">
+                      <Plus className="h-3 w-3 mr-2" />
                       Link Account
                     </Button>
                   </div>
@@ -449,8 +540,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <TabsContent value="checklist" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Task Checklist</h3>
-                  <span className="text-sm text-muted-foreground">
+                  <h3 className="text-[11px] font-semibold text-foreground">Task Checklist</h3>
+                  <span className="text-[10px] text-muted-foreground">
                     {checklist.filter(item => item.completed).length} of {checklist.length} completed
                   </span>
                 </div>
@@ -461,9 +552,10 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                     value={newChecklistItem}
                     onChange={(e) => setNewChecklistItem(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleAddChecklistItem()}
+                    className="text-[11px] h-8"
                   />
-                  <Button onClick={handleAddChecklistItem} disabled={!newChecklistItem.trim()}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={handleAddChecklistItem} disabled={!newChecklistItem.trim()} className="text-[10px] h-8 px-3">
+                    <Plus className="h-3 w-3 mr-2" />
                     Add
                   </Button>
                 </div>
@@ -472,8 +564,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   {checklist.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No checklist items yet</p>
-                      <p className="text-sm">Add tasks above to track progress</p>
+                      <p className="text-[11px]">No checklist items yet</p>
+                      <p className="text-[10px]">Add tasks above to track progress</p>
                     </div>
                   ) : (
                     checklist.map((item) => (
@@ -491,13 +583,13 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           )}
                         </Button>
                         <div className="flex-1 min-w-0">
-                          <span className={`block ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                          <span className={`block text-[11px] text-foreground ${item.completed ? "line-through text-muted-foreground" : ""}`}>
                             {item.text}
                           </span>
                           {item.assignee && (
                             <div className="flex items-center gap-1 mt-1">
                               <User className="h-3 w-3" />
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground">
                                 {item.assignee.display_name}
                               </span>
                             </div>
@@ -505,7 +597,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           {item.due_date && (
                             <div className="flex items-center gap-1 mt-1">
                               <Calendar className="h-3 w-3" />
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground">
                                 {format(new Date(item.due_date), "MMM d, yyyy")}
                               </span>
                             </div>
@@ -527,9 +619,9 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <TabsContent value="comments" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Comments & Updates</h3>
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                  <h3 className="text-[11px] font-semibold text-foreground">Comments & Updates</h3>
+                  <Button variant="outline" size="sm" className="text-[10px] h-7 px-3">
+                    <MessageSquare className="h-3 w-3 mr-2" />
                     Internal Note
                   </Button>
                 </div>
@@ -538,34 +630,34 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   {comments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No comments yet</p>
-                      <p className="text-sm">Start the conversation below</p>
+                      <p className="text-[11px]">No comments yet</p>
+                      <p className="text-[10px]">Start the conversation below</p>
                     </div>
                   ) : (
                     comments.map((comment) => (
                       <div key={comment.id} className="border rounded-lg p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                             {comment.author?.first_name?.[0] || 'U'}{comment.author?.last_name?.[0] || ''}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">{comment.author?.display_name || 'Unknown User'}</span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="font-medium text-[11px] text-foreground">{comment.author?.display_name || 'Unknown User'}</span>
+                              <span className="text-[10px] text-muted-foreground">
                                 {format(new Date(comment.created_at), "MMM d, h:mm a")}
                               </span>
                               {comment.is_internal && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-[10px] h-4 px-1.5">
                                   Internal Note
                                 </Badge>
                               )}
                               {comment.is_system && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
                                   System
                                 </Badge>
                               )}
                             </div>
-                            <div className="text-sm whitespace-pre-wrap">{comment.content}</div>
+                            <div className="text-[11px] text-foreground whitespace-pre-wrap">{comment.content}</div>
                           </div>
                         </div>
                       </div>
@@ -582,11 +674,11 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           checked={isInternalComment}
                           onCheckedChange={setIsInternalComment}
                         />
-                        <Label htmlFor="internal-comment" className="text-sm">
+                        <Label htmlFor="internal-comment" className="text-[11px] text-foreground">
                           Internal Note
                         </Label>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                         <span>Use @ to mention team members</span>
                       </div>
                     </div>
@@ -596,28 +688,28 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                         placeholder="Add a comment... Use @ to mention team members"
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        className="min-h-20 resize-none"
+                        className="min-h-20 resize-none text-[11px]"
                       />
                       <div className="flex flex-col gap-2">
                         <Button 
                           onClick={handleAddComment} 
                           disabled={!newComment.trim()}
-                          className="h-10"
+                          className="h-10 text-[10px]"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                           <Paperclip className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px]">
                         <Upload className="h-3 w-3 mr-1" />
                         Attach
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px]">
                         <User className="h-3 w-3 mr-1" />
                         Mention
                       </Button>
@@ -628,9 +720,9 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <TabsContent value="files" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Attachments</h3>
-                  <Button>
-                    <Upload className="h-4 w-4 mr-2" />
+                  <h3 className="text-[11px] font-semibold text-foreground">Attachments</h3>
+                  <Button className="text-[10px] h-8 px-3">
+                    <Upload className="h-3 w-3 mr-2" />
                     Upload File
                   </Button>
                 </div>
@@ -644,12 +736,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium truncate">{attachment.filename}</p>
-                            <Badge variant="secondary" className="text-xs">
+                            <p className="text-[11px] font-medium truncate text-foreground">{attachment.filename}</p>
+                            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
                               {((attachment.file_size || 0) / (1024 * 1024)).toFixed(1)} MB
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-1 text-[10px] text-muted-foreground">
                             <span>Uploaded by {attachment.uploaded_by?.display_name || 'Unknown'}</span>
                             <span>{format(new Date(attachment.created_at), "MMM d, h:mm a")}</span>
                           </div>
@@ -671,8 +763,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                         <Upload className="h-6 w-6 text-muted-foreground" />
                       </div>
-                      <h3 className="font-medium mb-2">Drag and drop files here, or click to browse</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <h3 className="font-medium mb-2 text-[11px] text-foreground">Drag and drop files here, or click to browse</h3>
+                      <p className="text-[10px] text-muted-foreground mb-4">
                         Allowed types: PDF, Excel, Word, PowerPoint, PNG, JPG
                       </p>
                       <input
@@ -682,7 +774,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                         id="file-upload"
                         accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.png,.jpg,.jpeg"
                       />
-                      <Button asChild variant="outline">
+                      <Button asChild variant="outline" className="text-[10px] h-8 px-3">
                         <label htmlFor="file-upload" className="cursor-pointer">
                           Choose Files
                         </label>
@@ -694,51 +786,51 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <TabsContent value="history" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">History</h3>
+                  <h3 className="text-[11px] font-semibold text-foreground">History</h3>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
                       S
                     </div>
                     <div className="flex-1">
                       <div className="bg-muted/50 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">System</span>
-                          <span className="text-xs text-muted-foreground">45 minutes ago</span>
+                          <span className="text-[11px] font-medium text-foreground">System</span>
+                          <span className="text-[10px] text-muted-foreground">45 minutes ago</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
+                        <p className="text-[11px] text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                       JS
                     </div>
                     <div className="flex-1">
                       <div className="bg-blue-50 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">John Smith</span>
-                          <span className="text-xs text-muted-foreground">1 hour ago</span>
+                          <span className="text-[11px] font-medium text-foreground">John Smith</span>
+                          <span className="text-[10px] text-muted-foreground">1 hour ago</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
+                        <p className="text-[11px] text-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                       RJ
                     </div>
                     <div className="flex-1">
                       <div className="bg-green-50 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">Richard Jeffries</span>
-                          <span className="text-xs text-muted-foreground">2 hours ago</span>
+                          <span className="text-[11px] font-medium text-foreground">Richard Jeffries</span>
+                          <span className="text-[10px] text-muted-foreground">2 hours ago</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
+                        <p className="text-[11px] text-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
                       </div>
                     </div>
                   </div>
@@ -750,8 +842,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
         {isEditing && (
           <div className="border-t p-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || loading}>
+            <Button variant="outline" onClick={() => setIsEditing(false)} className="text-[11px] h-8 px-3">Cancel</Button>
+            <Button onClick={handleSave} disabled={saving || loading} className="text-[11px] h-8 px-3">
               {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>

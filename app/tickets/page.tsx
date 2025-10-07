@@ -927,14 +927,44 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   });
                   return loading || !tickets;
                 })() ? (
-                  <tr>
-                    <td colSpan={9} className="p-8 text-center">
-                      <div className="flex items-center justify-center">
-                        <div className="h-6 w-6 mr-2 bg-muted animate-pulse rounded" />
-                        Loading tickets...
-                      </div>
-                    </td>
-                  </tr>
+                  // Better skeleton loading rows
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <tr key={`skeleton-${index}`} className="border-b border-border">
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                          <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-5 bg-muted animate-pulse rounded-full w-16" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-5 bg-muted animate-pulse rounded-full w-14" />
+                      </td>
+                      <td className="px-3 py-2.5 border-r border-border">
+                        <div className="h-5 bg-muted animate-pulse rounded-full w-12" />
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="h-4 bg-muted animate-pulse rounded w-24" />
+                          <div className="h-6 w-6 bg-muted animate-pulse rounded" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 ) : error ? (
                   <tr>
                     <td colSpan={9} className="p-8 text-center">
@@ -1297,7 +1327,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 <Input
                 placeholder="Search..."
-                className="pl-10 h-9 w-48 border-0 bg-muted/50 text-13"
+                className="pl-10 h-9 w-48 border-0 bg-muted/50 text-[13px]"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />
@@ -1307,7 +1337,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               value={kanbanGroupBy}
               onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
             >
-<SelectTrigger className="w-48 h-9 text-13">
+<SelectTrigger className="w-48 h-9 text-[13px]">
                 <SelectValue placeholder="Group By" />
               </SelectTrigger>
               <SelectContent>
@@ -1319,7 +1349,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </Select>
 
             <Select value={selectedType} onValueChange={setSelectedType}>
-<SelectTrigger className="w-32 h-9 text-13">
+<SelectTrigger className="w-32 h-9 text-[13px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -1332,12 +1362,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </SelectContent>
             </Select>
 
-<Button variant="outline" size="sm" className="h-9 text-13 bg-transparent font-sans">
+<Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
               Date Range
             </Button>
 
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-<SelectTrigger className="w-40 h-9 text-13">
+<SelectTrigger className="w-40 h-9 text-[13px]">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
@@ -1349,7 +1379,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </SelectContent>
             </Select>
 
-<Button variant="outline" size="sm" className="h-9 text-13 bg-transparent font-sans">
+<Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
               <Filter className="h-4 w-4 mr-2" />
               Add filter
             </Button>
@@ -1381,7 +1411,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 }`}
               >
                 <div className="p-4 pb-2">
-<h3 className="font-medium text-13 mb-2 leading-tight font-sans text-foreground">
+<h3 className="font-medium text-[13px] mb-2 leading-tight font-sans text-foreground">
                     {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
                   </h3>
                   {dragOverColumn === column.id && draggedTicket && (
@@ -1462,7 +1492,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 </Button>
               </div>
             </div>
-          )))}
+          ))
+            )}
         </div>
       </div>
       )
@@ -2007,96 +2038,87 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Ticket</DialogTitle>
+            <DialogTitle className="text-[11px] font-semibold text-foreground">Edit Ticket</DialogTitle>
           </DialogHeader>
           {ticketToEdit && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Title</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
                 <Input
                   value={editForm.title}
                   onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 text-[11px] h-8"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
                 <Textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 text-[11px] resize-none"
                   rows={4}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Type</label>
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
                   <Select 
                     value={editForm.type} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, type: value }))}
                   >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
+                    <SelectTrigger className="mt-1 h-8">
+                      <SelectValue className="text-[11px]" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="request">Request</SelectItem>
-                      <SelectItem value="incident">Incident</SelectItem>
-                      <SelectItem value="problem">Problem</SelectItem>
-                      <SelectItem value="change">Change</SelectItem>
-                      <SelectItem value="task">Task</SelectItem>
+                      <SelectItem value="request" className="text-[11px]">Request</SelectItem>
+                      <SelectItem value="incident" className="text-[11px]">Incident</SelectItem>
+                      <SelectItem value="problem" className="text-[11px]">Problem</SelectItem>
+                      <SelectItem value="change" className="text-[11px]">Change</SelectItem>
+                      <SelectItem value="task" className="text-[11px]">Task</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Priority</label>
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
                   <Select 
                     value={editForm.priority} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, priority: value }))}
                   >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
+                    <SelectTrigger className="mt-1 h-8">
+                      <SelectValue className="text-[11px]" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                      <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                      <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                      <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
+                      <SelectItem value="urgent" className="text-[11px]">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Status</label>
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
                   <Select 
                     value={editForm.status} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
                   >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
+                    <SelectTrigger className="mt-1 h-8">
+                      <SelectValue className="text-[11px]" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="new" className="text-[11px]">New</SelectItem>
+                      <SelectItem value="in_progress" className="text-[11px]">In Progress</SelectItem>
+                      <SelectItem value="resolved" className="text-[11px]">Resolved</SelectItem>
+                      <SelectItem value="closed" className="text-[11px]">Closed</SelectItem>
+                      <SelectItem value="on_hold" className="text-[11px]">On Hold</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowEditModal(false)}
-                  disabled={isUpdating}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleUpdateTicket}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? 'Updating...' : 'Save Changes'}
+                <Button variant="outline" onClick={() => setShowEditModal(false)} className="text-[11px] h-8 px-3">Cancel</Button>
+                <Button onClick={handleUpdateTicket} disabled={isUpdating} className="text-[11px] h-8 px-3">
+                  {isUpdating ? 'Updating...' : 'Update Ticket'}
                 </Button>
               </div>
             </div>

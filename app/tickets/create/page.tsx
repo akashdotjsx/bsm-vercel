@@ -70,9 +70,7 @@ export default function CreateTicketPage() {
   const [impact, setImpact] = useState<"low" | "medium" | "high" | "critical">("medium")
   const [serviceCategory, setServiceCategory] = useState("")
   const [service, setService] = useState("")
-  const [assigneeId, setAssigneeId] = useState("")
-  const [teamId, setTeamId] = useState("")
-  const [watcherIds, setWatcherIds] = useState<string[]>([])
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState<Date>()
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState("")
@@ -316,8 +314,7 @@ export default function CreateTicketPage() {
         impact,
         category: serviceCategory || undefined,
         subcategory: service || undefined,
-        assignee_id: assigneeId || undefined,
-        team_id: teamId || undefined,
+        assignee_id: assigneeIds.length > 0 ? assigneeIds[0] : undefined,
         due_date: dueDate?.toISOString(),
         tags: tags.length > 0 ? tags : undefined,
         custom_fields: Object.keys(customFields).length > 0 ? {
@@ -453,17 +450,22 @@ export default function CreateTicketPage() {
                       </span>
                     )}
                   </div>
-                  <Input
-                    id="title"
-                    placeholder="Enter ticket title..."
-                    value={title}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setTitle(v)
-                      if (invalidTitle && v.trim() !== '') setInvalidTitle(false)
-                    }}
-                    className={`text-[12px] ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      id="title"
+                      placeholder="Enter a clear, descriptive title (e.g., 'Email not working', 'Password reset request')..."
+                      value={title}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setTitle(v)
+                        if (invalidTitle && v.trim() !== '') setInvalidTitle(false)
+                      }}
+                      className={`text-[12px] ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Keep it brief but specific - this helps us categorize and prioritize your request
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -476,36 +478,24 @@ export default function CreateTicketPage() {
                       </span>
                     )}
                   </div>
-                  <div className={`rounded-lg border ${invalidDescription ? 'border-red-500 ring-2 ring-red-500' : ''}`}>
-                    <div className="flex items-center gap-1 p-2 border-b bg-muted/50">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <Bold className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <Italic className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <Underline className="h-3 w-3" />
-                      </Button>
-                      <div className="w-px h-4 bg-border mx-1" />
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <List className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <ListOrdered className="h-3 w-3" />
-                      </Button>
-                    </div>
+                  <div className="space-y-2">
                     <Textarea
                       id="description"
-                      placeholder="Describe the issue or request..."
+                      placeholder="Describe the issue or request in detail. Include what happened, when it occurred, and any steps you've already tried..."
                       value={description}
                       onChange={(e) => {
                         const v = e.target.value
                         setDescription(v)
                         if (invalidDescription && v.trim() !== '') setInvalidDescription(false)
                       }}
-                      className="min-h-32 border-0 rounded-t-none focus-visible:ring-0"
+                      className={`min-h-32 resize-none ${invalidDescription ? 'border-red-500 ring-2 ring-red-500' : 'border-border'}`}
                     />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Be as specific as possible to help us resolve your request quickly</span>
+                      <span className={description.length > 500 ? 'text-orange-600' : ''}>
+                        {description.length} characters
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -927,60 +917,22 @@ export default function CreateTicketPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Assignee</Label>
-                  <UserSelector
-                    users={users}
-                    value={assigneeId}
-                    onValueChange={setAssigneeId}
-                    placeholder="Select assignee..."
-                    className="w-full"
-                    disabled={usersLoading}
-                    filterByRole={["admin", "manager", "agent"]} // Only show users who can handle tickets
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Team</Label>
-                  <Select value={teamId} onValueChange={setTeamId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={usersLoading ? "Loading teams..." : "Select team"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="it">IT Support</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="general">General Support</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Watchers */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
-                  <Users className="h-4 w-4" />
-                  Watchers
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Select Watchers</Label>
+                  <Label>Assignee (Users and/or Teams)</Label>
                   <TeamSelector
                     teams={teams}
-                    users={users}
-                    selectedUserIds={watcherIds}
-                    onUsersChange={setWatcherIds}
-                    placeholder="Select teams or users to watch this ticket..."
+                    users={users.filter(user => ["admin", "manager", "agent"].includes(user.role))}
+                    selectedUserIds={assigneeIds}
+                    onUsersChange={setAssigneeIds}
+                    placeholder={usersLoading ? "Loading..." : "Select users or teams..."}
                     className="w-full"
                     disabled={usersLoading}
+                    emptyText={usersLoading ? "Loading users and teams..." : "No users or teams found"}
                   />
-                </div>
-                <div className="text-[10px] text-muted-foreground">
-                  Watchers will be notified of updates to this ticket
+                  <p className="text-xs text-muted-foreground">Selecting a team will automatically assign all team members</p>
                 </div>
               </CardContent>
             </Card>
+
 
             {/* Tags */}
             <Card>
