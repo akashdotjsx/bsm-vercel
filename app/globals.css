@@ -12,6 +12,9 @@
   /* Primary blue color system */
   --primary: #6E72FF;
   --primary-foreground: #ffffff;
+  /* Primary pink color system */
+  --primary-pink: #FF2CB9;
+  --primary-pink-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #525252;
   --muted: #f4f4f5;
@@ -101,6 +104,9 @@
   /* Primary blue stays the same in dark */
   --primary: #6E72FF;
   --primary-foreground: #ffffff;
+  /* Primary pink for dark mode (same hex) */
+  --primary-pink: #FF2CB9;
+  --primary-pink-foreground: #ffffff;
   --secondary: #282a2f;
   --secondary-foreground: #acb1b9;
   --muted: #282a2f;
@@ -187,6 +193,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  /* Expose primary pink via Tailwind color token */
+  --color-primary-pink: var(--primary-pink);
+  --color-primary-pink-foreground: var(--primary-pink-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
