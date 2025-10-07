@@ -48,8 +48,17 @@ export async function GET(request: NextRequest) {
 
     // supabase already created above
     
-    // Search in tickets with text matching
-    const { data: tickets, error } = await supabase
+    // Build search query with enum field matching
+    const queryLower = query.toLowerCase()
+    
+    // Check if query matches enum values
+    const priorityMatch = ['low', 'medium', 'high', 'critical'].find(p => p.includes(queryLower))
+    const statusMatch = ['new', 'open', 'in_progress', 'resolved', 'closed', 'cancelled'].find(s => s.includes(queryLower))
+    const typeMatch = ['incident', 'request', 'change', 'problem'].find(t => t.includes(queryLower))
+    const urgencyMatch = ['low', 'medium', 'high', 'critical'].find(u => u.includes(queryLower))
+    const impactMatch = ['low', 'medium', 'high', 'critical'].find(i => i.includes(queryLower))
+    
+    let ticketQuery = supabase
       .from('tickets')
       .select(`
         id,
@@ -76,7 +85,25 @@ export async function GET(request: NextRequest) {
         team:teams!team_id(id, name)
       `)
       .eq('organization_id', profile.organization_id)
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,ticket_number.ilike.%${query}%,subcategory.ilike.%${query}%`)
+    
+    // Build OR conditions array
+    const orConditions = [
+      `title.ilike.%${query}%`,
+      `description.ilike.%${query}%`,
+      `ticket_number.ilike.%${query}%`,
+      `subcategory.ilike.%${query}%`,
+      `category.ilike.%${query}%`
+    ]
+    
+    // Add enum matches if found
+    if (priorityMatch) orConditions.push(`priority.eq.${priorityMatch}`)
+    if (statusMatch) orConditions.push(`status.eq.${statusMatch}`)
+    if (typeMatch) orConditions.push(`type.eq.${typeMatch}`)
+    if (urgencyMatch) orConditions.push(`urgency.eq.${urgencyMatch}`)
+    if (impactMatch) orConditions.push(`impact.eq.${impactMatch}`)
+    
+    const { data: tickets, error } = await ticketQuery
+      .or(orConditions.join(','))
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -190,6 +217,21 @@ function calculateRelevance(ticket: any, query: string): number {
   // Category/subcategory matching
   if (ticket.subcategory && ticket.subcategory.toLowerCase().includes(queryLower)) {
     score += 0.3
+  }
+
+  // Status matching (important for queries like "open", "closed", "pending")
+  if (ticket.status && ticket.status.toLowerCase().includes(queryLower)) {
+    score += 0.6
+  }
+  
+  // Priority matching (important for queries like "high", "low", "medium")
+  if (ticket.priority && ticket.priority.toLowerCase().includes(queryLower)) {
+    score += 0.6
+  }
+  
+  // Type matching (important for queries like "incident", "request", "change")
+  if (ticket.type && ticket.type.toLowerCase().includes(queryLower)) {
+    score += 0.5
   }
 
   // Tags matching

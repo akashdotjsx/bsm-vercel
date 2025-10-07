@@ -25,6 +25,92 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
+// Fuzzy matching utility functions
+function calculateLevenshteinDistance(str1: string, str2: string): number {
+  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null))
+
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j
+
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // deletion
+        matrix[j - 1][i] + 1, // insertion
+        matrix[j - 1][i - 1] + indicator // substitution
+      )
+    }
+  }
+
+  return matrix[str2.length][str1.length]
+}
+
+function fuzzyMatch(query: string, text: string): { score: number; isMatch: boolean } {
+  const queryLower = query.toLowerCase()
+  const textLower = text.toLowerCase()
+  
+  // Exact match
+  if (textLower.includes(queryLower)) {
+    return { score: 1.0, isMatch: true }
+  }
+  
+  // Fuzzy match using Levenshtein distance
+  const distance = calculateLevenshteinDistance(queryLower, textLower)
+  const maxLength = Math.max(queryLower.length, textLower.length)
+  const similarity = 1 - (distance / maxLength)
+  
+  // Also check if query words exist in text (substring match)
+  const queryWords = queryLower.split(/\s+/)
+  const textWords = textLower.split(/\s+/)
+  const wordMatches = queryWords.filter(qWord => 
+    textWords.some(tWord => tWord.includes(qWord) || qWord.includes(tWord))
+  ).length
+  const wordScore = wordMatches / queryWords.length
+  
+  const finalScore = Math.max(similarity, wordScore * 0.8)
+  
+  return { score: finalScore, isMatch: finalScore > 0.6 }
+}
+
+function generateSpellingSuggestion(query: string, suggestion: string): string | null {
+  const queryLower = query.toLowerCase()
+  const suggestionLower = suggestion.toLowerCase()
+  
+  if (queryLower === suggestionLower) return null
+  
+  const distance = calculateLevenshteinDistance(queryLower, suggestionLower)
+  if (distance > 3 || distance === 0) return null // Too different or identical
+  
+  // Generate a "did you mean" style suggestion
+  const queryChars = queryLower.split('')
+  const suggestionChars = suggestionLower.split('')
+  
+  let result = ''
+  let i = 0, j = 0
+  
+  while (i < queryChars.length || j < suggestionChars.length) {
+    if (i < queryChars.length && j < suggestionChars.length && queryChars[i] === suggestionChars[j]) {
+      result += suggestionChars[j]
+      i++
+      j++
+    } else if (j < suggestionChars.length && (i >= queryChars.length || suggestionChars[j] < queryChars[i])) {
+      result += suggestionChars[j] // Missing letter
+      j++
+    } else if (i < queryChars.length) {
+      // Extra letter in query - we'll skip it
+      i++
+    }
+  }
+  
+  return result !== suggestionLower ? null : suggestion
+}
+
+function generateCorrectionPreview(original: string, corrected: string): boolean {
+  const distance = calculateLevenshteinDistance(original.toLowerCase(), corrected.toLowerCase())
+  return distance > 0 && distance <= 3
+}
+
 interface GlobalSearchProps {
   className?: string
 }
@@ -33,7 +119,7 @@ interface SearchResult {
   id: string
   title: string
   description: string
-  type: 'ticket' | 'user'
+  type: 'ticket' | 'user' | 'service' | 'asset'
   category?: string
   url: string
   relevance: number
@@ -43,6 +129,8 @@ interface SearchResult {
 interface SearchResponse {
   tickets?: SearchResult[]
   users?: SearchResult[]
+  services?: SearchResult[]
+  assets?: SearchResult[]
   suggestions: string[]
 }
 
@@ -54,8 +142,10 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const [results, setResults] = useState<SearchResult[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [spellingSuggestions, setSpellingSuggestions] = useState<string[]>([])
+  const [previewResults, setPreviewResults] = useState<SearchResult[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [searchType, setSearchType] = useState<'all' | 'tickets' | 'users'>('all')
+  const [searchType, setSearchType] = useState<'all' | 'tickets' | 'users' | 'services' | 'assets'>('all')
   const [isTyping, setIsTyping] = useState(false)
   
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300)
@@ -84,47 +174,84 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     }
   }, [searchType])
 
+  // Fetch preview results for recent searches
+  const fetchPreviewResults = useCallback(async (queries: string[]) => {
+    if (queries.length === 0) return
+    
+    try {
+      const allResults: SearchResult[] = []
+      
+      // Take first 3 recent searches and get preview results
+      for (const query of queries.slice(0, 3)) {
+        const responses = await Promise.allSettled([
+          fetch(`/api/search/tickets?q=${encodeURIComponent(query)}&limit=2`).then(r => r.json()),
+          fetch(`/api/search/users?q=${encodeURIComponent(query)}&limit=1`).then(r => r.json()),
+          fetch(`/api/search/services?q=${encodeURIComponent(query)}&limit=1`).then(r => r.json()),
+        ])
+        
+        const [ticketsResponse, usersResponse, servicesResponse] = responses
+        
+        if (ticketsResponse.status === 'fulfilled' && ticketsResponse.value?.tickets) {
+          allResults.push(...ticketsResponse.value.tickets.slice(0, 1))
+        }
+        if (usersResponse.status === 'fulfilled' && usersResponse.value?.users) {
+          allResults.push(...usersResponse.value.users)
+        }
+        if (servicesResponse.status === 'fulfilled' && servicesResponse.value?.services) {
+          allResults.push(...servicesResponse.value.services)
+        }
+      }
+      
+      setPreviewResults(allResults.slice(0, 6))
+    } catch (error) {
+      console.error('Error fetching preview results:', error)
+    }
+  }, [])
+
   // Fetch suggestions function with enhanced real-time data
   const fetchSuggestions = useCallback(async (query: string) => {
-    if (query.length < 1) {
-      // For empty query, get recent searches
-      try {
-        setIsFetchingSuggestions(true)
-        const response = await fetch(`/api/search/suggestions?q=&limit=8`)
-        if (response.ok) {
-          const data = await response.json()
-          setSuggestions([])
-          setRecentSearches(data.recent_searches || [])
-        }
-      } catch (error) {
-        console.error('Error fetching recent searches:', error)
-      } finally {
-        setIsFetchingSuggestions(false)
-      }
-      return
-    }
-
-    if (query.length < 2) {
-      setSuggestions([])
-      setIsFetchingSuggestions(false)
-      return
-    }
-
     try {
       setIsFetchingSuggestions(true)
       const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=10`)
       if (response.ok) {
         const data = await response.json()
-        setSuggestions(data.suggestions || [])
-        setRecentSearches(data.recent_searches || [])
+        const suggestions = data.suggestions || []
+        setSuggestions(suggestions)
+        const recentSearches = data.recent_searches || []
+        setRecentSearches(recentSearches)
+        
+        // Fetch preview results for empty state
+        if (!query && recentSearches.length > 0) {
+          fetchPreviewResults(recentSearches)
+        }
+        
+        // Generate spell corrections if query has typos
+        if (query.length > 2 && suggestions.length === 0) {
+          const allPossibleSuggestions = [
+            'hello', 'deploy', 'development', 'admin', 'administrator', 'password', 'reset', 'laptop', 'request', 'service',
+            'ticket', 'user', 'asset', 'printer', 'network', 'access', 'login', 'software', 'hardware', 'fix', 'issue'
+          ]
+          
+          const spellChecks = allPossibleSuggestions
+            .filter(word => {
+              const match = fuzzyMatch(query, word)
+              return match.isMatch && match.score > 0.7
+            })
+            .slice(0, 3)
+            
+          setSpellingSuggestions(spellChecks)
+        } else {
+          setSpellingSuggestions([])
+        }
         
         // Log real data stats for debugging
         if (data.has_real_data) {
           console.log('🔍 Real-time data:', {
             tickets: data.has_real_data.tickets,
             users: data.has_real_data.users,
+            services: data.has_real_data.services,
             history: data.has_real_data.history,
-            suggestions: data.suggestions?.length || 0
+            suggestions: suggestions.length
           })
         }
       }
@@ -147,14 +274,20 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     try {
       const responses = await Promise.allSettled([
         searchType === 'all' || searchType === 'tickets' 
-          ? fetch(`/api/search/tickets?q=${encodeURIComponent(query)}&limit=5`).then(r => r.json())
+          ? fetch(`/api/search/tickets?q=${encodeURIComponent(query)}&limit=3`).then(r => r.json())
           : Promise.resolve(null),
         searchType === 'all' || searchType === 'users'
-          ? fetch(`/api/search/users?q=${encodeURIComponent(query)}&limit=5`).then(r => r.json())
+          ? fetch(`/api/search/users?q=${encodeURIComponent(query)}&limit=3`).then(r => r.json())
+          : Promise.resolve(null),
+        searchType === 'all' || searchType === 'services'
+          ? fetch(`/api/search/services?q=${encodeURIComponent(query)}&limit=3`).then(r => r.json())
+          : Promise.resolve(null),
+        searchType === 'all' || searchType === 'assets'
+          ? fetch(`/api/search/assets?q=${encodeURIComponent(query)}&limit=3`).then(r => r.json())
           : Promise.resolve(null)
       ])
 
-      const [ticketsResponse, usersResponse] = responses
+      const [ticketsResponse, usersResponse, servicesResponse, assetsResponse] = responses
       const allResults: SearchResult[] = []
 
       if (ticketsResponse.status === 'fulfilled' && ticketsResponse.value?.tickets) {
@@ -163,6 +296,14 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 
       if (usersResponse.status === 'fulfilled' && usersResponse.value?.users) {
         allResults.push(...usersResponse.value.users)
+      }
+      
+      if (servicesResponse.status === 'fulfilled' && servicesResponse.value?.services) {
+        allResults.push(...servicesResponse.value.services)
+      }
+      
+      if (assetsResponse.status === 'fulfilled' && assetsResponse.value?.assets) {
+        allResults.push(...assetsResponse.value.assets)
       }
 
       // Sort by relevance
@@ -299,7 +440,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     router.push(result.url)
   }
 
-  const handleSearchTypeChange = (type: 'all' | 'tickets' | 'users') => {
+  const handleSearchTypeChange = (type: 'all' | 'tickets' | 'users' | 'services' | 'assets') => {
     setSearchType(type)
     if (searchTerm) {
       performSearch(searchTerm)
@@ -312,6 +453,10 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         return <Ticket className="h-4 w-4" />
       case 'user':
         return <User className="h-4 w-4" />
+      case 'service':
+        return <Settings className="h-4 w-4" />
+      case 'asset':
+        return <HardDrive className="h-4 w-4" />
       default:
         return <FileText className="h-4 w-4" />
     }
@@ -323,6 +468,10 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       case 'user':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'service':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'asset':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
@@ -393,6 +542,24 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                 >
                   <User className="h-3 w-3 mr-1" />
                   Users
+                </Button>
+                <Button
+                  variant={searchType === 'services' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-6 text-[10px] px-2"
+                  onClick={() => handleSearchTypeChange('services')}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Services
+                </Button>
+                <Button
+                  variant={searchType === 'assets' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-6 text-[10px] px-2"
+                  onClick={() => handleSearchTypeChange('assets')}
+                >
+                  <HardDrive className="h-3 w-3 mr-1" />
+                  Assets
                 </Button>
               </div>
             </div>
@@ -607,56 +774,141 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             </div>
           )}
 
-          {/* No results */}
-          {!isSearching && searchTerm && results.length === 0 && suggestions.length === 0 && (
-            <div className="p-4 text-center">
-              <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-[11px] text-muted-foreground">No results found for "{searchTerm}"</p>
+          {/* Spell correction suggestions */}
+          {!isSearching && searchTerm && spellingSuggestions.length > 0 && suggestions.length === 0 && (
+            <div className="p-3 border-b border-border">
+              <div className="text-[9px] text-muted-foreground mb-2">Did you mean:</div>
+              <div className="space-y-1">
+                {spellingSuggestions.map((suggestion, index) => {
+                  const correctionPreview = generateCorrectionPreview(searchTerm, suggestion)
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSearchTerm(suggestion)
+                        handleSuggestionClick(suggestion)
+                      }}
+                      className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors group"
+                    >
+                      <div className="text-muted-foreground group-hover:text-orange-500">
+                        <Zap className="h-3 w-3" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {correctionPreview && (
+                            <span className="text-[10px] text-muted-foreground line-through opacity-60">
+                              {searchTerm}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-foreground font-medium">
+                            {suggestion}
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-[7px] px-1 py-0 h-4">
+                        spell check
+                      </Badge>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {/* Default state - no search term - Show recent searches */}
+          {/* No results */}
+          {!isSearching && searchTerm && results.length === 0 && suggestions.length === 0 && spellingSuggestions.length === 0 && (
+            <div className="p-4 text-center">
+              <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-[11px] text-muted-foreground">No results found for "{searchTerm}"</p>
+              <p className="text-[9px] text-muted-foreground mt-1 opacity-60">Try a different search term</p>
+            </div>
+          )}
+
+          {/* Enhanced empty state with smart suggestions and preview cards */}
           {!searchTerm && (
-            <div className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="h-3 w-3 text-primary" />
-                <span className="text-[11px] font-medium text-foreground">Enterprise Search</span>
-              </div>
-              <p className="text-[9px] text-muted-foreground mb-3">
-                Search across tickets, users, and more with AI-powered suggestions
-              </p>
-              
-              {/* Recent Searches - Show more when no query */}
+            <div className="">
+              {/* Top 3 recent searches */}
               {recentSearches.length > 0 && (
-                <div className="space-y-1 mb-3">
-                  <div className="text-[9px] font-medium text-muted-foreground mb-1">Your recent searches:</div>
-                  {recentSearches.slice(0, 5).map((search, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(search)}
-                      className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors"
-                    >
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-foreground truncate">{search}</span>
-                    </button>
-                  ))}
+                <div className="p-3 border-b border-border">
+                  <div className="text-[8px] font-medium text-muted-foreground mb-2 px-1">Recent searches:</div>
+                  <div className="space-y-1">
+                    {recentSearches
+                      .filter(search => {
+                        const isFieldName = ['status', 'priority', 'type', 'department', 'category'].includes(search.toLowerCase())
+                        const isTooShort = search.length < 3
+                        const isSystemQuery = search.startsWith('TK-') && search.length < 8
+                        return !isFieldName && !isTooShort && !isSystemQuery
+                      })
+                      .slice(0, 3)
+                      .map((search, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(search)}
+                          className="flex items-center gap-2 w-full px-2 py-2 text-left hover:bg-muted rounded-sm transition-colors group"
+                        >
+                          <Clock className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
+                          <span className="text-[10px] text-foreground font-medium group-hover:text-primary truncate">{search}</span>
+                        </button>
+                      ))
+                    }
+                  </div>
                 </div>
               )}
               
-              <div className="space-y-1">
-                <div className="text-[9px] font-medium text-muted-foreground mb-1">Quick searches:</div>
-                {['dev-', 'fix ', 'deploy', 'admin', 'password reset', 'laptop'].map((example, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSearchTerm(example)}
-                    className="flex items-center gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors"
-                  >
-                    <Search className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[10px] text-foreground">{example}</span>
-                    <span className="text-[8px] text-muted-foreground ml-auto">Try typing</span>
-                  </button>
-                ))}
-              </div>
+              {/* Preview cards from recent searches */}
+              {previewResults.length > 0 && (
+                <div className="p-2">
+                  <div className="text-[8px] font-medium text-muted-foreground mb-2 px-1">Recent results:</div>
+                  <div className="space-y-1">
+                    {previewResults.map((result, index) => (
+                      <button
+                        key={result.id}
+                        onClick={() => handleResultClick(result)}
+                        className="flex items-start gap-2 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors group border border-transparent hover:border-primary/20"
+                      >
+                        <div className="text-muted-foreground mt-0.5 group-hover:text-primary">
+                          {getResultIcon(result.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-medium truncate text-foreground group-hover:text-primary">{result.title}</span>
+                            <Badge variant="secondary" className={cn("text-[7px] px-1 py-0.5 h-3", getResultTypeColor(result.type))}>
+                              {result.type}
+                            </Badge>
+                          </div>
+                          <p className="text-[8px] text-muted-foreground line-clamp-1 group-hover:text-muted-foreground/80">
+                            {result.description}
+                          </p>
+                          {result.metadata && (
+                            <div className="flex items-center gap-2 mt-1 text-[7px] text-muted-foreground">
+                              {result.metadata.status && (
+                                <Badge variant="outline" className="text-[6px] px-1 py-0 h-3">
+                                  {result.metadata.status}
+                                </Badge>
+                              )}
+                              {result.metadata.priority && (
+                                <Badge variant="outline" className="text-[6px] px-1 py-0 h-3">
+                                  {result.metadata.priority}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-30 group-hover:opacity-60" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Minimal hint only if completely empty */}
+              {recentSearches.length === 0 && previewResults.length === 0 && (
+                <div className="text-center py-8">
+                  <Search className="h-6 w-6 mx-auto text-muted-foreground mb-2 opacity-30" />
+                  <p className="text-[9px] text-muted-foreground opacity-50">Start typing to search</p>
+                  <p className="text-[8px] text-muted-foreground opacity-30 mt-1">tickets • users • services • assets</p>
+                </div>
+              )}
             </div>
           )}
         </div>
