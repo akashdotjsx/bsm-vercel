@@ -29,29 +29,12 @@ export default function LandingPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+  const { user, profile, loading, signOut } = useAuth()
 
   // Prevent hydration mismatch with theme
   useEffect(() => {
     setMounted(true)
-    
-    // Check if user is already authenticated (silently, no loading)
-    const checkAuth = async () => {
-      try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          console.log('User already authenticated, redirecting to dashboard')
-          router.push('/dashboard')
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error)
-        // Continue showing landing page on error
-      }
-    }
-    
-    checkAuth()
-  }, [router])
+  }, [])
 
   const handleSignIn = () => {
     console.log("[v0] Sign in button clicked, navigating to login")
@@ -133,7 +116,7 @@ export default function LandingPage() {
                   className="h-8 w-auto"
                 />
               ) : (
-                <div className="h-8 w-30 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+                <div className="h-8 w-30 bg-muted animate-pulse rounded" />
               )}
               <Badge variant="secondary" className="text-[12px]">
                 BSM
@@ -149,10 +132,39 @@ export default function LandingPage() {
                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               </Button>
-              <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
-                Sign In
-                <ArrowRight className="ml-2 h-3 w-3" />
-              </Button>
+              
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="h-6 w-20 bg-muted animate-pulse rounded"></div>
+                  <div className="h-8 w-16 bg-muted animate-pulse rounded"></div>
+                </div>
+              ) : user && profile ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-[12px] text-muted-foreground">
+                    Logged in as <span className="font-medium text-foreground">{profile.first_name || user.email}</span>
+                  </span>
+                  <Button 
+                    onClick={() => signOut().then(() => router.push('/auth/login'))} 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-[12px]"
+                  >
+                    Sign Out
+                  </Button>
+                  <Button 
+                    onClick={() => router.push('/dashboard')} 
+                    className="bg-foreground text-background hover:bg-foreground/90 text-[12px]"
+                  >
+                    Dashboard
+                    <ArrowRight className="ml-2 h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
+                  Sign In
+                  <ArrowRight className="ml-2 h-3 w-3" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

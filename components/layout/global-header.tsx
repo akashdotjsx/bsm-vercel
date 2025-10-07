@@ -28,6 +28,42 @@ export function GlobalHeader() {
     setMounted(true)
   }, [])
 
+  // Don't render user data during loading to prevent flash
+  if (loading) {
+    return (
+      <header className="h-12 md:h-14 bg-[var(--background)] border-b border-[var(--border)] flex items-center px-4 md:px-6 gap-3 md:gap-6 fixed top-0 left-0 right-0 z-50">
+        <div className="flex items-center gap-2">
+          {mounted && (
+            <button
+              onClick={() => router.push('/')}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <Image
+                src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
+                alt="Kroolo"
+                width={isMobile ? 80 : 100}
+                height={isMobile ? 22 : 28}
+                className={`${isMobile ? "h-5" : "h-7"} w-auto`}
+              />
+            </button>
+          )}
+          {!mounted && (
+            <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-muted animate-pulse rounded`} />
+          )}
+        </div>
+        <div className="hidden sm:block flex-1">
+          <GlobalSearch />
+        </div>
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 bg-muted animate-pulse rounded-full" />
+          <div className="w-16 h-6 bg-muted animate-pulse rounded" />
+          <div className="w-8 h-8 bg-muted animate-pulse rounded" />
+          <div className="w-8 h-8 bg-muted animate-pulse rounded-full" />
+        </div>
+      </header>
+    )
+  }
+
   // Format user data from profile
   const userData = {
     name: profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User',

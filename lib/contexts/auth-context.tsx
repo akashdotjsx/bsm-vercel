@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -232,7 +233,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout
     
     // Check if we're in browser (client-side)
     if (typeof window === 'undefined') {
@@ -240,68 +240,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
     
-    // Immediate fallback - set loading to false after 3 seconds no matter what
-    const emergencyTimeout = setTimeout(() => {
-      if (isMounted && !initialized) {
-        console.warn('Auth emergency timeout - forcing loading to false')
-        setLoading(false)
-        setInitialized(true)
-      }
-    }, 3000)
+    // Mark as hydrated to prevent flash
+    setIsHydrated(true)
     
-    // Set a longer timeout to prevent infinite loading
-    timeoutId = setTimeout(() => {
-      if (isMounted) {
-        console.warn('Auth loading timeout reached')
+    // Emergency timeout - always set loading to false after 5 seconds
+    const emergencyTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('🚨 Auth emergency timeout - forcing loading to false')
         setLoading(false)
         setInitialized(true)
       }
-    }, 10000) // 10 second timeout
+    }, 5000)
     
     // Get initial session
     const getSession = async () => {
       try {
+        console.log('🔍 Getting initial session...')
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error('Error getting session:', error)
+          console.error('❌ Error getting session:', error)
           if (isMounted) {
             setLoading(false)
+            setInitialized(true)
           }
           return
         }
         
         if (session?.user && isMounted) {
+          console.log('✅ User found, setting auth state:', session.user.email)
           setUser(session.user)
           
-          try {
-            const userProfile = await fetchProfile(session.user.id)
-            
-            if (isMounted) {
-              setProfile(userProfile)
-              
-              if (userProfile?.organization_id) {
-                const org = await fetchOrganization(userProfile.organization_id)
-                if (isMounted) {
-                  setOrganization(org)
+          // Load profile but don't let it block auth completion
+          fetchProfile(session.user.id)
+            .then(userProfile => {
+              if (isMounted && userProfile) {
+                console.log('📋 Profile loaded:', userProfile.display_name)
+                setProfile(userProfile)
+                
+                if (userProfile.organization_id) {
+                  fetchOrganization(userProfile.organization_id)
+                    .then(org => {
+                      if (isMounted && org) {
+                        console.log('🏢 Organization loaded:', org.name)
+                        setOrganization(org)
+                      }
+                    })
+                    .catch(err => console.error('Organization fetch failed:', err))
                 }
+                
+                // Load permissions asynchronously
+                loadUserPermissions(session.user.id)
+                  .catch(err => console.error('Permissions load failed:', err))
               }
-              
-              // Load permissions and roles
-              await loadUserPermissions(session.user.id)
-            }
-          } catch (profileError) {
-            console.error('Error loading user profile:', profileError)
-            // Continue with loading=false even if profile fails
-          }
+            })
+            .catch(err => console.error('Profile fetch failed:', err))
+            
+        } else if (isMounted && !session?.user) {
+          console.log('❌ No user session found')
+          // Clear state when no user
+          setUser(null)
+          setProfile(null)
+          setOrganization(null)
+          setPermissions([])
+          setUserRoles([])
         }
       } catch (error) {
-        console.error('Error in getSession:', error)
+        console.error('❌ Error in getSession:', error)
       } finally {
         if (isMounted) {
+          console.log('✅ Auth initialization complete')
           setLoading(false)
           setInitialized(true)
-          clearTimeout(timeoutId)
+          clearTimeout(emergencyTimeout)
         }
       }
     }
@@ -311,18 +322,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return
+        
+        console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
+        
         if (session?.user) {
           setUser(session.user)
-          const userProfile = await fetchProfile(session.user.id)
-          setProfile(userProfile)
-
-          if (userProfile?.organization_id) {
-            const org = await fetchOrganization(userProfile.organization_id)
-            setOrganization(org)
-          }
           
-          // Load permissions and roles
-          await loadUserPermissions(session.user.id)
+          // Load profile asynchronously without blocking
+          fetchProfile(session.user.id)
+            .then(userProfile => {
+              if (isMounted && userProfile) {
+                setProfile(userProfile)
+                
+                if (userProfile.organization_id) {
+                  fetchOrganization(userProfile.organization_id)
+                    .then(org => {
+                      if (isMounted && org) {
+                        setOrganization(org)
+                      }
+                    })
+                    .catch(err => console.error('Organization fetch failed:', err))
+                }
+                
+                loadUserPermissions(session.user.id)
+                  .catch(err => console.error('Permissions load failed:', err))
+              }
+            })
+            .catch(err => console.error('Profile fetch failed:', err))
+            
         } else {
           setUser(null)
           setProfile(null)
@@ -331,14 +359,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserRoles([])
         }
 
-        setLoading(false)
-        setInitialized(true)
+        // Always complete loading for auth state changes
+        if (isMounted) {
+          setLoading(false)
+          setInitialized(true)
+        }
       }
     )
 
     return () => {
       isMounted = false
-      clearTimeout(timeoutId)
       clearTimeout(emergencyTimeout)
       subscription.unsubscribe()
     }
@@ -350,7 +380,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     organization,
     permissions,
     userRoles,
-    loading,
+    loading: loading || !isHydrated,
     permissionsLoading,
     signOut,
     refreshProfile,

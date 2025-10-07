@@ -96,6 +96,7 @@ export function SidebarNavigation() {
     )
   }
 
+  // Show skeleton during loading to prevent flash
   // Helper function to determine if an item should be shown
   const shouldShowItem = (item: any) => {
     // Always show items with no permission requirement
@@ -108,14 +109,49 @@ export function SidebarNavigation() {
       return true
     }
     
+    // During initial loading, show skeleton/placeholder to prevent flickering
+    if (loading) {
+      return true
+    }
+    
     // If permissions are still loading, show the item to prevent flickering
-    // This provides a better UX than hiding items and then showing them
-    if (permissionsLoading || loading) {
+    if (permissionsLoading) {
       return true
     }
     
     // Once loaded, check actual permissions
     return canView(item.permission)
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full h-full flex flex-col bg-sidebar">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-sidebar-border scrollbar-track-transparent min-h-0">
+          <div className="p-4">
+            <div className="h-4 w-32 bg-muted animate-pulse rounded mb-4"></div>
+            <nav className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-8 bg-muted animate-pulse rounded"></div>
+              ))}
+            </nav>
+          </div>
+          <div className="px-4 pb-4">
+            <div className="h-4 w-28 bg-muted animate-pulse rounded mb-4"></div>
+            <nav className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-8 bg-muted animate-pulse rounded"></div>
+              ))}
+            </nav>
+          </div>
+        </div>
+        <div className="flex-shrink-0 p-4 border-t border-sidebar-border">
+          <div className="bg-sidebar-primary rounded-lg p-4">
+            <div className="h-4 w-20 bg-muted animate-pulse rounded mb-3"></div>
+            <div className="h-6 w-full bg-muted animate-pulse rounded"></div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -156,14 +192,16 @@ export function SidebarNavigation() {
                           {(item.name === 'Tickets' ? ticketSubmenuItems : (isAdmin || profile?.role === 'manager' ? servicesSubmenuItemsManager : servicesSubmenuItems)).map((subItem) => {
                             const SubIcon = subItem.icon
                             return (
-                              <Link
+                                <Link
                                 key={subItem.name}
                                 href={subItem.href}
                                 className={cn(
-                                  "flex items-center px-3 py-1.5 text-[10px] font-medium rounded-md transition-all duration-200",
+                                  "flex items-center px-3 py-1.5 text-[12px] font-medium rounded-md transition-all duration-200",
                                   pathname === subItem.href
                                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                     : "text-sidebar-foreground/60 hover:bg-sidebar-primary/30 hover:text-sidebar-foreground",
+                                )}
+                              >
                                 )}
                               >
                                 <SubIcon className="mr-3 h-3 w-3" />

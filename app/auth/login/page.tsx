@@ -105,7 +105,9 @@ export default function Page() {
         .eq('id', authData.user.id)
 
       console.log("Login successful, redirecting to dashboard")
-      router.push("/dashboard")
+      
+      // Force a hard navigation to ensure the redirect works
+      window.location.href = "/dashboard"
 
     } catch (err) {
       console.error("Login error:", err)

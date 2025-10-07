@@ -47,12 +47,6 @@ export default function PlatformAccessPage() {
             </Link>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-semibold text-green-800 mb-2">✅ Authentication Bypass Active</h3>
-            <p className="text-green-700 text-sm">
-              All platform features are accessible without login. The system is configured for demo access.
-            </p>
-          </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-blue-800 mb-2">🚀 Platform Features</h3>

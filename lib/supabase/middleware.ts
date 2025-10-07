@@ -2,16 +2,6 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function updateSession(request: NextRequest) {
-  const bypassPaths = ["/dashboard", "/tickets", "/workflows", "/services", "/analytics", "/platform"]
-  const isBypassPath = bypassPaths.some((path) => request.nextUrl.pathname.startsWith(path))
-
-  if (isBypassPath) {
-    console.log("[v0] Bypassing authentication for path:", request.nextUrl.pathname)
-    return NextResponse.next({
-      request,
-    })
-  }
-
   let supabaseResponse = NextResponse.next({
     request,
   })
