@@ -200,7 +200,7 @@ export default function UsersPage() {
     if (users.length > 0) {
       const userDepartments = users
         .map(user => user.department)
-        .filter(dept => dept && dept.trim() !== '')
+        .filter((dept): dept is string => dept !== undefined && dept.trim() !== '')
         .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
       
       const allDepartments = [...initialDepartments, ...userDepartments]
