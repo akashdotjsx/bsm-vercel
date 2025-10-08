@@ -72,6 +72,10 @@
   --chart-4: #6E72FF;
   --chart-5: #6a707c;
   --radius: 0.625rem;
+  
+  /* Kroolo button colors */
+  --btn-color-base: #6E72FF;
+  --btn-color-hover: #5A5FE0;
 
   /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
   --sidebar: #fafafa;
@@ -161,6 +165,10 @@
   --chart-3: #f04438;
   --chart-4: #6E72FF;
   --chart-5: #acb1b9;
+  
+  /* Kroolo button colors for dark mode */
+  --btn-color-base: #6E72FF;
+  --btn-color-hover: #5A5FE0;
   
   /* Dark mode sidebar */
   --sidebar: #1e2024;

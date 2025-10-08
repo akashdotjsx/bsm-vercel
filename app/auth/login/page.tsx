@@ -11,6 +11,7 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function Page() {
   const [email, setEmail] = useState("")
@@ -18,6 +19,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
@@ -142,154 +144,325 @@ export default function Page() {
 
   return (
     <div className="flex h-screen w-full bg-white overflow-hidden">
-
-      {/* Left side - Login Form */}
-      <div className="flex lg:w-1/2 w-full overflow-hidden bg-white">
-        <div className="flex flex-col w-full max-w-xs mx-auto p-6 lg:p-8">
-          {/* Top spacer - reduced */}
-          <div className="h-[20vh] min-h-8"></div>
-          
-          <div className="space-y-4">
-            {/* Logo and Header */}
-            <div className="text-center space-y-2">
+      {/* Main Container - 7/12 width like reference */}
+      <div className="flex lg:w-7/12 w-full overflow-hidden bg-white justify-center items-center">
+        <div className="w-full max-w-[440px] mx-auto">
+          {/* Login Form Card */}
+          <div 
+            className="bg-white border border-[#EAECF0] rounded-xl p-6 flex flex-col gap-4 relative"
+            style={{ 
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1)',
+              width: '440px',
+              maxWidth: '100%',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}
+          >
+            {/* Logo */}
+            <div className="flex justify-center h-12">
               {mounted && (
-                <Image 
-                  src="/images/kroolo-dark-logo2.svg"
-                  alt="Kroolo Logo" 
-                  width={100} 
-                  height={32} 
-                  className="h-10 w-auto mx-auto" 
-                />
+                <Link href="/" className="flex items-center">
+                  <Image 
+                    src="/images/kroolo-dark-logo2.svg"
+                    alt="Kroolo Logo" 
+                    width={200} 
+                    height={32} 
+                    className="h-8 w-auto" 
+                  />
+                </Link>
               )}
               {!mounted && (
-                <div className="h-10 w-28 bg-gray-200 animate-pulse rounded mx-auto" />
+                <div className="h-8 w-48 bg-gray-200 animate-pulse rounded mx-auto" />
               )}
-              <h1 className="text-lg font-semibold text-gray-900">Sign in with</h1>
+            </div>
+
+            {/* Header */}
+            <div className="text-center">
+              <h1 
+                className="text-xl font-medium text-gray-900" 
+                style={{ 
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
+                  fontSize: '20px', 
+                  fontWeight: 500,
+                  lineHeight: '28px',
+                  color: '#101828',
+                  marginBottom: '4px'
+                }}
+              >
+                Sign in with
+              </h1>
             </div>
 
             {/* Social Login Buttons */}
-            <div className="space-y-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full h-10 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                onClick={() => alert('Google sign-in coming soon!')}
-              >
-                <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                  <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Continue with Google
-              </Button>
+            <div className="flex flex-col gap-6">
+              <div className="w-full">
+                <Button 
+                  type="button" 
+                  className="w-full h-[35px] bg-transparent border border-[rgba(0,0,0,0.1)] text-[#344054] hover:bg-[rgba(0,0,0,0.05)] transition-all duration-300 rounded-sm flex justify-center items-center font-normal text-sm px-6 py-2"
+                  style={{
+                    boxShadow: 'none',
+                    textTransform: 'none',
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px'
+                  }}
+                  onClick={() => alert('Google sign-in coming soon!')}
+                >
+                  <svg className="mr-3" viewBox="0 0 24 24" style={{ width: '32px', height: '32px' }}>
+                    <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Sign in with Google
+                </Button>
+              </div>
               
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full h-10 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                onClick={() => alert('Microsoft sign-in coming soon!')}
-              >
-                <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                  <path fill="#f25022" d="M1 1h10v10H1z"/>
-                  <path fill="#00a4ef" d="M13 1h10v10H13z"/>
-                  <path fill="#7fba00" d="M1 13h10v10H1z"/>
-                  <path fill="#ffb900" d="M13 13h10v10H13z"/>
-                </svg>
-                Continue with Microsoft
-              </Button>
+              <div className="w-full">
+                <Button 
+                  type="button" 
+                  className="w-full h-[35px] bg-transparent border border-[rgba(0,0,0,0.1)] text-[#344054] hover:bg-[rgba(0,0,0,0.05)] transition-all duration-300 rounded-sm flex justify-center items-center font-normal text-sm px-6 py-2"
+                  style={{
+                    boxShadow: 'none',
+                    textTransform: 'none',
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px'
+                  }}
+                  onClick={() => alert('Microsoft sign-in coming soon!')}
+                >
+                  <svg className="mr-3" viewBox="0 0 24 24" style={{ width: '32px', height: '32px' }}>
+                    <path fill="#f25022" d="M1 1h10v10H1z"/>
+                    <path fill="#00a4ef" d="M13 1h10v10H13z"/>
+                    <path fill="#7fba00" d="M1 13h10v10H1z"/>
+                    <path fill="#ffb900" d="M13 13h10v10H13z"/>
+                  </svg>
+                  Sign in with Microsoft
+                </Button>
+              </div>
             </div>
 
             {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-4 text-gray-500">Or</span>
-              </div>
+            <div className="relative flex items-center justify-center">
+              <div className="flex-grow border-t border-[#EAECF0]"></div>
+              <span className="px-4 text-sm text-[#667085] bg-white" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: '14px', fontWeight: 400, lineHeight: '20px' }}>Or</span>
+              <div className="flex-grow border-t border-[#EAECF0]"></div>
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleLogin} className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-900">
+            <form onSubmit={handleLogin} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <Label 
+                  htmlFor="email" 
+                  className="block text-sm font-semibold text-[#2D2F34] mb-1" 
+                  style={{ 
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    color: '#344054',
+                    lineHeight: '18px'
+                  }}
+                >
                   Email
                 </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-10 px-3 bg-white border-gray-300 text-sm"
-                />
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200"
+                    style={{
+                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      height: '32px',
+                      color: '#101828',
+                      borderRadius: '6px',
+                      padding: '4px 12px',
+                      boxShadow: 'none'
+                    }}
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-900">
+              
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <Label 
+                  htmlFor="password" 
+                  className="block text-sm font-semibold text-[#2D2F34] mb-1" 
+                  style={{ 
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    color: '#344054',
+                    lineHeight: '18px'
+                  }}
+                >
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 px-3 bg-white border-gray-300 text-sm"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200 pr-8"
+                    style={{
+                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      height: '32px',
+                      color: '#101828',
+                      borderRadius: '6px',
+                      padding: '4px 12px',
+                      boxShadow: 'none'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                
+                {/* Forgot Password Link */}
+                <div className="mt-3 text-right">
+                  <button 
+                    type="button" 
+                    onClick={handleForgotPassword}
+                    disabled={isLoading}
+                    className="text-sm text-[#6E72FF] hover:text-[#5A5FE0] inline-block"
+                    style={{ 
+                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontSize: '12px',
+                      lineHeight: '18px',
+                      fontWeight: 400,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </div>
+              
               {error && (
                 <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
                   {error}
                 </div>
               )}
-              <Button type="submit" className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-[#6E72FF] hover:bg-[#5A5FE0] text-white font-medium text-sm rounded-sm transition-colors duration-200"
+                style={{
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  lineHeight: '20px',
+                  textTransform: 'capitalize',
+                  boxShadow: 'none',
+                  border: 'none',
+                  height: '35px'
+                }}
+              >
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
 
-              <div className="text-center">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handleForgotPassword}
-                  disabled={isLoading}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Forgot your password?
-                </Button>
-              </div>
             </form>
 
+            {/* SSO Link */}
+            <div className="text-center">
+              <Link 
+                href="/auth/sso" 
+                className="text-sm text-[#6E72FF] hover:text-[#5A5FE0]" 
+                style={{ 
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontSize: '14px',
+                  lineHeight: '20px',
+                  fontWeight: 400,
+                  textDecoration: 'none'
+                }}
+              >
+                Login with SSO
+              </Link>
+            </div>
+
             {/* Footer Links */}
-            <div className="text-center space-y-1">
-              <div className="text-sm">
-                <span className="text-gray-600">
-                  Don't have an account?{" "}
+            <div className="text-center">
+              <div 
+                className="text-sm" 
+                style={{ 
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
+                  fontSize: '13px',
+                  lineHeight: '20px',
+                  fontWeight: 400
+                }}
+              >
+                <span className="text-[#667085]">
+                  Don't have an account?
                 </span>
-                <Link href="/auth/contact" className="text-blue-600 hover:underline font-medium">
-                  Sign up
-                </Link>
-              </div>
-              
-              <div className="text-xs text-gray-500 leading-relaxed">
-                By signing up, I agree to Kroolo's{" "}
-                <Link href="#" className="text-blue-600 hover:underline">Terms</Link>
-                {" "}and{" "}
-                <Link href="#" className="text-blue-600 hover:underline">Privacy Policy</Link>.
+                <span className="ml-1">
+                  <Link 
+                    href="/auth/contact" 
+                    className="text-[#6E72FF] hover:text-[#5A5FE0]"
+                    style={{
+                      fontWeight: 500,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Sign up
+                  </Link>
+                </span>
               </div>
             </div>
           </div>
           
-          {/* Bottom spacer - flexible to fill remaining space */}
-          <div className="flex-1 min-h-8"></div>
+          {/* Terms and Privacy - Outside the card */}
+          <div className="mt-6 text-center max-w-[315px] mx-auto">
+            <div 
+              className="text-xs text-[#667085] leading-relaxed" 
+              style={{ 
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSize: '12px',
+                lineHeight: '18px',
+                fontWeight: 400
+              }}
+            >
+              By signing up, I agree to Kroolo's{" "}
+              <Link 
+                href="#" 
+                className="text-[#6E72FF] hover:text-[#5A5FE0]"
+                style={{ fontWeight: 400, textDecoration: 'none' }}
+              >
+                Terms of Service
+              </Link>
+              {" "}and{" "}
+              <Link 
+                href="#" 
+                className="text-[#6E72FF] hover:text-[#5A5FE0]"
+                style={{ fontWeight: 400, textDecoration: 'none' }}
+              >
+                Privacy Policy
+              </Link>.
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: '#ccdafa' }}>
+      {/* Right side - Image (5/12 width) */}
+      <div className="hidden lg:block lg:w-5/12 relative overflow-hidden" style={{ backgroundColor: '#ccdafa' }}>
         <Image
           src="/images/login_page_image.png"
           alt="AI WorkOS for All"
