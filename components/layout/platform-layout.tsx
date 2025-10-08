@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
-import { GlobalHeader } from "@/components/layout/global-header"
+import { KrooloNavbar } from "@/components/layout/kroolo-navbar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,7 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
 
   return (
     <div className="h-full bg-background flex flex-col">
-      <GlobalHeader />
+      <KrooloNavbar />
 
       <div className="flex flex-1 pt-12">
         {!isMobile && (
@@ -40,7 +40,7 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
         {isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="fixed left-4 top-16 z-50 md:hidden">
+              <Button variant="ghost" size="sm" className="fixed left-4 top-14 z-50 md:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
