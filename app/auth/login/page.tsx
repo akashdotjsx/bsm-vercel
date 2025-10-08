@@ -53,14 +53,33 @@ export default function Page() {
     setIsLoading(true)
     setError(null)
 
+    console.log('Login attempt with email:', email)
+    console.log('Password provided:', !!password)
+    console.log('Email length:', email.length)
+    console.log('Password length:', password.length)
+
+    if (!email || !password) {
+      setError('Please enter both email and password')
+      return
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
     try {
+      console.log('About to call supabase.auth.signInWithPassword')
       // Sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       })
 
+      console.log('Auth response:', { authData, authError })
+
       if (authError) {
+        console.error('Supabase auth error:', authError)
         setError(authError.message)
         return
       }

@@ -188,6 +188,23 @@
   --scrollbar-thumb-hover: #525558;
 }
 
+/* LoadingSpinner styles */
+.loadingSpinner {
+  animation-name: spin;
+  animation-duration: 800ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @theme inline {
   /* Updated font configuration to use Inter instead of Geist */
   --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
