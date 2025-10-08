@@ -437,12 +437,6 @@ export default function CreateTicketPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
-                  <FileText className="h-4 w-4" />
-                  Basic Information
-                </CardTitle>
-              </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -466,9 +460,6 @@ export default function CreateTicketPage() {
                       }}
                       className={`text-[12px] ${invalidTitle ? 'border-red-500 ring-2 ring-red-500' : ''}`}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Keep it brief but specific - this helps us categorize and prioritize your request
-                    </p>
                   </div>
                 </div>
 
@@ -503,7 +494,7 @@ export default function CreateTicketPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type">Type</Label>
                     <Select value={type} onValueChange={(value: any) => setType(value)}>
@@ -520,18 +511,6 @@ export default function CreateTicketPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select value="new" disabled>
-                      <SelectTrigger>
-                        <SelectValue placeholder="New" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">Status will be set to "New" when created</p>
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>

@@ -251,6 +251,8 @@
     @apply bg-background text-foreground;
     /* Updated font-family to use Inter variable */
     font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+    /* Smooth scrolling for a better UX across pages */
+    scroll-behavior: smooth;
   }
 
   /* Smooth transitions utility */

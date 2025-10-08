@@ -50,6 +50,16 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   const { categories: supabaseCategories } = useServiceCategories()
   const { users, teams } = useUsers()
 
+  // Prevent background scroll when drawer is open
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [isOpen])
+
   // State for editing
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -170,8 +180,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   return (
     <div className="fixed inset-0 z-50 flex" style={{ top: '60px' }}>
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col h-full relative z-10">
-        <div className="p-6 bg-background flex items-center justify-between">
+      <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
+        <div className="p-6 bg-background flex items-center justify-between flex-shrink-0">
           <div>
             <h2 className="text-[16px] font-semibold text-foreground mb-1">{dbTicket?.title || ticket?.title || "Loading..."}</h2>
             {(dbTicket?.ticket_number || ticket?.id) && (
@@ -186,8 +196,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         {error ? (
           <div className="p-6 text-red-600 text-[11px]">{String(error)}</div>
         ) : (
-          <Tabs defaultValue="details" className="flex-1 flex flex-col">
-            <div className="px-6 bg-muted/30">
+          <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+            <div className="px-6 bg-muted/30 flex-shrink-0">
               <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
                   value="details"
@@ -246,7 +256,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
                 {isEditing ? (
                   <>
@@ -394,131 +404,145 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-[14px] font-semibold text-foreground">Ticket Details</h3>
-                          <Button variant="outline" size="sm" className="text-[11px] h-8 px-4" onClick={() => setIsEditing(true)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </Button>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-6">
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
-                            {dbTicket?.title || ticket?.title ? (
-                              <p className="text-[11px] text-foreground mt-1">{dbTicket?.title || ticket?.title}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-3/4" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
-                            {dbTicket?.status || ticket?.status ? (
-                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.status || ticket?.status}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-16" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
-                            {dbTicket?.priority || ticket?.priority ? (
-                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.priority || ticket?.priority}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
-                            {dbTicket?.type || ticket?.type || ticket?.displayType ? (
-                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.type || ticket?.type || ticket?.displayType}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-14" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
-                            {(() => {
-                              // Get assignee information
-                              const assigneeId = dbTicket?.assignee_id || ticket?.assignee?.id
-                              const assigneeName = dbTicket?.assignee?.display_name || ticket?.assignee?.name
-                              
-                              if (assigneeId && assigneeName) {
-                                return <p className="text-[11px] text-foreground mt-1">{assigneeName}</p>
-                              } else if (assigneeName) {
-                                return <p className="text-[11px] text-foreground mt-1">{assigneeName}</p>
-                              } else if (assigneeId) {
-                                // Find user in the users array
-                                const assignedUser = users.find(u => u.id === assigneeId)
-                                return (
-                                  <p className="text-[11px] text-foreground mt-1">
-                                    {assignedUser?.display_name || assignedUser?.first_name || assignedUser?.email || 'Assigned User'}
-                                  </p>
-                                )
-                              } else {
-                                return <p className="text-[11px] text-muted-foreground mt-1">Unassigned</p>
-                              }
-                            })()}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reported by</label>
-                            {requesterName || ticket?.reportedBy ? (
-                              <p className="text-[11px] text-foreground mt-1">{requesterName || ticket?.reportedBy}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-20" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due Date</label>
-                            {dbTicket?.due_date || ticket?.dueDate ? (
-                              <p className="text-[11px] text-foreground mt-1">
-                                {dbTicket?.due_date ? format(new Date(dbTicket.due_date), "MMM d, yyyy h:mm a") : ticket?.dueDate || "Not set"}
-                              </p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-24" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
-                            {dbTicket?.urgency || ticket?.urgency ? (
-                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.urgency || ticket?.urgency}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
-                            {dbTicket?.impact || ticket?.impact ? (
-                              <p className="text-[11px] text-foreground mt-1 capitalize">{dbTicket?.impact || ticket?.impact}</p>
-                            ) : (
-                              <div className="h-4 bg-muted animate-pulse rounded mt-1 w-12" />
-                            )}
-                          </div>
-                          <div className="col-span-2">
-                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
-                            {dbTicket?.description || ticket?.description ? (
-                              <p className="text-[11px] text-foreground whitespace-pre-wrap mt-1 leading-relaxed">{dbTicket?.description || ticket?.description}</p>
-                            ) : (
-                              <div className="mt-1 space-y-2">
-                                <div className="h-4 bg-muted animate-pulse rounded w-full" />
-                                <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
-                                <div className="h-4 bg-muted animate-pulse rounded w-4/6" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-[14px] font-semibold text-foreground">Ticket Details</h3>
+                      <Button variant="outline" size="sm" className="text-[11px] h-8 px-4" onClick={() => setIsEditing(true)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </div>
 
-                    {form.tags.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
+                      <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                        {dbTicket?.title || ticket?.title ? (
+                          <span className="text-[11px] text-foreground">{dbTicket?.title || ticket?.title}</span>
+                        ) : (
+                          <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
+                      <div className="min-h-24 border rounded-md p-3 bg-muted/30">
+                        {dbTicket?.description || ticket?.description ? (
+                          <span className="text-[11px] text-foreground whitespace-pre-wrap leading-relaxed">{dbTicket?.description || ticket?.description}</span>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                            <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
+                            <div className="h-4 bg-muted animate-pulse rounded w-4/6" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Tags</label>
-                        <div className="flex flex-wrap gap-2">
-                          {form.tags.map((t) => (
-                            <Badge key={t} variant="secondary">{t}</Badge>
-                          ))}
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.type || ticket?.type || ticket?.displayType ? (
+                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.type || ticket?.type || ticket?.displayType}</span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-14" />
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.priority || ticket?.priority ? (
+                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.priority || ticket?.priority}</span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.status || ticket?.status ? (
+                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.status || ticket?.status}</span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-16" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {(() => {
+                            const assigneeId = dbTicket?.assignee_id || ticket?.assignee?.id
+                            const assigneeName = dbTicket?.assignee?.display_name || ticket?.assignee?.name
+                            
+                            if (assigneeId && assigneeName) {
+                              return <span className="text-[11px] text-foreground">{assigneeName}</span>
+                            } else if (assigneeName) {
+                              return <span className="text-[11px] text-foreground">{assigneeName}</span>
+                            } else if (assigneeId) {
+                              const assignedUser = users.find(u => u.id === assigneeId)
+                              return (
+                                <span className="text-[11px] text-foreground">
+                                  {assignedUser?.display_name || assignedUser?.first_name || assignedUser?.email || 'Assigned User'}
+                                </span>
+                              )
+                            } else {
+                              return <span className="text-[11px] text-muted-foreground">Unassigned</span>
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due date</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.due_date || ticket?.dueDate ? (
+                            <span className="text-[11px] text-foreground">
+                              {dbTicket?.due_date ? format(new Date(dbTicket.due_date), "MMM d, yyyy h:mm a") : ticket?.dueDate || "Not set"}
+                            </span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-24" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          <span className="text-[11px] text-muted-foreground">Select category</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Subcategory</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          <span className="text-[11px] text-muted-foreground">Select category first</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.urgency || ticket?.urgency ? (
+                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.urgency || ticket?.urgency}</span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
+                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
+                          {dbTicket?.impact || ticket?.impact ? (
+                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.impact || ticket?.impact}</span>
+                          ) : (
+                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </TabsContent>
 
