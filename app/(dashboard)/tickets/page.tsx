@@ -174,7 +174,7 @@ export default function TicketsPage() {
   
   const deleteTicket = async (id: string) => {
     await deleteTicketMutation.mutateAsync(id)
-    toast.success('Ticket deleted successfully!')
+    // Toast is shown in confirmDeleteTicket function
   }
 
   // Get dynamic ticket types from database
@@ -259,7 +259,6 @@ export default function TicketsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [ticketToEdit, setTicketToEdit] = useState<any>(null)
   const [ticketToDelete, setTicketToDelete] = useState<any>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   
   // Edit form state
@@ -914,28 +913,117 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   const confirmDeleteTicket = async () => {
     if (!ticketToDelete) return
 
-    console.log('🗑️ DELETE CONFIRMED - Ticket to delete:', {
-      displayId: ticketToDelete.id,
-      dbId: ticketToDelete.dbId,
-      title: ticketToDelete.title
+    console.log('🗑️ [DELETE FLOW] Step 1: Delete button clicked')
+    const ticketToDeleteCopy = { ...ticketToDelete }
+    
+    // CLOSE MODAL IMMEDIATELY - Don't wait for async operation
+    console.log('🗑️ [DELETE FLOW] Step 2: Closing modal IMMEDIATELY')
+    setShowDeleteModal(false)
+    setTicketToDelete(null)
+    
+    // Force cleanup body state RIGHT AWAY
+    console.log('🗑️ [DELETE FLOW] Step 3: Force cleanup body state')
+    
+    // DEBUG: Check what's blocking
+    console.log('🔍 [DEBUG] Body styles:', {
+      overflow: document.body.style.overflow,
+      pointerEvents: document.body.style.pointerEvents,
+      hasInert: document.body.hasAttribute('inert')
     })
-
-    setIsDeleting(true)
+    
+    document.body.style.overflow = ''
+    document.body.style.pointerEvents = ''
+    document.body.removeAttribute('inert')
+    
+    // DEBUG: Check all elements with pointer-events none or high z-index
+    const allElements = document.querySelectorAll('*')
+    const blockingElements: any[] = []
+    allElements.forEach(el => {
+      const style = window.getComputedStyle(el)
+      const zIndex = parseInt(style.zIndex)
+      
+      // Check for blocking conditions
+      if (style.pointerEvents === 'none' && el.offsetWidth > 100 && el.offsetHeight > 100) {
+        blockingElements.push({
+          element: el.tagName,
+          class: el.className,
+          pointerEvents: style.pointerEvents,
+          zIndex: style.zIndex,
+          position: style.position
+        })
+      }
+      
+      // Check for high z-index overlays
+      if (zIndex >= 40 && (style.position === 'fixed' || style.position === 'absolute')) {
+        blockingElements.push({
+          element: el.tagName,
+          class: el.className,
+          zIndex: style.zIndex,
+          position: style.position,
+          width: el.offsetWidth,
+          height: el.offsetHeight
+        })
+      }
+    })
+    
+    console.log('🔍 [DEBUG] Found potential blocking elements:', blockingElements)
+    
+    // AGGRESSIVE CONTINUOUS CLEANUP
+    const cleanupInterval = setInterval(() => {
+      // Force body to be clean
+      document.body.style.overflow = '';
+      document.body.style.pointerEvents = '';
+      document.body.removeAttribute('inert');
+      
+      // Remove all Radix portals
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach(portal => portal.remove());
+      
+      // COMPLETELY REMOVE React Query Devtools from DOM
+      const devtools = document.querySelector('.tsqd-main-panel');
+      if (devtools) {
+        console.log('🧹 [CLEANUP] REMOVING React Query Devtools from DOM');
+        devtools.remove(); // REMOVE, not hide!
+      }
+      
+      // Find and remove any blocking overlays
+      const allEls = document.querySelectorAll('*');
+      allEls.forEach((el) => {
+        const style = window.getComputedStyle(el);
+        const zIndex = parseInt(style.zIndex);
+        if (zIndex >= 40 && (style.position === 'fixed' || style.position === 'absolute')) {
+          const rect = el.getBoundingClientRect();
+          if (rect.width > window.innerWidth * 0.5 && rect.height > window.innerHeight * 0.5) {
+            console.log('💣 [CLEANUP] REMOVING blocker from DOM:', el.tagName, el.className);
+            (el as HTMLElement).remove(); // REMOVE from DOM completely!
+          }
+        }
+      });
+    }, 50); // Run every 50ms
+    
+    // Stop cleanup after 2 seconds
+    setTimeout(() => {
+      clearInterval(cleanupInterval);
+      console.log('✅ [CLEANUP] Continuous cleanup stopped');
+    }, 2000)
+    
+    // Run delete in background
+    console.log('🗑️ [DELETE FLOW] Step 4: Running delete in background')
     try {
-      console.log('🗑️ Calling deleteTicket with dbId:', ticketToDelete.dbId)
-      await deleteTicket(ticketToDelete.dbId)
-      console.log('✅ deleteTicket completed successfully')
-      toast.success('Ticket deleted successfully!', {
-        description: `Ticket #${ticketToDelete.id} has been removed.`,
-        duration: 5000,
-      })
-      setShowDeleteModal(false)
-      setTicketToDelete(null)
+      await deleteTicket(ticketToDeleteCopy.dbId)
+      console.log('✅ [DELETE FLOW] Step 5: Delete completed successfully')
+      
+      // TOAST DISABLED FOR TESTING
+      // toast.success('Ticket deleted successfully!', {
+      //   description: `Ticket #${ticketToDeleteCopy.id} has been removed.`,
+      //   duration: 5000,
+      // })
+      console.log('✅ SUCCESS: Ticket deleted:', ticketToDeleteCopy.id)
     } catch (error) {
-      console.error('❌ Error deleting ticket:', error)
-      toast.error('Failed to delete ticket')
-    } finally {
-      setIsDeleting(false)
+      console.error('❌ [DELETE FLOW] Error deleting ticket:', error)
+      // TOAST DISABLED FOR TESTING
+      // toast.error('Failed to delete ticket')
+      console.error('❌ ERROR: Failed to delete ticket')
     }
   }
 
@@ -1495,8 +1583,17 @@ className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5
                 <Download className="h-3 w-3 mr-2" />
                 Import
               </Button>
-<Button 
-className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white text-sm h-8 px-4 rounded-lg shadow-xs mr-2"
+                onClick={() => {
+                  alert('CLICK TEST: This button works!')
+                  console.log('🧪 TEST: Button is clickable')
+                }} 
+              >
+                🧪 TEST CLICK
+              </Button>
+              <Button 
+                className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => {
                   console.log("[CREATE] Opening drawer for new ticket")
                   setSelectedTicket(null) // No ticket = CREATE mode
@@ -2091,7 +2188,20 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       {/* Delete Ticket Modal */}
       <DeleteConfirmationDialog
         open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
+        onOpenChange={(open) => {
+          console.log('🚪 [MODAL] onOpenChange called:', { open, isPending: deleteTicketMutation.isPending })
+          // Prevent closing while deleting
+          if (!deleteTicketMutation.isPending) {
+            console.log('🚪 [MODAL] Setting showDeleteModal to:', open)
+            setShowDeleteModal(open)
+            if (!open) {
+              console.log('🚪 [MODAL] Clearing ticketToDelete')
+              setTicketToDelete(null)
+            }
+          } else {
+            console.log('⚠️ [MODAL] Blocked close attempt - mutation still pending')
+          }
+        }}
         onConfirm={confirmDeleteTicket}
         title="Delete Ticket"
         description="Do you want to delete ticket"
