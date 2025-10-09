@@ -138,7 +138,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       })
     } else if (dbTicket) {
       // EDIT mode - populate from ticket
-      const assigneeIds = dbTicket.assignee_id ? [dbTicket.assignee_id] : []
+      const assigneeIds = dbTicket.assignee_ids || (dbTicket.assignee_id ? [dbTicket.assignee_id] : [])
       setForm({
         title: dbTicket.title || "",
         description: dbTicket.description || "",
@@ -167,13 +167,15 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       // Prepare ticket data
       const ticketData: any = { ...form }
       
-      // Convert assignee_ids array back to single assignee_id for API
+      // Keep assignee_ids as array for multiple assignees
+      // Also update single assignee_id for backward compatibility
       if (form.assignee_ids.length > 0) {
         ticketData.assignee_id = form.assignee_ids[0]
+        ticketData.assignee_ids = form.assignee_ids
       } else {
         ticketData.assignee_id = null
+        ticketData.assignee_ids = []
       }
-      delete ticketData.assignee_ids
       
       // Normalize due_date to ISO if present
       if (ticketData.due_date) {
@@ -237,7 +239,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
             urgency: updatedTicket.urgency || form.urgency,
             category: updatedTicket.category || form.category,
             subcategory: updatedTicket.subcategory || form.subcategory,
-            assignee_ids: updatedTicket.assignee_id ? [updatedTicket.assignee_id] : [],
+            assignee_ids: updatedTicket.assignee_ids || (updatedTicket.assignee_id ? [updatedTicket.assignee_id] : []),
             due_date: updatedTicket.due_date || form.due_date,
             tags: updatedTicket.tags || form.tags,
           })

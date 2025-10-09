@@ -28,6 +28,9 @@ import { useTicketsGQL } from "@/hooks/use-tickets-gql"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
+import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
+import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
+import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 
 const mockTickets_UNUSED = [
   {
@@ -115,7 +118,11 @@ export default function MyTicketsPage() {
   const [showTicketTray, setShowTicketTray] = useState(false)
   const [groupBy, setGroupBy] = useState("none")
   const [showCustomColumns, setShowCustomColumns] = useState(false)
+  const [showCustomColumnsDialog, setShowCustomColumnsDialog] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
+  
+  // Custom columns store
+  const { columns: customColumns } = useCustomColumnsStore()
 
   const { user } = useAuth()
   
@@ -281,17 +288,24 @@ export default function MyTicketsPage() {
                 <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
                   Notes
                 </th>
+                {/* Custom columns headers */}
+                {customColumns.map((column) => (
+                  <th key={column.id} className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
+                    {column.title}
+                  </th>
+                ))}
+                {/* Add column button */}
                 <th className="text-center p-3 text-xs font-medium text-muted-foreground w-12">
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
-                    onClick={() => setShowCustomColumns(!showCustomColumns)}
+                    onClick={() => setShowCustomColumnsDialog(true)}
+                    title="Manage custom columns"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </th>
-                <th className="text-center p-3 text-xs font-medium text-muted-foreground w-12"></th>
               </tr>
             </thead>
             <tbody>
@@ -388,13 +402,13 @@ export default function MyTicketsPage() {
                       defaultValue={ticket.metadata?.notes || ''}
                     />
                   </td>
-                  <td className="p-3 border-r border-border text-center">
-                    {showCustomColumns && (
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </td>
+                  {/* Custom column cells */}
+                  {customColumns.map((column) => (
+                    <td key={column.id} className="p-3 border-r border-border">
+                      <CustomColumnCell column={column} ticketId={ticket.id} />
+                    </td>
+                  ))}
+                  {/* Empty cell for the + button column */}
                   <td className="p-3 text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -666,6 +680,12 @@ export default function MyTicketsPage() {
           setSelectedTicket(null)
         }}
         ticket={selectedTicket}
+      />
+
+      {/* Custom Columns Dialog */}
+      <CustomColumnsDialog
+        open={showCustomColumnsDialog}
+        onOpenChange={setShowCustomColumnsDialog}
       />
     </PageContent>
   )

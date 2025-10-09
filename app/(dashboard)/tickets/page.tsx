@@ -50,6 +50,9 @@ import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
+import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
+import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
+import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -242,8 +245,12 @@ export default function TicketsPage() {
   const [showTicketTray, setShowTicketTray] = useState(false)
   const [groupBy, setGroupBy] = useState("none")
   const [showCustomColumns, setShowCustomColumns] = useState(false)
+  const [showCustomColumnsDialog, setShowCustomColumnsDialog] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
+  
+  // Custom columns store
+  const { columns: customColumns } = useCustomColumnsStore()
   
   // Ticket action states
   const [showEditModal, setShowEditModal] = useState(false)
@@ -1027,7 +1034,25 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Notes</th>
+                   {/* Custom columns headers */}
+                   {customColumns.map((column) => (
+                     <th key={column.id} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                       {column.title}
+                     </th>
+                   ))}
+                   {/* Add column button */}
+                   <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       className="h-6 w-6 p-0"
+                       onClick={() => setShowCustomColumnsDialog(true)}
+                       title="Manage custom columns"
+                     >
+                       <Plus className="h-3 w-3" />
+                     </Button>
+                   </th>
                  </tr>
                </thead>
                <tbody className="0">
@@ -1080,7 +1105,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   ))
                 ) : error ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center">
+                    <td colSpan={9 + customColumns.length + 1} className="p-8 text-center">
                       <div className="text-red-600">
                         Error loading tickets: {error}
                       </div>
@@ -1088,7 +1113,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   </tr>
                 ) : filteredTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center">
+                    <td colSpan={9 + customColumns.length + 1} className="p-8 text-center">
                       <div className="text-muted-foreground">
                         No tickets found. <button 
                           onClick={() => router.push('/tickets/create')} 
@@ -1104,7 +1129,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <React.Fragment key={groupName}>
                        {groupBy !== "none" && (
                          <tr className="bg-muted/30 border-b border-border">
-                           <td colSpan={9} className="px-4 py-3">
+                           <td colSpan={9 + customColumns.length + 1} className="px-4 py-3">
                              <div className="flex items-center gap-2">
                                <span className="font-semibold text-foreground">{groupName}</span>
                                <span className="text-sm text-muted-foreground">({groupTickets.length} tickets)</span>
@@ -1257,6 +1282,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         </DropdownMenu>
                       </div>
                     </td>
+                    {/* Custom column cells */}
+                    {customColumns.map((column) => (
+                      <td key={column.id} className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+                        <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
+                      </td>
+                    ))}
+                    {/* Empty cell for the + button column */}
+                    <td className="px-3 py-2.5 whitespace-nowrap"></td>
                   </tr>
                       ))}
                     </React.Fragment>
@@ -1268,7 +1301,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         </div>
       </div>
     ),
-    [groupedTickets, groupBy, showCustomColumns, searchTerm, handleTicketClick],
+    [groupedTickets, groupBy, showCustomColumns, searchTerm, handleTicketClick, customColumns],
   )
 
   const handleDragStart = useCallback((e: React.DragEvent, ticket: any) => {
@@ -2319,6 +2352,12 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         description="Do you want to delete ticket"
         itemName={ticketToDelete ? `#${ticketToDelete.id} - ${ticketToDelete.title}` : undefined}
         isDeleting={deleteTicketMutation.isPending}
+      />
+
+      {/* Custom Columns Dialog */}
+      <CustomColumnsDialog
+        open={showCustomColumnsDialog}
+        onOpenChange={setShowCustomColumnsDialog}
       />
     </PageContent>
   )
