@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
 import { AIAssistantPanel } from "@/components/ai/ai-assistant-panel"
-import { TicketTray } from "@/components/tickets/ticket-tray"
+import TicketDrawer from "@/components/tickets/ticket-drawer"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTicketsGQL } from "@/hooks/use-tickets-gql"
 import { useAuth } from "@/lib/contexts/auth-context"
@@ -212,8 +212,8 @@ export default function MyTicketsPage() {
   }
 
   const handleTicketClick = (ticket: any) => {
-    console.log("[v0] Opening ticket tray for:", ticket.id)
-    setSelectedTicket(ticket)
+    console.log("[v0] Opening ticket drawer for:", ticket.ticket_number)
+    setSelectedTicket({ dbId: ticket.id, ...ticket })
     setShowTicketTray(true)
   }
 
@@ -656,10 +656,10 @@ export default function MyTicketsPage() {
         )}
       </div>
 
-      <TicketTray
+      <TicketDrawer
         isOpen={showTicketTray}
         onClose={() => {
-          console.log("[v0] Closing ticket tray")
+          console.log("[v0] Closing ticket drawer")
           setShowTicketTray(false)
           setSelectedTicket(null)
         }}

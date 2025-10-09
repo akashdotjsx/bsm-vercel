@@ -34,6 +34,7 @@ import { PageContent } from "@/components/layout/page-content"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
@@ -108,6 +109,7 @@ const formatDate = (dateString: string) => {
 
 export default function TicketsPage() {
   const { user } = useStore()
+  const { organization } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -530,8 +532,13 @@ export default function TicketsPage() {
   }, [])
 
   const handleTicketClick = useCallback((ticket: any) => {
-    console.log("[v0] Opening ticket tray for:", ticket.id)
-    setSelectedTicket(ticket)
+    console.log("[TICKET CLICK] Opening drawer for:", ticket.id, "dbId:", ticket.dbId)
+    // Ensure dbId is set for EDIT mode to work
+    const ticketWithDbId = {
+      ...ticket,
+      dbId: ticket.dbId || ticket.id // Use dbId if available, otherwise use id
+    }
+    setSelectedTicket(ticketWithDbId)
     setShowTicketTray(true)
   }, [])
 
@@ -836,30 +843,46 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   const handleDuplicateTicket = async (ticket: any) => {
     try {
-      const duplicateData = {
+      console.log('[DUPLICATE] Creating duplicate of ticket:', ticket.id)
+      
+      // Build duplicate data - only include non-null/non-empty values
+      const duplicateData: any = {
         title: `${ticket.title} (Copy)`,
-        description: ticket.description,
-        type: ticket.type,
-        priority: ticket.priority,
+        type: ticket.type || 'request',
+        priority: ticket.priority || 'medium',
+        status: 'new',
         urgency: ticket.urgency || 'medium',
         impact: ticket.impact || 'medium',
-        category: ticket.category,
-        subcategory: ticket.subcategory,
-        assignee_id: ticket.assignee_id,
-        team_id: ticket.team_id,
-        due_date: ticket.due_date,
-        tags: ticket.tags || [],
-        custom_fields: ticket.custom_fields || {}
+        // Required fields
+        requester_id: user?.id,
+        organization_id: ticket.organization_id || organization?.id
+      }
+      
+      // Only add optional fields if they have values
+      if (ticket.description) duplicateData.description = ticket.description
+      if (ticket.assignee_id) duplicateData.assignee_id = ticket.assignee_id
+      if (ticket.team_id) duplicateData.team_id = ticket.team_id
+      if (ticket.due_date) duplicateData.due_date = ticket.due_date
+      if (ticket.category) duplicateData.category = ticket.category
+      if (ticket.subcategory) duplicateData.subcategory = ticket.subcategory
+      if (ticket.tags && ticket.tags.length > 0) duplicateData.tags = ticket.tags
+      if (ticket.custom_fields && Object.keys(ticket.custom_fields).length > 0) {
+        duplicateData.custom_fields = ticket.custom_fields
       }
 
+      console.log('[DUPLICATE] Duplicate data:', duplicateData)
       const newTicket = await createTicket(duplicateData)
-      toast.success(`Ticket #${newTicket.ticket_number} duplicated successfully!`, {
-        description: `"${newTicket.title}" has been created.`,
+      console.log('[DUPLICATE] Successfully created:', newTicket.ticket_number)
+      
+      toast.success(`Ticket duplicated successfully!`, {
+        description: `"${newTicket.title}" has been created as #${newTicket.ticket_number}`,
         duration: 5000,
       })
     } catch (error) {
-      console.error('Error duplicating ticket:', error)
-      toast.error('Failed to duplicate ticket')
+      console.error('[DUPLICATE] Error duplicating ticket:', error)
+      toast.error('Failed to duplicate ticket', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      })
     }
   }
 
@@ -1180,7 +1203,24 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         <Input
                           placeholder="Add notes..."
                           className="h-6 text-xs border-0 bg-transparent focus:bg-background text-muted-foreground flex-1"
-                          defaultValue={ticket.notes || "Customer reported via email"}
+                          defaultValue={ticket.custom_fields?.notes || ticket.notes || ""}
+                          onBlur={async (e) => {
+                            const newNotes = e.target.value
+                            if (newNotes !== (ticket.custom_fields?.notes || ticket.notes || "")) {
+                              try {
+                                console.log("[NOTES] Saving notes for ticket:", ticket.id)
+                                await updateTicket(ticket.dbId || ticket.id, {
+                                  custom_fields: {
+                                    ...ticket.custom_fields,
+                                    notes: newNotes
+                                  }
+                                })
+                                console.log("[NOTES] Notes saved successfully")
+                              } catch (error) {
+                                console.error("[NOTES] Failed to save notes:", error)
+                              }
+                            }
+                          }}
                         />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -1189,7 +1229,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditTicket(ticket)}>
+                            <DropdownMenuItem onClick={() => {
+                              console.log("[EDIT] Opening TicketDrawer in EDIT mode")
+                              const ticketWithDbId = {
+                                ...ticket,
+                                dbId: ticket.dbId || ticket.id
+                              }
+                              setSelectedTicket(ticketWithDbId)
+                              setShowTicketTray(true)
+                            }}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Ticket
                             </DropdownMenuItem>
@@ -1670,7 +1718,11 @@ className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5
               </Button>
 <Button 
 className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
-                onClick={() => router.push('/tickets/create')} 
+                onClick={() => {
+                  console.log("[CREATE] Opening drawer for new ticket")
+                  setSelectedTicket(null) // No ticket = CREATE mode
+                  setShowTicketTray(true)
+                }} 
               >
                 + Create Ticket
               </Button>

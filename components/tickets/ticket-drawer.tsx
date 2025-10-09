@@ -18,6 +18,8 @@ import {
   useUpdateChecklistItemGraphQL,
   useDeleteChecklistItemGraphQL
 } from "@/hooks/queries/use-ticket-details-graphql"
+import { useCreateTicketGraphQL } from "@/hooks/queries/use-tickets-graphql-query"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useUsers } from "@/hooks/use-users"
 import { TeamSelector } from "@/components/users/team-selector"
@@ -52,9 +54,14 @@ interface TicketDrawerProps {
 
 export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerProps) {
   const ticketId = ticket?.dbId || ""
+  const isCreateMode = !ticketId // CREATE mode when no ticket ID
+  
+  // Auth context for organization and user
+  const { user, organization } = useAuth()
   
   // GraphQL hooks - Single query fetches everything!
   const { data: dbTicket, isLoading: loading, error } = useTicketDetailsGraphQL(ticketId)
+  const createTicketMutation = useCreateTicketGraphQL()
   const updateTicketMutation = useUpdateTicketDetailsGraphQL()
   const addCommentMutation = useAddCommentGraphQL(ticketId)
   const addChecklistItemMutation = useAddChecklistItemGraphQL(ticketId)
@@ -79,8 +86,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     }
   }, [isOpen])
 
-  // State for editing
-  const [isEditing, setIsEditing] = useState(false)
+  // State for editing - CREATE mode is always in edit state
+  const [isEditing, setIsEditing] = useState(isCreateMode)
   const [saving, setSaving] = useState(false)
   
   // State for comments
@@ -112,25 +119,44 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   const selectedCategory = supabaseCategories.find((c) => c.id === form.category)
   const availableServices = selectedCategory?.services || []
 
+  // Initialize form for CREATE mode or populate from existing ticket
   useEffect(() => {
-    if (!dbTicket) return
-    // Convert single assignee to array format for compatibility
-    const assigneeIds = dbTicket.assignee_id ? [dbTicket.assignee_id] : []
-    setForm({
-      title: dbTicket.title || "",
-      description: dbTicket.description || "",
-      type: dbTicket.type || "request",
-      priority: dbTicket.priority || "medium",
-      status: dbTicket.status || "new",
-      impact: dbTicket.impact || "medium",
-      urgency: dbTicket.urgency || "medium",
-      category: dbTicket.category || "",
-      subcategory: dbTicket.subcategory || "",
-      assignee_ids: assigneeIds,
-      due_date: dbTicket.due_date || "",
-      tags: Array.isArray(dbTicket.tags) ? dbTicket.tags : [],
-    })
-  }, [dbTicket])
+    if (isCreateMode) {
+      // CREATE mode - set defaults
+      setIsEditing(true)
+      setForm({
+        title: "",
+        description: "",
+        type: "request",
+        priority: "medium",
+        status: "new",
+        impact: "medium",
+        urgency: "medium",
+        category: "",
+        subcategory: "",
+        assignee_ids: [],
+        due_date: "",
+        tags: [],
+      })
+    } else if (dbTicket) {
+      // EDIT mode - populate from ticket
+      const assigneeIds = dbTicket.assignee_id ? [dbTicket.assignee_id] : []
+      setForm({
+        title: dbTicket.title || "",
+        description: dbTicket.description || "",
+        type: dbTicket.type || "request",
+        priority: dbTicket.priority || "medium",
+        status: dbTicket.status || "new",
+        impact: dbTicket.impact || "medium",
+        urgency: dbTicket.urgency || "medium",
+        category: dbTicket.category || "",
+        subcategory: dbTicket.subcategory || "",
+        assignee_ids: assigneeIds,
+        due_date: dbTicket.due_date || "",
+        tags: Array.isArray(dbTicket.tags) ? dbTicket.tags : [],
+      })
+    }
+  }, [dbTicket, isCreateMode])
 
   const requesterName = useMemo(() => {
     if (!dbTicket?.requester) return ""
@@ -138,27 +164,58 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   }, [dbTicket])
 
   const handleSave = async () => {
-    if (!ticketId) return
     setSaving(true)
     try {
-      const updates: any = { ...form }
+      // Prepare ticket data
+      const ticketData: any = { ...form }
+      
       // Convert assignee_ids array back to single assignee_id for API
       if (form.assignee_ids.length > 0) {
-        updates.assignee_id = form.assignee_ids[0] // Use first assignee for now
+        ticketData.assignee_id = form.assignee_ids[0]
       } else {
-        updates.assignee_id = null
+        ticketData.assignee_id = null
       }
-      delete updates.assignee_ids // Remove the array field
+      delete ticketData.assignee_ids
+      
       // Normalize due_date to ISO if present
-      if (updates.due_date) {
-        updates.due_date = new Date(updates.due_date).toISOString()
+      if (ticketData.due_date) {
+        ticketData.due_date = new Date(ticketData.due_date).toISOString()
       }
-      await updateTicketMutation.mutateAsync({ id: ticketId, updates })
-      setIsEditing(false)
-      toast.success("Ticket updated successfully!")
+      
+      if (isCreateMode) {
+        // CREATE MODE - Create new ticket
+        console.log("[CREATE] Creating new ticket:", ticketData)
+        
+        // Validate required fields
+        if (!ticketData.title || !ticketData.title.trim()) {
+          toast.error("Title is required")
+          setSaving(false)
+          return
+        }
+        
+        // Add required fields for creation
+        ticketData.requester_id = user?.id
+        ticketData.organization_id = organization?.id
+        
+        const newTicket = await createTicketMutation.mutateAsync(ticketData)
+        console.log("[CREATE] Ticket created:", newTicket)
+        
+        toast.success("Ticket created successfully!", {
+          description: `Ticket #${newTicket.ticket_number} has been created.`
+        })
+        
+        // Close drawer after creation
+        onClose()
+      } else {
+        // UPDATE MODE - Update existing ticket
+        console.log("[UPDATE] Updating ticket:", ticketId, ticketData)
+        await updateTicketMutation.mutateAsync({ id: ticketId, updates: ticketData })
+        setIsEditing(false)
+        toast.success("Ticket updated successfully!")
+      }
     } catch (error) {
-      console.error("Error updating ticket:", error)
-      toast.error("Failed to update ticket")
+      console.error(`Error ${isCreateMode ? 'creating' : 'updating'} ticket:`, error)
+      toast.error(`Failed to ${isCreateMode ? 'create' : 'update'} ticket`)
     } finally {
       setSaving(false)
     }
@@ -238,26 +295,66 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         isDeleting={deleteChecklistItemMutation.isPending}
       />
 
-      <div className="fixed inset-0 z-50 flex" style={{ top: '60px' }}>
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
-        <div className="p-6 bg-background flex items-center justify-between flex-shrink-0">
-          <div>
-            <h2 className="text-[13px] font-semibold text-foreground mb-1">{dbTicket?.title || ticket?.title || "Loading..."}</h2>
-            {(dbTicket?.ticket_number || ticket?.id) && (
-              <p className="text-[11px] text-muted-foreground">#{dbTicket?.ticket_number || ticket?.id} • Created {dbTicket?.created_at ? format(new Date(dbTicket.created_at), "MMM d, y h:mm a") : ""}</p>
-            )}
+      {/* Drawer overlay - starts below navbar */}
+      <div className="fixed inset-0 z-50 flex" style={{ top: 'var(--header-height, 56px)' }}>
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+        
+        {/* Drawer panel */}
+        <div 
+          className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden border-l"
+          style={{ height: 'calc(100vh - var(--header-height, 56px))' }}
+        >
+          {/* Header */}
+          <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b">
+            <div className="flex-1 min-w-0 mr-4">
+              <h2 className="text-sm md:text-[13px] font-semibold text-foreground mb-1 truncate">
+                {isCreateMode ? "Create New Ticket" : (dbTicket?.title || ticket?.title || "Loading...")}
+              </h2>
+              {!isCreateMode && (dbTicket?.ticket_number || ticket?.id) && (
+                <p className="text-[10px] md:text-[11px] text-muted-foreground">
+                  #{dbTicket?.ticket_number || ticket?.id}
+                  {dbTicket?.created_at && (
+                    <>
+                      <span className="mx-1">•</span>
+                      <span>Created {format(new Date(dbTicket.created_at), "MMM d, y h:mm a")}</span>
+                    </>
+                  )}
+                </p>
+              )}
+              {isCreateMode && (
+                <p className="text-[10px] md:text-[11px] text-muted-foreground">
+                  Fill in the details below to create a new ticket
+                </p>
+              )}
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 shrink-0" 
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
 
-        {error ? (
-          <div className="p-6 text-red-600 text-[11px]">{String(error)}</div>
-        ) : (
-          <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
-            <div className="px-6 bg-muted/30 flex-shrink-0">
+          {/* Error state - only for EDIT mode */}
+          {!isCreateMode && error ? (
+            <div className="p-4 md:p-6">
+              <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 p-4">
+                <p className="text-sm text-red-600 dark:text-red-400">Failed to load ticket details</p>
+                <p className="text-xs text-red-500 dark:text-red-500 mt-1">{String(error)}</p>
+              </div>
+            </div>
+          ) : !isCreateMode && loading ? (
+            <div className="p-4 md:p-6 flex items-center justify-center">
+              <LoadingSpinner className="h-8 w-8" />
+            </div>
+          ) : (
+            <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+              {/* Hide tabs in CREATE mode - only show Details */}
+              {!isCreateMode && (
+              <div className="px-4 md:px-6 bg-muted/30 flex-shrink-0">
               <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
                   value="details"
@@ -314,11 +411,13 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   </Badge>
                 </TabsTrigger>
               </TabsList>
-            </div>
+              </div>
+              )}
 
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
-                {isEditing ? (
+                {/* Always show edit form in CREATE mode */}
+                {(isEditing || isCreateMode) ? (
                   <>
                     <div className="space-y-2">
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
@@ -386,17 +485,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
-                        <TeamSelector
-                          teams={teams}
-                          users={users}
-                          selectedUserIds={form.assignee_ids}
-                          onUsersChange={(userIds) => setForm({ ...form, assignee_ids: userIds })}
-                          placeholder="Assign to user or team..."
-                          className="h-8 text-[11px]"
-                        />
-                      </div>
+                    </div>
+
+                    {/* Assignee - full width for better UX */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
+                      <TeamSelector
+                        teams={teams}
+                        users={users}
+                        selectedUserIds={form.assignee_ids}
+                        onUsersChange={(userIds) => setForm({ ...form, assignee_ids: userIds })}
+                        placeholder="Assign to user or team..."
+                        className="h-9 text-[11px]"
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -463,7 +564,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                       </div>
                     </div>
                   </>
-                ) : (
+                ) : !isCreateMode ? (
                   <>
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-[13px] font-semibold text-foreground">Ticket Details</h3>
@@ -603,7 +704,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                       </div>
                     </div>
                   </>
-                )}
+                ) : null}
               </TabsContent>
 
               <TabsContent value="accounts" className="p-6">
@@ -920,20 +1021,48 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                   </div>
                 </div>
               </TabsContent>
-            </div>
-          </Tabs>
-        )}
+              </div>
+            </Tabs>
+          )}
 
-        {isEditing && (
-          <div className="border-t p-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)} className="text-[11px] h-8 px-3">Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || loading} className="text-[11px] h-8 px-3">
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        )}
+          {/* Footer - show when editing or creating */}
+          {(isEditing || isCreateMode) && (
+            <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (isCreateMode) {
+                    onClose() // Close drawer in CREATE mode
+                  } else {
+                    setIsEditing(false) // Just cancel edit in EDIT mode
+                  }
+                }} 
+                className="text-[11px] h-8 px-3"
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={saving || (!isCreateMode && loading)} 
+                className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
+              >
+                {saving ? (
+                  <>
+                    <LoadingSpinner className="h-3 w-3 mr-2" />
+                    {isCreateMode ? "Creating..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-2" />
+                    {isCreateMode ? "Create Ticket" : "Save Changes"}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   )
 }

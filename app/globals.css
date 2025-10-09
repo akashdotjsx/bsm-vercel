@@ -73,6 +73,9 @@
   --chart-5: #6a707c;
   --radius: 0.625rem;
   
+  /* Layout dimensions */
+  --header-height: 56px; /* h-14 on desktop */
+  
   /* Kroolo button colors */
   --btn-color-base: #6E72FF;
   --btn-color-hover: #5A5FE0;
