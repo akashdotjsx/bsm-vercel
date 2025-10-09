@@ -104,7 +104,7 @@ export function UIDemo() {
   }
 
   return (
-    <div className={`min-h-screen p-8 transition-colors duration-300 ${isDark ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen p-8 transition-colors duration-300 ${isDark ? 'dark bg-gray-900' : 'bg-muted/50'}`}>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
@@ -248,7 +248,7 @@ export function UIDemo() {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
               {demoTeams.map((team) => (
-                <div key={team.id} className="p-4 border rounded-lg bg-card">
+                <div key={team.id} className="p-4 border rounded-lg 0">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">{team.name.substring(0, 2)}</span>

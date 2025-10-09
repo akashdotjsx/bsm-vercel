@@ -182,10 +182,10 @@ export default function UsersPage() {
   }
   
   // Debug logging
-  console.log('🏠 Users page render - users:', users?.length || bg-card, 'teams:', teams?.length || bg-card, 'loading:', loading)
+  console.log('🏠 Users page render - users:', users?.length || 0, 'teams:', teams?.length || 0, 'loading:', loading)
   console.log('🔐 Auth status - user:', !!authUser, 'profile:', !!profile, 'authLoading:', authLoading)
   console.log('👤 Auth user ID:', authUser?.id, 'Email:', authUser?.email)
-  console.log('🏢 Teams data structure:', teams?.slice(bg-card, 1)) // Log first team to see structure
+  console.log('🏢 Teams data structure:', teams?.slice(0, 1)) // Log first team to see structure
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [departmentFilter, setDepartmentFilter] = useState("all")
@@ -236,11 +236,11 @@ export default function UsersPage() {
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <h2 className="text-[13px] font-semibold mb-2">Authentication Required</h2>
+            <h2 className="text-lg font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please log in to access user management</p>
             <a 
               href="/auth/login" 
-              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/9bg-card"
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Go to Login
             </a>
@@ -280,7 +280,7 @@ export default function UsersPage() {
 
   // Update departments when users change - with null safety
   useEffect(() => {
-    if (users.length > bg-card) {
+    if (users.length > 0) {
       const userDepartments = users
         .map(user => user.department)
         .filter((dept): dept is string => {
@@ -298,7 +298,7 @@ export default function UsersPage() {
 
   // Update selectedTeamForMembers when teams data changes
   useEffect(() => {
-    if (selectedTeamForMembers && teams.length > bg-card) {
+    if (selectedTeamForMembers && teams.length > 0) {
       const updatedTeam = teams.find(t => t.id === selectedTeamForMembers.id)
       if (updatedTeam) {
         setSelectedTeamForMembers(updatedTeam)
@@ -562,7 +562,7 @@ export default function UsersPage() {
   }
 
   // If loading and no data, show skeleton
-  if (loading && users.length === bg-card) {
+  if (loading && users.length === 0) {
     return (
       <PageContent
         title="Users & Teams"
@@ -595,13 +595,13 @@ export default function UsersPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search users..."
-                className="pl-1bg-card w-8bg-card text-[11px]"
+                className="pl-10 w-80 text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 text-[11px]">
+              <SelectTrigger className="w-32 text-sm">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="All Stat" />
@@ -614,7 +614,7 @@ export default function UsersPage() {
               </SelectContent>
             </Select>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-48 text-[11px]">
+              <SelectTrigger className="w-48 text-sm">
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
@@ -626,35 +626,35 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="text-[11px]">
+            <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="text-sm">
               <Settings className="mr-2 h-4 w-4" />
               Manage Departments
             </Button>
           </div>
            <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
              <DialogTrigger asChild>
-              <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-1bg-card px-5 rounded-lg shadow-[bg-card_8px_18px_rgba(1bg-card6,92,255,bg-card.35)]">
+              <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add User
               </Button>
              </DialogTrigger>
             <DialogContent className="font-sans">
               <DialogHeader>
-                <DialogTitle className="text-[11px]">Add New User</DialogTitle>
-                <DialogDescription className="text-[11px]">
+                <DialogTitle className="text-base">Add New User</DialogTitle>
+                <DialogDescription className="text-sm">
                   Create a new user account with appropriate permissions.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="first_name" className="text-right text-[11px]">
+                  <Label htmlFor="first_name" className="text-right text-sm">
                     First Name
                   </Label>
                   <Input
                     id="first_name"
                     value={newUser.first_name}
                     onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
-                    className="col-span-3 text-[11px]"
+                    className="col-span-3 text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -719,7 +719,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddUser} className="text-[11px]">
+                <Button onClick={handleAddUser} className="text-sm">
                   Add User
                 </Button>
               </DialogFooter>
@@ -732,12 +732,12 @@ export default function UsersPage() {
            <Card>
              <CardContent className="p-6">
                <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-gray-2bg-cardbg-card dark:bg-white/1bg-card flex items-center justify-center">
-<User className="h-7 w-7 text-blue-6bg-cardbg-card" />
+                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
+                   <User className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[1bg-cardpx] font-medium text-muted-foreground">Total Users</p>
-                   <p className="text-[13px] font-bold">{users.length}</p>
+                   <p className="text-xs font-medium text-muted-foreground">Total Users</p>
+                   <p className="text-2xl font-bold">{users.length}</p>
                  </div>
                </div>
              </CardContent>
@@ -745,12 +745,12 @@ export default function UsersPage() {
            <Card>
              <CardContent className="p-6">
                <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-gray-2bg-cardbg-card dark:bg-white/1bg-card flex items-center justify-center">
-<Shield className="h-7 w-7 text-emerald-6bg-cardbg-card" />
+                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
+                   <Shield className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[1bg-cardpx] font-medium text-muted-foreground">Active Users</p>
-                   <p className="text-[13px] font-bold">{users.filter((u) => u.is_active).length}</p>
+                   <p className="text-xs font-medium text-muted-foreground">Active Users</p>
+                   <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
                  </div>
                </div>
              </CardContent>
@@ -758,12 +758,12 @@ export default function UsersPage() {
            <Card>
              <CardContent className="p-6">
                <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-gray-2bg-cardbg-card dark:bg-white/1bg-card flex items-center justify-center">
-<Users className="h-7 w-7 text-purple-6bg-cardbg-card" />
+                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
+                   <Users className="h-7 w-7 text-purple-600 dark:text-purple-400" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[1bg-cardpx] font-medium text-muted-foreground">Teams</p>
-                   <p className="text-[13px] font-bold">{teams.length}</p>
+                   <p className="text-xs font-medium text-muted-foreground">Teams</p>
+                   <p className="text-2xl font-bold">{teams.length}</p>
                  </div>
                </div>
              </CardContent>
@@ -771,12 +771,12 @@ export default function UsersPage() {
            <Card>
              <CardContent className="p-6">
                <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-gray-2bg-cardbg-card dark:bg-white/1bg-card flex items-center justify-center">
-<Calendar className="h-7 w-7 text-orange-6bg-cardbg-card" />
+                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
+                   <Calendar className="h-7 w-7 text-orange-600 dark:text-orange-400" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[1bg-cardpx] font-medium text-muted-foreground">New This Month</p>
-                   <p className="text-[13px] font-bold">{users.filter((u) => {
+                   <p className="text-xs font-medium text-muted-foreground">New This Month</p>
+                   <p className="text-2xl font-bold">{users.filter((u) => {
                      const createdDate = new Date(u.created_at)
                      const now = new Date()
                      const thisMonth = now.getMonth()
@@ -793,7 +793,7 @@ export default function UsersPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-[13px] font-bold">Users</CardTitle>
+              <CardTitle className="text-lg font-bold">Users</CardTitle>
             </div>
             <CardDescription className="text-sm">Manage user accounts and permissions</CardDescription>
           </CardHeader>
@@ -812,7 +812,7 @@ export default function UsersPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-muted/5bg-card">
+                    <tr key={user.id} className="hover:bg-muted/50">
                       <td className="py-3 px-4">
                         <UserAvatar 
                           user={user} 
@@ -820,16 +820,16 @@ export default function UsersPage() {
                           showName 
                           showRole={false}
                           showStatus
-                          className="min-w-bg-card"
+                          className="min-w-0"
                         />
                       </td>
                       <td className="py-3 px-4 text-sm">{user.role || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
-{user.is_active ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-1bg-cardbg-card text-green-7bg-cardbg-card">Active</span>
+                        {user.is_active ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">Active</span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-1bg-cardbg-card text-red-7bg-cardbg-card">Inactive</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400">Inactive</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-sm">{formatDate(user.created_at)}</td>
@@ -859,7 +859,7 @@ export default function UsersPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-6bg-cardbg-card text-[13px]"
+                              className="text-destructive text-sm"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete User
@@ -881,7 +881,7 @@ export default function UsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-[13px] font-bold">Teams</CardTitle>
+                  <CardTitle className="text-lg font-bold">Teams</CardTitle>
                 </div>
                 <CardDescription className="text-sm">
                   Organize users into teams for better collaboration
@@ -889,7 +889,7 @@ export default function UsersPage() {
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-1bg-card px-5 rounded-lg shadow-[bg-card_8px_18px_rgba(1bg-card6,92,255,bg-card.35)]">
+                  <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Team
                   </Button>
@@ -979,22 +979,22 @@ export default function UsersPage() {
                 return (
                   <Card
                     key={team.id}
-                    className="border-bg-card bg-gradient-to-br from-card via-card to-muted/3bg-card dark:from-card dark:via-card dark:to-muted/1bg-card shadow-lg hover:shadow-xl transition-all duration-3bg-cardbg-card hover:-translate-y-1"
+                    className="border bg-gradient-to-br from-card via-card to-muted/30 dark:from-card dark:via-card dark:to-muted/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-3 mb-4">
-                        <div className="flex-shrink-bg-card w-12 h-12 rounded-xl bg-gradient-to-br from-blue-5bg-cardbg-card via-indigo-5bg-cardbg-card to-purple-5bg-cardbg-card dark:from-blue-4bg-cardbg-card dark:via-indigo-4bg-cardbg-card dark:to-purple-4bg-cardbg-card flex items-center justify-center shadow-lg">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 flex items-center justify-center shadow-lg">
                           <Users className="h-6 w-6 text-white" />
                         </div>
-                        <div className="flex-1 min-w-bg-card">
-                          <h3 className="font-bold text-foreground text-[13px] mb-1">{team.name}</h3>
-                          <p className="text-[1bg-cardpx] text-muted-foreground mb-2 line-clamp-2">{team.description || 'No description provided'}</p>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-foreground text-base mb-1">{team.name}</h3>
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{team.description || 'No description provided'}</p>
                           <div className="flex items-center gap-2 mb-3">
-                            <Badge variant="outline" className="text-[8px] px-2 py-bg-card.5 bg-accent/5bg-card border-accent">
+                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-accent/50 border-accent">
                               {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
                             </Badge>
                             {team.department && (
-                              <Badge variant="outline" className="text-[8px] px-2 py-bg-card.5 bg-muted/5bg-card border-muted">
+                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-muted/50 border-muted">
                                 {team.department}
                               </Badge>
                             )}
@@ -1002,7 +1002,7 @@ export default function UsersPage() {
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-bg-card text-muted-foreground hover:text-foreground hover:bg-accent/5bg-card">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -1028,15 +1028,15 @@ export default function UsersPage() {
 
                       {/* Team Lead */}
                       {leadUser && (
-                        <div className="flex items-center gap-2 mb-4 p-2 bg-accent/3bg-card dark:bg-accent/2bg-card rounded-lg">
+                        <div className="flex items-center gap-2 mb-4 p-2 bg-accent/30 dark:bg-accent/20 rounded-lg">
                           <UserAvatar 
                             user={leadUser}
                             size="sm"
                             showStatus
                           />
-                          <div className="min-w-bg-card">
+                          <div className="min-w-0">
                             <p className="text-[9px] text-muted-foreground">Team Lead</p>
-                            <p className="font-medium text-[1bg-cardpx] text-foreground truncate">
+                            <p className="font-medium text-xs text-foreground truncate">
                               {leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email}
                             </p>
                           </div>
@@ -1044,21 +1044,21 @@ export default function UsersPage() {
                       )}
 
                       {/* Team Members */}
-                      {teamMembers.length > bg-card ? (
+                      {teamMembers.length > 0 ? (
                         <div className="space-y-2">
                           <p className="text-[9px] text-muted-foreground font-medium">Team Members</p>
                           <div className="flex -space-x-2">
-                            {teamMembers.slice(bg-card, 6).map((member: any, index: number) => (
+                            {teamMembers.slice(0, 6).map((member: any, index: number) => (
                               <UserAvatar 
                                 key={member.user?.id || index}
                                 user={member.user}
                                 size="sm"
-                                className="ring-2 ring-background hover:z-1bg-card hover:scale-11bg-card transition-transform"
+                                className="ring-2 ring-background hover:z-10 hover:scale-110 transition-transform"
                                 showStatus
                               />
                             ))}
                             {teamMembers.length > 6 && (
-                              <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted dark:bg-muted/7bg-card flex items-center justify-center text-[7px] font-bold text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                              <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted dark:bg-muted/70 flex items-center justify-center text-[7px] font-bold text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                                 +{teamMembers.length - 6}
                               </div>
                             )}
@@ -1299,15 +1299,15 @@ export default function UsersPage() {
                   Add
                 </Button>
               </div>
-              <div className="space-y-2 max-h-6bg-card overflow-y-auto">
+              <div className="space-y-2 max-h-60 overflow-y-auto">
                 {departments.map((dept) => (
-<div key={dept} className="flex items-center justify-between p-2 bg-gray-5bg-card dark:bg-gray-9bg-cardbg-card/4bg-card rounded">
-                    <span className="text-[13px]">{dept}</span>
+                  <div key={dept} className="flex items-center justify-between p-2 bg-muted rounded">
+                    <span className="text-sm">{dept}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteDepartment(dept)}
-                      className="text-red-6bg-cardbg-card text-[13px]"
+                      className="text-destructive text-sm"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1373,7 +1373,7 @@ export default function UsersPage() {
 
         {/* Team Members Management Modal */}
         <Dialog open={showManageMembers} onOpenChange={setShowManageMembers}>
-          <DialogContent className="max-w-4xl max-h-[8bg-cardvh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="text-[13px] font-semibold">
                 Manage Team Members - {selectedTeamForMembers?.name}
@@ -1387,7 +1387,7 @@ export default function UsersPage() {
               {/* Add Member Section */}
               <div className="border-b pb-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-[13px] font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || bg-card})</h3>
+                  <h3 className="text-sm font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || 0})</h3>
                   <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="text-[12px]">
@@ -1464,9 +1464,9 @@ export default function UsersPage() {
 
               {/* Current Members List */}
               <div className="space-y-2">
-                {(selectedTeamForMembers as any)?.team_members?.length === bg-card ? (
+                {(selectedTeamForMembers as any)?.team_members?.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Users className="mx-auto h-12 w-12 mb-2 opacity-5bg-card" />
+                    <Users className="mx-auto h-12 w-12 mb-2 opacity-50" />
                     <p className="text-[13px]">No team members yet</p>
                     <p className="text-[12px] mt-1">Add members to get started</p>
                   </div>
@@ -1475,10 +1475,10 @@ export default function UsersPage() {
                     {((selectedTeamForMembers as any)?.team_members || []).map((member: any) => (
                       <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <div className="h-8 w-8 bg-gray-2bg-cardbg-card rounded-full flex items-center justify-center">
-                            <span className="text-[1bg-cardpx] font-semibold text-gray-7bg-cardbg-card">
-                              {member.user.display_name?.split(' ').map((n: string) => n[bg-card]).join('') || 
-                               member.user.email.substring(bg-card, 2).toUpperCase()}
+                          <div className="h-8 w-8 bg-muted rounded-full flex items-center justify-center">
+                            <span className="text-xs font-semibold text-muted-foreground">
+                              {member.user.display_name?.split(' ').map((n: string) => n[0]).join('') || 
+                               member.user.email.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
                           <div>
@@ -1506,7 +1506,7 @@ export default function UsersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveMemberFromTeam(member.user.id)}
-                            className="h-7 w-7 p-bg-card text-red-6bg-cardbg-card hover:bg-red-5bg-card"
+                            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

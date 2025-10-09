@@ -10,7 +10,7 @@ export function ModeToggle() {
   return (
     <div className="flex items-center space-x-2">
       <span className="text-sm text-slate-600">Mode:</span>
-      <div className="flex items-center rounded-lg border bg-card p-1">
+      <div className="flex items-center rounded-lg border 0 p-1">
         <Button
           variant={isEmployeeMode ? "default" : "ghost"}
           size="sm"

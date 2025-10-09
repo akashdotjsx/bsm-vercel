@@ -280,7 +280,7 @@ export default function LandingPage() {
                   className="h-6 w-auto"
                 />
               ) : (
-                <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+                <div className="h-6 w-24 bg-muted dark:bg-gray-700 animate-pulse rounded" />
               )}
               <Badge variant="secondary" className="text-[12px]">
                 BSM

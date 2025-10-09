@@ -178,7 +178,7 @@ export default function CategoryServicesPage() {
             </Button>
             <div>
               <h1 className="text-[13px] font-semibold tracking-tight">{categoryName}</h1>
-              <p className="text-sm text-gray-500">Manage services in this category</p>
+              <p className="text-sm text-muted-foreground">Manage services in this category</p>
             </div>
           </div>
           <Button onClick={() => setShowAddService(true)}>
@@ -188,7 +188,7 @@ export default function CategoryServicesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-white shadow-sm">
+          <Card className="0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 bg-green-500 rounded-full"></div>
@@ -199,7 +199,7 @@ export default function CategoryServicesPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm">
+          <Card className="0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
@@ -210,7 +210,7 @@ export default function CategoryServicesPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm">
+          <Card className="0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
@@ -223,7 +223,7 @@ export default function CategoryServicesPage() {
           </Card>
         </div>
 
-        <Card className="bg-white shadow-sm">
+        <Card className="0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-[11px] font-semibold">Services</CardTitle>
             <CardDescription>All services in the {categoryName} category</CardDescription>
@@ -231,7 +231,7 @@ export default function CategoryServicesPage() {
           <CardContent>
             <div className="space-y-4">
               {services.map((service) => (
-                <div key={service.id} className="p-4 bg-gray-50 rounded-lg">
+                <div key={service.id} className="p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
@@ -248,8 +248,8 @@ export default function CategoryServicesPage() {
                           {service.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
+                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <User className="h-3 w-3" />
                           <span>Owner: {service.owner}</span>

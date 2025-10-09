@@ -191,7 +191,7 @@ export default function TestGraphQLPage() {
               </div>
 
               <div className="relative pt-4">
-                <div className="overflow-hidden h-4 text-xs flex rounded bg-gray-200">
+                <div className="overflow-hidden h-4 text-xs flex rounded bg-muted">
                   <div 
                     style={{ width: `${(graphqlTime / restTime) * 100}%` }}
                     className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all"

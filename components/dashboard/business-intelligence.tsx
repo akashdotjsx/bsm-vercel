@@ -719,10 +719,10 @@ export function BusinessIntelligence() {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-8 bg-muted rounded w-1/4 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-32 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -770,7 +770,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.businessImpact.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.businessImpact.change}%</span>
                 <span className="ml-1">vs last quarter</span>
               </div>
@@ -796,7 +796,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.operationalEfficiency.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.operationalEfficiency.change}%</span>
                 <span className="ml-1">efficiency gain</span>
               </div>
@@ -822,7 +822,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.customerSatisfaction.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.customerSatisfaction.change}%</span>
                 <span className="ml-1">satisfaction score</span>
               </div>
@@ -848,7 +848,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.costSavings.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.costSavings.change}%</span>
                 <span className="ml-1">annual savings</span>
               </div>
@@ -874,7 +874,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.riskMitigation.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.riskMitigation.change}%</span>
                 <span className="ml-1">risk coverage</span>
               </div>
@@ -900,7 +900,7 @@ export function BusinessIntelligence() {
             </div>
             <div className="mt-4">
               <div className="text-[13px] font-bold">{dashboardData?.executiveKpis.serviceAvailability.value}</div>
-              <div className="flex items-center text-[10px] text-gray-600 mt-1">
+              <div className="flex items-center text-[10px] text-muted-foreground mt-1">
                 <span className="text-green-600">+{dashboardData?.executiveKpis.serviceAvailability.change}%</span>
                 <span className="ml-1">uptime</span>
               </div>
@@ -916,7 +916,7 @@ export function BusinessIntelligence() {
               <Building2 className="mr-2 h-4 w-4" />
               Department Performance
             </CardTitle>
-            <p className="text-[10px] text-gray-600">Efficiency metrics by department</p>
+            <p className="text-[10px] text-muted-foreground">Efficiency metrics by department</p>
           </CardHeader>
           <CardContent className="pt-4">
             <div
@@ -934,7 +934,7 @@ export function BusinessIntelligence() {
               <Target className="mr-2 h-4 w-4" />
               Service Delivery Performance
             </CardTitle>
-            <p className="text-[10px] text-gray-600">Performance vs SLA targets</p>
+            <p className="text-[10px] text-muted-foreground">Performance vs SLA targets</p>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="h-64 cursor-pointer" onClick={() => handleChartClick("service-delivery", "All Services")}>
@@ -951,7 +951,7 @@ export function BusinessIntelligence() {
               <BarChart3 className="mr-2 h-4 w-4" />
               Financial Impact Trends
             </CardTitle>
-            <p className="text-[10px] text-gray-600">Cost savings and ROI progression</p>
+            <p className="text-[10px] text-muted-foreground">Cost savings and ROI progression</p>
           </CardHeader>
           <CardContent className="pt-4">
             <div
@@ -969,7 +969,7 @@ export function BusinessIntelligence() {
               <AlertTriangle className="mr-2 h-4 w-4" />
               Risk Distribution
             </CardTitle>
-            <p className="text-[10px] text-gray-600">Risk levels across all categories</p>
+            <p className="text-[10px] text-muted-foreground">Risk levels across all categories</p>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="h-64 cursor-pointer" onClick={() => handleChartClick("risk-analysis", "Risk Analysis")}>
@@ -985,22 +985,22 @@ export function BusinessIntelligence() {
               <Users className="mr-2 h-4 w-4" />
               Customer Success Metrics
             </CardTitle>
-            <p className="text-[10px] text-gray-600">Key customer satisfaction indicators</p>
+            <p className="text-[10px] text-muted-foreground">Key customer satisfaction indicators</p>
         </CardHeader>
         <CardContent className="pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {dashboardData?.customerMetrics.map((metric, index) => (
               <div
                 key={index}
-                className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                className="p-4 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
                 onClick={() => handleChartClick("customer-metrics", metric.metric)}
               >
-                <div className="text-[11px] font-medium text-gray-700 mb-2">{metric.metric}</div>
-                <div className="text-[13px] font-bold text-gray-900 mb-1">
+                <div className="text-[11px] font-medium text-foreground mb-2">{metric.metric}</div>
+                <div className="text-[13px] font-bold text-foreground mb-1">
                   {metric.current}
                   {metric.metric.includes("Time") ? "%" : metric.metric.includes("Quality") ? "/5" : "%"}
                 </div>
-                <div className="text-[10px] text-gray-600">
+                <div className="text-[10px] text-muted-foreground">
                   Target: {metric.target}
                   {metric.metric.includes("Time") ? "%" : metric.metric.includes("Quality") ? "/5" : "%"}
                 </div>

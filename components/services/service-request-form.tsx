@@ -131,7 +131,7 @@ export function ServiceRequestForm({ open, onOpenChange, service, onSubmit }: Se
                 <DialogTitle className="text-[11px] font-semibold">
                   Request Service: {service.name}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-gray-600">
+                <DialogDescription className="text-sm text-muted-foreground">
                   {service.category_name} • SLA: {getSLAText()}
                 </DialogDescription>
               </div>
@@ -147,24 +147,24 @@ export function ServiceRequestForm({ open, onOpenChange, service, onSubmit }: Se
           </div>
         </DialogHeader>
 
-        <div className="space-y-1 text-sm text-gray-600 mb-6">
+        <div className="space-y-1 text-sm text-muted-foreground mb-6">
           {service.description}
         </div>
 
         {/* Service Information */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+        <div className="bg-muted/50 p-4 rounded-lg mb-6">
           <h3 className="font-medium text-sm mb-3">Service Information</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Category:</span>
+              <span className="text-muted-foreground">Category:</span>
               <span className="ml-2 font-medium">{service.category_name}</span>
             </div>
             <div>
-              <span className="text-gray-600">Expected SLA:</span>
+              <span className="text-muted-foreground">Expected SLA:</span>
               <span className="ml-2 font-medium">{getSLAText()}</span>
             </div>
             <div className="col-span-1">
-              <span className="text-gray-600">Popularity:</span>
+              <span className="text-muted-foreground">Popularity:</span>
               <div className="inline-flex items-center ml-2">
                 {Array.from({ length: getPopularityStars() }).map((_, i) => (
                   <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />

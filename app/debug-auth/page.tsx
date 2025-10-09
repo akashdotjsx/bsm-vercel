@@ -28,28 +28,28 @@ export default function AuthDebugPage() {
       <h1 className="text-[13px] font-bold mb-6">Auth Debug Information</h1>
       
       <div className="space-y-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">User</h2>
-          <pre className="text-sm overflow-auto bg-white p-2 rounded">
+          <pre className="text-sm overflow-auto 0 p-2 rounded">
             {JSON.stringify(user, null, 2)}
           </pre>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">Profile</h2>
-          <pre className="text-sm overflow-auto bg-white p-2 rounded">
+          <pre className="text-sm overflow-auto 0 p-2 rounded">
             {JSON.stringify(profile, null, 2)}
           </pre>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">Organization</h2>
-          <pre className="text-sm overflow-auto bg-white p-2 rounded">
+          <pre className="text-sm overflow-auto 0 p-2 rounded">
             {JSON.stringify(organization, null, 2)}
           </pre>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">Role Checks</h2>
           <div className="space-y-2 text-sm">
             <div>Loading: {loading ? 'true' : 'false'}</div>

@@ -38,8 +38,8 @@ export function ProtectedLayout({
         fallback={
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
-              <h1 className="text-[13px] font-bold text-gray-900 mb-4">Access Denied</h1>
-              <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
+              <h1 className="text-[13px] font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
               <Link href="/dashboard" className="text-blue-600 hover:underline">Return to Dashboard</Link>
             </div>
           </div>

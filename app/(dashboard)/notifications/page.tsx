@@ -30,16 +30,16 @@ export default function NotificationsPage() {
   } = useNotifications()
 
   const getNotificationColor = (type: string, priority: string) => {
-    if (priority === "high") return "text-red-6bg-cardbg-card dark:text-red-4bg-cardbg-card"
-    if (priority === "medium") return "text-orange-6bg-cardbg-card dark:text-orange-4bg-cardbg-card"
-    return "text-gray-6bg-cardbg-card dark:text-gray-4bg-cardbg-card"
+    if (priority === "high") return "text-red-600 dark:text-red-400"
+    if (priority === "medium") return "text-orange-600 dark:text-orange-400"
+    return "text-muted-foreground"
   }
 
   const getPriorityBadge = (priority: string) => {
     const colors = {
-      high: "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card dark:bg-red-9bg-cardbg-card dark:text-red-2bg-cardbg-card",
-      medium: "bg-orange-1bg-cardbg-card text-orange-8bg-cardbg-card dark:bg-orange-9bg-cardbg-card dark:text-orange-2bg-cardbg-card",
-      low: "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card dark:bg-gray-8bg-cardbg-card dark:text-gray-2bg-cardbg-card",
+      high: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      medium: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+      low: "bg-muted text-foreground dark:bg-gray-800/30 dark:text-muted-foreground",
     }
     return colors[priority as keyof typeof colors] || colors.low
   }
@@ -50,13 +50,13 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[13px] font-semibold text-gray-9bg-cardbg-card dark:text-white">Notifications</h1>
-            <p className="text-[1bg-cardpx] text-gray-6bg-cardbg-card dark:text-gray-4bg-cardbg-card mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Notifications</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Stay updated with system alerts, ticket updates, and workflow notifications
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="text-[1bg-cardpx]">
+            <Badge variant="secondary" className="text-sm">
               {unreadCount} unread
             </Badge>
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
@@ -69,12 +69,12 @@ export default function NotificationsPage() {
         </div>
 
         {/* Notification Filters */}
-        <div className="flex items-center gap-2 pb-4 border-b border-gray-1bg-cardbg-card dark:border-gray-8bg-cardbg-card">
+        <div className="flex items-center gap-2 pb-4 border-b border-border">
           <Button
             variant={currentFilter === "all" ? "default" : "ghost"}
             size="sm"
             onClick={() => setFilter("all")}
-            className="text-[11px]"
+            className="text-sm"
           >
             All ({getCountByType("all")})
           </Button>
@@ -82,7 +82,7 @@ export default function NotificationsPage() {
             variant={currentFilter === "unread" ? "default" : "ghost"}
             size="sm"
             onClick={() => setFilter("unread")}
-            className="text-[11px]"
+            className="text-sm"
           >
             Unread ({unreadCount})
           </Button>
@@ -90,7 +90,7 @@ export default function NotificationsPage() {
             variant={currentFilter === "tickets" ? "default" : "ghost"}
             size="sm"
             onClick={() => setFilter("tickets")}
-            className="text-[11px]"
+            className="text-sm"
           >
             Tickets ({getCountByType("tickets")})
           </Button>
@@ -98,7 +98,7 @@ export default function NotificationsPage() {
             variant={currentFilter === "workflows" ? "default" : "ghost"}
             size="sm"
             onClick={() => setFilter("workflows")}
-            className="text-[11px]"
+            className="text-sm"
           >
             Workflows ({getCountByType("workflows")})
           </Button>
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
             variant={currentFilter === "system" ? "default" : "ghost"}
             size="sm"
             onClick={() => setFilter("system")}
-            className="text-[11px]"
+            className="text-sm"
           >
             System ({getCountByType("system")})
           </Button>
@@ -119,16 +119,16 @@ export default function NotificationsPage() {
             return (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg border transition-colors hover:bg-gray-5bg-card dark:hover:bg-gray-8bg-cardbg-card ${
+                className={`p-4 rounded-lg border transition-colors hover:bg-muted/50 ${
                   notification.read
-                    ? "bg-white dark:bg-gray-9bg-cardbg-card border-gray-1bg-cardbg-card dark:border-gray-8bg-cardbg-card"
-                    : "bg-blue-5bg-card dark:bg-blue-95bg-card border-blue-2bg-cardbg-card dark:border-blue-8bg-cardbg-card"
+                    ? "0 dark:bg-gray-900 border-border"
+                    : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={`p-2 rounded-full ${
-                      notification.read ? "bg-gray-1bg-cardbg-card dark:bg-gray-8bg-cardbg-card" : "bg-blue-1bg-cardbg-card dark:bg-blue-9bg-cardbg-card"
+                      notification.read ? "bg-muted" : "bg-blue-100 dark:bg-blue-900/30"
                     }`}
                   >
                     <IconComponent
@@ -136,27 +136,27 @@ export default function NotificationsPage() {
                     />
                   </div>
 
-                  <div className="flex-1 min-w-bg-card">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <h3
-                        className={`text-[11px] font-medium ${
-                          notification.read ? "text-gray-9bg-cardbg-card dark:text-gray-1bg-cardbg-card" : "text-gray-9bg-cardbg-card dark:text-white"
+                        className={`text-sm font-medium ${
+                          notification.read ? "text-foreground" : "text-foreground"
                         }`}
                       >
                         {notification.title}
                       </h3>
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[1bg-cardpx] ${getPriorityBadge(notification.priority)}`}>
+                        <Badge className={`text-sm ${getPriorityBadge(notification.priority)}`}>
                           {notification.priority}
                         </Badge>
-                        {!notification.read && <div className="w-2 h-2 bg-blue-6bg-cardbg-card rounded-full"></div>}
+                        {!notification.read && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
                       </div>
                     </div>
 
-                    <p className="text-[1bg-cardpx] text-gray-6bg-cardbg-card dark:text-gray-4bg-cardbg-card mb-2">{notification.message}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-[1bg-cardpx] text-gray-5bg-cardbg-card dark:text-gray-5bg-cardbg-card">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {notification.time}
                       </div>
@@ -166,7 +166,7 @@ export default function NotificationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-[11px] h-6 px-2"
+                            className="text-sm h-6 px-2"
                             onClick={() => markAsRead(notification.id)}
                           >
                             Mark as read
@@ -175,7 +175,7 @@ export default function NotificationsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-[11px] h-6 px-2"
+                          className="text-sm h-6 px-2"
                           onClick={() => clearNotification(notification.id)}
                         >
                           Clear

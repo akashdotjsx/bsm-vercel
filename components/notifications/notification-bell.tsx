@@ -68,14 +68,14 @@ export function NotificationBell() {
   const getNotificationColor = (type: string, priority: string) => {
     if (priority === "high") return "text-red-600 dark:text-red-400"
     if (priority === "medium") return "text-orange-600 dark:text-orange-400"
-    return "text-gray-600 dark:text-gray-400"
+    return "text-muted-foreground dark:text-muted-foreground"
   }
 
   const getPriorityBadge = (priority: string) => {
     const colors = {
       high: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
       medium: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+      low: "bg-muted text-foreground dark:bg-gray-800 dark:text-gray-200",
     }
     return colors[priority as keyof typeof colors] || colors.low
   }

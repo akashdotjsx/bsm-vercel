@@ -86,8 +86,8 @@ export default function SetPassword() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8 space-y-6">
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <div className="max-w-md w-full 0 shadow-md rounded-lg p-8 space-y-6">
           <div className="text-center mb-8">
             <Skeleton className="h-7 w-48 mx-auto mb-4" />
             <Skeleton className="h-4 w-full" />
@@ -110,18 +110,18 @@ export default function SetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted/50">
+      <div className="max-w-md w-full 0 shadow-md rounded-lg p-8">
         <div className="text-center mb-8">
-          <h2 className="text-[13px] font-bold text-gray-900">Set Your Password</h2>
-          <p className="text-gray-600 mt-2">
+          <h2 className="text-[13px] font-bold text-foreground">Set Your Password</h2>
+          <p className="text-muted-foreground mt-2">
             Welcome, {user.email}! Please set a secure password to complete your account setup.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
               New Password
             </label>
             <input
@@ -129,7 +129,7 @@ export default function SetPassword() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your password"
               required
               minLength={8}
@@ -137,7 +137,7 @@ export default function SetPassword() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
               Confirm Password
             </label>
             <input
@@ -145,7 +145,7 @@ export default function SetPassword() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Confirm your password"
               required
               minLength={8}
@@ -158,7 +158,7 @@ export default function SetPassword() {
             </div>
           )}
 
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             <p>Password requirements:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
               <li>At least 8 characters long</li>

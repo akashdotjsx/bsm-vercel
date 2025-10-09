@@ -130,7 +130,7 @@ const getPriorityColor = (priority: string) => {
     case "low":
       return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+      return "bg-muted text-foreground dark:bg-gray-900/20 dark:text-muted-foreground"
   }
 }
 
@@ -147,7 +147,7 @@ const getStatusColor = (status: string) => {
     case "resolved":
       return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+      return "bg-muted text-foreground dark:bg-gray-900/20 dark:text-muted-foreground"
   }
 }
 
@@ -169,7 +169,7 @@ const formatDate = (dateString: string) => {
 }
 
 const getDaysRemainingColor = (days: number) => {
-  if (days < 0) return "text-gray-500"
+  if (days < 0) return "text-muted-foreground"
   if (days === 0) return "text-red-600"
   if (days === 1) return "text-orange-600"
   return "text-green-600"

@@ -26,6 +26,12 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { 
+  useApproveServiceRequest, 
+  useRejectServiceRequest, 
+  useUpdateServiceRequestStatus, 
+  useAssignServiceRequest 
+} from "@/hooks/use-services-assets-gql"
 
 interface ServiceRequest {
   id: string
@@ -75,11 +81,11 @@ const statusConfig = {
   in_progress: { label: "In Progress", color: "bg-purple-100 text-purple-800", icon: RefreshCw },
   completed: { label: "Completed", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
   rejected: { label: "Rejected", color: "bg-red-100 text-red-800", icon: XCircle },
-  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-800", icon: XCircle }
+  cancelled: { label: "Cancelled", color: "bg-muted text-foreground", icon: XCircle }
 }
 
 const priorityConfig = {
-  low: { label: "Low", color: "bg-gray-100 text-gray-800" },
+  low: { label: "Low", color: "bg-muted text-foreground" },
   medium: { label: "Medium", color: "bg-blue-100 text-blue-800" },
   high: { label: "High", color: "bg-orange-100 text-orange-800" },
   critical: { label: "Critical", color: "bg-red-100 text-red-800" }
@@ -93,6 +99,12 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
   const [newPriority, setNewPriority] = useState("")
   const [comment, setComment] = useState("")
   const [assigneeEmail, setAssigneeEmail] = useState("")
+  
+  // GraphQL mutations
+  const approveServiceRequest = useApproveServiceRequest()
+  const rejectServiceRequest = useRejectServiceRequest()
+  const updateServiceRequestStatus = useUpdateServiceRequestStatus()
+  const assignServiceRequest = useAssignServiceRequest()
 
   if (!request) return null
 
@@ -129,21 +141,16 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
   const handleApprove = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/service-requests/${request.id}/approve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment })
+      await approveServiceRequest.mutateAsync({
+        requestId: request.id,
+        comment
       })
-
-      if (response.ok) {
-        toast.success('Service request approved successfully')
-        setComment("")
-        onUpdate()
-        onOpenChange(false)
-      } else {
-        toast.error('Failed to approve request')
-      }
+      toast.success('Service request approved successfully')
+      setComment("")
+      onUpdate()
+      onOpenChange(false)
     } catch (error) {
+      console.error('Failed to approve request:', error)
       toast.error('Failed to approve request')
     } finally {
       setLoading(false)
@@ -153,21 +160,16 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
   const handleReject = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/service-requests/${request.id}/reject`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment })
+      await rejectServiceRequest.mutateAsync({
+        requestId: request.id,
+        comment
       })
-
-      if (response.ok) {
-        toast.success('Service request rejected')
-        setComment("")
-        onUpdate()
-        onOpenChange(false)
-      } else {
-        toast.error('Failed to reject request')
-      }
+      toast.success('Service request rejected')
+      setComment("")
+      onUpdate()
+      onOpenChange(false)
     } catch (error) {
+      console.error('Failed to reject request:', error)
       toast.error('Failed to reject request')
     } finally {
       setLoading(false)
@@ -179,21 +181,17 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
     
     try {
       setLoading(true)
-      const response = await fetch(`/api/service-requests/${request.id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, comment })
+      await updateServiceRequestStatus.mutateAsync({
+        requestId: request.id,
+        status: newStatus,
+        comment
       })
-
-      if (response.ok) {
-        toast.success('Status updated successfully')
-        setComment("")
-        setNewStatus("")
-        onUpdate()
-      } else {
-        toast.error('Failed to update status')
-      }
+      toast.success('Status updated successfully')
+      setComment("")
+      setNewStatus("")
+      onUpdate()
     } catch (error) {
+      console.error('Failed to update status:', error)
       toast.error('Failed to update status')
     } finally {
       setLoading(false)
@@ -205,21 +203,17 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
     
     try {
       setLoading(true)
-      const response = await fetch(`/api/service-requests/${request.id}/assign`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assigneeEmail, comment })
+      await assignServiceRequest.mutateAsync({
+        requestId: request.id,
+        assigneeEmail,
+        comment
       })
-
-      if (response.ok) {
-        toast.success('Request assigned successfully')
-        setAssigneeEmail("")
-        setComment("")
-        onUpdate()
-      } else {
-        toast.error('Failed to assign request')
-      }
+      toast.success('Request assigned successfully')
+      setAssigneeEmail("")
+      setComment("")
+      onUpdate()
     } catch (error) {
+      console.error('Failed to assign request:', error)
       toast.error('Failed to assign request')
     } finally {
       setLoading(false)
@@ -236,7 +230,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 {request.title}
               </DialogTitle>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-gray-600">#{request.request_number}</span>
+                <span className="text-sm text-muted-foreground">#{request.request_number}</span>
                 {getStatusBadge(request.status)}
                 {getPriorityBadge(request.priority)}
               </div>
@@ -253,7 +247,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "details"
                     ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Request Details
@@ -264,7 +258,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === "actions"
                       ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Actions
@@ -280,13 +274,13 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4 text-gray-600" />
+                      <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-sm">Requester</span>
                     </div>
                     <p className="text-sm">{request.requester.first_name} {request.requester.last_name}</p>
-                    <p className="text-xs text-gray-600">{request.requester.email}</p>
+                    <p className="text-xs text-muted-foreground">{request.requester.email}</p>
                     {request.requester.department && (
-                      <p className="text-xs text-gray-600">{request.requester.department}</p>
+                      <p className="text-xs text-muted-foreground">{request.requester.department}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -294,12 +288,12 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-gray-600" />
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-sm">Timeline</span>
                     </div>
                     <p className="text-sm">Created: {formatDate(request.created_at)}</p>
                     {request.estimated_delivery_date && (
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         Due: {formatDate(request.estimated_delivery_date)}
                       </p>
                     )}
@@ -309,11 +303,11 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Building className="h-4 w-4 text-gray-600" />
+                      <Building className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-sm">Service</span>
                     </div>
                     <p className="text-sm">{request.service.name}</p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       SLA: {request.service.estimated_delivery_days} days
                     </p>
                   </CardContent>
@@ -328,20 +322,20 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-medium text-sm mb-2">Description</h4>
-                    <p className="text-sm text-gray-700">{request.description}</p>
+                    <p className="text-sm text-foreground">{request.description}</p>
                   </div>
                   
                   {request.business_justification && (
                     <div>
                       <h4 className="font-medium text-sm mb-2">Business Justification</h4>
-                      <p className="text-sm text-gray-700">{request.business_justification}</p>
+                      <p className="text-sm text-foreground">{request.business_justification}</p>
                     </div>
                   )}
 
                   {request.form_data?.additionalRequirements && (
                     <div>
                       <h4 className="font-medium text-sm mb-2">Additional Requirements</h4>
-                      <p className="text-sm text-gray-700">{request.form_data.additionalRequirements}</p>
+                      <p className="text-sm text-foreground">{request.form_data.additionalRequirements}</p>
                     </div>
                   )}
 
@@ -350,22 +344,22 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Priority:</span>
-                      <p className="text-gray-600">{request.priority}</p>
+                      <p className="text-muted-foreground">{request.priority}</p>
                     </div>
                     <div>
                       <span className="font-medium">Urgency:</span>
-                      <p className="text-gray-600">{request.urgency}</p>
+                      <p className="text-muted-foreground">{request.urgency}</p>
                     </div>
                     {request.cost_center && (
                       <div>
                         <span className="font-medium">Cost Center:</span>
-                        <p className="text-gray-600">{request.cost_center}</p>
+                        <p className="text-muted-foreground">{request.cost_center}</p>
                       </div>
                     )}
                     {request.form_data?.department && (
                       <div>
                         <span className="font-medium">Department:</span>
-                        <p className="text-gray-600">{request.form_data.department}</p>
+                        <p className="text-muted-foreground">{request.form_data.department}</p>
                       </div>
                     )}
                   </div>
@@ -381,7 +375,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                   <CardContent className="space-y-3">
                     {request.assignee && (
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-600" />
+                        <Users className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-sm">Assigned to:</span>
                         <span className="text-sm">
                           {request.assignee.first_name} {request.assignee.last_name} ({request.assignee.email})
@@ -390,7 +384,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
                     )}
                     {request.approver && (
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-gray-600" />
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium text-sm">Approver:</span>
                         <span className="text-sm">
                           {request.approver.first_name} {request.approver.last_name} ({request.approver.email})

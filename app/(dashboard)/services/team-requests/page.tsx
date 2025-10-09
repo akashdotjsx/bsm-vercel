@@ -54,7 +54,7 @@ const statusColors: Record<string, string> = {
   in_progress: "bg-purple-100 text-purple-800",
   completed: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-800",
+  cancelled: "bg-muted text-foreground",
 }
 
 export default function TeamRequestsPage() {
@@ -110,7 +110,7 @@ export default function TeamRequestsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by title, requester, number" className="pl-10" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -129,10 +129,10 @@ export default function TeamRequestsPage() {
         <div className="space-y-3">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="animate-pulse"><CardContent className="p-6"><div className="h-4 bg-gray-200 rounded w-3/4" /></CardContent></Card>
+              <Card key={i} className="animate-pulse"><CardContent className="p-6"><div className="h-4 bg-muted rounded w-3/4" /></CardContent></Card>
             ))
           ) : filtered.length === 0 ? (
-            <Card><CardContent className="p-8 text-center text-gray-600">No team requests found</CardContent></Card>
+            <Card><CardContent className="p-8 text-center text-muted-foreground">No team requests found</CardContent></Card>
           ) : (
             filtered.map((r) => (
               <Card key={r.id} className="hover:shadow-sm transition-shadow">
@@ -144,7 +144,7 @@ export default function TeamRequestsPage() {
                         <Badge className={`${statusColors[r.status] || statusColors.pending}`}>{r.status.replace('_',' ')}</Badge>
                         <Badge variant="outline">{r.priority}</Badge>
                       </div>
-                      <div className="text-sm text-gray-600 flex items-center gap-2">
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
                         <span>#{r.request_number}</span>
                         <span>•</span>
                         <span>{r.service.name}</span>

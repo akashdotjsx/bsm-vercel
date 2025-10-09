@@ -607,6 +607,114 @@ export async function updateServiceRequestGQL(id: string, updates: any): Promise
   return response.updateservice_requestsCollection.records[0]
 }
 
+// Service Request Actions - Approve/Reject/Assign/UpdateStatus
+export async function approveServiceRequestGQL(id: string, comment?: string): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation ApproveServiceRequest($id: UUID!, $set: service_requestsUpdateInput!) {
+      updateservice_requestsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          status
+          approval_status
+          approved_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const updates: any = {
+    status: 'approved',
+    approval_status: 'approved',
+    approved_at: new Date().toISOString(),
+  }
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_requestsCollection.records[0]
+}
+
+export async function rejectServiceRequestGQL(id: string, comment?: string): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation RejectServiceRequest($id: UUID!, $set: service_requestsUpdateInput!) {
+      updateservice_requestsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          status
+          approval_status
+          rejected_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const updates: any = {
+    status: 'rejected',
+    approval_status: 'rejected',
+    rejected_at: new Date().toISOString(),
+  }
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_requestsCollection.records[0]
+}
+
+export async function assignServiceRequestGQL(id: string, assigneeId: string, comment?: string): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation AssignServiceRequest($id: UUID!, $set: service_requestsUpdateInput!) {
+      updateservice_requestsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          assignee_id
+          status
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const updates: any = {
+    assignee_id: assigneeId,
+    status: 'in_progress',
+  }
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_requestsCollection.records[0]
+}
+
+export async function updateServiceRequestStatusGQL(id: string, status: string, comment?: string): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateServiceRequestStatus($id: UUID!, $set: service_requestsUpdateInput!) {
+      updateservice_requestsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          status
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const updates: any = {
+    status,
+  }
+  
+  // Set completion timestamp if status is completed
+  if (status === 'completed') {
+    updates.completed_at = new Date().toISOString()
+  }
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_requestsCollection.records[0]
+}
+
 // ============================================
 // MUTATIONS - ASSETS
 // ============================================

@@ -162,13 +162,13 @@ export default function Page() {
 
 
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden">
+    <div className="flex h-screen w-full 0 overflow-hidden">
       {/* Main Container - 7/12 width like reference */}
-      <div className="flex lg:w-7/12 w-full overflow-hidden bg-white justify-center items-center">
+      <div className="flex lg:w-7/12 w-full overflow-hidden 0 justify-center items-center">
         <div className="w-full max-w-[440px] mx-auto">
           {/* Login Form Card */}
           <div 
-            className="bg-white border border-[#EAECF0] rounded-xl p-6 flex flex-col gap-4 relative"
+            className="0 border border-[#EAECF0] rounded-xl p-6 flex flex-col gap-4 relative"
             style={{ 
               boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1)',
               width: '440px',
@@ -189,14 +189,14 @@ export default function Page() {
                 </Link>
               )}
               {!mounted && (
-                <div className="h-8 w-48 bg-gray-200 animate-pulse rounded mx-auto" />
+                <div className="h-8 w-48 bg-muted animate-pulse rounded mx-auto" />
               )}
             </div>
 
             {/* Header */}
             <div className="text-center">
               <h1 
-                className="text-[13px] font-medium text-gray-900" 
+                className="text-[13px] font-medium text-foreground" 
                 style={{ 
                   fontSize: '20px', 
                   fontWeight: 500,
@@ -261,7 +261,7 @@ export default function Page() {
             {/* Divider */}
             <div className="relative flex items-center justify-center">
               <div className="flex-grow border-t border-[#EAECF0]"></div>
-              <span className="px-4 text-sm text-[#667085] bg-white" style={{ fontSize: '14px', fontWeight: 400, lineHeight: '20px' }}>Or</span>
+              <span className="px-4 text-sm text-[#667085] 0" style={{ fontSize: '14px', fontWeight: 400, lineHeight: '20px' }}>Or</span>
               <div className="flex-grow border-t border-[#EAECF0]"></div>
             </div>
 
@@ -290,7 +290,7 @@ export default function Page() {
                     autoFocus
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200"
+                    className="w-full 0 text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200"
                     style={{
                       fontSize: '13px',
                       fontWeight: 400,
@@ -326,7 +326,7 @@ export default function Page() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200 pr-8"
+                    className="w-full 0 text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200 pr-8"
                     style={{
                       fontSize: '14px',
                       fontWeight: 400,
@@ -340,7 +340,7 @@ export default function Page() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

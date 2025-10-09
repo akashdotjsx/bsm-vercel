@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createGraphQLClient } from '@/lib/graphql/client'
-import { Ticket } from '@/lib/api/tickets'
+import { Ticket } from '@/lib/types/tickets'
 import { gql } from 'graphql-request'
 
 interface TicketsParams {

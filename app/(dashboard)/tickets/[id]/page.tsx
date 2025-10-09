@@ -182,9 +182,9 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
       case "resolved":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
       case "closed":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
     }
   }
 
@@ -201,7 +201,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
       case "low":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
     }
   }
 
@@ -218,7 +218,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
       case "change":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
     }
   }
 

@@ -439,7 +439,7 @@ className="pl-10 h-10 text-13"
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array.from({ length: 9 }).map((_, i) => (
-              <div key={`kb-skel-${i}`} className="bg-card rounded-lg border p-6">
+              <div key={`kb-skel-${i}`} className="0 rounded-lg border p-6">
                 <div className="flex items-start space-x-4">
                   <Skeleton className="w-12 h-12 rounded-lg" />
                   <div className="flex-1 space-y-3">
@@ -465,7 +465,7 @@ className="pl-10 h-10 text-13"
               return (
                 <div
                   key={category.name}
-                  className="bg-card rounded-lg border p-6 hover:shadow-md transition-all duration-200 group hover:border-primary/20 relative"
+                  className="0 rounded-lg border p-6 hover:shadow-md transition-all duration-200 group hover:border-primary/20 relative"
                 >
                 <div className="absolute top-4 right-4">
                   <DropdownMenu>
@@ -515,7 +515,7 @@ className="pl-10 h-10 text-13"
 <div className="mb-3 p-2 rounded-md bg-[var(--primary)]/5 border border-[var(--primary)]/10">
                       <div className="flex items-start gap-2">
 <Sparkles className="h-3 w-3 text-[var(--primary)] mt-0.5 shrink-0" />
-                        <p className="text-[10px] text-gray-700 leading-relaxed">{category.aiInsights}</p>
+                        <p className="text-[10px] text-foreground leading-relaxed">{category.aiInsights}</p>
                       </div>
                     </div>
 
@@ -651,12 +651,12 @@ className="pl-10 h-10 text-13"
           </DialogHeader>
 
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-lg">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/50 rounded-lg">
               {chatMessages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[80%] p-3 rounded-lg ${
-                      message.role === "user" ? "bg-[#7073fc] text-white" : "bg-white border shadow-sm"
+                      message.role === "user" ? "bg-[#7073fc] text-white" : "0 border shadow-sm"
                     }`}
                   >
                     <div className="flex items-start gap-2">
@@ -669,7 +669,7 @@ className="pl-10 h-10 text-13"
 
               {isGenerating && (
                 <div className="flex justify-start">
-                  <div className="bg-white border shadow-sm p-3 rounded-lg">
+                  <div className="0 border shadow-sm p-3 rounded-lg">
                     <div className="flex items-center gap-2">
 <Loader2 className="h-4 w-4 text-[var(--primary)] animate-spin" />
                       <p className="text-[13px] text-muted-foreground">AI is thinking...</p>
@@ -776,7 +776,7 @@ className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-13 text-[var(--
 
             <div className="grid gap-2">
               <Label className="text-[13px]">Article Preview</Label>
-              <div className="max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-lg border">
+              <div className="max-h-60 overflow-y-auto p-3 bg-muted/50 rounded-lg border">
                 <pre className="whitespace-pre-wrap text-[13px] leading-relaxed">{articleForm.content}</pre>
               </div>
             </div>

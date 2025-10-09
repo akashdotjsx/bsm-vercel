@@ -26,7 +26,7 @@ export default function LiveChatPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-card rounded-lg border p-4">
+          <div className="0 rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="h-4 w-4 text-green-600" />
@@ -38,7 +38,7 @@ export default function LiveChatPage() {
             </div>
           </div>
 
-          <div className="bg-card rounded-lg border p-4">
+          <div className="0 rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <MessageSquare className="h-4 w-4 text-blue-600" />
@@ -50,7 +50,7 @@ export default function LiveChatPage() {
             </div>
           </div>
 
-          <div className="bg-card rounded-lg border p-4">
+          <div className="0 rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <Clock className="h-4 w-4 text-orange-600" />
@@ -62,7 +62,7 @@ export default function LiveChatPage() {
             </div>
           </div>
 
-          <div className="bg-card rounded-lg border p-4">
+          <div className="0 rounded-lg border p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Zap className="h-4 w-4 text-purple-600" />
@@ -76,7 +76,7 @@ export default function LiveChatPage() {
         </div>
 
         {/* Chat Interface Placeholder */}
-        <div className="bg-card rounded-lg border p-8 text-center">
+        <div className="0 rounded-lg border p-8 text-center">
           <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-[11px] font-medium mb-2">Live Chat Interface</h3>
           <p className="text-muted-foreground mb-4">

@@ -22,14 +22,14 @@ export default function DetailedReportPage() {
     const cat = searchParams.get("category") || "general"
     const itemName = searchParams.get("item") || "Unknown"
 
-    console.log("[vbg-card] Detailed report page: Loading data for", { title, cat, itemName })
+    console.log("[v] Detailed report page: Loading data for", { title, cat, itemName })
 
     setReportTitle(`${itemName} - Detailed Report`)
     setCategory(cat)
 
     // Generate mock detailed data
-    const mockDetailedData = Array.from({ length: Math.floor(Math.random() * 5bg-card) + 2bg-card }, (_, index) => ({
-      id: `TKT-${String(index + 1).padStart(4, "bg-card")}`,
+    const mockDetailedData = Array.from({ length: Math.floor(Math.random() * 5) + 2 }, (_, index) => ({
+      id: `TKT-${String(index + 1).padStart(4, "0")}`,
       title: `Sample ticket for ${itemName} - ${index + 1}`,
       department: cat === "department" ? itemName : ["IT", "HR", "Finance", "Legal"][Math.floor(Math.random() * 4)],
       type: cat === "type" ? itemName : ["Incident", "Request", "Change", "Problem"][Math.floor(Math.random() * 4)],
@@ -40,17 +40,17 @@ export default function DetailedReportPage() {
         Math.floor(Math.random() * 5)
       ],
       account: ["Acme Corp", "TechStart Inc", "Global Solutions", "Innovation Labs"][Math.floor(Math.random() * 4)],
-      created: format(subDays(new Date(), Math.floor(Math.random() * 3bg-card)), "yyyy-MM-dd HH:mm"),
+      created: format(subDays(new Date(), Math.floor(Math.random() * 30)), "yyyy-MM-dd HH:mm"),
       updated: format(subDays(new Date(), Math.floor(Math.random() * 7)), "yyyy-MM-dd HH:mm"),
-      resolutionTime: `${Math.floor(Math.random() * 48) + 1}h ${Math.floor(Math.random() * 6bg-card)}m`,
-      slaStatus: Math.random() > bg-card.2 ? "Met" : "Breached",
+      resolutionTime: `${Math.floor(Math.random() * 48) + 1}h ${Math.floor(Math.random() * 60)}m`,
+      slaStatus: Math.random() > 0.2 ? "Met" : "Breached",
       customerRating: Math.floor(Math.random() * 5) + 1,
     }))
 
     setReportData(mockDetailedData)
     setLoading(false)
 
-    console.log("[vbg-card] Detailed report page: Data loaded successfully", mockDetailedData.length, "records")
+    console.log("[v] Detailed report page: Data loaded successfully", mockDetailedData.length, "records")
   }, []) // Empty dependency array to run only once on mount
 
   const exportReport = (format: "csv" | "pdf") => {
@@ -95,7 +95,7 @@ export default function DetailedReportPage() {
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
       const link = document.createElement("a")
       link.href = URL.createObjectURL(blob)
-      link.download = `${reportTitle.replace(/[^a-zbg-card-9]/gi, "_")}_detailed_report.csv`
+      link.download = `${reportTitle.replace(/[^a-z0-9]/gi, "_")}_detailed_report.csv`
       link.click()
     } else if (format === "pdf") {
       const htmlContent = `
@@ -104,17 +104,17 @@ export default function DetailedReportPage() {
         <head>
           <title>${reportTitle}</title>
           <style>
-            body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; margin: 2bg-cardpx; font-size: 12px; }
-            h1 { color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 1bg-cardpx; }
-            table { width: 1bg-cardbg-card%; border-collapse: collapse; margin-top: 2bg-cardpx; }
+            body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; margin: 20px; font-size: 12px; }
+            h1 { color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f8f9fa; font-weight: bold; }
-            .badge { padding: 2px 6px; border-radius: 4px; font-size: 1bg-cardpx; }
+            .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; }
             .status-open { background-color: #fee2e2; color: #dc2626; }
             .status-progress { background-color: #dbeafe; color: #2563eb; }
-            .status-resolved { background-color: #fbg-cardfdf4; color: #16a34a; }
+            .status-resolved { background-color: #f0fdf4; color: #16a34a; }
             .priority-critical { background-color: #fee2e2; color: #dc2626; }
-            .priority-high { background-color: #fef3c7; color: #d977bg-card6; }
+            .priority-high { background-color: #fef3c7; color: #d97706; }
           </style>
         </head>
         <body>
@@ -159,7 +159,7 @@ export default function DetailedReportPage() {
       const blob = new Blob([htmlContent], { type: "text/html" })
       const link = document.createElement("a")
       link.href = URL.createObjectURL(blob)
-      link.download = `${reportTitle.replace(/[^a-zbg-card-9]/gi, "_")}_detailed_report.html`
+      link.download = `${reportTitle.replace(/[^a-z0-9]/gi, "_")}_detailed_report.html`
       link.click()
     }
   }
@@ -173,7 +173,7 @@ export default function DetailedReportPage() {
             <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
             <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
             <div className="space-y-4">
-              {[...Array(1bg-card)].map((_, i) => (
+              {[...Array(10)].map((_, i) => (
                 <div key={i} className="h-12 bg-muted rounded"></div>
               ))}
             </div>
@@ -196,18 +196,18 @@ export default function DetailedReportPage() {
                 Back to Analytics
               </Button>
               <div>
-                <h1 className="text-[13px] font-semibold text-gray-9bg-cardbg-card text-[13px] leading-relaxed">{reportTitle}</h1>
-                <p className="text-[13px] text-gray-6bg-cardbg-card mt-1 leading-relaxed">
+                <h1 className="text-2xl font-semibold text-foreground">{reportTitle}</h1>
+                <p className="text-sm text-muted-foreground mt-1">
                   Detailed breakdown of tickets • {reportData.length} records
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => exportReport("csv")} className="text-[13px]">
+              <Button size="sm" variant="outline" onClick={() => exportReport("csv")}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
-              <Button size="sm" variant="outline" onClick={() => exportReport("pdf")} className="text-[13px]">
+              <Button size="sm" variant="outline" onClick={() => exportReport("pdf")}>
                 <Download className="h-4 w-4 mr-2" />
                 Export PDF
               </Button>
@@ -215,64 +215,64 @@ export default function DetailedReportPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-card p-4 rounded-lg shadow-sm">
-              <div className="text-[13px] text-gray-6bg-cardbg-card leading-relaxed">Total Tickets</div>
-              <div className="text-[13px] font-semibold text-gray-9bg-cardbg-card">{reportData.length}</div>
+            <div className="0 p-4 rounded-lg shadow-sm">
+              <div className="text-sm text-muted-foreground">Total Tickets</div>
+              <div className="text-2xl font-semibold text-foreground">{reportData.length}</div>
             </div>
-            <div className="bg-card p-4 rounded-lg shadow-sm">
-              <div className="text-[13px] text-gray-6bg-cardbg-card leading-relaxed">Open Tickets</div>
-              <div className="text-[13px] font-semibold text-red-6bg-cardbg-card">
+            <div className="0 p-4 rounded-lg shadow-sm">
+              <div className="text-sm text-muted-foreground">Open Tickets</div>
+              <div className="text-2xl font-semibold text-destructive">
                 {reportData.filter((t) => t.status === "Open").length}
               </div>
             </div>
-            <div className="bg-card p-4 rounded-lg shadow-sm">
-              <div className="text-[13px] text-gray-6bg-cardbg-card leading-relaxed">Resolved Tickets</div>
-              <div className="text-[13px] font-semibold text-green-6bg-cardbg-card">
+            <div className="0 p-4 rounded-lg shadow-sm">
+              <div className="text-sm text-muted-foreground">Resolved Tickets</div>
+              <div className="text-2xl font-semibold text-green-600 dark:text-green-400">
                 {reportData.filter((t) => t.status === "Resolved").length}
               </div>
             </div>
-            <div className="bg-card p-4 rounded-lg shadow-sm">
-              <div className="text-[13px] text-gray-6bg-cardbg-card leading-relaxed">SLA Compliance</div>
-              <div className="text-[13px] font-semibold text-blue-6bg-cardbg-card">
-                {Math.round((reportData.filter((t) => t.slaStatus === "Met").length / reportData.length) * 1bg-cardbg-card)}%
+            <div className="0 p-4 rounded-lg shadow-sm">
+              <div className="text-sm text-muted-foreground">SLA Compliance</div>
+              <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                {Math.round((reportData.filter((t) => t.slaStatus === "Met").length / reportData.length) * 100)}%
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm">
+        <div className="0 rounded-lg shadow-sm">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-[13px] leading-relaxed">Ticket ID</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Title</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Department</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Type</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Status</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Priority</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Assignee</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Account</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Created</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Resolution Time</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">SLA Status</TableHead>
-                  <TableHead className="text-[13px] leading-relaxed">Rating</TableHead>
+                  <TableHead>Ticket ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Assignee</TableHead>
+                  <TableHead>Account</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Resolution Time</TableHead>
+                  <TableHead>SLA Status</TableHead>
+                  <TableHead>Rating</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {reportData.map((ticket, index) => (
-                  <TableRow key={index} className="hover:bg-gray-5bg-card">
-                    <TableCell className="font-medium text-[13px] leading-relaxed">{ticket.id}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed max-w-xs truncate" title={ticket.title}>
+                  <TableRow key={index} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">{ticket.id}</TableCell>
+                    <TableCell className="max-w-xs truncate" title={ticket.title}>
                       {ticket.title}
                     </TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.department}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">
-                      <Badge variant="outline" className="text-[13px]">
+                    <TableCell>{ticket.department}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
                         {ticket.type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">
+                    <TableCell>
                       <Badge
                         variant={
                           ticket.status === "Open"
@@ -283,12 +283,11 @@ export default function DetailedReportPage() {
                                 ? "secondary"
                                 : "outline"
                         }
-                        className="text-[13px]"
                       >
                         {ticket.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">
+                    <TableCell>
                       <Badge
                         variant={
                           ticket.priority === "Critical" || ticket.priority === "High"
@@ -297,21 +296,20 @@ export default function DetailedReportPage() {
                               ? "default"
                               : "secondary"
                         }
-                        className="text-[13px]"
                       >
                         {ticket.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.assignee}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.account}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.created}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.resolutionTime}</TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">
-                      <Badge variant={ticket.slaStatus === "Met" ? "secondary" : "destructive"} className="text-[13px]">
+                    <TableCell>{ticket.assignee}</TableCell>
+                    <TableCell>{ticket.account}</TableCell>
+                    <TableCell>{ticket.created}</TableCell>
+                    <TableCell>{ticket.resolutionTime}</TableCell>
+                    <TableCell>
+                      <Badge variant={ticket.slaStatus === "Met" ? "secondary" : "destructive"}>
                         {ticket.slaStatus}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[13px] leading-relaxed">{ticket.customerRating}/5</TableCell>
+                    <TableCell>{ticket.customerRating}/5</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

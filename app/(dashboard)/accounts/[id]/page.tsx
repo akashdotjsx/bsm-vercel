@@ -39,10 +39,10 @@ const accountData = {
     supportChannel: "Email",
     contactPerson: "John Smith",
     email: "john.smith@acme.com",
-    address: "123 Business Ave, New York, NY 1bg-cardbg-cardbg-card1",
+    address: "123 Business Ave, New York, NY 10001",
     status: "Active",
-    createdAt: "2bg-card24-bg-card1-15",
-    lastActivity: "2bg-card25-bg-card1-15T1bg-card:3bg-card:bg-cardbg-cardZ",
+    createdAt: "2024-01-15",
+    lastActivity: "2025-01-15T10:30:00Z",
     domain: "acme.com",
     tags: ["Enterprise", "Priority"],
   },
@@ -56,8 +56,8 @@ const accountData = {
     email: "sarah@techflow.ca",
     address: "456 Tech Street, Toronto, ON M5V 3A8",
     status: "Active",
-    createdAt: "2bg-card24-bg-card1-1bg-card",
-    lastActivity: "2bg-card25-bg-card1-14T15:45:bg-cardbg-cardZ",
+    createdAt: "2024-01-10",
+    lastActivity: "2025-01-14T15:45:00Z",
     domain: "techflow.ca",
     tags: ["SMB", "Tech"],
   },
@@ -71,8 +71,8 @@ const accountData = {
     email: "m.brown@globaldynamics.co.uk",
     address: "789 Corporate Blvd, London, EC1A 1BB",
     status: "Inactive",
-    createdAt: "2bg-card24-bg-card1-bg-card5",
-    lastActivity: "2bg-card24-12-2bg-cardTbg-card9:15:bg-cardbg-cardZ",
+    createdAt: "2024-01-05",
+    lastActivity: "2024-12-20T09:15:00Z",
     domain: "globaldynamics.co.uk",
     tags: ["Enterprise"],
   },
@@ -84,7 +84,7 @@ const sampleTickets = [
     title: "Login Issues",
     priority: "High",
     status: "Open",
-    createdAt: "2bg-card25-bg-card1-1bg-card",
+    createdAt: "2025-01-10",
     requester: "John Smith",
     assignee: "Support Team",
   },
@@ -93,7 +93,7 @@ const sampleTickets = [
     title: "Feature Request - Dashboard",
     priority: "Medium",
     status: "In Progress",
-    createdAt: "2bg-card25-bg-card1-bg-card8",
+    createdAt: "2025-01-08",
     requester: "John Smith",
     assignee: "Dev Team",
   },
@@ -105,14 +105,14 @@ const sampleTasks = [
     title: "Setup new user accounts",
     status: "Not Started",
     assignee: "John Smith",
-    dueDate: "2bg-card25-bg-card1-2bg-card",
+    dueDate: "2025-01-20",
   },
   {
     id: 2,
     title: "Configure SSO integration",
     status: "In Progress",
     assignee: "Tech Team",
-    dueDate: "2bg-card25-bg-card1-25",
+    dueDate: "2025-01-25",
   },
 ]
 
@@ -123,7 +123,7 @@ const sampleContacts = [
     email: "john.smith@acme.com",
     role: "IT Manager",
     department: "Information Technology",
-    phone: "+1-555-bg-card123",
+    phone: "+1-555-0123",
   },
   {
     id: 2,
@@ -131,7 +131,7 @@ const sampleContacts = [
     email: "jane.doe@acme.com",
     role: "Admin",
     department: "Administration",
-    phone: "+1-555-bg-card124",
+    phone: "+1-555-0124",
   },
 ]
 
@@ -141,31 +141,31 @@ const sampleActivity = [
     type: "ticket",
     action: "Ticket #1 created",
     user: "John Smith",
-    timestamp: "2bg-card25-bg-card1-1bg-cardT14:3bg-card:bg-cardbg-cardZ",
+    timestamp: "2025-01-10T14:30:00Z",
   },
   {
     id: 2,
     type: "account",
     action: "Account updated",
     user: "System",
-    timestamp: "2bg-card25-bg-card1-bg-card9T1bg-card:15:bg-cardbg-cardZ",
+    timestamp: "2025-01-09T10:15:00Z",
   },
 ]
 
 const sampleFiles = [
   {
     id: 1,
-    name: "Contract_2bg-card25.pdf",
+    name: "Contract_2025.pdf",
     size: "2.4 MB",
     uploadedBy: "John Smith",
-    uploadedAt: "2bg-card25-bg-card1-bg-card5",
+    uploadedAt: "2025-01-05",
   },
   {
     id: 2,
     name: "Requirements_Doc.docx",
     size: "1.8 MB",
     uploadedBy: "Jane Doe",
-    uploadedAt: "2bg-card25-bg-card1-bg-card3",
+    uploadedAt: "2025-01-03",
   },
 ]
 
@@ -191,19 +191,19 @@ const formatDateTime = (dateString: string) => {
 
 const getStatusChip = (status: string) => {
   const statusConfig = {
-    Active: { color: "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card", variant: "default" as const },
-    Inactive: { color: "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card", variant: "secondary" as const },
-    Open: { color: "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card", variant: "destructive" as const },
-    "In Progress": { color: "bg-blue-1bg-cardbg-card text-blue-8bg-cardbg-card", variant: "default" as const },
-    Closed: { color: "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card", variant: "default" as const },
-    "Not Started": { color: "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card", variant: "secondary" as const },
-    Completed: { color: "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card", variant: "default" as const },
+    Active: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", variant: "default" as const },
+    Inactive: { color: "bg-muted text-foreground dark:bg-gray-900/30 dark:text-muted-foreground", variant: "secondary" as const },
+    Open: { color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", variant: "destructive" as const },
+    "In Progress": { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", variant: "default" as const },
+    Closed: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", variant: "default" as const },
+    "Not Started": { color: "bg-muted text-foreground dark:bg-gray-900/30 dark:text-muted-foreground", variant: "secondary" as const },
+    Completed: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", variant: "default" as const },
   }
 
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Active
 
   return (
-    <Badge variant={config.variant} className={`text-[13px] ${config.color} hover:${config.color}`}>
+    <Badge variant={config.variant} className={`text-sm ${config.color} hover:${config.color}`}>
       {status}
     </Badge>
   )
@@ -211,15 +211,15 @@ const getStatusChip = (status: string) => {
 
 const getPriorityChip = (priority: string) => {
   const priorityConfig = {
-    High: { color: "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card", variant: "destructive" as const },
-    Medium: { color: "bg-yellow-1bg-cardbg-card text-yellow-8bg-cardbg-card", variant: "default" as const },
-    Low: { color: "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card", variant: "default" as const },
+    High: { color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", variant: "destructive" as const },
+    Medium: { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", variant: "default" as const },
+    Low: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", variant: "default" as const },
   }
 
   const config = priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.Medium
 
   return (
-    <Badge variant={config.variant} className={`text-[13px] ${config.color} hover:${config.color}`}>
+    <Badge variant={config.variant} className={`text-sm ${config.color} hover:${config.color}`}>
       {priority}
     </Badge>
   )
@@ -228,22 +228,22 @@ const getPriorityChip = (priority: string) => {
 const getInitials = (name: string) => {
   return name
     .split(" ")
-    .map((n) => n[bg-card])
+    .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(bg-card, 2)
+    .slice(0, 2)
 }
 
 const getChipColor = (name: string) => {
   const colors = [
-    "bg-red-5bg-cardbg-card",
-    "bg-blue-5bg-cardbg-card",
-    "bg-green-5bg-cardbg-card",
-    "bg-purple-5bg-cardbg-card",
-    "bg-orange-5bg-cardbg-card",
-    "bg-pink-5bg-cardbg-card",
-    "bg-indigo-5bg-cardbg-card",
-    "bg-teal-5bg-cardbg-card",
+    "bg-red-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-orange-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-teal-500",
   ]
   const index = name.length % colors.length
   return colors[index]
@@ -349,8 +349,8 @@ export default function AccountDetailPage() {
     return (
       <PageContent title="Account Not Found" description="The requested account could not be found">
         <div className="text-center py-12">
-          <h2 className="text-[13px] font-semibold mb-4">Account Not Found</h2>
-          <Button onClick={() => router.push("/accounts")} className="text-[13px]">
+          <h2 className="text-sm font-semibold mb-4">Account Not Found</h2>
+          <Button onClick={() => router.push("/accounts")} className="text-sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Accounts
           </Button>
@@ -373,34 +373,34 @@ export default function AccountDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/accounts")} className="text-[13px]">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/accounts")} className="text-sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Accounts
             </Button>
-            <div className="text-[13px] text-muted-foreground">/</div>
-            <h1 className="text-[13px] font-semibold">{account.name}</h1>
+            <div className="text-sm text-muted-foreground">/</div>
+            <h1 className="text-sm font-semibold">{account.name}</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+            <Button variant="outline" size="sm" className="text-sm bg-transparent">
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+                <Button variant="outline" size="sm" className="text-sm bg-transparent">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-[13px]">
+                <DropdownMenuItem className="text-sm">
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-[13px]">
+                <DropdownMenuItem className="text-sm">
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Account
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-[13px] text-red-6bg-cardbg-card">
+                <DropdownMenuItem className="text-sm text-destructive">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </DropdownMenuItem>
@@ -412,25 +412,25 @@ export default function AccountDetailPage() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview" className="text-[13px]">
+            <TabsTrigger value="overview" className="text-sm">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="tickets" className="text-[13px]">
+            <TabsTrigger value="tickets" className="text-sm">
               Tickets
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="text-[13px]">
+            <TabsTrigger value="tasks" className="text-sm">
               Tasks
             </TabsTrigger>
-            <TabsTrigger value="contacts" className="text-[13px]">
+            <TabsTrigger value="contacts" className="text-sm">
               Contacts
             </TabsTrigger>
-            <TabsTrigger value="activity" className="text-[13px]">
+            <TabsTrigger value="activity" className="text-sm">
               Activity
             </TabsTrigger>
-            <TabsTrigger value="files" className="text-[13px]">
+            <TabsTrigger value="files" className="text-sm">
               Files
             </TabsTrigger>
-            <TabsTrigger value="settings" className="text-[13px]">
+            <TabsTrigger value="settings" className="text-sm">
               Settings
             </TabsTrigger>
           </TabsList>
@@ -442,13 +442,13 @@ export default function AccountDetailPage() {
               <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-[13px]">Account Overview</CardTitle>
+                    <CardTitle className="text-sm">Account Overview</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Account Name</label>
-                        <p className="text-[13px] text-muted-foreground">{account.name}</p>
+                        <p className="text-sm text-muted-foreground">{account.name}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Account Owner</label>
@@ -458,22 +458,22 @@ export default function AccountDetailPage() {
                           >
                             {getInitials(account.contactPerson)}
                           </div>
-                          <span className="text-[13px] text-muted-foreground">{account.contactPerson}</span>
+                          <span className="text-sm text-muted-foreground">{account.contactPerson}</span>
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Domain</label>
-                        <p className="text-[13px] text-muted-foreground">{account.domain}</p>
+                        <p className="text-sm text-muted-foreground">{account.domain}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Tags</label>
                         <div className="flex space-x-1">
                           {account.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-[13px]">
+                            <Badge key={index} variant="outline" className="text-sm">
                               {tag}
                             </Badge>
                           ))}
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-[13px]">
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-sm">
                             <Plus className="h-3 w-3 mr-1" />
                             Add tag
                           </Button>
@@ -481,7 +481,7 @@ export default function AccountDetailPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Last Customer Activity</label>
-                        <p className="text-[13px] text-muted-foreground">{formatDateTime(account.lastActivity)}</p>
+                        <p className="text-sm text-muted-foreground">{formatDateTime(account.lastActivity)}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Status</label>
@@ -494,16 +494,16 @@ export default function AccountDetailPage() {
                 {/* Recent Activity */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-[13px]">Recent Activity</CardTitle>
+                    <CardTitle className="text-sm">Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {sampleActivity.map((activity) => (
                         <div key={activity.id} className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-blue-5bg-cardbg-card rounded-full mt-2"></div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                           <div className="flex-1">
-                            <p className="text-[13px] font-medium">{activity.action}</p>
-                            <p className="text-[13px] text-muted-foreground">
+                            <p className="text-sm font-medium">{activity.action}</p>
+                            <p className="text-sm text-muted-foreground">
                               by {activity.user} • {formatDateTime(activity.timestamp)}
                             </p>
                           </div>
@@ -519,24 +519,24 @@ export default function AccountDetailPage() {
                 {/* Quick Stats */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-[13px]">Quick Stats</CardTitle>
+                    <CardTitle className="text-sm">Quick Stats</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] text-muted-foreground">Open Tickets</span>
-                      <span className="text-[13px] font-medium">2</span>
+                      <span className="text-sm text-muted-foreground">Open Tickets</span>
+                      <span className="text-sm font-medium">2</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] text-muted-foreground">Active Tasks</span>
-                      <span className="text-[13px] font-medium">1</span>
+                      <span className="text-sm text-muted-foreground">Active Tasks</span>
+                      <span className="text-sm font-medium">1</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] text-muted-foreground">Total Contacts</span>
-                      <span className="text-[13px] font-medium">2</span>
+                      <span className="text-sm text-muted-foreground">Total Contacts</span>
+                      <span className="text-sm font-medium">2</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[13px] text-muted-foreground">Files Uploaded</span>
-                      <span className="text-[13px] font-medium">2</span>
+                      <span className="text-sm text-muted-foreground">Files Uploaded</span>
+                      <span className="text-sm font-medium">2</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -544,20 +544,20 @@ export default function AccountDetailPage() {
                 {/* Contact Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-[13px]">Contact Information</CardTitle>
+                    <CardTitle className="text-sm">Contact Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-[13px]">{account.email}</span>
+                      <span className="text-sm">{account.email}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-[13px]">{account.website}</span>
+                      <span className="text-sm">{account.website}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-[13px]">{account.address}</span>
+                      <span className="text-sm">{account.address}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -568,18 +568,18 @@ export default function AccountDetailPage() {
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-medium">Tickets</h3>
-              <Button size="sm" className="text-[13px]">
+              <h3 className="text-base font-medium">Tickets</h3>
+              <Button size="sm" className="text-sm">
                 <Plus className="mr-2 h-4 w-4" />
                 New Ticket
               </Button>
             </div>
             <Card>
-              <CardContent className="p-bg-card">
+              <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-gray-5bg-card border-b">
+                      <tr className="bg-muted/50 border-b">
                         <th className="text-left py-3 px-4 font-medium text-xs">ID</th>
                         <th className="text-left py-3 px-4 font-medium text-xs">Title</th>
                         <th className="text-left py-3 px-4 font-medium text-xs">Priority</th>
@@ -590,13 +590,13 @@ export default function AccountDetailPage() {
                     </thead>
                     <tbody>
                       {sampleTickets.map((ticket) => (
-                        <tr key={ticket.id} className="border-b hover:bg-gray-5bg-card">
-                          <td className="py-3 px-4 text-[13px]">#{ticket.id}</td>
-                          <td className="py-3 px-4 text-[13px] font-medium">{ticket.title}</td>
+                        <tr key={ticket.id} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4 text-sm">#{ticket.id}</td>
+                          <td className="py-3 px-4 text-sm font-medium">{ticket.title}</td>
                           <td className="py-3 px-4">{getPriorityChip(ticket.priority)}</td>
                           <td className="py-3 px-4">{getStatusChip(ticket.status)}</td>
-                          <td className="py-3 px-4 text-[13px]">{formatDate(ticket.createdAt)}</td>
-                          <td className="py-3 px-4 text-[13px]">{ticket.assignee}</td>
+                          <td className="py-3 px-4 text-sm">{formatDate(ticket.createdAt)}</td>
+                          <td className="py-3 px-4 text-sm">{ticket.assignee}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -609,8 +609,8 @@ export default function AccountDetailPage() {
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-medium">Tasks</h3>
-              <Button size="sm" className="text-[13px]">
+              <h3 className="text-base font-medium">Tasks</h3>
+              <Button size="sm" className="text-sm">
                 <Plus className="mr-2 h-4 w-4" />
                 New Task
               </Button>
@@ -618,15 +618,15 @@ export default function AccountDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[13px]">Not Started (1)</CardTitle>
+                  <CardTitle className="text-sm">Not Started (1)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {sampleTasks
                     .filter((task) => task.status === "Not Started")
                     .map((task) => (
                       <div key={task.id} className="p-3 border rounded-lg">
-                        <h4 className="text-[13px] font-medium">{task.title}</h4>
-                        <p className="text-[13px] text-muted-foreground">Due: {formatDate(task.dueDate)}</p>
+                        <h4 className="text-sm font-medium">{task.title}</h4>
+                        <p className="text-sm text-muted-foreground">Due: {formatDate(task.dueDate)}</p>
                         <div className="flex items-center space-x-2 mt-2">
                           <div
                             className={`w-5 h-5 ${getChipColor(task.assignee)} rounded-full flex items-center justify-center text-white text-xs`}
@@ -640,15 +640,15 @@ export default function AccountDetailPage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[13px]">In Progress (1)</CardTitle>
+                  <CardTitle className="text-sm">In Progress (1)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {sampleTasks
                     .filter((task) => task.status === "In Progress")
                     .map((task) => (
                       <div key={task.id} className="p-3 border rounded-lg">
-                        <h4 className="text-[13px] font-medium">{task.title}</h4>
-                        <p className="text-[13px] text-muted-foreground">Due: {formatDate(task.dueDate)}</p>
+                        <h4 className="text-sm font-medium">{task.title}</h4>
+                        <p className="text-sm text-muted-foreground">Due: {formatDate(task.dueDate)}</p>
                         <div className="flex items-center space-x-2 mt-2">
                           <div
                             className={`w-5 h-5 ${getChipColor(task.assignee)} rounded-full flex items-center justify-center text-white text-xs`}
@@ -662,10 +662,10 @@ export default function AccountDetailPage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[13px]">Completed (bg-card)</CardTitle>
+                  <CardTitle className="text-sm">Completed (0)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[13px] text-muted-foreground">No completed tasks</p>
+                  <p className="text-sm text-muted-foreground">No completed tasks</p>
                 </CardContent>
               </Card>
             </div>
@@ -678,33 +678,33 @@ export default function AccountDetailPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-[11px] font-semibold">Contacts</CardTitle>
-                      <CardDescription className="text-[13px] text-gray-6bg-cardbg-card">
+                      <CardTitle className="text-base font-semibold">Contacts</CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
                         Manage account contacts and their information
                       </CardDescription>
                     </div>
-                    <Button onClick={handleAddContact} className="text-[13px]">
+                    <Button onClick={handleAddContact} className="text-sm">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Contact
                     </Button>
                   </div>
                   <div className="mt-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-4bg-cardbg-card" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Search contacts..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-1bg-card text-[13px]"
+                        className="pl-10 text-sm"
                       />
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-bg-card">
+                <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className="bg-gray-5bg-card border-b">
+                        <tr className="bg-muted/50 border-b">
                           <th className="text-left py-3 px-4 font-medium text-xs border-r">Name</th>
                           <th className="text-left py-3 px-4 font-medium text-xs border-r">Email</th>
                           <th className="text-left py-3 px-4 font-medium text-xs border-r">Role</th>
@@ -715,7 +715,7 @@ export default function AccountDetailPage() {
                       </thead>
                       <tbody>
                         {filteredContacts.map((contact) => (
-                          <tr key={contact.id} className="border-b hover:bg-gray-5bg-card">
+                          <tr key={contact.id} className="border-b hover:bg-muted/50">
                             <td className="py-3 px-4 border-r">
                               <div className="flex items-center space-x-2">
                                 <div
@@ -724,27 +724,27 @@ export default function AccountDetailPage() {
                                 >
                                   {getInitials(contact.name)}
                                 </div>
-                                <span className="text-[13px] font-medium">{contact.name}</span>
+                                <span className="text-sm font-medium">{contact.name}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-[13px] border-r">{contact.email}</td>
-                            <td className="py-3 px-4 text-[13px] border-r">{contact.role}</td>
-                            <td className="py-3 px-4 text-[13px] border-r">{contact.department}</td>
-                            <td className="py-3 px-4 text-[13px] border-r">{contact.phone}</td>
+                            <td className="py-3 px-4 text-sm border-r">{contact.email}</td>
+                            <td className="py-3 px-4 text-sm border-r">{contact.role}</td>
+                            <td className="py-3 px-4 text-sm border-r">{contact.department}</td>
+                            <td className="py-3 px-4 text-sm border-r">{contact.phone}</td>
                             <td className="py-3 px-4">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem className="text-[13px]" onClick={() => handleEditContact(contact)}>
+                                  <DropdownMenuItem className="text-sm" onClick={() => handleEditContact(contact)}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Contact
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="text-[13px] text-red-6bg-cardbg-card"
+                                    className="text-sm text-destructive"
                                     onClick={() => handleDeleteContact(contact.id)}
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -755,9 +755,9 @@ export default function AccountDetailPage() {
                             </td>
                           </tr>
                         ))}
-                        {filteredContacts.length === bg-card && (
+                        {filteredContacts.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="py-8 text-center text-gray-5bg-cardbg-card text-[13px]">
+                            <td colSpan={6} className="py-8 text-center text-muted-foreground text-sm">
                               {searchTerm ? "No contacts found matching your search." : "No contacts added yet."}
                             </td>
                           </tr>
@@ -773,9 +773,9 @@ export default function AccountDetailPage() {
           {/* Activity Tab */}
           <TabsContent value="activity" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-medium">Activity Timeline</h3>
+              <h3 className="text-base font-medium">Activity Timeline</h3>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+                <Button variant="outline" size="sm" className="text-sm bg-transparent">
                   <Filter className="mr-2 h-4 w-4" />
                   Filter
                 </Button>
@@ -787,17 +787,17 @@ export default function AccountDetailPage() {
                   {sampleActivity.map((activity, index) => (
                     <div key={activity.id} className="flex items-start space-x-4">
                       <div className="flex flex-col items-center">
-                        <div className="w-3 h-3 bg-blue-5bg-cardbg-card rounded-full"></div>
-                        {index < sampleActivity.length - 1 && <div className="w-px h-12 bg-gray-2bg-cardbg-card mt-2"></div>}
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        {index < sampleActivity.length - 1 && <div className="w-px h-12 bg-muted mt-2"></div>}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="text-[13px] font-medium">{activity.action}</span>
-                          <Badge variant="outline" className="text-[13px]">
+                          <span className="text-sm font-medium">{activity.action}</span>
+                          <Badge variant="outline" className="text-sm">
                             {activity.type}
                           </Badge>
                         </div>
-                        <p className="text-[13px] text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           by {activity.user} • {formatDateTime(activity.timestamp)}
                         </p>
                       </div>
@@ -811,19 +811,19 @@ export default function AccountDetailPage() {
           {/* Files Tab */}
           <TabsContent value="files" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-medium">Files</h3>
-              <Button size="sm" className="text-[13px]">
+              <h3 className="text-base font-medium">Files</h3>
+              <Button size="sm" className="text-sm">
                 <Upload className="mr-2 h-4 w-4" />
                 Upload File
               </Button>
             </div>
             <Card>
               <CardContent className="p-6">
-                <div className="border-2 border-dashed border-gray-3bg-cardbg-card rounded-lg p-8 text-center mb-6">
-                  <Upload className="mx-auto h-12 w-12 text-gray-4bg-cardbg-card mb-4" />
-                  <p className="text-[13px] text-muted-foreground mb-2">Upload a file or drag and drop it here</p>
-                  <p className="text-[13px] text-muted-foreground">Max file size: 25 MB</p>
-                  <Button variant="outline" size="sm" className="mt-4 text-[13px] bg-transparent">
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center mb-6">
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground mb-2">Upload a file or drag and drop it here</p>
+                  <p className="text-sm text-muted-foreground">Max file size: 25 MB</p>
+                  <Button variant="outline" size="sm" className="mt-4 text-sm bg-transparent">
                     Choose File
                   </Button>
                 </div>
@@ -831,10 +831,10 @@ export default function AccountDetailPage() {
                   {sampleFiles.map((file) => (
                     <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <FileText className="h-8 w-8 text-blue-5bg-cardbg-card" />
+                        <FileText className="h-8 w-8 text-blue-500" />
                         <div>
-                          <p className="text-[13px] font-medium">{file.name}</p>
-                          <p className="text-[13px] text-muted-foreground">
+                          <p className="text-sm font-medium">{file.name}</p>
+                          <p className="text-sm text-muted-foreground">
                             {file.size} • Uploaded by {file.uploadedBy} on {formatDate(file.uploadedAt)}
                           </p>
                         </div>
@@ -856,18 +856,18 @@ export default function AccountDetailPage() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
-            <h3 className="text-[11px] font-medium">Account Settings</h3>
+            <h3 className="text-base font-medium">Account Settings</h3>
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[13px]">General Settings</CardTitle>
+                  <CardTitle className="text-sm">General Settings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Account Status</label>
                     <div className="flex items-center space-x-4">
                       {getStatusChip(account.status)}
-                      <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+                      <Button variant="outline" size="sm" className="text-sm bg-transparent">
                         Change Status
                       </Button>
                     </div>
@@ -877,11 +877,11 @@ export default function AccountDetailPage() {
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2">
                         <input type="checkbox" defaultChecked className="rounded" />
-                        <span className="text-[13px]">Email notifications for new tickets</span>
+                        <span className="text-sm">Email notifications for new tickets</span>
                       </label>
                       <label className="flex items-center space-x-2">
                         <input type="checkbox" defaultChecked className="rounded" />
-                        <span className="text-[13px]">SMS notifications for urgent issues</span>
+                        <span className="text-sm">SMS notifications for urgent issues</span>
                       </label>
                     </div>
                   </div>
@@ -890,24 +890,24 @@ export default function AccountDetailPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[13px] text-red-6bg-cardbg-card">Danger Zone</CardTitle>
+                  <CardTitle className="text-sm text-destructive">Danger Zone</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="text-sm font-medium mb-2">Disable Account</h4>
-                    <p className="text-[13px] text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       Disable account and remove from external channels to stop syncing conversations.
                     </p>
-                    <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
+                    <Button variant="outline" size="sm" className="text-sm bg-transparent">
                       Disable Account
                     </Button>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium mb-2">Delete Account</h4>
-                    <p className="text-[13px] text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       Permanently delete this account and all associated data. This action cannot be undone.
                     </p>
-                    <Button variant="destructive" size="sm" className="text-[13px]">
+                    <Button variant="destructive" size="sm" className="text-sm">
                       Delete Account
                     </Button>
                   </div>
@@ -919,11 +919,11 @@ export default function AccountDetailPage() {
 
         {/* Contact Management Tray */}
         {showContactTray && (
-          <div className="fixed inset-bg-card bg-black bg-opacity-5bg-card z-5bg-card flex items-center justify-end">
-            <div className="bg-white h-full w-96 shadow-xl overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-end">
+            <div className="0 h-full w-96 shadow-xl overflow-y-auto">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[11px] font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h3>
+                  <h3 className="text-base font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h3>
                   <Button variant="ghost" size="sm" onClick={handleCancelContact}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -932,7 +932,7 @@ export default function AccountDetailPage() {
 
               <div className="p-6 space-y-4">
                 <div>
-                  <Label htmlFor="name" className="text-[13px] font-medium">
+                  <Label htmlFor="name" className="text-sm font-medium">
                     Name *
                   </Label>
                   <Input
@@ -940,12 +940,12 @@ export default function AccountDetailPage() {
                     value={contactForm.name}
                     onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                     placeholder="Enter full name"
-                    className="mt-1 text-[13px]"
+                    className="mt-1 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className="text-[13px] font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium">
                     Email *
                   </Label>
                   <Input
@@ -954,38 +954,38 @@ export default function AccountDetailPage() {
                     value={contactForm.email}
                     onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
                     placeholder="Enter email address"
-                    className="mt-1 text-[13px]"
+                    className="mt-1 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="role" className="text-[13px] font-medium">
+                  <Label htmlFor="role" className="text-sm font-medium">
                     Role
                   </Label>
                   <Select
                     value={contactForm.role}
                     onValueChange={(value) => setContactForm({ ...contactForm, role: value })}
                   >
-                    <SelectTrigger className="mt-1 text-[13px]">
+                    <SelectTrigger className="mt-1 text-sm">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="IT Manager" className="text-[13px]">
+                      <SelectItem value="IT Manager" className="text-sm">
                         IT Manager
                       </SelectItem>
-                      <SelectItem value="Admin" className="text-[13px]">
+                      <SelectItem value="Admin" className="text-sm">
                         Admin
                       </SelectItem>
-                      <SelectItem value="Developer" className="text-[13px]">
+                      <SelectItem value="Developer" className="text-sm">
                         Developer
                       </SelectItem>
-                      <SelectItem value="Support" className="text-[13px]">
+                      <SelectItem value="Support" className="text-sm">
                         Support
                       </SelectItem>
-                      <SelectItem value="Manager" className="text-[13px]">
+                      <SelectItem value="Manager" className="text-sm">
                         Manager
                       </SelectItem>
-                      <SelectItem value="Director" className="text-[13px]">
+                      <SelectItem value="Director" className="text-sm">
                         Director
                       </SelectItem>
                     </SelectContent>
@@ -993,36 +993,36 @@ export default function AccountDetailPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="department" className="text-[13px] font-medium">
+                  <Label htmlFor="department" className="text-sm font-medium">
                     Department
                   </Label>
                   <Select
                     value={contactForm.department}
                     onValueChange={(value) => setContactForm({ ...contactForm, department: value })}
                   >
-                    <SelectTrigger className="mt-1 text-[13px]">
+                    <SelectTrigger className="mt-1 text-sm">
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Information Technology" className="text-[13px]">
+                      <SelectItem value="Information Technology" className="text-sm">
                         Information Technology
                       </SelectItem>
-                      <SelectItem value="Administration" className="text-[13px]">
+                      <SelectItem value="Administration" className="text-sm">
                         Administration
                       </SelectItem>
-                      <SelectItem value="Human Resources" className="text-[13px]">
+                      <SelectItem value="Human Resources" className="text-sm">
                         Human Resources
                       </SelectItem>
-                      <SelectItem value="Finance" className="text-[13px]">
+                      <SelectItem value="Finance" className="text-sm">
                         Finance
                       </SelectItem>
-                      <SelectItem value="Operations" className="text-[13px]">
+                      <SelectItem value="Operations" className="text-sm">
                         Operations
                       </SelectItem>
-                      <SelectItem value="Sales" className="text-[13px]">
+                      <SelectItem value="Sales" className="text-sm">
                         Sales
                       </SelectItem>
-                      <SelectItem value="Marketing" className="text-[13px]">
+                      <SelectItem value="Marketing" className="text-sm">
                         Marketing
                       </SelectItem>
                     </SelectContent>
@@ -1030,21 +1030,21 @@ export default function AccountDetailPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone" className="text-[13px] font-medium">
+                  <Label htmlFor="phone" className="text-sm font-medium">
                     Phone
                   </Label>
                   <div className="flex mt-1">
                     <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-32 text-[13px] rounded-r-none border-r-bg-card">
+                      <SelectTrigger className="w-32 text-sm rounded-r-none border-r-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {countryCodes.map((country) => (
-                          <SelectItem key={country.code} value={country.code} className="text-[13px]">
+                          <SelectItem key={country.code} value={country.code} className="text-sm">
                             <span className="flex items-center space-x-2">
                               <span>{country.flag}</span>
                               <span>{country.code}</span>
-                              <span className="text-gray-5bg-cardbg-card">({country.country})</span>
+                              <span className="text-muted-foreground">({country.country})</span>
                             </span>
                           </SelectItem>
                         ))}
@@ -1055,19 +1055,19 @@ export default function AccountDetailPage() {
                       value={contactForm.phone}
                       onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
                       placeholder="Enter phone number"
-                      className="text-[13px] rounded-l-none flex-1"
+                      className="text-sm rounded-l-none flex-1"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 border-t bg-gray-5bg-card flex justify-end space-x-3">
-                <Button variant="outline" onClick={handleCancelContact} className="text-[13px] bg-transparent">
+              <div className="p-6 border-t bg-muted/50 flex justify-end space-x-3">
+                <Button variant="outline" onClick={handleCancelContact} className="text-sm bg-transparent">
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSaveContact}
-                  className="text-[13px]"
+                  className="text-sm"
                   disabled={!contactForm.name || !contactForm.email}
                 >
                   {editingContact ? "Update Contact" : "Add Contact"}

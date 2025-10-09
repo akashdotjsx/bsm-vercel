@@ -289,7 +289,7 @@ export function TeamSelector({
                           <Check className="h-4 w-4 text-primary" />
                         ) : someMembersSelected ? (
                           <div className="h-4 w-4 rounded-full bg-amber-400 flex items-center justify-center">
-                            <div className="h-2 w-2 rounded-full bg-white" />
+                            <div className="h-2 w-2 rounded-full 0" />
                           </div>
                         ) : (
                           <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -340,7 +340,7 @@ export function TeamSelector({
                               user.role === 'admin' && "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
                               user.role === 'manager' && "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300", 
                               user.role === 'agent' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
-                              !['admin', 'manager', 'agent'].includes(user.role) && "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                              !['admin', 'manager', 'agent'].includes(user.role) && "bg-muted text-foreground dark:bg-gray-800 dark:text-gray-300"
                             )}
                           >
                             {user.role}

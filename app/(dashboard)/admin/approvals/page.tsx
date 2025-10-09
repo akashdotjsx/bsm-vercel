@@ -99,12 +99,12 @@ export default function ApprovalWorkflowsPage() {
                 },
                 { name: "Vendor Onboarding", steps: 3, approvers: "Procurement → Legal → Finance", status: "Draft" },
               ].map((workflow) => (
-                <div key={workflow.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={workflow.name} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-4">
-                    <CheckCircle className="h-5 w-5 text-gray-400" />
+                    <CheckCircle className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{workflow.name}</p>
-                      <p className="text-sm text-gray-500">{workflow.approvers}</p>
+                      <p className="text-sm text-muted-foreground">{workflow.approvers}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">

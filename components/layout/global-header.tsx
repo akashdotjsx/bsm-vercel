@@ -109,7 +109,7 @@ export function GlobalHeader() {
           </button>
         )}
         {!mounted && (
-          <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-gray-200 dark:bg-gray-700 animate-pulse rounded`} />
+          <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-muted dark:bg-gray-700 animate-pulse rounded`} />
         )}
       </div>
 
@@ -160,7 +160,7 @@ export function GlobalHeader() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50"
             >
               <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">

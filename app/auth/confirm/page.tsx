@@ -82,8 +82,8 @@ export default function AuthConfirm() {
   }, [router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted/50">
+      <div className="max-w-md w-full 0 shadow-md rounded-lg p-8">
         <div className="text-center">
           {status === 'loading' && (
             <>
@@ -100,13 +100,13 @@ export default function AuthConfirm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-[13px] font-semibold text-gray-900 mb-2">
+              <h2 className="text-[13px] font-semibold text-foreground mb-2">
                 Authentication Successful!
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {message}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Redirecting you now...
               </p>
             </>
@@ -119,13 +119,13 @@ export default function AuthConfirm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h2 className="text-[13px] font-semibold text-gray-900 mb-2">
+              <h2 className="text-[13px] font-semibold text-foreground mb-2">
                 Authentication Failed
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 {message}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Redirecting to error page...
               </p>
             </>

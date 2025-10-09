@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,7 +65,20 @@ export async function GET(request: NextRequest) {
     query = query.range(from, to)
 
     console.log('🔍 API Route - Executing query with params:', { page, limit, status, priority, type, assignee_id, search })
-    const { data: tickets, error, count } = await query
+    
+    // Cache the query for 60 seconds with tickets tag
+    const fetchTickets = unstable_cache(
+      async () => {
+        return await query
+      },
+      [`tickets-${organizationId || 'all'}-${page}-${status || 'all'}-${priority || 'all'}`],
+      {
+        revalidate: 60, // Cache for 1 minute
+        tags: [CACHE_TAGS.tickets],
+      }
+    )
+    
+    const { data: tickets, error, count } = await fetchTickets()
 
     console.log('📊 API Route - Query result:', { 
       ticketsCount: tickets?.length || 0, 

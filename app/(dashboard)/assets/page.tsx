@@ -124,7 +124,7 @@ export default function AssetManagementPage() {
   const { rules, loading: rulesLoading, runRule } = useDiscoveryRules(organizationId)
 
   const getStatusColor = (status: string | undefined | null) => {
-    if (!status) return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+    if (!status) return "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-300"
     switch (status.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
@@ -134,12 +134,12 @@ export default function AssetManagementPage() {
       case "retired":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-300"
     }
   }
 
   const getCriticalityColor = (criticality: string | undefined | null) => {
-    if (!criticality) return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+    if (!criticality) return "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-300"
     switch (criticality.toLowerCase()) {
       case "critical":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
@@ -150,7 +150,7 @@ export default function AssetManagementPage() {
       case "low":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-300"
     }
   }
 
@@ -301,7 +301,7 @@ export default function AssetManagementPage() {
           </div>
 
           {/* Assets Table */}
-          <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+          <div className="0 rounded-lg shadow-sm overflow-hidden">
             {assetsLoading ? (
               <table className="w-full">
                 <thead className="bg-muted/50">

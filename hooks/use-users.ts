@@ -1,7 +1,154 @@
 import { useState, useEffect } from 'react'
-import { userAPI } from '@/lib/api/users'
+// NOTE: This hook uses a mix of Supabase client and REST API calls
+// import { userAPI } from '@/lib/api/users' // DEPRECATED - API file deleted
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabase/client'
+
+// Recreate userAPI methods inline
+const userAPI = {
+  getUsers: async () => {
+    const supabase = createClient()
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organization:organizations(id, name),
+        manager:profiles!manager_id(id, display_name)
+      `)
+      .order('created_at', { ascending: false })
+    if (error) return []
+    return profiles || []
+  },
+  getTeams: async () => {
+    const supabase = createClient()
+    const { data: teams, error } = await supabase
+      .from('teams')
+      .select(`
+        *,
+        lead:profiles!lead_id(id, display_name),
+        organization:organizations(id, name),
+        team_members(
+          id,
+          role,
+          user:profiles(id, display_name, email)
+        )
+      `)
+      .order('name', { ascending: true })
+    if (error) return []
+    return teams || []
+  },
+  inviteUser: async (userData: any) => {
+    const response = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    })
+    if (!response.ok) throw new Error('Failed to invite user')
+    return response.json()
+  },
+  updateUser: async (userId: string, updates: any) => {
+    const response = await fetch(`/api/profiles/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    })
+    if (!response.ok) throw new Error('Failed to update user')
+    const result = await response.json()
+    return result.profile
+  },
+  deactivateUser: async (userId: string) => {
+    const response = await fetch(`/api/profiles/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: false })
+    })
+    if (!response.ok) throw new Error('Failed to deactivate user')
+    const result = await response.json()
+    return result.profile
+  },
+  reactivateUser: async (userId: string) => {
+    const response = await fetch(`/api/profiles/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: true })
+    })
+    if (!response.ok) throw new Error('Failed to reactivate user')
+    const result = await response.json()
+    return result.profile
+  },
+  resetUserPassword: async (email: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`
+    })
+    if (error) throw error
+    return { success: true }
+  },
+  createTeam: async (teamData: any) => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('teams')
+      .insert(teamData)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  updateTeam: async (teamId: string, updates: any) => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('teams')
+      .update(updates)
+      .eq('id', teamId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  deleteTeam: async (teamId: string) => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('teams')
+      .update({ is_active: false })
+      .eq('id', teamId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  addUserToTeam: async (teamId: string, userId: string, role: string = 'member') => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('team_members')
+      .insert({ team_id: teamId, user_id: userId, role })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  removeUserFromTeam: async (teamId: string, userId: string) => {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', teamId)
+      .eq('user_id', userId)
+    if (error) throw error
+    return { success: true }
+  },
+  updateTeamMemberRole: async (teamId: string, userId: string, role: string) => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('team_members')
+      .update({ role })
+      .eq('team_id', teamId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
 
 interface User {
   id: string

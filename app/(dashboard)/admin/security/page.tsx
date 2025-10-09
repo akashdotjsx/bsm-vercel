@@ -403,7 +403,7 @@ export default function SecurityAccessPage() {
           <CardContent>
             <div className="space-y-4">
               {providers.map((provider) => (
-                <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50">
+                <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                   <div className="flex items-center space-x-4">
                     <div className="text-[13px]">{provider.icon}</div>
                     <div>
@@ -413,7 +413,7 @@ export default function SecurityAccessPage() {
                           {provider.type}
                         </Badge>
                       </div>
-                      <p className="text-[13px] text-gray-500">
+                      <p className="text-[13px] text-muted-foreground">
                         {provider.users} users • Last sync: {provider.lastSync}
                       </p>
                     </div>
@@ -425,7 +425,7 @@ export default function SecurityAccessPage() {
                       ) : provider.status === "Configured" ? (
                         <Settings className="h-4 w-4 text-blue-500" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-gray-400" />
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
                       )}
                       <Badge
                         variant={
@@ -602,12 +602,12 @@ export default function SecurityAccessPage() {
           <CardContent>
             <div className="space-y-4">
               {roles.map((role) => (
-                <div key={role.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50">
+                <div key={role.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                   <div className="flex items-center space-x-4">
-                    <Shield className="h-5 w-5 text-gray-400" />
+                    <Shield className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium text-[13px]">{role.name}</p>
-                      <p className="text-[13px] text-gray-500">{role.permissions.join(", ")}</p>
+                      <p className="text-[13px] text-muted-foreground">{role.permissions.join(", ")}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -700,7 +700,7 @@ export default function SecurityAccessPage() {
                   description: "Auto-create users from SSO providers",
                 },
               ].map((policy) => (
-                <div key={policy.name} className="p-4 rounded-lg bg-gray-50">
+                <div key={policy.name} className="p-4 rounded-lg bg-muted/50">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-[13px]">{policy.name}</h4>
                     <Badge
@@ -712,7 +712,7 @@ export default function SecurityAccessPage() {
                       {policy.status}
                     </Badge>
                   </div>
-                  <p className="text-[13px] text-gray-500">{policy.description}</p>
+                  <p className="text-[13px] text-muted-foreground">{policy.description}</p>
                 </div>
               ))}
             </div>

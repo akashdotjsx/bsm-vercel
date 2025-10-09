@@ -248,7 +248,7 @@ export default function ArticleEditPage() {
         )
       case "blockquote":
         return blockWrapper(
-          <div className="border-l-4 border-gray-300 pl-4 italic">
+          <div className="border-l-4 border-border pl-4 italic">
             <textarea
               value={block.content}
               onChange={(e) => updateBlockContent(block.id, e.target.value)}
@@ -433,12 +433,12 @@ export default function ArticleEditPage() {
 
           {formatCommands.length > 0 && (
             <div>
-              <div className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">FORMAT</div>
+              <div className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">FORMAT</div>
               {formatCommands.map((command) => (
                 <button
                   key={command.id}
                   onClick={() => handleSlashCommand(command)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-100 text-[13px]"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted text-[13px]"
                 >
                   {command.icon}
                   {command.label}
@@ -449,12 +449,12 @@ export default function ArticleEditPage() {
 
           {insertCommands.length > 0 && (
             <div>
-              <div className="px-3 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">INSERT</div>
+              <div className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">INSERT</div>
               {insertCommands.map((command) => (
                 <button
                   key={command.id}
                   onClick={() => handleSlashCommand(command)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-100 text-[13px]"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted text-[13px]"
                 >
                   {command.icon}
                   {command.label}

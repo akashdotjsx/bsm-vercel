@@ -72,7 +72,7 @@ export function UserAvatar({
       case 'admin': return 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border-0'
       case 'manager': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-0'
       case 'agent': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border-0'
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-0'
+      default: return 'bg-muted text-foreground dark:bg-gray-800 dark:text-gray-300 border-0'
     }
   }
 

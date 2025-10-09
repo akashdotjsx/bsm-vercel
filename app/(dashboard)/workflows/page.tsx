@@ -13,11 +13,11 @@ export default function WorkflowsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-[13px] font-semibold tracking-tight">Workflows</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
             <p className="text-sm text-muted-foreground">Automate your service management processes</p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="bg-[#7bg-card73fc] text-white hover:bg-[#5a5dfc]">
+            <Button variant="outline" size="sm" className="bg-[#7c73fc] text-white hover:bg-[#5a5dfc]">
               <Zap className="h-4 w-4 mr-2" />
               AI Generate
             </Button>
@@ -30,25 +30,25 @@ export default function WorkflowsPage() {
           </div>
         </div>
 
-        <Card className="border-[#7bg-card73fc]/2bg-card bg-gradient-to-r from-[#7bg-card73fc]/5 to-transparent">
+        <Card className="border-[#7c73fc]/20 bg-gradient-to-r from-[#7c73fc]/5 to-transparent">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Bot className="h-5 w-5 text-[#7bg-card73fc]" />
+                <Bot className="h-5 w-5 text-[#7c73fc]" />
                 <div>
                   <h3 className="font-medium text-sm">AI Workflow Intelligence</h3>
                   <p className="text-xs text-muted-foreground">
                     3 optimization opportunities detected •
-                    <span className="text-[#7bg-card73fc] font-medium"> 23% efficiency improvement</span> possible
+                    <span className="text-[#7c73fc] font-medium"> 23% efficiency improvement</span> possible
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs bg-green-5bg-card text-green-7bg-cardbg-card border-green-2bg-cardbg-card">
+                <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                   <TrendingUp className="h-3 w-3 mr-1" />
                   94% Success Rate
                 </Badge>
-                <Badge variant="outline" className="text-xs bg-orange-5bg-card text-orange-7bg-cardbg-card border-orange-2bg-cardbg-card">
+                <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800">
                   <AlertTriangle className="h-3 w-3 mr-1" />2 Need Attention
                 </Badge>
               </div>
@@ -67,7 +67,7 @@ export default function WorkflowsPage() {
 function WorkflowsList() {
   const workflows = [
     {
-      id: "WFbg-cardbg-card1",
+      id: "WF001",
       name: "Employee Onboarding",
       description:
         "Automated workflow for new employee setup including account creation, asset assignment, and access provisioning",
@@ -80,19 +80,19 @@ function WorkflowsList() {
       aiInsights: "AI suggests adding IT security training step for 15% faster completion",
     },
     {
-      id: "WFbg-cardbg-card2",
+      id: "WF002",
       name: "IT Asset Request Approval",
       description: "Multi-level approval process for IT equipment requests with budget validation",
       status: "active",
       triggers: 45,
       completions: 42,
       avgTime: "1.2 days",
-      lastRun: "3bg-card minutes ago",
+      lastRun: "30 minutes ago",
       category: "IT",
       aiInsights: "Predicted bottleneck: Finance approval step (avg 18h delay)",
     },
     {
-      id: "WFbg-cardbg-card3",
+      id: "WF003",
       name: "Incident Escalation",
       description: "Automatic escalation of high-priority incidents to management after SLA breach",
       status: "paused",
@@ -104,7 +104,7 @@ function WorkflowsList() {
       aiInsights: "Low usage detected. Consider merging with general escalation workflow",
     },
     {
-      id: "WFbg-cardbg-card4",
+      id: "WF004",
       name: "Software License Renewal",
       description: "Automated reminder and approval workflow for software license renewals",
       status: "active",
@@ -113,15 +113,15 @@ function WorkflowsList() {
       avgTime: "3 days",
       lastRun: "4 hours ago",
       category: "Procurement",
-      aiInsights: "AI recommends 3bg-card-day advance notification for better compliance",
+      aiInsights: "AI recommends 30-day advance notification for better compliance",
     },
     {
-      id: "WFbg-cardbg-card5",
+      id: "WF005",
       name: "Customer Feedback Collection",
       description: "Automated survey deployment after ticket resolution with follow-up actions",
       status: "draft",
-      triggers: bg-card,
-      completions: bg-card,
+      triggers: 0,
+      completions: 0,
       avgTime: "N/A",
       lastRun: "Never",
       category: "Customer Success",
@@ -145,17 +145,17 @@ function WorkflowsList() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "HR":
-        return "bg-blue-1bg-cardbg-card text-blue-8bg-cardbg-card"
+        return "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400"
       case "IT":
-        return "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card"
+        return "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400"
       case "Support":
-        return "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card"
+        return "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400"
       case "Procurement":
-        return "bg-purple-1bg-cardbg-card text-purple-8bg-cardbg-card"
+        return "bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-400"
       case "Customer Success":
-        return "bg-orange-1bg-cardbg-card text-orange-8bg-cardbg-card"
+        return "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-400"
       default:
-        return "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card"
+        return "bg-muted dark:bg-gray-950 text-foreground dark:text-muted-foreground"
     }
   }
 
@@ -168,7 +168,7 @@ function WorkflowsList() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <Link href={`/workflow-builder?id=${workflow.id}`} className="hover:underline">
-                    <CardTitle className="text-[11px] cursor-pointer hover:text-[#7bg-card73fc]">{workflow.name}</CardTitle>
+                    <CardTitle className="text-base cursor-pointer hover:text-[#7c73fc]">{workflow.name}</CardTitle>
                   </Link>
                   <Badge variant={getStatusColor(workflow.status)} className="text-xs">
                     {workflow.status}
@@ -183,15 +183,15 @@ function WorkflowsList() {
               </div>
               <div className="flex space-x-1">
                 {workflow.status === "active" ? (
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Pause className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Play className="h-4 w-4" />
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card" asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
                   <Link href={`/workflow-builder?id=${workflow.id}`}>
                     <Settings className="h-4 w-4" />
                   </Link>
@@ -202,37 +202,37 @@ function WorkflowsList() {
           <CardContent className="space-y-4">
             <CardDescription className="text-sm">{workflow.description}</CardDescription>
 
-            <div className="p-3 rounded-lg bg-[#7bg-card73fc]/5 border border-[#7bg-card73fc]/1bg-card">
+            <div className="p-3 rounded-lg bg-[#7c73fc]/5 border border-[#7c73fc]/10">
               <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-[#7bg-card73fc] mt-bg-card.5 shrink-bg-card" />
-                <p className="text-xs text-gray-7bg-cardbg-card leading-relaxed">{workflow.aiInsights}</p>
+                <Sparkles className="h-4 w-4 text-[#7c73fc] mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">{workflow.aiInsights}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-gray-7bg-cardbg-card">Triggers</p>
+                <p className="text-muted-foreground">Triggers</p>
                 <p className="font-semibold">{workflow.triggers}</p>
               </div>
               <div>
-                <p className="text-gray-7bg-cardbg-card">Completions</p>
+                <p className="text-muted-foreground">Completions</p>
                 <p className="font-semibold">{workflow.completions}</p>
               </div>
               <div>
-                <p className="text-gray-7bg-cardbg-card">Avg Time</p>
+                <p className="text-muted-foreground">Avg Time</p>
                 <p className="font-semibold">{workflow.avgTime}</p>
               </div>
               <div>
-                <p className="text-gray-7bg-cardbg-card">Last Run</p>
+                <p className="text-muted-foreground">Last Run</p>
                 <p className="font-semibold">{workflow.lastRun}</p>
               </div>
             </div>
 
             {workflow.status === "active" && (
-              <div className="w-full bg-gray-2bg-cardbg-card rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className="bg-primary h-2 rounded-full"
-                  style={{ width: `${(workflow.completions / workflow.triggers) * 1bg-cardbg-card}%` }}
+                  style={{ width: `${(workflow.completions / workflow.triggers) * 100}%` }}
                 ></div>
               </div>
             )}

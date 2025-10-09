@@ -64,11 +64,11 @@ const statusConfig = {
   in_progress: { label: "In Progress", color: "bg-purple-100 text-purple-800", icon: RefreshCw },
   completed: { label: "Completed", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
   rejected: { label: "Rejected", color: "bg-red-100 text-red-800", icon: XCircle },
-  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-800", icon: XCircle }
+  cancelled: { label: "Cancelled", color: "bg-muted text-muted-foreground", icon: XCircle }
 }
 
 const priorityConfig = {
-  low: { label: "Low", color: "bg-gray-100 text-gray-800" },
+  low: { label: "Low", color: "bg-muted text-muted-foreground" },
   medium: { label: "Medium", color: "bg-blue-100 text-blue-800" },
   high: { label: "High", color: "bg-orange-100 text-orange-800" },
   critical: { label: "Critical", color: "bg-red-100 text-red-800" }
@@ -176,8 +176,8 @@ export default function AdminServiceRequestsPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-            <h2 className="text-[11px] font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-[10px] text-gray-600">You need administrator privileges to view all service requests.</p>
+            <h2 className="text-[11px] font-semibold text-foreground mb-2">Access Denied</h2>
+            <p className="text-[10px] text-muted-foreground">You need administrator privileges to view all service requests.</p>
           </CardContent>
         </Card>
       </PageContent>
@@ -196,10 +196,10 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-gray-600">Total Requests</p>
+                  <p className="text-[10px] text-muted-foreground">Total Requests</p>
                   <p className="text-[13px] font-bold">{statusCounts.total}</p>
                 </div>
-                <Users className="h-8 w-8 text-gray-600" />
+                <Users className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -208,7 +208,7 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-gray-600">Pending</p>
+                  <p className="text-[10px] text-muted-foreground">Pending</p>
                   <p className="text-[13px] font-bold">{statusCounts.pending}</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
@@ -220,7 +220,7 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-gray-600">Approved</p>
+                  <p className="text-[10px] text-muted-foreground">Approved</p>
                   <p className="text-[13px] font-bold">{statusCounts.approved}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-blue-600" />
@@ -232,7 +232,7 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-gray-600">In Progress</p>
+                  <p className="text-[10px] text-muted-foreground">In Progress</p>
                   <p className="text-[13px] font-bold">{statusCounts.in_progress}</p>
                 </div>
                 <RefreshCw className="h-8 w-8 text-purple-600" />
@@ -244,7 +244,7 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-gray-600">Completed</p>
+                  <p className="text-[10px] text-muted-foreground">Completed</p>
                   <p className="text-[13px] font-bold">{statusCounts.completed}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
@@ -256,7 +256,7 @@ export default function AdminServiceRequestsPage() {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search requests, services, or requesters..."
               value={searchTerm}
@@ -299,9 +299,9 @@ export default function AdminServiceRequestsPage() {
               <Card key={i} className="animate-pulse">
                 <CardContent className="p-6">
                   <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                    <div className="h-3 bg-muted rounded w-full"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -309,9 +309,9 @@ export default function AdminServiceRequestsPage() {
           ) : filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-[11px] font-semibold text-gray-900 mb-2">No service requests found</h3>
-                <p className="text-gray-600">
+                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-[11px] font-semibold text-foreground mb-2">No service requests found</h3>
+                <p className="text-muted-foreground">
                   {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
                     ? "Try adjusting your search or filter criteria"
                     : "No service requests have been submitted yet"}
@@ -325,14 +325,14 @@ export default function AdminServiceRequestsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-[11px] font-semibold text-gray-900">
+                        <h3 className="text-[11px] font-semibold text-foreground">
                           {request.title}
                         </h3>
                         {getStatusBadge(request.status)}
                         {getPriorityBadge(request.priority)}
                       </div>
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                         <span className="font-medium">#{request.request_number}</span>
                         <span>•</span>
                         <span>{request.service.name}</span>
@@ -351,11 +351,11 @@ export default function AdminServiceRequestsPage() {
                         )}
                       </div>
 
-                      <p className="text-gray-700 mb-3 line-clamp-2">
+                      <p className="text-foreground mb-3 line-clamp-2">
                         {request.description}
                       </p>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {request.estimated_delivery_date && (
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />

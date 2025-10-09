@@ -234,7 +234,7 @@ export default function SLAManagementPage() {
           <CardContent>
             <div className="space-y-4">
               {slas.map((sla) => (
-                <div key={sla.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm">
+                <div key={sla.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg shadow-sm">
                   <div className="flex items-center space-x-4">
                     <Badge
                       variant={sla.priority === "P1" ? "destructive" : sla.priority === "P2" ? "default" : "secondary"}
@@ -243,7 +243,7 @@ export default function SLAManagementPage() {
                     </Badge>
                     <div>
                       <p className="font-medium">{sla.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Response: {formatTime(sla.responseTime)} | Resolution: {formatTime(sla.resolutionTime)}
                       </p>
                     </div>

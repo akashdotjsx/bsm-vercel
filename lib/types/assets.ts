@@ -1,7 +1,6 @@
-// Assets API client using HTTP requests instead of direct Supabase calls
-// This follows the same pattern as tickets API
+// Asset type definitions
+// Extracted from lib/api/assets.ts for clean separation of types from API implementation
 
-// Types
 export interface AssetType {
   id: string
   organization_id: string
@@ -55,6 +54,7 @@ export interface Asset {
   asset_type?: AssetType
   owner?: { id: string; display_name: string; email: string }
   support_team?: { id: string; name: string }
+  category?: string
 }
 
 export interface AssetRelationship {
@@ -149,6 +149,7 @@ export interface CreateAssetData {
   cost?: number
   custom_fields?: Record<string, any>
   tags?: string[]
+  category?: string
 }
 
 export interface UpdateAssetData extends Partial<CreateAssetData> {}
@@ -163,67 +164,15 @@ export interface AssetsFilters {
   owner_id?: string
   support_team_id?: string
   tags?: string[]
+  category?: string
 }
 
-
-// Asset API class using HTTP calls
-export class AssetAPI {
-  // Get asset types
-  async getAssetTypes(): Promise<AssetType[]> {
-    const response = await fetch('/api/asset-types')
-    if (!response.ok) {
-      throw new Error('Failed to fetch asset types')
-    }
-    const data = await response.json()
-    return data.assetTypes || []
+export interface AssetsPaginatedResponse {
+  assets: Asset[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
   }
-
-  // Get assets with pagination and filters
-  async getAssets(organizationId: string, filters: AssetsFilters = {}): Promise<{
-    assets: Asset[]
-    pagination: {
-      page: number
-      limit: number
-      total: number
-      pages: number
-    }
-  }> {
-    const searchParams = new URLSearchParams()
-    
-    if (filters.page) searchParams.set('page', filters.page.toString())
-    if (filters.limit) searchParams.set('limit', filters.limit.toString())
-    if (filters.search) searchParams.set('search', filters.search)
-    if (filters.asset_type_id) searchParams.set('asset_type_id', filters.asset_type_id)
-    if (filters.status) searchParams.set('status', filters.status)
-    if (filters.criticality) searchParams.set('criticality', filters.criticality)
-    if (filters.owner_id) searchParams.set('owner_id', filters.owner_id)
-    if (filters.support_team_id) searchParams.set('support_team_id', filters.support_team_id)
-    if (filters.tags && filters.tags.length > 0) searchParams.set('tags', filters.tags.join(','))
-
-    const response = await fetch(`/api/assets?${searchParams.toString()}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch assets')
-    }
-    return response.json()
-  }
-
-  // Create asset
-  async createAsset(data: CreateAssetData): Promise<Asset> {
-    const response = await fetch('/api/assets', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-    if (!response.ok) {
-      throw new Error('Failed to create asset')
-    }
-    const result = await response.json()
-    return result.asset
-  }
-
 }
-
-// Create and export the API instance
-export const assetAPI = new AssetAPI()

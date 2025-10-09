@@ -467,7 +467,7 @@ export default function UsersTeamsPage() {
             </div>
 
             {/* Users Table */}
-            <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+            <div className="0 rounded-lg shadow-sm overflow-hidden">
               <table className="min-w-full divide-y divide-border">
                 <thead className="bg-muted/50">
                   <tr>
@@ -491,7 +491,7 @@ export default function UsersTeamsPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-card divide-y divide-border">
+                <tbody className="0 divide-y divide-border">
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-muted/50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -642,7 +642,7 @@ export default function UsersTeamsPage() {
             {/* Teams Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teams.map((team) => (
-                <div key={team.id} className="bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                <div key={team.id} className="0 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-[11px] font-medium text-foreground">{team.name}</h3>

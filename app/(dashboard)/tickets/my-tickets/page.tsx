@@ -152,9 +152,9 @@ export default function MyTicketsPage() {
       case "waiting_on_customer":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
       case "on_hold":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-800/30 dark:text-gray-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-800/30 dark:text-gray-300"
     }
   }
 
@@ -216,7 +216,7 @@ export default function MyTicketsPage() {
         </div>
       </div>
 
-      <div className="border border-border rounded-lg bg-card overflow-hidden">
+      <div className="border border-border rounded-lg 0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -426,7 +426,7 @@ export default function MyTicketsPage() {
       <div className="grid grid-cols-5 gap-6">
         {columns.map((column) => (
           <div key={column.id} className="space-y-4">
-            <div className={`border-t-4 ${column.color} bg-card rounded-t-lg`}>
+            <div className={`border-t-4 ${column.color} 0 rounded-t-lg`}>
               <div className="p-4 pb-2">
                 <h3 className="font-medium text-sm text-foreground">
                   {column.title} <span className="text-muted-foreground">{getTicketsByType(column.id).length}</span>
@@ -438,7 +438,7 @@ export default function MyTicketsPage() {
               {getTicketsByType(column.id).map((ticket) => (
                 <Card
                   key={ticket.id}
-                  className="hover:shadow-md transition-all cursor-pointer border border-border bg-card"
+                  className="hover:shadow-md transition-all cursor-pointer border border-border 0"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-2 mb-3">

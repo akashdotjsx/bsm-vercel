@@ -69,13 +69,13 @@ const TicketDrawer = dynamic(
 const getAvatarInitials = (firstName?: string, lastName?: string, displayName?: string) => {
   if (displayName) {
     const names = displayName.split(' ')
-    return names.map(n => n[bg-card]).join('').toUpperCase().slice(bg-card, 2)
+    return names.map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
   if (firstName && lastName) {
-    return (firstName[bg-card] + lastName[bg-card]).toUpperCase()
+    return (firstName[0] + lastName[0]).toUpperCase()
   }
   if (firstName) {
-    return firstName.slice(bg-card, 2).toUpperCase()
+    return firstName.slice(0, 2).toUpperCase()
   }
   return '??'
 }
@@ -83,13 +83,13 @@ const getAvatarInitials = (firstName?: string, lastName?: string, displayName?: 
 // Helper function to generate avatar colors
 const getAvatarColor = (name: string) => {
   const colors = [
-    'bg-red-5bg-cardbg-card', 'bg-[#6E72FF]', 'bg-green-5bg-cardbg-card', 'bg-yellow-5bg-cardbg-card', 
-    'bg-purple-5bg-cardbg-card', 'bg-pink-5bg-cardbg-card', 'bg-indigo-5bg-cardbg-card', 'bg-orange-5bg-cardbg-card'
+    'bg-red-500', 'bg-[#6E72FF]', 'bg-green-500', 'bg-yellow-500', 
+    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500'
   ]
   const hash = name.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(bg-card)
+    a = ((a << 5) - a) + b.charCodeAt(0)
     return a & a
-  }, bg-card)
+  }, 0)
   return colors[Math.abs(hash) % colors.length]
 }
 
@@ -120,7 +120,7 @@ export default function TicketsPage() {
   // Memoize the params to prevent unnecessary re-renders
   const ticketsParams = useMemo(() => ({
     page: 1,
-    limit: 5bg-card,
+    limit: 50,
     status: selectedStatus === "all" ? undefined : selectedStatus,
     priority: selectedPriority === "all" ? undefined : selectedPriority,
     type: selectedType === "all" ? undefined : selectedType,
@@ -138,8 +138,8 @@ export default function TicketsPage() {
   const tickets = ticketsData?.tickets || []
   const pagination = {
     page: ticketsParams.page || 1,
-    limit: ticketsParams.limit || 5bg-card,
-    total: ticketsData?.total || bg-card,
+    limit: ticketsParams.limit || 50,
+    total: ticketsData?.total || 0,
     hasNextPage: ticketsData?.hasNextPage || false,
     hasPreviousPage: ticketsData?.hasPreviousPage || false,
   }
@@ -172,11 +172,11 @@ export default function TicketsPage() {
 
   // Debug logging
   console.log('🏠 Tickets page render:', { 
-    ticketsCount: tickets?.length || bg-card, 
+    ticketsCount: tickets?.length || 0, 
     loading, 
     error, 
     pagination,
-    hasTickets: tickets && tickets.length > bg-card
+    hasTickets: tickets && tickets.length > 0
   })
 
   // Force re-render when loading state changes
@@ -185,13 +185,13 @@ export default function TicketsPage() {
   }, [loading])
 
   useEffect(() => {
-    console.log('📊 Tickets state changed:', tickets?.length || bg-card, 'tickets')
+    console.log('📊 Tickets state changed:', tickets?.length || 0, 'tickets')
   }, [tickets])
 
   // Check for URL parameters to open specific ticket
   useEffect(() => {
     const viewTicketId = searchParams?.get('view')
-    if (viewTicketId && tickets && tickets.length > bg-card) {
+    if (viewTicketId && tickets && tickets.length > 0) {
       const ticketToView = tickets.find(ticket => ticket.id === viewTicketId)
       if (ticketToView) {
         setSelectedTicket(ticketToView)
@@ -208,11 +208,11 @@ export default function TicketsPage() {
       if (newTicketData) {
         try {
           const ticketInfo = JSON.parse(newTicketData)
-          // Check if the ticket was created recently (within last 1bg-card seconds)
-          if (Date.now() - ticketInfo.timestamp < 1bg-cardbg-cardbg-cardbg-card) {
+          // Check if the ticket was created recently (within last 10 seconds)
+          if (Date.now() - ticketInfo.timestamp < 10000) {
             toast.success(`Ticket #${ticketInfo.ticketNumber} created successfully!`, {
               description: `"${ticketInfo.title}"`,
-              duration: 5bg-cardbg-cardbg-card,
+              duration: 5000,
             })
           }
           // Clear the notification
@@ -228,7 +228,7 @@ export default function TicketsPage() {
     checkForNewTicket()
     
     // Also check when tickets are loaded (in case of page refresh)
-    if (tickets && tickets.length > bg-card) {
+    if (tickets && tickets.length > 0) {
       checkForNewTicket()
     }
   }, [tickets])
@@ -293,7 +293,7 @@ export default function TicketsPage() {
 
   // Transform API ticket data to match the expected format
   const transformedTickets = useMemo(() => {
-    if (!tickets || tickets.length === bg-card) return []
+    if (!tickets || tickets.length === 0) return []
     
     console.log('🔄 Transforming tickets:', tickets)
     
@@ -323,11 +323,11 @@ export default function TicketsPage() {
       date: formatDate(ticket.created_at),
       reportedDate: formatDate(ticket.created_at),
       dueDate: ticket.due_date ? formatDate(ticket.due_date) : "No due date",
-      comments: bg-card, // Will be updated when we implement comments
-      attachments: bg-card, // Will be updated when we implement attachments
+      comments: 0, // Will be updated when we implement comments
+      attachments: 0, // Will be updated when we implement attachments
       priority: ticket.priority,
       type: ticket.type || "Unknown", // Keep original type for grouping
-      displayType: ticket.type ? ticket.type.charAt(bg-card).toUpperCase() + ticket.type.slice(1) : "Unknown", // For display
+      displayType: ticket.type ? ticket.type.charAt(0).toUpperCase() + ticket.type.slice(1) : "Unknown", // For display
       notes: "Customer reported via email", // Default notes
       category: "",
       subcategory: "",
@@ -339,7 +339,7 @@ export default function TicketsPage() {
 
   // Initialize local tickets when transformedTickets changes
   useEffect(() => {
-    if (transformedTickets.length > bg-card) {
+    if (transformedTickets.length > 0) {
       setLocalTickets(transformedTickets)
     }
   }, [transformedTickets])
@@ -380,7 +380,7 @@ export default function TicketsPage() {
         }
         
         // Type filter (from active filters)
-        if (activeFilters.type.length > bg-card) {
+        if (activeFilters.type.length > 0) {
           const ticketType = ticket.type?.toLowerCase() || ''
           if (!activeFilters.type.some(type => type.toLowerCase() === ticketType)) return false
         } else if (selectedType !== "all") {
@@ -390,7 +390,7 @@ export default function TicketsPage() {
         }
         
         // Priority filter (from active filters)
-        if (activeFilters.priority.length > bg-card) {
+        if (activeFilters.priority.length > 0) {
           const ticketPriority = ticket.priority?.toLowerCase() || ''
           if (!activeFilters.priority.some(priority => priority.toLowerCase() === ticketPriority)) return false
         } else if (selectedPriority !== "all") {
@@ -400,7 +400,7 @@ export default function TicketsPage() {
         }
         
         // Status filter (from active filters)
-        if (activeFilters.status.length > bg-card) {
+        if (activeFilters.status.length > 0) {
           const ticketStatus = ticket.status?.toLowerCase() || ''
           if (!activeFilters.status.some(status => status.toLowerCase() === ticketStatus)) return false
         } else if (selectedStatus !== "all") {
@@ -486,15 +486,15 @@ export default function TicketsPage() {
   const getPriorityColor = useCallback((priority: string) => {
     switch (priority) {
       case "urgent":
-        return "border-l-red-6bg-cardbg-card"
+        return "border-l-red-600"
       case "high":
-        return "border-l-red-5bg-cardbg-card"
+        return "border-l-red-500"
       case "medium":
-        return "border-l-yellow-5bg-cardbg-card"
+        return "border-l-yellow-500"
       case "low":
-        return "border-l-green-5bg-cardbg-card"
+        return "border-l-green-500"
       default:
-        return "border-l-gray-3bg-cardbg-card"
+        return "border-l-gray-300"
     }
   }, [])
 
@@ -503,13 +503,13 @@ export default function TicketsPage() {
       case "new":
         return "bg-[#6E72FF] text-white"
       case "waiting_on_you":
-        return "bg-yellow-5bg-cardbg-card text-gray-9bg-cardbg-card"
+        return "bg-yellow-500 text-gray-900"
       case "waiting_on_customer":
-        return "bg-purple-5bg-cardbg-card text-white"
+        return "bg-purple-500 text-white"
       case "on_hold":
-        return "bg-gray-5bg-cardbg-card text-white"
+        return "bg-muted/500 text-white"
       default:
-        return "bg-gray-5bg-cardbg-card text-white"
+        return "bg-muted/500 text-white"
     }
   }, [])
 
@@ -529,7 +529,7 @@ export default function TicketsPage() {
   }, [])
 
   const handleTicketClick = useCallback((ticket: any) => {
-    console.log("[vbg-card] Opening ticket tray for:", ticket.id)
+    console.log("[v0] Opening ticket tray for:", ticket.id)
     setSelectedTicket(ticket)
     setShowTicketTray(true)
   }, [])
@@ -566,7 +566,7 @@ export default function TicketsPage() {
 
     try {
       // Simulate AI response - in real implementation, this would call Gemini 2.5 API
-      await new Promise((resolve) => setTimeout(resolve, 15bg-cardbg-card))
+      await new Promise((resolve) => setTimeout(resolve, 1500))
 
       const aiMessage = {
         id: (Date.now() + 1).toString(),
@@ -574,9 +574,9 @@ export default function TicketsPage() {
         content: `Based on your tickets data, here's what I found regarding "${userMessage.content}":
 
 Current ticket statistics:
-• Total tickets: ${tickets?.length || bg-card}
-• Open tickets: ${tickets?.filter((t) => t.status === "new").length || bg-card}
-• High priority: ${tickets?.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || bg-card}
+• Total tickets: ${tickets?.length || 0}
+• Open tickets: ${tickets?.filter((t) => t.status === "new").length || 0}
+• High priority: ${tickets?.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
 
 I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
         timestamp: new Date(),
@@ -608,8 +608,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     // Reset previous results
     setImportResult(null)
     setImportProgress({
-      current: bg-card,
-      total: 1bg-cardbg-card,
+      current: 0,
+      total: 100,
       status: 'parsing',
       message: 'Starting import...'
     })
@@ -618,8 +618,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       // Step 1: Validate file
       console.log('🔍 Step 1: Validating file...')
       setImportProgress({
-        current: 1bg-card,
-        total: 1bg-cardbg-card,
+        current: 10,
+        total: 100,
         status: 'parsing',
         message: 'Validating file...'
       })
@@ -633,18 +633,18 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           success: false,
           tickets: [],
           errors: [fileValidation.error || 'Invalid file'],
-          totalRows: bg-card,
-          validRows: bg-card,
-          successfullyImportedCount: bg-card,
-          failedImportCount: bg-card,
+          totalRows: 0,
+          validRows: 0,
+          successfullyImportedCount: 0,
+          failedImportCount: 0,
           parsingErrors: [fileValidation.error || 'Invalid file'],
           validationErrors: [],
           importErrors: []
         }
         setImportResult(errorResult)
         setImportProgress({
-          current: 1bg-cardbg-card,
-          total: 1bg-cardbg-card,
+          current: 100,
+          total: 100,
           status: 'error',
           message: 'File validation failed'
         })
@@ -655,7 +655,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       console.log('📄 Step 2: Parsing file...')
       setImportProgress({
         current: 25,
-        total: 1bg-cardbg-card,
+        total: 100,
         status: 'parsing',
         message: 'Parsing file...'
       })
@@ -664,12 +664,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       console.log('📊 Parse result:', parseResult)
 
       // Check if parsing was successful
-      if (parseResult.parsingErrors.length > bg-card) {
+      if (parseResult.parsingErrors.length > 0) {
         console.error('❌ Parsing failed:', parseResult.parsingErrors)
         setImportResult(parseResult)
         setImportProgress({
-          current: 1bg-cardbg-card,
-          total: 1bg-cardbg-card,
+          current: 100,
+          total: 100,
           status: 'error',
           message: 'File parsing failed'
         })
@@ -677,7 +677,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       }
 
       // Check if we have any valid tickets
-      if (parseResult.tickets.length === bg-card) {
+      if (parseResult.tickets.length === 0) {
         console.error('❌ No valid tickets found after parsing')
         const noTicketsResult: ImportResult = {
           ...parseResult,
@@ -687,8 +687,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         }
         setImportResult(noTicketsResult)
         setImportProgress({
-          current: 1bg-cardbg-card,
-          total: 1bg-cardbg-card,
+          current: 100,
+          total: 100,
           status: 'error',
           message: 'No valid tickets found'
         })
@@ -700,16 +700,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       // Step 3: Import tickets
       console.log('📤 Step 3: Importing tickets...')
       setImportProgress({
-        current: 5bg-card,
-        total: 1bg-cardbg-card,
+        current: 50,
+        total: 100,
         status: 'importing',
         message: `Importing ${parseResult.tickets.length} tickets...`
       })
 
-      let successCount = bg-card
+      let successCount = 0
       const importErrors: string[] = []
 
-      for (let i = bg-card; i < parseResult.tickets.length; i++) {
+      for (let i = 0; i < parseResult.tickets.length; i++) {
         const ticket = parseResult.tickets[i]
         
         try {
@@ -744,10 +744,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         }
 
         // Update progress
-        const progress = 5bg-card + ((i + 1) / parseResult.tickets.length) * 4bg-card
+        const progress = 50 + ((i + 1) / parseResult.tickets.length) * 40
         setImportProgress({
           current: Math.round(progress),
-          total: 1bg-cardbg-card,
+          total: 100,
           status: 'importing',
           message: `Imported ${i + 1} of ${parseResult.tickets.length} tickets...`
         })
@@ -756,7 +756,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       // Step 4: Finalize results
       console.log('📊 Step 4: Finalizing results...')
       const finalResult: ImportResult = {
-        success: importErrors.length === bg-card && successCount > bg-card,
+        success: importErrors.length === 0 && successCount > 0,
         tickets: parseResult.tickets,
         errors: [...parseResult.errors, ...importErrors],
         totalRows: parseResult.totalRows,
@@ -772,8 +772,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       setImportResult(finalResult)
       
       setImportProgress({
-        current: 1bg-cardbg-card,
-        total: 1bg-cardbg-card,
+        current: 100,
+        total: 100,
         status: finalResult.success ? 'completed' : 'error',
         message: finalResult.success 
           ? `Import completed successfully! ${successCount} tickets imported.`
@@ -781,7 +781,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       })
 
       // Refresh tickets list if any were successfully imported
-      if (successCount > bg-card) {
+      if (successCount > 0) {
         console.log('🔄 Refreshing tickets list...')
         refetch()
       }
@@ -792,18 +792,18 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         success: false,
         tickets: [],
         errors: [`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`],
-        totalRows: bg-card,
-        validRows: bg-card,
-        successfullyImportedCount: bg-card,
-        failedImportCount: bg-card,
+        totalRows: 0,
+        validRows: 0,
+        successfullyImportedCount: 0,
+        failedImportCount: 0,
         parsingErrors: [`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`],
         validationErrors: [],
         importErrors: []
       }
       setImportResult(errorResult)
       setImportProgress({
-        current: 1bg-cardbg-card,
-        total: 1bg-cardbg-card,
+        current: 100,
+        total: 100,
         status: 'error',
         message: 'Unexpected error occurred'
       })
@@ -854,7 +854,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       const newTicket = await createTicket(duplicateData)
       toast.success(`Ticket #${newTicket.ticket_number} duplicated successfully!`, {
         description: `"${newTicket.title}" has been created.`,
-        duration: 5bg-cardbg-cardbg-card,
+        duration: 5000,
       })
     } catch (error) {
       console.error('Error duplicating ticket:', error)
@@ -883,7 +883,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       console.log('✅ deleteTicket completed successfully')
       toast.success('Ticket deleted successfully!', {
         description: `Ticket #${ticketToDelete.id} has been removed.`,
-        duration: 5bg-cardbg-cardbg-card,
+        duration: 5000,
       })
       setShowDeleteModal(false)
       setTicketToDelete(null)
@@ -911,7 +911,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       await updateTicket(ticketToEdit.dbId, updateData)
       toast.success('Ticket updated successfully!', {
         description: `Ticket #${ticketToEdit.id} has been updated.`,
-        duration: 5bg-cardbg-cardbg-card,
+        duration: 5000,
       })
       setShowEditModal(false)
       setTicketToEdit(null)
@@ -940,7 +940,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       <div className="space-y-4 font-sans">
         <div className="flex items-center gap-4 py-2">
           <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-48 h-8 text-[11px] bg-transparent">
+            <SelectTrigger className="w-48 h-8 text-sm bg-transparent">
               <List className="h-3 w-3 mr-2" />
               <SelectValue placeholder="Group By: None" />
             </SelectTrigger>
@@ -957,13 +957,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-8 text-[11px] bg-transparent"
+            className="h-8 text-sm bg-transparent"
             onClick={() => setShowFilterDialog(true)}
           >
             <Filter className="h-3 w-3 mr-2" />
             Filter
-            {(activeFilters.type.length > bg-card || activeFilters.priority.length > bg-card || activeFilters.status.length > bg-card || activeFilters.assignee.length > bg-card) && (
-              <span className="ml-1 bg-[#6E72FF] text-white text-[1bg-cardpx] rounded-full px-1.5 py-bg-card.5">
+            {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
+              <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
                 {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
               </span>
             )}
@@ -972,34 +972,34 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-1bg-card h-8 w-48 text-[11px]"
+              className="pl-10 h-8 w-48 text-sm"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
         </div>
 
-         <div className="bg-card border border-border rounded-lg overflow-hidden">
+         <div className="0 border border-border rounded-lg overflow-hidden">
            <div className="overflow-x-auto">
              <table className="w-full border-collapse">
                <thead>
-                 <tr className="bg-muted/5bg-card border-b border-border">
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
-                   <th className="px-3 py-2 text-left text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
+                 <tr className="bg-muted/50 border-b border-border">
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
+                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</th>
                  </tr>
                </thead>
-               <tbody className="bg-card">
+               <tbody className="0">
                 {(() => {
                   console.log('⚙️ Rendering tickets table with:', { 
                     currentLoading: loading, 
-                    currentTicketsCount: tickets?.length || bg-card,
+                    currentTicketsCount: tickets?.length || 0,
                     hasTickets: !!tickets,
                     shouldShowLoading: loading || !tickets
                   });
@@ -1024,10 +1024,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
                       </td>
                       <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-3 bg-muted animate-pulse rounded w-2bg-card" />
+                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
                       </td>
                       <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-3 bg-muted animate-pulse rounded w-2bg-card" />
+                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
                       </td>
                       <td className="px-3 py-2.5 border-r border-border">
                         <div className="h-5 bg-muted animate-pulse rounded-full w-14" />
@@ -1046,12 +1046,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 ) : error ? (
                   <tr>
                     <td colSpan={9} className="p-8 text-center">
-                      <div className="text-red-6bg-cardbg-card">
+                      <div className="text-red-600">
                         Error loading tickets: {error}
                       </div>
                     </td>
                   </tr>
-                ) : filteredTickets.length === bg-card ? (
+                ) : filteredTickets.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="p-8 text-center">
                       <div className="text-muted-foreground">
@@ -1068,7 +1068,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   Object.entries(groupedTickets).map(([groupName, groupTickets]) => (
                     <React.Fragment key={groupName}>
                        {groupBy !== "none" && (
-                         <tr className="bg-muted/3bg-card border-b border-border">
+                         <tr className="bg-muted/30 border-b border-border">
                            <td colSpan={9} className="px-4 py-3">
                              <div className="flex items-center gap-2">
                                <span className="font-semibold text-foreground">{groupName}</span>
@@ -1080,32 +1080,32 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                        {groupTickets.map((ticket, index) => (
                    <tr
                      key={ticket.id}
-                           className="bg-card border-b border-border hover:bg-muted/5bg-card last:border-b-bg-card"
+                           className="0 border-b border-border hover:bg-muted/50 last:border-b-0"
                    >
                     <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <div>
                         <button
                           onClick={() => handleTicketClick(ticket)}
-                          className="text-[11px] font-medium text-foreground hover:text-[#6E72FF] hover:underline cursor-pointer"
+                          className="text-sm font-medium text-foreground hover:text-[#6E72FF] hover:underline cursor-pointer"
                         >
                           {ticket.title}
                         </button>
-                        <div className="text-[1bg-cardpx] text-muted-foreground">{ticket.id}</div>
+                        <div className="text-xs text-muted-foreground">{ticket.id}</div>
                       </div>
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                      <span className={`px-2 py-1 rounded-full text-[1bg-cardpx] font-medium ${
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         ticket.status === "new" 
-                          ? "bg-[#6E72FF]/1bg-card text-[#6E72FF]"
+                          ? "bg-[#6E72FF]/10 text-[#6E72FF]"
                           : ticket.status === "in_progress"
-                            ? "bg-yellow-1bg-cardbg-card text-yellow-8bg-cardbg-card"
+                            ? "bg-yellow-100 text-yellow-800"
                             : ticket.status === "review"
-                              ? "bg-purple-1bg-cardbg-card text-purple-8bg-cardbg-card"
+                              ? "bg-purple-100 text-purple-800"
                               : ticket.status === "pending"
-                                ? "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card"
+                                ? "bg-gray-100 text-gray-800"
                                 : ticket.status === "open"
-                                  ? "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card"
-                                  : "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-gray-100 text-gray-800"
                       }`}>
                         {ticket.status === "new" ? "New" : 
                          ticket.status === "in_progress" ? "In Progress" :
@@ -1145,45 +1145,45 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                        </div>
                      </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                       <span className="text-[11px] text-foreground">{ticket.reportedDate}</span>
+                       <span className="text-sm text-foreground">{ticket.reportedDate}</span>
                      </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                       <span className="text-[11px] text-foreground">{ticket.dueDate}</span>
+                       <span className="text-sm text-foreground">{ticket.dueDate}</span>
                      </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-  <span className="text-[1bg-cardpx] px-2 py-1 rounded-full bg-amber-1bg-cardbg-card text-amber-8bg-cardbg-card">
+  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
                          {ticket.displayType}
                        </span>
                      </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                       <span
-                        className={`text-[1bg-cardpx] px-2 py-1 rounded-full ${
+                        className={`text-xs px-2 py-1 rounded-full ${
                           ticket.priority === "urgent"
-                            ? "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card"
+                            ? "bg-red-100 text-red-800"
                             : ticket.priority === "high"
-                              ? "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card"
+                              ? "bg-red-100 text-red-800"
                               : ticket.priority === "medium"
-                                ? "bg-orange-1bg-cardbg-card text-orange-8bg-cardbg-card"
+                                ? "bg-orange-100 text-orange-800"
                                 : ticket.priority === "low"
-                                  ? "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card"
+                                  ? "bg-green-100 text-green-800"
                                   : ticket.priority === "critical"
-                                    ? "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card"
-                                    : "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {ticket.priority ? ticket.priority.charAt(bg-card).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
+                        {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <div className="flex items-center justify-between">
                         <Input
                           placeholder="Add notes..."
-                          className="h-6 text-[1bg-cardpx] border-bg-card bg-transparent focus:bg-background text-muted-foreground flex-1"
+                          className="h-6 text-xs border-0 bg-transparent focus:bg-background text-muted-foreground flex-1"
                           defaultValue={ticket.notes || "Customer reported via email"}
                         />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card ml-2">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -1197,7 +1197,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                               Duplicate Ticket
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              className="text-red-6bg-cardbg-card" 
+                              className="text-red-600" 
                               onClick={() => handleDeleteTicket(ticket)}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -1299,18 +1299,18 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               }
             }
 
-            if (Object.keys(updateData).length > bg-card) {
+            if (Object.keys(updateData).length > 0) {
               await updateTicket(ticketId, updateData)
-              console.log("[vbg-card] Ticket updated in API:", ticketId, updateData)
+              console.log("[v0] Ticket updated in API:", ticketId, updateData)
             }
           }
         } catch (error) {
-          console.error("[vbg-card] Failed to update ticket in API:", error)
+          console.error("[v0] Failed to update ticket in API:", error)
           // Revert local state on API failure
           setLocalTickets(transformedTickets)
         }
 
-        console.log("[vbg-card] Ticket moved:", draggedTicket.id, "to", targetColumn)
+        console.log("[v0] Ticket moved:", draggedTicket.id, "to", targetColumn)
         setDraggedTicket(null)
       }
     },
@@ -1322,32 +1322,32 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     switch (kanbanGroupBy) {
       case "status":
         return [
-          { id: "new", title: "New", count: bg-card, color: "border-t-[#6E72FF]" },
-          { id: "waiting_on_you", title: "In Progress", count: bg-card, color: "border-t-yellow-4bg-cardbg-card" },
-          { id: "waiting_on_customer", title: "Review", count: bg-card, color: "border-t-purple-4bg-cardbg-card" },
-          { id: "on_hold", title: "Done", count: bg-card, color: "border-t-green-4bg-cardbg-card" },
+          { id: "new", title: "New", count: 0, color: "border-t-[#6E72FF]" },
+          { id: "waiting_on_you", title: "In Progress", count: 0, color: "border-t-yellow-400" },
+          { id: "waiting_on_customer", title: "Review", count: 0, color: "border-t-purple-400" },
+          { id: "on_hold", title: "Done", count: 0, color: "border-t-green-400" },
         ]
       case "priority":
         return [
-          { id: "urgent", title: "Urgent", count: bg-card, color: "border-t-red-6bg-cardbg-card" },
-          { id: "high", title: "High", count: bg-card, color: "border-t-red-4bg-cardbg-card" },
-          { id: "medium", title: "Medium", count: bg-card, color: "border-t-yellow-4bg-cardbg-card" },
-          { id: "low", title: "Low", count: bg-card, color: "border-t-green-4bg-cardbg-card" },
+          { id: "urgent", title: "Urgent", count: 0, color: "border-t-red-600" },
+          { id: "high", title: "High", count: 0, color: "border-t-red-400" },
+          { id: "medium", title: "Medium", count: 0, color: "border-t-yellow-400" },
+          { id: "low", title: "Low", count: 0, color: "border-t-green-400" },
         ]
       case "category":
         return [
-          { id: "technical", title: "Technical", count: bg-card, color: "border-t-[#6E72FF]" },
-          { id: "billing", title: "Billing", count: bg-card, color: "border-t-green-4bg-cardbg-card" },
-          { id: "general", title: "General", count: bg-card, color: "border-t-purple-4bg-cardbg-card" },
-          { id: "feature", title: "Feature Request", count: bg-card, color: "border-t-orange-4bg-cardbg-card" },
+          { id: "technical", title: "Technical", count: 0, color: "border-t-[#6E72FF]" },
+          { id: "billing", title: "Billing", count: 0, color: "border-t-green-400" },
+          { id: "general", title: "General", count: 0, color: "border-t-purple-400" },
+          { id: "feature", title: "Feature Request", count: 0, color: "border-t-orange-400" },
         ]
       default: // type - use hardcoded ticket types to ensure consistency
         return [
-          { id: "incident", title: "Incident", count: bg-card, color: "border-t-red-4bg-cardbg-card" },
-          { id: "request", title: "Request", count: bg-card, color: "border-t-[#6E72FF]" },
-          { id: "problem", title: "Problem", count: bg-card, color: "border-t-orange-4bg-cardbg-card" },
-          { id: "change", title: "Change", count: bg-card, color: "border-t-green-4bg-cardbg-card" },
-          { id: "general_query", title: "General Query", count: bg-card, color: "border-t-purple-4bg-cardbg-card" },
+          { id: "incident", title: "Incident", count: 0, color: "border-t-red-400" },
+          { id: "request", title: "Request", count: 0, color: "border-t-[#6E72FF]" },
+          { id: "problem", title: "Problem", count: 0, color: "border-t-orange-400" },
+          { id: "change", title: "Change", count: 0, color: "border-t-green-400" },
+          { id: "general_query", title: "General Query", count: 0, color: "border-t-purple-400" },
         ]
     }
   }, [kanbanGroupBy])
@@ -1384,7 +1384,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   const renderKanbanView = useCallback(() => {
     const kanbanColumns = getKanbanColumns()
-    const numColumns = kanbanColumns.length > bg-card ? kanbanColumns.length : 1
+    const numColumns = kanbanColumns.length > 0 ? kanbanColumns.length : 1
     
     // Create responsive grid classes
     const getGridClass = (cols: number) => {
@@ -1404,7 +1404,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-1bg-card h-9 w-48 border-bg-card bg-muted/5bg-card text-[13px]"
+              className="pl-10 h-9 w-48 border-0 bg-muted/50 text-sm"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -1414,7 +1414,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             value={kanbanGroupBy}
             onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
           >
-            <SelectTrigger className="w-48 h-9 text-[13px]">
+            <SelectTrigger className="w-48 h-9 text-sm">
               <SelectValue placeholder="Group By" />
             </SelectTrigger>
             <SelectContent>
@@ -1426,7 +1426,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           </Select>
 
           <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-32 h-9 text-[13px]">
+            <SelectTrigger className="w-32 h-9 text-sm">
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
@@ -1439,12 +1439,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
             Date Range
           </Button>
 
           <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-            <SelectTrigger className="w-4bg-card h-9 text-[13px]">
+            <SelectTrigger className="w-40 h-9 text-sm">
               <SelectValue placeholder="All Priorities" />
             </SelectTrigger>
             <SelectContent>
@@ -1456,7 +1456,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" className="h-9 text-[13px] bg-transparent font-sans">
+          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
             <Filter className="h-4 w-4 mr-2" />
             Add filter
           </Button>
@@ -1474,8 +1474,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             kanbanColumns.map((column) => (
                 <div
                   key={column.id}
-                  className={`space-y-4 transition-all duration-2bg-cardbg-card ${
-                    dragOverColumn === column.id ? "bg-[#6E72FF]/5 dark:bg-[#6E72FF]/1bg-card rounded-lg p-2" : ""
+                  className={`space-y-4 transition-all duration-200 ${
+                    dragOverColumn === column.id ? "bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 rounded-lg p-2" : ""
                   }`}
                   onDragOver={handleDragOver}
                   onDragEnter={(e) => handleDragEnter(e, column.id)}
@@ -1483,12 +1483,12 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   onDrop={(e) => handleDrop(e, column.id)}
                 >
                   <div
-                    className={`border-t-4 ${column.color} bg-card rounded-t-lg ${
-                      dragOverColumn === column.id ? "shadow-lg border-2 border-[#6E72FF]/3bg-card border-dashed" : ""
+                    className={`border-t-4 ${column.color} 0 rounded-t-lg ${
+                      dragOverColumn === column.id ? "shadow-lg border-2 border-[#6E72FF]/30 border-dashed" : ""
                     }`}
                   >
                     <div className="p-4 pb-2">
-                      <h3 className="font-medium text-[13px] mb-2 leading-tight font-sans text-foreground">
+                      <h3 className="font-medium text-sm mb-2 leading-tight font-sans text-foreground">
                         {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
                       </h3>
                   {dragOverColumn === column.id && draggedTicket && (
@@ -1500,7 +1500,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <div className="space-y-3 px-4">
                 {loading ? (
                   Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={`kanban-skel-${column.id}-${i}`} className="border border-border bg-card">
+                    <Card key={`kanban-skel-${column.id}-${i}`} className="border border-border 0">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-2 mb-3">
                           <div className="flex-1">
@@ -1530,8 +1530,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   })().map((ticket) => (
                   <Card
                     key={ticket.id}
-                    className={`hover:shadow-md transition-all cursor-move border border-border bg-card ${
-                      draggedTicket?.id === ticket.id ? "opacity-5bg-card scale-95" : ""
+                    className={`hover:shadow-md transition-all cursor-move border border-border 0 ${
+                      draggedTicket?.id === ticket.id ? "opacity-50 scale-95" : ""
                     }`}
                     draggable
                     onDragStart={(e) => handleDragStart(e, ticket)}
@@ -1540,7 +1540,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <CardContent className="p-4">
                       <div className="flex items-start gap-2 mb-3">
                         <div className="flex-1">
-                          <h4 className="font-normal text-[13px] mb-2 leading-tight font-sans">{ticket.title}</h4>
+                          <h4 className="font-normal text-sm mb-2 leading-tight font-sans">{ticket.title}</h4>
                         </div>
                       </div>
 
@@ -1551,17 +1551,17 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             ticket.priority === "urgent"
-                              ? "bg-red-2bg-cardbg-card text-red-9bg-cardbg-card dark:bg-red-9bg-cardbg-card/5bg-card dark:text-red-2bg-cardbg-card"
+                              ? "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200"
                               : ticket.priority === "high"
-                                ? "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card dark:bg-red-9bg-cardbg-card/3bg-card dark:text-red-3bg-cardbg-card"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                                 : ticket.priority === "medium"
-                                  ? "bg-orange-1bg-cardbg-card text-orange-8bg-cardbg-card dark:bg-orange-9bg-cardbg-card/3bg-card dark:text-orange-3bg-cardbg-card"
-                                  : "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card dark:bg-green-9bg-cardbg-card/3bg-card dark:text-green-3bg-cardbg-card"
+                                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                                  : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                           }`}
                         >
-                          {ticket.priority ? ticket.priority.charAt(bg-card).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
+                          {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
                         </span>
-                        <div className="w-4 h-4 rounded border border-muted-foreground/3bg-card"></div>
+                        <div className="w-4 h-4 rounded border border-muted-foreground/30"></div>
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -1569,10 +1569,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                           <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
                             <User className="h-3 w-3" />
                           </div>
-                          <span className="text-xs text-red-5bg-cardbg-card">{ticket.timestamp}</span>
+                          <span className="text-xs text-red-500">{ticket.timestamp}</span>
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          {ticket.comments > bg-card && (
+                          {ticket.comments > 0 && (
                             <div className="flex items-center gap-1">
                               <MessageSquare className="h-3 w-3" />
                               <span>{ticket.comments}</span>
@@ -1587,7 +1587,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/3bg-card hover:border-muted-foreground/5bg-card"
+                  className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
                   onClick={() => router.push('/tickets/create')}
                 >
                   <Plus className="h-3 w-3 mr-2" />
@@ -1623,22 +1623,22 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   return (
     <PageContent>
-      <div className="flex gap-6 font-sans text-[13px]">
+      <div className="flex gap-6 font-sans text-sm">
         <div className="flex-1 space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
                <div className="flex items-center gap-2">
-                 <h1 className="text-[13px] font-semibold tracking-tight font-sans text-foreground">
+                 <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
                    {ticketView === "all" ? "All Tickets" : 
                     ticketView === "my" ? "My Tickets" : 
                     "Assigned to Me"}
                  </h1>
-<span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-[1bg-cardpx] font-medium">
+<span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                   {loading ? (
-                    <Skeleton className="h-3 w-1bg-card inline-block align-middle" />
+                    <Skeleton className="h-3 w-10 inline-block align-middle" />
                   ) : (
                     <>
-                      {filteredTickets?.length || bg-card}
+                      {filteredTickets?.length || 0}
                       {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
                         <span className="text-muted-foreground"> of {tickets.length}</span>
                       )}
@@ -1646,14 +1646,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   )}
                 </span>
                </div>
-               <p className="text-muted-foreground text-[1bg-cardpx] font-sans">
+               <p className="text-muted-foreground text-xs font-sans">
                  Manage all support tickets and track customer issues effortlessly.
                </p>
             </div>
 
             <div className="flex items-center gap-3">
 <Button
-className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/9bg-card hover:to-[var(--primary-pink)] text-white text-[11px] h-8 px-4 rounded-lg shadow-xs"
+className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/90 hover:to-[var(--primary-pink)] text-white text-sm h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => setShowAIChat(true)}
               >
                 <Sparkles className="h-3 w-3 mr-2" />
@@ -1661,14 +1661,14 @@ className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[
               </Button>
 <Button
                 variant="outline"
-className="bg-background text-[#6E72FF] border-[#6E72FF]/2bg-card hover:bg-[#6E72FF]/5 text-[11px] h-8 px-4 rounded-lg"
+className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5 text-sm h-8 px-4 rounded-lg"
                 onClick={() => setShowImportDialog(true)}
               >
                 <Download className="h-3 w-3 mr-2" />
                 Import
               </Button>
 <Button 
-className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 px-4 rounded-lg shadow-xs"
+className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => router.push('/tickets/create')} 
               >
                 + Create Ticket
@@ -1678,10 +1678,10 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
 
            <div className="space-y-4">
              <div className="flex items-center justify-between border-b border-border">
-               <div className="flex items-center gap-bg-card">
+               <div className="flex items-center gap-0">
                  <button
                    onClick={() => setCurrentView("list")}
-                   className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
+                   className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
                      currentView === "list"
                        ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
                        : "text-muted-foreground border-transparent hover:text-foreground"
@@ -1691,7 +1691,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
                  </button>
                  <button
                    onClick={() => setCurrentView("kanban")}
-                   className={`px-3 py-2 text-[11px] font-medium border-b-2 transition-colors ${
+                   className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
                      currentView === "kanban"
                        ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
                        : "text-muted-foreground border-transparent hover:text-foreground"
@@ -1703,7 +1703,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
                
                <div className="flex items-center gap-3">
                  <Select value={ticketView} onValueChange={setTicketView}>
-                   <SelectTrigger className="w-28 h-7 text-[11px] font-inter text-[#717171] border-border">
+                   <SelectTrigger className="w-28 h-7 text-sm font-inter text-[#717171] border-border">
                      <SelectValue>
                        {ticketView === "all" ? "All Tickets" : 
                         ticketView === "my" ? "My Tickets" : 
@@ -1726,7 +1726,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
         </div>
 
         {showAIPanel && (
-          <div className="w-8bg-card shrink-bg-card">
+          <div className="w-80 shrink-0">
             <Suspense fallback={<LoadingSpinner size="md" />}>
               <AIAssistantPanel />
             </Suspense>
@@ -1735,12 +1735,12 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
       </div>
 
       <Dialog open={showAIChat} onOpenChange={setShowAIChat}>
-        <DialogContent className="max-w-4xl h-[6bg-cardbg-cardpx] flex flex-col p-bg-card">
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-[#6E72FF]" />
-<span className="font-sans text-[11px]">Ask AI about Tickets</span>
+<span className="font-sans text-sm">Ask AI about Tickets</span>
               </div>
               <Button
                 variant="ghost"
@@ -1755,7 +1755,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
 
           {/* Chat Messages Area */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {aiMessages.length === bg-card ? (
+            {aiMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
                   <Bot className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -1768,13 +1768,13 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
               aiMessages.map((message) => (
                 <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[8bg-card%] rounded-lg px-4 py-2 ${
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
                       message.type === "user" ? "bg-[#6E72FF] text-white" : "bg-muted text-foreground"
                     }`}
                   >
-                    <p className="font-sans text-[13px] whitespace-pre-wrap">{message.content}</p>
+                    <p className="font-sans text-sm whitespace-pre-wrap">{message.content}</p>
                     <p
-                      className={`text-xs mt-1 ${message.type === "user" ? "text-[#6E72FF]/7bg-card" : "text-muted-foreground"}`}
+                      className={`text-xs mt-1 ${message.type === "user" ? "text-[#6E72FF]/70" : "text-muted-foreground"}`}
                     >
                       {message.timestamp.toLocaleTimeString()}
                     </p>
@@ -1799,13 +1799,13 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
           <div className="border-t px-6 py-4">
             <div className="flex items-end gap-3">
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <Plus className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
@@ -1816,20 +1816,20 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/9bg-card text-white text-[11px] h-8 p
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans text-13"
+className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                   disabled={aiLoading}
                 />
                 <Button
                   onClick={handleSendAIMessage}
                   disabled={!aiInput.trim() || aiLoading}
                   size="sm"
-                  className="absolute right-2 bottom-2 h-8 w-8 p-bg-card"
+                  className="absolute right-2 bottom-2 h-8 w-8 p-0"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
 
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-bg-card">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <ArrowUp className="h-4 w-4" />
               </Button>
             </div>
@@ -1859,14 +1859,14 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
               <Input
                 type="file"
                 accept=".csv,.xlsx,.xls"
-                onChange={(e) => setImportFile(e.target.files?.[bg-card] || null)}
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                 className="cursor-pointer"
                     disabled={isImporting}
               />
               <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
             </div>
 
-                <div className="bg-[#6E72FF]/5 dark:bg-[#6E72FF]/1bg-card p-4 rounded-lg">
+                <div className="bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 p-4 rounded-lg">
                   <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• <strong>Required columns:</strong> Title, Priority, Type</li>
@@ -1874,7 +1874,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                     <li>• <strong>Priority values:</strong> low, medium, high, urgent, critical</li>
                     <li>• <strong>Type values:</strong> incident, request, problem, change, general_query</li>
                     <li>• <strong>Status values:</strong> new, open, in_progress, pending, resolved, closed</li>
-                    <li>• <strong>Maximum file size:</strong> 1bg-cardMB</li>
+                    <li>• <strong>Maximum file size:</strong> 10MB</li>
                     <li>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</li>
               </ul>
             </div>
@@ -1903,24 +1903,24 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                     {importProgress.current}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-2bg-cardbg-card rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-3bg-cardbg-card ${
-                      importProgress.status === 'error' ? 'bg-red-5bg-cardbg-card' : 
-                      importProgress.status === 'completed' ? 'bg-green-5bg-cardbg-card' : 'bg-[#6a5cff]'
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      importProgress.status === 'error' ? 'bg-red-500' : 
+                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6a5cff]'
                     }`}
                     style={{ width: `${importProgress.current}%` }}
                   />
                 </div>
                 {importProgress.status === 'parsing' && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/2bg-card animate-pulse rounded" />
+                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
                     Parsing file...
                   </div>
                 )}
                 {importProgress.status === 'importing' && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/2bg-card animate-pulse rounded" />
+                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
                     Creating tickets...
                   </div>
                 )}
@@ -1931,14 +1931,14 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
             {importResult && (
               <div className="space-y-4">
                 <div className={`p-4 rounded-lg ${
-                  importResult.success ? 'bg-green-5bg-card dark:bg-green-95bg-card/2bg-card' : 'bg-red-5bg-card dark:bg-red-95bg-card/2bg-card'
+                  importResult.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`h-2 w-2 rounded-full ${
-                      importResult.success ? 'bg-green-5bg-cardbg-card' : 'bg-red-5bg-cardbg-card'
+                      importResult.success ? 'bg-green-500' : 'bg-red-500'
                     }`} />
                     <h4 className={`font-medium text-sm ${
-                      importResult.success ? 'text-green-8bg-cardbg-card dark:text-green-2bg-cardbg-card' : 'text-red-8bg-cardbg-card dark:text-red-2bg-cardbg-card'
+                      importResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
                     }`}>
                       {importResult.success ? 'Import Successful!' : 'Import Completed with Errors'}
                     </h4>
@@ -1951,29 +1951,29 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                   </div>
                 </div>
 
-                {importResult.errors.length > bg-card && (
+                {importResult.errors.length > 0 && (
                   <div className="space-y-2">
-                    <h5 className="text-sm font-medium text-red-8bg-cardbg-card dark:text-red-2bg-cardbg-card">Errors:</h5>
-                    <div className="max-h-32 overflow-y-auto bg-red-5bg-card dark:bg-red-95bg-card/2bg-card p-3 rounded-lg">
-                      <ul className="text-xs text-red-7bg-cardbg-card dark:text-red-3bg-cardbg-card space-y-1">
-                        {importResult.parsingErrors.length > bg-card && (
+                    <h5 className="text-sm font-medium text-red-800 dark:text-red-200">Errors:</h5>
+                    <div className="max-h-32 overflow-y-auto bg-red-50 dark:bg-red-950/20 p-3 rounded-lg">
+                      <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
+                        {importResult.parsingErrors.length > 0 && (
                           <li className="font-medium">Parsing Errors:</li>
                         )}
-                        {importResult.parsingErrors.slice(bg-card, 5).map((error, index) => (
+                        {importResult.parsingErrors.slice(0, 5).map((error, index) => (
                           <li key={`parse-${index}`}>• {error}</li>
                         ))}
                         
-                        {importResult.validationErrors.length > bg-card && (
+                        {importResult.validationErrors.length > 0 && (
                           <li className="font-medium mt-2">Validation Errors:</li>
                         )}
-                        {importResult.validationErrors.slice(bg-card, 5).map((error, index) => (
+                        {importResult.validationErrors.slice(0, 5).map((error, index) => (
                           <li key={`validation-${index}`}>• {error}</li>
                         ))}
                         
-                        {importResult.importErrors.length > bg-card && (
+                        {importResult.importErrors.length > 0 && (
                           <li className="font-medium mt-2">Import Errors:</li>
                         )}
-                        {importResult.importErrors.slice(bg-card, 5).map((error, index) => (
+                        {importResult.importErrors.slice(0, 5).map((error, index) => (
                           <li key={`import-${index}`}>• {error}</li>
                         ))}
                         
@@ -1995,7 +1995,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                   >
                     Close
                   </Button>
-                  {importResult.validRows > bg-card && (
+                  {importResult.validRows > 0 && (
                     <Button 
                       onClick={() => {
                         resetImportState()
@@ -2039,7 +2039,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                     }}
                     className="text-xs"
                   >
-                    {type.charAt(bg-card).toUpperCase() + type.slice(1).replace('_', ' ')}
+                    {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
                   </Button>
                 ))}
               </div>
@@ -2064,7 +2064,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                     }}
                     className="text-xs"
                   >
-                    {priority.charAt(bg-card).toUpperCase() + priority.slice(1)}
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
                   </Button>
                 ))}
               </div>
@@ -2089,7 +2089,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
                     }}
                     className="text-xs"
                   >
-                    {status.charAt(bg-card).toUpperCase() + status.slice(1).replace('_', ' ')}
+                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
                   </Button>
                 ))}
               </div>
@@ -2156,7 +2156,7 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
         <TicketDrawer
           isOpen={showTicketTray}
           onClose={() => {
-            console.log("[vbg-card] Closing ticket drawer")
+            console.log("[v0] Closing ticket drawer")
             setShowTicketTray(false)
             setSelectedTicket(null)
           }}
@@ -2168,86 +2168,86 @@ className="min-h-[4bg-cardpx] max-h-[12bg-cardpx] resize-none pr-12 font-sans te
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[11px] font-semibold text-foreground">Edit Ticket</DialogTitle>
+            <DialogTitle className="text-sm font-semibold text-foreground">Edit Ticket</DialogTitle>
           </DialogHeader>
           {ticketToEdit && (
             <div className="space-y-4">
               <div>
-                <label className="text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</label>
                 <Input
                   value={editForm.title}
                   onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="mt-1 text-[11px] h-8"
+                  className="mt-1 text-sm h-8"
                 />
               </div>
               <div>
-                <label className="text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</label>
                 <Textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="mt-1 text-[11px] resize-none"
+                  className="mt-1 text-sm resize-none"
                   rows={4}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</label>
                   <Select 
                     value={editForm.type} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, type: value }))}
                   >
                     <SelectTrigger className="mt-1 h-8">
-                      <SelectValue className="text-[11px]" />
+                      <SelectValue className="text-sm" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="request" className="text-[11px]">Request</SelectItem>
-                      <SelectItem value="incident" className="text-[11px]">Incident</SelectItem>
-                      <SelectItem value="problem" className="text-[11px]">Problem</SelectItem>
-                      <SelectItem value="change" className="text-[11px]">Change</SelectItem>
-                      <SelectItem value="task" className="text-[11px]">Task</SelectItem>
+                      <SelectItem value="request" className="text-sm">Request</SelectItem>
+                      <SelectItem value="incident" className="text-sm">Incident</SelectItem>
+                      <SelectItem value="problem" className="text-sm">Problem</SelectItem>
+                      <SelectItem value="change" className="text-sm">Change</SelectItem>
+                      <SelectItem value="task" className="text-sm">Task</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
                   <Select 
                     value={editForm.priority} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, priority: value }))}
                   >
                     <SelectTrigger className="mt-1 h-8">
-                      <SelectValue className="text-[11px]" />
+                      <SelectValue className="text-sm" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low" className="text-[11px]">Low</SelectItem>
-                      <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
-                      <SelectItem value="high" className="text-[11px]">High</SelectItem>
-                      <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
-                      <SelectItem value="urgent" className="text-[11px]">Urgent</SelectItem>
+                      <SelectItem value="low" className="text-sm">Low</SelectItem>
+                      <SelectItem value="medium" className="text-sm">Medium</SelectItem>
+                      <SelectItem value="high" className="text-sm">High</SelectItem>
+                      <SelectItem value="critical" className="text-sm">Critical</SelectItem>
+                      <SelectItem value="urgent" className="text-sm">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-[1bg-cardpx] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</label>
                   <Select 
                     value={editForm.status} 
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
                   >
                     <SelectTrigger className="mt-1 h-8">
-                      <SelectValue className="text-[11px]" />
+                      <SelectValue className="text-sm" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new" className="text-[11px]">New</SelectItem>
-                      <SelectItem value="in_progress" className="text-[11px]">In Progress</SelectItem>
-                      <SelectItem value="resolved" className="text-[11px]">Resolved</SelectItem>
-                      <SelectItem value="closed" className="text-[11px]">Closed</SelectItem>
-                      <SelectItem value="on_hold" className="text-[11px]">On Hold</SelectItem>
+                      <SelectItem value="new" className="text-sm">New</SelectItem>
+                      <SelectItem value="in_progress" className="text-sm">In Progress</SelectItem>
+                      <SelectItem value="resolved" className="text-sm">Resolved</SelectItem>
+                      <SelectItem value="closed" className="text-sm">Closed</SelectItem>
+                      <SelectItem value="on_hold" className="text-sm">On Hold</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setShowEditModal(false)} className="text-[11px] h-8 px-3">Cancel</Button>
-                <Button onClick={handleUpdateTicket} disabled={isUpdating} className="text-[11px] h-8 px-3">
+                <Button variant="outline" onClick={() => setShowEditModal(false)} className="text-sm h-8 px-3">Cancel</Button>
+                <Button onClick={handleUpdateTicket} disabled={isUpdating} className="text-sm h-8 px-3">
                   {isUpdating ? 'Updating...' : 'Update Ticket'}
                 </Button>
               </div>

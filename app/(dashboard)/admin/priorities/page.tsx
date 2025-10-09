@@ -132,8 +132,8 @@ export default function PriorityMatrixPage() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-[13px] font-semibold text-gray-900">Priority Matrix</h1>
-          <p className="text-[13px] text-gray-600 mt-1">Configure priority levels based on impact and urgency</p>
+          <h1 className="text-[13px] font-semibold text-foreground">Priority Matrix</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">Configure priority levels based on impact and urgency</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -215,7 +215,7 @@ export default function PriorityMatrixPage() {
 
                     <TabsContent value="matrix" className="space-y-4">
                       <div className="grid grid-cols-4 gap-4">
-                        <div className="text-center font-medium text-[13px] text-gray-500 p-2">Impact / Urgency</div>
+                        <div className="text-center font-medium text-[13px] text-muted-foreground p-2">Impact / Urgency</div>
                         <div className="text-center font-medium text-[13px] bg-red-50 p-2 rounded">High Urgency</div>
                         <div className="text-center font-medium text-[13px] bg-yellow-50 p-2 rounded">
                           Medium Urgency
@@ -331,7 +331,7 @@ export default function PriorityMatrixPage() {
                         {priorityLevels.map((priority) => (
                           <div
                             key={priority.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                           >
                             <div className="flex items-center space-x-3">
                               <Badge
@@ -341,7 +341,7 @@ export default function PriorityMatrixPage() {
                                 {priority.name}
                               </Badge>
                               <span className="text-[13px]">{priority.responseTime}</span>
-                              <span className="text-[13px] text-gray-500">{priority.description}</span>
+                              <span className="text-[13px] text-muted-foreground">{priority.description}</span>
                             </div>
                             <Button
                               variant="outline"
@@ -371,7 +371,7 @@ export default function PriorityMatrixPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-4">
-              <div className="text-center font-medium text-[13px] text-gray-500 p-2">Impact / Urgency</div>
+              <div className="text-center font-medium text-[13px] text-muted-foreground p-2">Impact / Urgency</div>
               <div className="text-center font-medium text-[13px] bg-red-50 p-2 rounded">High Urgency</div>
               <div className="text-center font-medium text-[13px] bg-yellow-50 p-2 rounded">Medium Urgency</div>
               <div className="text-center font-medium text-[13px] bg-green-50 p-2 rounded">Low Urgency</div>
@@ -409,7 +409,7 @@ export default function PriorityMatrixPage() {
                             >
                               {cell.priority.name} ({cell.priority.id.toUpperCase()})
                             </Badge>
-                            <p className="text-xs text-gray-600">{cell.priority.description}</p>
+                            <p className="text-xs text-muted-foreground">{cell.priority.description}</p>
                           </>
                         )}
                       </div>

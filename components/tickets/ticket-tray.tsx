@@ -247,7 +247,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "change":
         return "bg-green-100 text-green-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -260,11 +260,11 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "resolved":
         return "bg-green-100 text-green-800"
       case "closed":
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
       case "on hold":
         return "bg-purple-100 text-purple-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -279,7 +279,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "low":
         return "bg-green-100 text-green-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -397,7 +397,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       case "jpeg":
         return <FileText className="h-5 w-5 text-purple-600" />
       default:
-        return <FileText className="h-5 w-5 text-gray-600" />
+        return <FileText className="h-5 w-5 text-muted-foreground" />
     }
   }
 
@@ -538,11 +538,11 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
 
       {position === 'side' ? (
-        <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-white dark:bg-gray-900 shadow-2xl flex flex-col h-full relative z-10">
-          <div className="p-6 bg-white dark:bg-gray-900">
+        <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] 0 dark:bg-gray-900 shadow-2xl flex flex-col h-full relative z-10">
+          <div className="p-6 0 dark:bg-gray-900">
             <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-[13px] font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
+              <h1 className="text-[13px] font-semibold text-foreground dark:text-white">{ticketData.title}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -578,13 +578,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="font-medium">{ticketData.id}</span>
             <span>Created on {ticketData.createdDate}</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900">
+        <div className="0 dark:bg-gray-900">
           <div className="flex px-6">
             {tabs.map((tab) => (
               <button
@@ -592,13 +592,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors flex-1 text-center ${
                   activeTab === tab.id
-                    ? "text-gray-900 dark:text-white border-gray-900 dark:border-white"
-                    : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+                    ? "text-foreground dark:text-white border-gray-900 dark:border-white"
+                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{tab.count}</span>
+                  <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">{tab.count}</span>
                 )}
               </button>
             ))}
@@ -611,10 +611,10 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
             <div className="p-6 space-y-6">
               {/* Description Section */}
               <div className="space-y-3">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">Description</span>
+                <span className="text-sm font-medium text-foreground dark:text-white">Description</span>
 
                 {/* Rich Text Editor Toolbar */}
-                <div className="flex items-center gap-1 p-2 bg-gray-50 rounded-t-md">
+                <div className="flex items-center gap-1 p-2 bg-muted/50 rounded-t-md">
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Bold className="h-4 w-4" />
                   </Button>
@@ -651,7 +651,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Type</span>
+                    <span className="text-sm font-medium text-foreground">Type</span>
                     <Select
                       value={ticketData.type}
                       onValueChange={(value) => setTicketData({ ...ticketData, type: value })}
@@ -670,7 +670,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Status</span>
+                    <span className="text-sm font-medium text-foreground">Status</span>
                     <Select
                       value={ticketData.status}
                       onValueChange={(value) => setTicketData({ ...ticketData, status: value })}
@@ -689,7 +689,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Priority</span>
+                    <span className="text-sm font-medium text-foreground">Priority</span>
                     <Select
                       value={ticketData.priority}
                       onValueChange={(value) => setTicketData({ ...ticketData, priority: value })}
@@ -707,7 +707,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Category</span>
+                    <span className="text-sm font-medium text-foreground">Category</span>
                     <Input
                       value={ticketData.category}
                       onChange={(e) => setTicketData({ ...ticketData, category: e.target.value })}
@@ -716,7 +716,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Reported By</span>
+                    <span className="text-sm font-medium text-foreground">Reported By</span>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
                         {ticketData.reportedBy}
@@ -728,7 +728,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Assignee</span>
+                    <span className="text-sm font-medium text-foreground">Assignee</span>
                     <Select
                       value={ticketData.assignee}
                       onValueChange={(value) => setTicketData({ ...ticketData, assignee: value })}
@@ -746,7 +746,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Organization</span>
+                    <span className="text-sm font-medium text-foreground">Organization</span>
                     <Input
                       value={ticketData.organization}
                       onChange={(e) => setTicketData({ ...ticketData, organization: e.target.value })}
@@ -755,7 +755,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Department</span>
+                    <span className="text-sm font-medium text-foreground">Department</span>
                     <Input
                       value={ticketData.department}
                       onChange={(e) => setTicketData({ ...ticketData, department: e.target.value })}
@@ -764,7 +764,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Due Date</span>
+                    <span className="text-sm font-medium text-foreground">Due Date</span>
                     <Input
                       type="date"
                       value={ticketData.dueDate}
@@ -774,7 +774,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Estimated Hours</span>
+                    <span className="text-sm font-medium text-foreground">Estimated Hours</span>
                     <Input
                       value={ticketData.estimatedTime}
                       onChange={(e) => setTicketData({ ...ticketData, estimatedTime: e.target.value })}
@@ -786,7 +786,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
               {/* Tags Section */}
               <div className="space-y-3">
-                <span className="text-sm font-medium text-gray-900">Tags</span>
+                <span className="text-sm font-medium text-foreground">Tags</span>
                 <div className="flex flex-wrap gap-2">
                   {ticketData.tags.map((tag, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
@@ -816,9 +816,9 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
               </div>
 
               {showAccountSearch && (
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
                   <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-400" />
+                    <Search className="h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search accounts to link..."
                       value={accountSearchQuery}
@@ -839,7 +839,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                       .map((account) => (
                         <div
                           key={account.id}
-                          className="flex items-center justify-between p-2 bg-white rounded cursor-pointer hover:bg-gray-50"
+                          className="flex items-center justify-between p-2 0 rounded cursor-pointer hover:bg-muted/50"
                           onClick={() => handleLinkAccount(account)}
                         >
                           <div className="flex items-center gap-2">
@@ -851,7 +851,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                             </div>
                             <div>
                               <p className="text-sm font-medium">{account.name}</p>
-                              <p className="text-xs text-gray-500">{account.email}</p>
+                              <p className="text-xs text-muted-foreground">{account.email}</p>
                             </div>
                           </div>
                           <Button size="sm" variant="outline">
@@ -865,7 +865,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
               <div className="space-y-4">
                 {ticketData.accounts.map((account) => (
-                  <div key={account.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div key={account.id} className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#6E72FF] flex items-center justify-center text-white font-medium">
@@ -876,7 +876,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                         </div>
                         <div>
                           <h4 className="font-medium">{account.name}</h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {account.role} • {account.department}
                           </p>
                         </div>
@@ -886,19 +886,19 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400" />
+                        <Mail className="h-4 w-4 text-muted-foreground" />
                         <span>{account.email}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-400" />
+                        <Phone className="h-4 w-4 text-muted-foreground" />
                         <span>{account.phone}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-gray-400" />
+                        <Building className="h-4 w-4 text-muted-foreground" />
                         <span>{account.organization}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
+                        <Clock className="h-4 w-4 text-muted-foreground" />
                         <span>Last contact: {account.lastContact}</span>
                       </div>
                     </div>
@@ -923,7 +923,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[11px] font-medium">Task Checklist</h3>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {ticketData.checklist.filter((item) => item.completed).length} of {ticketData.checklist.length}{" "}
                   completed
                 </div>
@@ -931,11 +931,11 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
               <div className="space-y-3">
                 {ticketData.checklist.map((item) => (
-                  <div key={item.id} className="bg-gray-50 rounded-lg p-3 space-y-3">
+                  <div key={item.id} className="bg-muted/50 rounded-lg p-3 space-y-3">
                     <div className="flex items-center gap-3">
                       <Checkbox checked={item.completed} onCheckedChange={() => toggleChecklistItem(item.id)} />
                       <div className="flex-1">
-                        <p className={`text-sm ${item.completed ? "line-through text-gray-500" : ""}`}>{item.text}</p>
+                        <p className={`text-sm ${item.completed ? "line-through text-muted-foreground" : ""}`}>{item.text}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -949,7 +949,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
                     <div className="grid grid-cols-2 gap-3 pl-7">
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500">Assignee</label>
+                        <label className="text-xs font-medium text-muted-foreground">Assignee</label>
                         <Select
                           value={item.assignee}
                           onValueChange={(value) => handleUpdateChecklistItem(item.id, { assignee: value })}
@@ -967,7 +967,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-500">Due Date</label>
+                        <label className="text-xs font-medium text-muted-foreground">Due Date</label>
                         <Input
                           type="date"
                           value={item.dueDate}
@@ -1018,14 +1018,14 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{comment.author}</span>
-                        <span className="text-xs text-gray-500">{comment.timestamp}</span>
+                        <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
                         {comment.type === "system" && (
                           <Badge variant="secondary" className="text-xs">
                             System
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{comment.content}</p>
+                      <p className="text-sm text-foreground bg-muted/50 p-3 rounded-lg">{comment.content}</p>
                     </div>
                   </div>
                 ))}
@@ -1040,13 +1040,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     className="min-h-[80px]"
                   />
                   {showMentionDropdown && (
-                    <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 0 border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
                       {teamMembers
                         .filter((member) => member.name.toLowerCase().includes(mentionQuery.toLowerCase()))
                         .map((member) => (
                           <div
                             key={member.id}
-                            className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+                            className="flex items-center gap-2 p-2 hover:bg-muted/50 cursor-pointer"
                             onClick={() => handleSelectMention(member)}
                           >
                             <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs">
@@ -1054,7 +1054,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                             </div>
                             <div>
                               <p className="text-sm font-medium">{member.name}</p>
-                              <p className="text-xs text-gray-500">{member.email}</p>
+                              <p className="text-xs text-muted-foreground">{member.email}</p>
                             </div>
                           </div>
                         ))}
@@ -1103,13 +1103,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
               <div className="space-y-3">
                 {ticketData.files.map((file) => (
-                  <div key={file.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center">
+                  <div key={file.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                       {getFileIcon(file.name)}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-sm">{file.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {file.size} • Uploaded by {file.uploadedBy} • {file.uploadedAt}
                       </p>
                     </div>
@@ -1126,12 +1126,12 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
               </div>
 
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
                 onClick={() => document.getElementById("file-upload")?.click()}
               >
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500 mb-2">Drag and drop files here, or click to browse</p>
-                <p className="text-xs text-gray-400 mb-2">Allowed types: PDF, Excel, Word, PowerPoint, PNG, JPG</p>
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">Drag and drop files here, or click to browse</p>
+                <p className="text-xs text-muted-foreground mb-2">Allowed types: PDF, Excel, Word, PowerPoint, PNG, JPG</p>
                 <Button variant="outline" size="sm">
                   Choose Files
                 </Button>
@@ -1156,16 +1156,16 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                       <div className="w-8 h-8 rounded-full bg-[#6E72FF]/10 flex items-center justify-center">
                         <History className="h-4 w-4 text-[#6E72FF]" />
                       </div>
-                      {index < ticketData.history.length - 1 && <div className="w-px h-8 bg-gray-200 mt-2"></div>}
+                      {index < ticketData.history.length - 1 && <div className="w-px h-8 bg-muted mt-2"></div>}
                     </div>
                     <div className="flex-1 pb-4">
-                      <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="bg-muted/50 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-sm">{entry.action}</span>
-                          <span className="text-xs text-gray-500">by {entry.user}</span>
+                          <span className="text-xs text-muted-foreground">by {entry.user}</span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-1">{entry.timestamp}</p>
-                        <p className="text-sm text-gray-700">{entry.details}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{entry.timestamp}</p>
+                        <p className="text-sm text-foreground">{entry.details}</p>
                       </div>
                     </div>
                   </div>
@@ -1176,11 +1176,11 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
         </div>
       </div>
       ) : (
-        <div className="relative z-10 w-full max-w-4xl bg-white dark:bg-gray-900 shadow-2xl rounded-lg flex flex-col max-h-[90vh] overflow-hidden">
-          <div className="p-6 bg-white dark:bg-gray-900 border-b">
+        <div className="relative z-10 w-full max-w-4xl 0 dark:bg-gray-900 shadow-2xl rounded-lg flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="p-6 0 dark:bg-gray-900 border-b">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-[13px] font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
+                <h1 className="text-[13px] font-semibold text-foreground dark:text-white">{ticketData.title}</h1>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyTicketId} title="Copy Ticket ID">
@@ -1197,13 +1197,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="font-medium">{ticketData.id}</span>
               <span>Created on {ticketData.createdDate}</span>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900">
+          <div className="0 dark:bg-gray-900">
             <div className="flex px-6">
               {tabs.map((tab) => (
                 <button
@@ -1211,13 +1211,13 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors flex-1 text-center ${
                     activeTab === tab.id
-                      ? "text-gray-900 dark:text-white border-gray-900 dark:border-white"
-                      : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+                      ? "text-foreground dark:text-white border-gray-900 dark:border-white"
+                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
                   }`}
                 >
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{tab.count}</span>
+                    <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">{tab.count}</span>
                   )}
                 </button>
               ))}
@@ -1230,8 +1230,8 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
               <div className="p-6 space-y-6">
                 {/* Description Section */}
                 <div className="space-y-3">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Description</span>
-                  <div className="flex items-center gap-1 p-2 bg-gray-50 rounded-t-md">
+                  <span className="text-sm font-medium text-foreground dark:text-white">Description</span>
+                  <div className="flex items-center gap-1 p-2 bg-muted/50 rounded-t-md">
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <Bold className="h-4 w-4" />
                     </Button>
@@ -1263,7 +1263,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Type</span>
+                      <span className="text-sm font-medium text-foreground">Type</span>
                       <Select value={ticketData.type} onValueChange={(value) => setTicketData({ ...ticketData, type: value })}>
                         <SelectTrigger className="w-40 h-9">
                           <SelectValue />
@@ -1279,7 +1279,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Status</span>
+                      <span className="text-sm font-medium text-foreground">Status</span>
                       <Select value={ticketData.status} onValueChange={(value) => setTicketData({ ...ticketData, status: value })}>
                         <SelectTrigger className="w-40 h-9">
                           <SelectValue />
@@ -1295,7 +1295,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Priority</span>
+                      <span className="text-sm font-medium text-foreground">Priority</span>
                       <Select value={ticketData.priority} onValueChange={(value) => setTicketData({ ...ticketData, priority: value })}>
                         <SelectTrigger className="w-40 h-9">
                           <SelectValue />
@@ -1310,7 +1310,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Reported By</span>
+                      <span className="text-sm font-medium text-foreground">Reported By</span>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
                           {ticketData.reportedBy}
@@ -1322,7 +1322,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
 
                   <div className="space-y-5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Assignee</span>
+                      <span className="text-sm font-medium text-foreground">Assignee</span>
                       <Select value={ticketData.assignee} onValueChange={(value) => setTicketData({ ...ticketData, assignee: value })}>
                         <SelectTrigger className="w-40 h-9">
                           <SelectValue placeholder="Assign" />
@@ -1337,19 +1337,19 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Due Date</span>
+                      <span className="text-sm font-medium text-foreground">Due Date</span>
                       <Input type="date" value={ticketData.dueDate} onChange={(e) => setTicketData({ ...ticketData, dueDate: e.target.value })} className="w-40 h-9 text-sm" />
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Estimated Hours</span>
+                      <span className="text-sm font-medium text-foreground">Estimated Hours</span>
                       <Input value={ticketData.estimatedTime} onChange={(e) => setTicketData({ ...ticketData, estimatedTime: e.target.value })} className="w-40 h-9 text-sm" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <span className="text-sm font-medium text-gray-900">Tags</span>
+                  <span className="text-sm font-medium text-foreground">Tags</span>
                   <div className="flex flex-wrap gap-2">
                     {ticketData.tags.map((tag, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">

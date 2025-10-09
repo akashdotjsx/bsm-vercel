@@ -45,19 +45,19 @@ interface ServiceRequest {
 }
 
 const statusConfig = {
-  pending: { label: "Pending", color: "bg-yellow-1bg-cardbg-card text-yellow-8bg-cardbg-card dark:bg-yellow-9bg-cardbg-card/3bg-card dark:text-yellow-4bg-cardbg-card", icon: Clock },
-  approved: { label: "Approved", color: "bg-blue-1bg-cardbg-card text-blue-8bg-cardbg-card dark:bg-blue-9bg-cardbg-card/3bg-card dark:text-blue-4bg-cardbg-card", icon: CheckCircle2 },
-  in_progress: { label: "In Progress", color: "bg-purple-1bg-cardbg-card text-purple-8bg-cardbg-card dark:bg-purple-9bg-cardbg-card/3bg-card dark:text-purple-4bg-cardbg-card", icon: RefreshCw },
-  completed: { label: "Completed", color: "bg-green-1bg-cardbg-card text-green-8bg-cardbg-card dark:bg-green-9bg-cardbg-card/3bg-card dark:text-green-4bg-cardbg-card", icon: CheckCircle2 },
-  rejected: { label: "Rejected", color: "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card dark:bg-red-9bg-cardbg-card/3bg-card dark:text-red-4bg-cardbg-card", icon: XCircle },
-  cancelled: { label: "Cancelled", color: "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card dark:bg-gray-9bg-cardbg-card/3bg-card dark:text-gray-4bg-cardbg-card", icon: XCircle }
+  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", icon: Clock },
+  approved: { label: "Approved", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", icon: CheckCircle2 },
+  in_progress: { label: "In Progress", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400", icon: RefreshCw },
+  completed: { label: "Completed", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: CheckCircle2 },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: XCircle },
+  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400", icon: XCircle }
 }
 
 const priorityConfig = {
-  low: { label: "Low", color: "bg-gray-1bg-cardbg-card text-gray-8bg-cardbg-card dark:bg-gray-9bg-cardbg-card/3bg-card dark:text-gray-4bg-cardbg-card" },
-  medium: { label: "Medium", color: "bg-blue-1bg-cardbg-card text-blue-8bg-cardbg-card dark:bg-blue-9bg-cardbg-card/3bg-card dark:text-blue-4bg-cardbg-card" },
-  high: { label: "High", color: "bg-orange-1bg-cardbg-card text-orange-8bg-cardbg-card dark:bg-orange-9bg-cardbg-card/3bg-card dark:text-orange-4bg-cardbg-card" },
-  critical: { label: "Critical", color: "bg-red-1bg-cardbg-card text-red-8bg-cardbg-card dark:bg-red-9bg-cardbg-card/3bg-card dark:text-red-4bg-cardbg-card" }
+  low: { label: "Low", color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" },
+  medium: { label: "Medium", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  high: { label: "High", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  critical: { label: "Critical", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" }
 }
 
 export default function MyServiceRequestsPage() {
@@ -148,8 +148,8 @@ export default function MyServiceRequestsPage() {
                   <p className="text-sm text-muted-foreground">Total Requests</p>
                   <p className="text-2xl font-bold">{statusCounts.total}</p>
                 </div>
-                <div className="h-8 w-8 bg-blue-1bg-cardbg-card dark:bg-blue-9bg-cardbg-card/3bg-card rounded-full flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-blue-6bg-cardbg-card dark:text-blue-4bg-cardbg-card" />
+                <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
@@ -162,8 +162,8 @@ export default function MyServiceRequestsPage() {
                   <p className="text-sm text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold">{statusCounts.pending}</p>
                 </div>
-                <div className="h-8 w-8 bg-yellow-1bg-cardbg-card dark:bg-yellow-9bg-cardbg-card/3bg-card rounded-full flex items-center justify-center">
-                  <AlertCircle className="h-4 w-4 text-yellow-6bg-cardbg-card dark:text-yellow-4bg-cardbg-card" />
+                <div className="h-8 w-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
             </CardContent>
@@ -176,8 +176,8 @@ export default function MyServiceRequestsPage() {
                   <p className="text-sm text-muted-foreground">In Progress</p>
                   <p className="text-2xl font-bold">{statusCounts.in_progress}</p>
                 </div>
-                <div className="h-8 w-8 bg-purple-1bg-cardbg-card dark:bg-purple-9bg-cardbg-card/3bg-card rounded-full flex items-center justify-center">
-                  <RefreshCw className="h-4 w-4 text-purple-6bg-cardbg-card dark:text-purple-4bg-cardbg-card" />
+                <div className="h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <RefreshCw className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
@@ -190,8 +190,8 @@ export default function MyServiceRequestsPage() {
                   <p className="text-sm text-muted-foreground">Completed</p>
                   <p className="text-2xl font-bold">{statusCounts.completed}</p>
                 </div>
-                <div className="h-8 w-8 bg-green-1bg-cardbg-card dark:bg-green-9bg-cardbg-card/3bg-card rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="h-4 w-4 text-green-6bg-cardbg-card dark:text-green-4bg-cardbg-card" />
+                <div className="h-8 w-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
@@ -206,11 +206,11 @@ export default function MyServiceRequestsPage() {
               placeholder="Search requests..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-1bg-card"
+              className="pl-10"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-[15bg-cardpx]">
+            <SelectTrigger className="w-full md:w-[150px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -223,7 +223,7 @@ export default function MyServiceRequestsPage() {
             </SelectContent>
           </Select>
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-full md:w-[15bg-cardpx]">
+            <SelectTrigger className="w-full md:w-[150px]">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -251,7 +251,7 @@ export default function MyServiceRequestsPage() {
                 </CardContent>
               </Card>
             ))
-          ) : filteredRequests.length === bg-card ? (
+          ) : filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />

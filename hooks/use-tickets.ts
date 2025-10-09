@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { ticketAPI, Ticket, TicketComment, TicketAttachment, ChecklistItem, CreateTicketData, UpdateTicketData } from '@/lib/api/tickets'
+import { Ticket, TicketComment, TicketAttachment, ChecklistItem, CreateTicketData, UpdateTicketData } from '@/lib/types/tickets'
+// NOTE: This hook uses legacy REST API calls. Consider migrating to GraphQL hooks
+// import { ticketAPI } from '@/lib/api/tickets' // DEPRECATED - API file deleted, use REST endpoints directly or GraphQL
 
 export function useTickets(params: {
   page?: number
@@ -37,7 +39,21 @@ export function useTickets(params: {
       setLoading(true)
       setError(null)
       console.log('🔄 Fetching tickets with params:', stableParams)
-      const data = await ticketAPI.getTickets(stableParams)
+      
+      // Direct REST API call
+      const searchParams = new URLSearchParams()
+      if (stableParams.page) searchParams.set('page', stableParams.page.toString())
+      if (stableParams.limit) searchParams.set('limit', stableParams.limit.toString())
+      if (stableParams.status) searchParams.set('status', stableParams.status)
+      if (stableParams.priority) searchParams.set('priority', stableParams.priority)
+      if (stableParams.type) searchParams.set('type', stableParams.type)
+      if (stableParams.assignee_id) searchParams.set('assignee_id', stableParams.assignee_id)
+      if (stableParams.search) searchParams.set('search', stableParams.search)
+      
+      const response = await fetch(`/api/tickets?${searchParams.toString()}`)
+      if (!response.ok) throw new Error('Failed to fetch tickets')
+      const data = await response.json()
+      
       console.log('📊 Tickets fetched successfully:', data)
       console.log('📊 Setting tickets to:', data.tickets?.length || 0, 'tickets')
       setTickets(data.tickets || [])
@@ -59,7 +75,17 @@ export function useTickets(params: {
 
   const createTicket = useCallback(async (data: CreateTicketData) => {
     try {
-      const newTicket = await ticketAPI.createTicket(data)
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create ticket')
+      }
+      const result = await response.json()
+      const newTicket = result.ticket
       setTickets(prev => [newTicket, ...prev])
       return newTicket
     } catch (err) {
@@ -70,7 +96,17 @@ export function useTickets(params: {
 
   const updateTicket = useCallback(async (id: string, data: UpdateTicketData) => {
     try {
-      const updatedTicket = await ticketAPI.updateTicket(id, data)
+      const response = await fetch(`/api/tickets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update ticket')
+      }
+      const result = await response.json()
+      const updatedTicket = result.ticket
       setTickets(prev => prev.map(ticket => 
         ticket.id === id ? updatedTicket : ticket
       ))
@@ -84,8 +120,14 @@ export function useTickets(params: {
   const deleteTicket = useCallback(async (id: string) => {
     console.log('🔧 useTickets.deleteTicket called with id:', id)
     try {
-      console.log('🔧 Calling ticketAPI.deleteTicket...')
-      await ticketAPI.deleteTicket(id)
+      console.log('🔧 Calling DELETE API...')
+      const response = await fetch(`/api/tickets/${id}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete ticket')
+      }
       console.log('🔧 API call successful, updating local state...')
       setTickets(prev => {
         const filtered = prev.filter(ticket => ticket.id !== id)
@@ -121,8 +163,10 @@ export function useTicket(id: string) {
     try {
       setLoading(true)
       setError(null)
-      const data = await ticketAPI.getTicket(id)
-      setTicket(data)
+      const response = await fetch(`/api/tickets/${id}`)
+      if (!response.ok) throw new Error('Failed to fetch ticket')
+      const result = await response.json()
+      setTicket(result.ticket)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch ticket')
     } finally {
@@ -138,7 +182,17 @@ export function useTicket(id: string) {
 
   const updateTicket = useCallback(async (data: UpdateTicketData) => {
     try {
-      const updatedTicket = await ticketAPI.updateTicket(id, data)
+      const response = await fetch(`/api/tickets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update ticket')
+      }
+      const result = await response.json()
+      const updatedTicket = result.ticket
       setTicket(updatedTicket)
       return updatedTicket
     } catch (err) {
@@ -165,8 +219,10 @@ export function useTicketComments(ticketId: string) {
     try {
       setLoading(true)
       setError(null)
-      const data = await ticketAPI.getComments(ticketId)
-      setComments(data)
+      const response = await fetch(`/api/tickets/${ticketId}/comments`)
+      if (!response.ok) throw new Error('Failed to fetch comments')
+      const result = await response.json()
+      setComments(result.comments || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch comments')
     } finally {
@@ -182,7 +238,17 @@ export function useTicketComments(ticketId: string) {
 
   const addComment = useCallback(async (content: string, isInternal = false) => {
     try {
-      const newComment = await ticketAPI.addComment(ticketId, content, isInternal)
+      const response = await fetch(`/api/tickets/${ticketId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, is_internal: isInternal })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to add comment')
+      }
+      const result = await response.json()
+      const newComment = result.comment
       setComments(prev => [...prev, newComment])
       return newComment
     } catch (err) {

@@ -54,16 +54,16 @@ export default function TestProfilePage() {
       <h1 className="text-[13px] font-bold mb-6">Profile Fetch Test</h1>
       
       <div className="space-y-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">Current User</h2>
-          <pre className="text-sm overflow-auto bg-white p-2 rounded">
+          <pre className="text-sm overflow-auto 0 p-2 rounded">
             {JSON.stringify(user, null, 2)}
           </pre>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h2 className="font-semibold mb-2">Profile Fetch Test Result</h2>
-          <pre className="text-sm overflow-auto bg-white p-2 rounded">
+          <pre className="text-sm overflow-auto 0 p-2 rounded">
             {JSON.stringify(testResult, null, 2)}
           </pre>
         </div>

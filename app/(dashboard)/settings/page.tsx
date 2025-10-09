@@ -673,7 +673,7 @@ export default function SettingsPage() {
                 <img
                   src={organizationSettings.logoUrl || "/placeholder.svg"}
                   alt="Organization Logo"
-                  className="w-20 h-20 rounded-lg object-cover border border-gray-100"
+                  className="w-20 h-20 rounded-lg object-cover border border-border"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -1427,9 +1427,9 @@ export default function SettingsPage() {
   return (
     <PageContent>
       <div className="flex h-full bg-background">
-        <div className="w-64 bg-card border-r border-gray-100 flex flex-col">
+        <div className="w-64 0 border-r border-border flex flex-col">
           {/* Header */}
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -1450,14 +1450,14 @@ export default function SettingsPage() {
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 border-b border-border">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search settings"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 text-sm border-gray-100"
+                className="pl-9 text-sm border-border"
               />
             </div>
           </div>
@@ -1503,7 +1503,7 @@ export default function SettingsPage() {
           <div className="max-w-4xl mx-auto p-8">
             {renderContent()}
 
-            <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="mt-8 pt-6 border-t border-border">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
                   Changes are automatically saved when you modify settings

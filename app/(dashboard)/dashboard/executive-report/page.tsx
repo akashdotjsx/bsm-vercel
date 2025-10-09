@@ -195,11 +195,11 @@ export default function ExecutiveReportPage() {
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-muted rounded w-1/3"></div>
+            <div className="h-32 bg-muted rounded"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+                <div key={i} className="h-48 bg-muted rounded"></div>
               ))}
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function ExecutiveReportPage() {
           </div>
         </div>
 
-        <Card className="bg-white">
+        <Card className="0">
           <CardHeader>
             <CardTitle className="text-[11px] font-semibold flex items-center">
               <TrendingUp className="mr-2 h-5 w-5 text-green-600" />
@@ -263,7 +263,7 @@ export default function ExecutiveReportPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {reportData?.details.map((item) => (
-            <Card key={item.id} className="bg-white">
+            <Card key={item.id} className="0">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-[11px] font-semibold">{item.metric}</CardTitle>

@@ -342,39 +342,90 @@
     max-width: calc(100vw - 15px);
   }
   
-  /* Custom text sizes for Enterprise Search Frontend */
+  /* ========================================
+   * KROOLO THEME FONT SIZES
+   * Centralized font size system
+   * Change the CSS variables to scale globally
+   * ======================================== */
+  
+  /* Font Size CSS Variables */
+  :root {
+    --text-xs: 10px;
+    --text-sm: 12px;
+    --text-base: 13px;
+    --text-md: 14px;
+    --text-lg: 16px;
+    --text-xl: 18px;
+    --text-2xl: 24px;
+    --text-3xl: 30px;
+    --text-4xl: 36px;
+  }
+  
+  /* Font Size Utility Classes */
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+  
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+  
+  .text-base {
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+  
+  .text-md {
+    font-size: var(--text-md);
+    line-height: 1.5;
+  }
+  
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: 1.5;
+  }
+  
+  .text-xl {
+    font-size: var(--text-xl);
+    line-height: 1.5;
+  }
+  
+  .text-2xl {
+    font-size: var(--text-2xl);
+    line-height: 1.25;
+  }
+  
+  .text-3xl {
+    font-size: var(--text-3xl);
+    line-height: 1.25;
+  }
+  
+  .text-4xl {
+    font-size: var(--text-4xl);
+    line-height: 1.25;
+  }
+  
+  /* Legacy aliases for backward compatibility */
   .text-10 {
-    font-size: 10px;
+    font-size: var(--text-xs);
     line-height: 1.5;
   }
   
   .text-11 {
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-  /* Alias to design token name */
-  .text-xs-sm {
-    font-size: 11px;
+    font-size: var(--text-xs);
     line-height: 1.5;
   }
   
   .text-13 {
-    font-size: 13px;
+    font-size: var(--text-base);
     line-height: 1.5;
   }
   
-  /* Updated base text size */
-  .text-base {
-    font-size: 13px;
-  }
-  
-  .text-xs {
-    font-size: 10px;
-  }
-  
-  .text-sm {
-    font-size: 12px;
+  .text-xs-sm {
+    font-size: var(--text-xs);
+    line-height: 1.5;
   }
 
   /* Font family helpers matching design system */

@@ -382,7 +382,7 @@ export default function CreateTicketPage() {
       case "change":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
     }
   }
 
@@ -399,7 +399,7 @@ export default function CreateTicketPage() {
       case "low":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
+        return "bg-muted text-foreground dark:bg-gray-900/30 dark:text-gray-300"
     }
   }
 
@@ -424,7 +424,7 @@ export default function CreateTicketPage() {
             >
               {isSubmitting ? (
                 <>
-                  <div className="h-4 w-4 mr-2 bg-white/20 rounded animate-pulse" />
+                  <div className="h-4 w-4 mr-2 0/20 rounded animate-pulse" />
                   Creating...
                 </>
               ) : (

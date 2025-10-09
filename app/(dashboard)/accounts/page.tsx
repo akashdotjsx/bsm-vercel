@@ -86,7 +86,7 @@ const getStatusChip = (status: string) => {
   return (
     <Badge
       variant={isActive ? "default" : "secondary"}
-      className={`text-[10px] ${isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-gray-100 text-gray-800 hover:bg-gray-100"}`}
+      className={`text-[10px] ${isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-muted text-foreground hover:bg-muted"}`}
     >
       {status}
     </Badge>
@@ -278,17 +278,17 @@ export default function AccountsPage() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-100">
+              <table className="w-full border-collapse border border-border">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Name</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Country</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Support Channel</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Account Owner</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Created At</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-gray-100">Actions</th>
-                    <th className="text-center py-3 px-4 font-medium text-[10px] border border-gray-100 w-12">
+                  <tr className="bg-muted/50">
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Country</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Support Channel</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Account Owner</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Created At</th>
+                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Actions</th>
+                    <th className="text-center py-3 px-4 font-medium text-[10px] border border-border w-12">
                       <DropdownMenu open={showCustomColumns} onOpenChange={setShowCustomColumns}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -346,8 +346,8 @@ export default function AccountsPage() {
                 </thead>
                 <tbody>
                   {accounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-gray-50">
-                      <td className="py-3 px-4 border border-gray-100">
+                    <tr key={account.id} className="hover:bg-muted/50">
+                      <td className="py-3 px-4 border border-border">
                         <div>
                           <button
                             onClick={() => router.push(`/accounts/${account.id}`)}
@@ -361,8 +361,8 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                           </div>
                         </div>
                       </td>
-<td className="py-3 px-4 text-[11px] border border-gray-100">{account.country}</td>
-                      <td className="py-3 px-4 border border-gray-100">
+<td className="py-3 px-4 text-[11px] border border-border">{account.country}</td>
+                      <td className="py-3 px-4 border border-border">
 <div className="flex items-center text-[11px]">
                           {account.supportChannel === "Email" && <Mail className="mr-1 h-3 w-3" />}
                           {account.supportChannel === "Slack" && <MessageSquare className="mr-1 h-3 w-3" />}
@@ -370,7 +370,7 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                           {account.supportChannel}
                         </div>
                       </td>
-                      <td className="py-3 px-4 border border-gray-100">
+                      <td className="py-3 px-4 border border-border">
                         <div className="flex items-center">
                           <div
                             className={`w-8 h-8 ${getChipColor(account.contactPerson)} rounded-full flex items-center justify-center text-white text-[9px] font-medium cursor-pointer`}
@@ -380,9 +380,9 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 border border-gray-100">{getStatusChip(account.status)}</td>
-<td className="py-3 px-4 text-[11px] border border-gray-100">{formatDate(account.createdAt)}</td>
-                      <td className="py-3 px-4 border border-gray-100">
+                      <td className="py-3 px-4 border border-border">{getStatusChip(account.status)}</td>
+<td className="py-3 px-4 text-[11px] border border-border">{formatDate(account.createdAt)}</td>
+                      <td className="py-3 px-4 border border-border">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -408,7 +408,7 @@ className="text-[11px] text-red-600"
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
-                      <td className="py-3 px-4 border border-gray-100"></td>
+                      <td className="py-3 px-4 border border-border"></td>
                     </tr>
                   ))}
                 </tbody>
