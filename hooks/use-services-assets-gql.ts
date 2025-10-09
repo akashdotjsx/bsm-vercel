@@ -162,8 +162,10 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
 interface ServiceRequestsParams {
   status?: string
   requester_id?: string
+  assignee_id?: string
   service_id?: string
   organization_id?: string
+  scope?: 'all' | 'my' | 'team' // all = all requests, my = requester_id filter, team = manager reports
   page?: number
   limit?: number
 }
@@ -172,12 +174,15 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
   const [serviceRequests, setServiceRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [count, setCount] = useState(0)
 
   const stableParams = useMemo(() => params, [
     params.status,
     params.requester_id,
+    params.assignee_id,
     params.service_id,
     params.organization_id,
+    params.scope,
     params.page,
     params.limit
   ])
@@ -190,21 +195,81 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
 
       const client = await createGraphQLClient()
 
+      // Build filter based on params
+      const filter: any = {}
+      
+      if (stableParams.organization_id) {
+        filter.organization_id = { eq: stableParams.organization_id }
+      }
+      
+      if (stableParams.status) {
+        filter.status = { eq: stableParams.status }
+      }
+      
+      if (stableParams.requester_id) {
+        filter.requester_id = { eq: stableParams.requester_id }
+      }
+      
+      if (stableParams.assignee_id) {
+        filter.assignee_id = { eq: stableParams.assignee_id }
+      }
+      
+      if (stableParams.service_id) {
+        filter.service_id = { eq: stableParams.service_id }
+      }
+
       const query = gql`
-        query GetServiceRequests($first: Int!, $offset: Int!) {
-          service_requestsCollection(first: $first, offset: $offset) {
+        query GetServiceRequests($filter: service_requestsFilter, $first: Int!, $offset: Int!) {
+          service_requestsCollection(
+            filter: $filter
+            orderBy: [{ created_at: DescNullsLast }]
+            first: $first
+            offset: $offset
+          ) {
             edges {
               node {
                 id
-                service_id
-                requester_id
+                request_number
+                title
+                description
+                business_justification
                 status
                 priority
+                urgency
+                estimated_delivery_date
+                completed_at
+                cost_center
                 form_data
-                approval_status
-                fulfilled_at
                 created_at
                 updated_at
+                service: services {
+                  id
+                  name
+                  icon
+                  estimated_delivery_days
+                }
+                requester: profiles {
+                  id
+                  first_name
+                  last_name
+                  display_name
+                  email
+                  department
+                }
+                assignee: profiles {
+                  id
+                  first_name
+                  last_name
+                  display_name
+                  email
+                }
+                approver: profiles {
+                  id
+                  first_name
+                  last_name
+                  display_name
+                  email
+                }
               }
             }
           }
@@ -212,14 +277,16 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
       `
 
       const variables = {
-        first: stableParams.limit || 50,
-        offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 50)
+        filter: Object.keys(filter).length > 0 ? filter : undefined,
+        first: stableParams.limit || 100,
+        offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 100)
       }
 
       const data: any = await client.request(query, variables)
       const transformedRequests = data.service_requestsCollection.edges.map((edge: any) => edge.node)
       
       setServiceRequests(transformedRequests)
+      setCount(transformedRequests.length)
       console.log('✅ GraphQL: Service requests loaded successfully:', transformedRequests.length)
     } catch (err) {
       console.error('❌ GraphQL Error fetching service requests:', err)
@@ -235,6 +302,7 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
 
   return {
     serviceRequests,
+    count,
     loading,
     error,
     refetch: fetchServiceRequests

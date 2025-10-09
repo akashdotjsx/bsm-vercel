@@ -275,7 +275,7 @@ export function BusinessIntelligence() {
                   .no-print { display: none; }
                 }
                 body { 
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                  font-family: Inter, ui-sans-serif, system-ui, sans-serif; 
                   margin: 20px; 
                   color: #333;
                   line-height: 1.6;

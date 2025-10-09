@@ -10,12 +10,20 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useTicket, useTicketComments, useTicketAttachments, useTicketChecklist } from "@/hooks/use-tickets"
+import { 
+  useTicketDetailsGraphQL,
+  useUpdateTicketDetailsGraphQL,
+  useAddCommentGraphQL,
+  useAddChecklistItemGraphQL,
+  useUpdateChecklistItemGraphQL,
+  useDeleteChecklistItemGraphQL
+} from "@/hooks/queries/use-ticket-details-graphql"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useUsers } from "@/hooks/use-users"
 import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import { 
   X, 
   Save, 
@@ -43,12 +51,22 @@ interface TicketDrawerProps {
 
 export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerProps) {
   const ticketId = ticket?.dbId || ""
-  const { ticket: dbTicket, loading, error, updateTicket } = useTicket(ticketId)
-  const { comments, addComment } = useTicketComments(ticketId)
-  const { attachments, uploadAttachment } = useTicketAttachments(ticketId)
-  const { checklist, addChecklistItem, updateChecklistItem, deleteChecklistItem } = useTicketChecklist(ticketId)
+  
+  // GraphQL hooks - Single query fetches everything!
+  const { data: dbTicket, isLoading: loading, error } = useTicketDetailsGraphQL(ticketId)
+  const updateTicketMutation = useUpdateTicketDetailsGraphQL()
+  const addCommentMutation = useAddCommentGraphQL(ticketId)
+  const addChecklistItemMutation = useAddChecklistItemGraphQL(ticketId)
+  const updateChecklistItemMutation = useUpdateChecklistItemGraphQL(ticketId)
+  const deleteChecklistItemMutation = useDeleteChecklistItemGraphQL(ticketId)
+  
   const { categories: supabaseCategories } = useServiceCategories()
   const { users, teams } = useUsers()
+  
+  // Extract nested data from ticket
+  const comments = dbTicket?.comments || []
+  const attachments = dbTicket?.attachments || []
+  const checklist = dbTicket?.checklist || []
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -118,20 +136,24 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     if (!ticketId) return
     setSaving(true)
     try {
-      const payload: any = { ...form }
+      const updates: any = { ...form }
       // Convert assignee_ids array back to single assignee_id for API
       if (form.assignee_ids.length > 0) {
-        payload.assignee_id = form.assignee_ids[0] // Use first assignee for now
+        updates.assignee_id = form.assignee_ids[0] // Use first assignee for now
       } else {
-        payload.assignee_id = null
+        updates.assignee_id = null
       }
-      delete payload.assignee_ids // Remove the array field
+      delete updates.assignee_ids // Remove the array field
       // Normalize due_date to ISO if present
-      if (payload.due_date) {
-        payload.due_date = new Date(payload.due_date).toISOString()
+      if (updates.due_date) {
+        updates.due_date = new Date(updates.due_date).toISOString()
       }
-      await updateTicket(payload)
+      await updateTicketMutation.mutateAsync({ id: ticketId, updates })
       setIsEditing(false)
+      toast.success("Ticket updated successfully!")
+    } catch (error) {
+      console.error("Error updating ticket:", error)
+      toast.error("Failed to update ticket")
     } finally {
       setSaving(false)
     }
@@ -141,10 +163,15 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     if (!newComment.trim()) return
     
     try {
-      await addComment(newComment.trim(), isInternalComment)
+      await addCommentMutation.mutateAsync({
+        content: newComment.trim(),
+        isInternal: isInternalComment
+      })
       setNewComment("")
+      toast.success("Comment added successfully!")
     } catch (error) {
       console.error("Error adding comment:", error)
+      toast.error("Failed to add comment")
     }
   }
 
@@ -152,26 +179,36 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     if (!newChecklistItem.trim()) return
     
     try {
-      await addChecklistItem(newChecklistItem.trim())
+      await addChecklistItemMutation.mutateAsync({
+        text: newChecklistItem.trim()
+      })
       setNewChecklistItem("")
+      toast.success("Checklist item added!")
     } catch (error) {
       console.error("Error adding checklist item:", error)
+      toast.error("Failed to add checklist item")
     }
   }
 
   const handleToggleChecklistItem = async (itemId: string, completed: boolean) => {
     try {
-      await updateChecklistItem(itemId, { completed })
+      await updateChecklistItemMutation.mutateAsync({
+        itemId,
+        updates: { completed }
+      })
     } catch (error) {
       console.error("Error updating checklist item:", error)
+      toast.error("Failed to update checklist item")
     }
   }
 
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
-      await deleteChecklistItem(itemId)
+      await deleteChecklistItemMutation.mutateAsync(itemId)
+      toast.success("Checklist item deleted!")
     } catch (error) {
       console.error("Error deleting checklist item:", error)
+      toast.error("Failed to delete checklist item")
     }
   }
 

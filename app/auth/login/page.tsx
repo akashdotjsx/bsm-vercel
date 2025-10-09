@@ -172,8 +172,7 @@ export default function Page() {
             style={{ 
               boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1)',
               width: '440px',
-              maxWidth: '100%',
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              maxWidth: '100%'
             }}
           >
             {/* Logo */}
@@ -199,7 +198,6 @@ export default function Page() {
               <h1 
                 className="text-[13px] font-medium text-gray-900" 
                 style={{ 
-                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
                   fontSize: '20px', 
                   fontWeight: 500,
                   lineHeight: '28px',
@@ -220,7 +218,6 @@ export default function Page() {
                   style={{
                     boxShadow: 'none',
                     textTransform: 'none',
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontSize: '14px',
                     fontWeight: 500,
                     lineHeight: '20px'
@@ -244,7 +241,6 @@ export default function Page() {
                   style={{
                     boxShadow: 'none',
                     textTransform: 'none',
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontSize: '14px',
                     fontWeight: 500,
                     lineHeight: '20px'
@@ -265,7 +261,7 @@ export default function Page() {
             {/* Divider */}
             <div className="relative flex items-center justify-center">
               <div className="flex-grow border-t border-[#EAECF0]"></div>
-              <span className="px-4 text-sm text-[#667085] bg-white" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontSize: '14px', fontWeight: 400, lineHeight: '20px' }}>Or</span>
+              <span className="px-4 text-sm text-[#667085] bg-white" style={{ fontSize: '14px', fontWeight: 400, lineHeight: '20px' }}>Or</span>
               <div className="flex-grow border-t border-[#EAECF0]"></div>
             </div>
 
@@ -277,7 +273,6 @@ export default function Page() {
                   htmlFor="email" 
                   className="block text-sm font-semibold text-[#2D2F34] mb-1" 
                   style={{ 
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 600,
                     fontSize: '12px',
                     color: '#344054',
@@ -297,7 +292,6 @@ export default function Page() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200"
                     style={{
-                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                       fontSize: '13px',
                       fontWeight: 400,
                       height: '32px',
@@ -316,7 +310,6 @@ export default function Page() {
                   htmlFor="password" 
                   className="block text-sm font-semibold text-[#2D2F34] mb-1" 
                   style={{ 
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 600,
                     fontSize: '12px',
                     color: '#344054',
@@ -335,7 +328,6 @@ export default function Page() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-white text-[#2D2F34] placeholder-[#ACB1B9] placeholder-opacity-60 focus:outline-none focus:ring-0 border border-transparent focus:border-[#6E72FF] hover:border-[#6E72FF] transition-colors duration-200 pr-8"
                     style={{
-                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                       fontSize: '14px',
                       fontWeight: 400,
                       height: '32px',
@@ -362,7 +354,6 @@ export default function Page() {
                     disabled={isLoading}
                     className="text-sm text-[#6E72FF] hover:text-[#5A5FE0] inline-block"
                     style={{ 
-                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                       fontSize: '12px',
                       lineHeight: '18px',
                       fontWeight: 400,
@@ -386,7 +377,6 @@ export default function Page() {
                 disabled={isLoading}
                 className="w-full bg-[#6E72FF] hover:bg-[#5A5FE0] text-white font-medium text-sm rounded-sm transition-colors duration-200"
                 style={{
-                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   fontSize: '14px',
                   fontWeight: 500,
                   lineHeight: '20px',
@@ -407,7 +397,6 @@ export default function Page() {
                 href="/auth/sso" 
                 className="text-sm text-[#6E72FF] hover:text-[#5A5FE0]" 
                 style={{ 
-                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   fontSize: '14px',
                   lineHeight: '20px',
                   fontWeight: 400,
@@ -423,7 +412,6 @@ export default function Page() {
               <div 
                 className="text-sm" 
                 style={{ 
-                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
                   fontSize: '13px',
                   lineHeight: '20px',
                   fontWeight: 400
@@ -453,7 +441,6 @@ export default function Page() {
             <div 
               className="text-xs text-[#667085] leading-relaxed" 
               style={{ 
-                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontSize: '12px',
                 lineHeight: '18px',
                 fontWeight: 400

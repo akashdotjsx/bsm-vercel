@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { PlatformLayout } from '@/components/layout/platform-layout'
 import { PermissionGuard } from '@/components/auth/permission-guard'
@@ -39,7 +40,7 @@ export function ProtectedLayout({
             <div className="text-center">
               <h1 className="text-[13px] font-bold text-gray-900 mb-4">Access Denied</h1>
               <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
-              <a href="/dashboard" className="text-blue-600 hover:underline">Return to Dashboard</a>
+              <Link href="/dashboard" className="text-blue-600 hover:underline">Return to Dashboard</Link>
             </div>
           </div>
         }
@@ -85,9 +86,9 @@ export function AdminLayout({
                 {breadcrumbs.map((crumb, index) => (
                   <span key={crumb.label}>
                     {crumb.href ? (
-                      <a href={crumb.href} className="text-muted-foreground hover:text-foreground">
+                      <Link href={crumb.href} className="text-muted-foreground hover:text-foreground">
                         {crumb.label}
-                      </a>
+                      </Link>
                     ) : (
                       <span className="text-foreground">{crumb.label}</span>
                     )}
