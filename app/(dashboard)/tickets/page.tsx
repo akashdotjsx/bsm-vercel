@@ -53,6 +53,7 @@ import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatar
 import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
+import { TicketsTable } from "@/components/tickets/tickets-table"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -1021,287 +1022,30 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           </div>
         </div>
 
-         <div className="0 border border-border rounded-lg overflow-hidden">
-           <div className="overflow-x-auto">
-             <table className="w-full border-collapse">
-               <thead>
-                 <tr className="bg-muted/50 border-b border-border">
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Ticket</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Status</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported By</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Assignee</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Reported Date</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Due Date</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Type</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Priority</th>
-                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">Notes</th>
-                   {/* Custom columns headers */}
-                   {customColumns.map((column) => (
-                     <th key={column.id} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                       {column.title}
-                     </th>
-                   ))}
-                   {/* Add column button */}
-                   <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                     <Button
-                       variant="ghost"
-                       size="sm"
-                       className="h-6 w-6 p-0"
-                       onClick={() => setShowCustomColumnsDialog(true)}
-                       title="Manage custom columns"
-                     >
-                       <Plus className="h-3 w-3" />
-                     </Button>
-                   </th>
-                 </tr>
-               </thead>
-               <tbody className="0">
-                {(() => {
-                  console.log('⚙️ Rendering tickets table with:', { 
-                    currentLoading: loading, 
-                    currentTicketsCount: tickets?.length || 0,
-                    hasTickets: !!tickets,
-                    shouldShowLoading: loading || !tickets
-                  });
-                  return loading || !tickets;
-                })() ? (
-                  // Better skeleton loading rows
-                  Array.from({ length: 8 }).map((_, index) => (
-                    <tr key={`skeleton-${index}`} className="border-b border-border">
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="space-y-2">
-                          <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-                          <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-5 bg-muted animate-pulse rounded-full w-16" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-3 bg-muted animate-pulse rounded w-20" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-5 bg-muted animate-pulse rounded-full w-14" />
-                      </td>
-                      <td className="px-3 py-2.5 border-r border-border">
-                        <div className="h-5 bg-muted animate-pulse rounded-full w-12" />
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="h-4 bg-muted animate-pulse rounded w-24" />
-                          <div className="h-6 w-6 bg-muted animate-pulse rounded" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : error ? (
-                  <tr>
-                    <td colSpan={9 + customColumns.length + 1} className="p-8 text-center">
-                      <div className="text-red-600">
-                        Error loading tickets: {error}
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredTickets.length === 0 ? (
-                  <tr>
-                    <td colSpan={9 + customColumns.length + 1} className="p-8 text-center">
-                      <div className="text-muted-foreground">
-                        No tickets found. <button 
-                          onClick={() => router.push('/tickets/create')} 
-                          className="text-[#6E72FF] hover:underline"
-                        >
-                          Create your first ticket
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  Object.entries(groupedTickets).map(([groupName, groupTickets]) => (
-                    <React.Fragment key={groupName}>
-                       {groupBy !== "none" && (
-                         <tr className="bg-muted/30 border-b border-border">
-                           <td colSpan={9 + customColumns.length + 1} className="px-4 py-3">
-                             <div className="flex items-center gap-2">
-                               <span className="font-semibold text-foreground">{groupName}</span>
-                               <span className="text-sm text-muted-foreground">({groupTickets.length} tickets)</span>
-                             </div>
-                           </td>
-                         </tr>
-                       )}
-                       {groupTickets.map((ticket, index) => (
-                   <tr
-                     key={ticket.id}
-                           className="0 border-b border-border hover:bg-muted/50 last:border-b-0"
-                   >
-                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                      <div>
-                        <button
-                          onClick={() => handleTicketClick(ticket)}
-                          className="text-sm font-medium text-foreground hover:text-[#6E72FF] hover:underline cursor-pointer"
-                        >
-                          {ticket.title}
-                        </button>
-                        <div className="text-xs text-muted-foreground">{ticket.id}</div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === "new" 
-                          ? "bg-[#6E72FF]/10 text-[#6E72FF]"
-                          : ticket.status === "in_progress"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : ticket.status === "review"
-                              ? "bg-purple-100 text-purple-800"
-                              : ticket.status === "pending"
-                                ? "bg-gray-100 text-gray-800"
-                                : ticket.status === "open"
-                                  ? "bg-gray-100 text-gray-800"
-                                  : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {ticket.status === "new" ? "New" : 
-                         ticket.status === "in_progress" ? "In Progress" :
-                         ticket.status === "review" ? "Review" :
-                         ticket.status === "pending" ? "Pending" :
-                         ticket.status === "open" ? "Open" :
-                         ticket.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                      <div className="flex items-center">
-                        <div
-                          className={`h-6 w-6 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-[9px] font-medium`}
-                          title={ticket.reportedBy}
-                        >
-                          {ticket.reportedByAvatar}
-                        </div>
-                      </div>
-                    </td>
- <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                       <div className="flex items-center">
-                         <MultiAssigneeAvatars
-                           assignees={ticket.assignees || []}
-                           maxDisplay={3}
-                           size="sm"
-                         />
-                       </div>
-                     </td>
- <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                       <span className="text-sm text-foreground">{ticket.reportedDate}</span>
-                     </td>
- <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                       <span className="text-sm text-foreground">{ticket.dueDate}</span>
-                     </td>
- <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800">
-                         {ticket.displayType}
-                       </span>
-                     </td>
- <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          ticket.priority === "urgent"
-                            ? "bg-red-100 text-red-800"
-                            : ticket.priority === "high"
-                              ? "bg-red-100 text-red-800"
-                              : ticket.priority === "medium"
-                                ? "bg-orange-100 text-orange-800"
-                                : ticket.priority === "low"
-                                  ? "bg-green-100 text-green-800"
-                                  : ticket.priority === "critical"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center justify-between">
-                        <Input
-                          placeholder="Add notes..."
-                          className="h-6 text-xs border-0 bg-transparent focus:bg-background text-muted-foreground flex-1"
-                          defaultValue={ticket.custom_fields?.notes || ticket.notes || ""}
-                          onBlur={async (e) => {
-                            const newNotes = e.target.value
-                            if (newNotes !== (ticket.custom_fields?.notes || ticket.notes || "")) {
-                              try {
-                                console.log("[NOTES] Saving notes for ticket:", ticket.id)
-                                await updateTicket(ticket.dbId || ticket.id, {
-                                  custom_fields: {
-                                    ...ticket.custom_fields,
-                                    notes: newNotes
-                                  }
-                                })
-                                console.log("[NOTES] Notes saved successfully")
-                              } catch (error) {
-                                console.error("[NOTES] Failed to save notes:", error)
-                              }
-                            }
-                          }}
-                        />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              console.log("[EDIT] Opening TicketDrawer in EDIT mode")
-                              const ticketWithDbId = {
-                                ...ticket,
-                                dbId: ticket.dbId || ticket.id
-                              }
-                              setSelectedTicket(ticketWithDbId)
-                              setShowTicketTray(true)
-                            }}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Ticket
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicateTicket(ticket)}>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Duplicate Ticket
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600" 
-                              onClick={() => handleDeleteTicket(ticket)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Ticket
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
-                    {/* Custom column cells */}
-                    {customColumns.map((column) => (
-                      <td key={column.id} className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-                        <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
-                      </td>
-                    ))}
-                    {/* Empty cell for the + button column */}
-                    <td className="px-3 py-2.5 whitespace-nowrap"></td>
-                  </tr>
-                      ))}
-                    </React.Fragment>
-                ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* Shared TicketsTable Component */}
+        <TicketsTable
+          tickets={filteredTickets}
+          loading={loading}
+          error={error}
+          groupBy={groupBy}
+          groupedTickets={groupedTickets}
+          onTicketClick={handleTicketClick}
+          onEditTicket={(ticket) => {
+            const ticketWithDbId = {
+              ...ticket,
+              dbId: ticket.dbId || ticket.id
+            }
+            setSelectedTicket(ticketWithDbId)
+            setShowTicketTray(true)
+          }}
+          onDuplicateTicket={handleDuplicateTicket}
+          onDeleteTicket={handleDeleteTicket}
+          onUpdateTicket={updateTicket}
+          onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
+        />
       </div>
     ),
-    [groupedTickets, groupBy, showCustomColumns, searchTerm, handleTicketClick, customColumns],
+    [groupedTickets, groupBy, filteredTickets, loading, error, handleTicketClick, handleDuplicateTicket, handleDeleteTicket, updateTicket],
   )
 
   const handleDragStart = useCallback((e: React.DragEvent, ticket: any) => {

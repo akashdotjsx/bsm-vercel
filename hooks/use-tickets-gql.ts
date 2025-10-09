@@ -98,6 +98,7 @@ export function useTicketsGQL(params: TicketsParams = {}) {
                 status
                 requester_id
                 assignee_id
+                assignee_ids
                 team_id
                 sla_policy_id
                 due_date
@@ -128,7 +129,16 @@ export function useTicketsGQL(params: TicketsParams = {}) {
       // Batch-fetch requester and assignee profiles via GraphQL
       const requesterIds = Array.from(new Set(rawTickets.map((t: any) => t.requester_id).filter(Boolean)))
       const assigneeIds = Array.from(new Set(rawTickets.map((t: any) => t.assignee_id).filter(Boolean)))
-      const allIds = Array.from(new Set([...requesterIds, ...assigneeIds]))
+      
+      // MULTI-ASSIGNEE SUPPORT: Collect all assignee IDs from assignee_ids array
+      const multiAssigneeIds: string[] = []
+      rawTickets.forEach((t: any) => {
+        if (t.assignee_ids && Array.isArray(t.assignee_ids)) {
+          multiAssigneeIds.push(...t.assignee_ids)
+        }
+      })
+      
+      const allIds = Array.from(new Set([...requesterIds, ...assigneeIds, ...multiAssigneeIds]))
 
       let profileById: Record<string, any> = {}
       if (allIds.length > 0) {
@@ -144,11 +154,19 @@ export function useTicketsGQL(params: TicketsParams = {}) {
         profileById = profiles.reduce((acc: any, p: any) => { acc[p.id] = p; return acc }, {})
       }
 
-      const tickets = rawTickets.map((t: any) => ({
-        ...t,
-        requester: t.requester_id ? profileById[t.requester_id] || null : null,
-        assignee: t.assignee_id ? profileById[t.assignee_id] || null : null,
-      }))
+      const tickets = rawTickets.map((t: any) => {
+        // Map assignee_ids array to full profile objects
+        const assigneesArray = (t.assignee_ids && Array.isArray(t.assignee_ids))
+          ? t.assignee_ids.map((id: string) => profileById[id]).filter(Boolean)
+          : []
+        
+        return {
+          ...t,
+          requester: t.requester_id ? profileById[t.requester_id] || null : null,
+          assignee: t.assignee_id ? profileById[t.assignee_id] || null : null,
+          assignees: assigneesArray, // Multi-assignee support
+        }
+      })
 
       setTickets(tickets)
       setPagination({

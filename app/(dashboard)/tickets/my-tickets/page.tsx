@@ -31,6 +31,7 @@ import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatar
 import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
+import { TicketsTable } from "@/components/tickets/tickets-table"
 
 const mockTickets_UNUSED = [
   {
@@ -258,186 +259,29 @@ export default function MyTicketsPage() {
         </div>
       </div>
 
-      <div className="border border-border rounded-lg 0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Ticket
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Status
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Reported By
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Assignee
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Reported Date
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Due Date
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">Type</th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Priority
-                </th>
-                <th className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                  Notes
-                </th>
-                {/* Custom columns headers */}
-                {customColumns.map((column) => (
-                  <th key={column.id} className="text-left p-3 text-xs font-medium text-muted-foreground border-r border-border">
-                    {column.title}
-                  </th>
-                ))}
-                {/* Add column button */}
-                <th className="text-center p-3 text-xs font-medium text-muted-foreground w-12">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setShowCustomColumnsDialog(true)}
-                    title="Manage custom columns"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.map((ticket, index) => (
-                <tr
-                  key={ticket.id}
-                  className={`border-b border-border hover:bg-muted/50 ${index % 2 === 0 ? "bg-background" : "bg-muted/20"}`}
-                >
-                  <td className="p-3 border-r border-border">
-                    <div className="space-y-1">
-                      <div
-                        className="text-[13px] font-normal cursor-pointer hover:text-blue-600 hover:underline"
-                        onClick={() => handleTicketClick(ticket)}
-                      >
-                        {ticket.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">{ticket.ticket_number}</div>
-                    </div>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                      {getStatusText(ticket.status)}
-                    </span>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <div className="flex items-center justify-center">
-                      {ticket.requester ? (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-medium"
-                            title={ticket.requester.display_name || ticket.requester.email}
-                          >
-                            {(ticket.requester.first_name?.[0] || '') + (ticket.requester.last_name?.[0] || '')}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
-                          ?
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <div className="flex items-center justify-center">
-                      <MultiAssigneeAvatars
-                        assignees={ticket.assignee ? [{
-                          id: ticket.assignee_id || ticket.assignee.id,
-                          name: ticket.assignee.display_name || ticket.assignee.email,
-                          avatar: (ticket.assignee.first_name?.[0] || '') + (ticket.assignee.last_name?.[0] || ''),
-                          display_name: ticket.assignee.display_name,
-                          first_name: ticket.assignee.first_name,
-                          last_name: ticket.assignee.last_name,
-                          avatar_url: ticket.assignee.avatar_url
-                        }] : []}
-                        maxDisplay={3}
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <span className="text-[13px]">
-                      {ticket.created_at ? format(new Date(ticket.created_at), 'MMM dd, yyyy') : '-'}
-                    </span>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <span className="text-[13px]">
-                      {ticket.due_date ? format(new Date(ticket.due_date), 'MMM dd, yyyy') : '-'}
-                    </span>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full">
-                      {ticket.type}
-                    </span>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        ticket.priority === "urgent"
-                          ? "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200"
-                          : ticket.priority === "high"
-                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                            : ticket.priority === "medium"
-                              ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                              : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                      }`}
-                    >
-                      {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
-                    </span>
-                  </td>
-                  <td className="p-3 border-r border-border">
-                    <Input
-                      placeholder="Add notes..."
-                      className="h-7 text-xs border-0 bg-transparent focus:bg-background"
-                      defaultValue={ticket.metadata?.notes || ''}
-                    />
-                  </td>
-                  {/* Custom column cells */}
-                  {customColumns.map((column) => (
-                    <td key={column.id} className="p-3 border-r border-border">
-                      <CustomColumnCell column={column} ticketId={ticket.id} />
-                    </td>
-                  ))}
-                  {/* Empty cell for the + button column */}
-                  <td className="p-3 text-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Ticket
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Duplicate Ticket
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Ticket
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Shared TicketsTable Component */}
+      <TicketsTable
+        tickets={filteredTickets}
+        loading={loading}
+        error={error}
+        groupBy={groupBy}
+        groupedTickets={{}}
+        onTicketClick={handleTicketClick}
+        onEditTicket={(ticket) => {
+          setSelectedTicket({ dbId: ticket.id, ...ticket })
+          setShowTicketTray(true)
+        }}
+        onDuplicateTicket={(ticket) => {
+          console.log("Duplicate ticket:", ticket)
+        }}
+        onDeleteTicket={(ticket) => {
+          console.log("Delete ticket:", ticket)
+        }}
+        onUpdateTicket={async (ticketId, updates) => {
+          console.log("Update ticket:", ticketId, updates)
+        }}
+        onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
+      />
     </div>
   )
 
