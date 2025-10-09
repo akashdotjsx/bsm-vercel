@@ -105,21 +105,25 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
     setIsLoading(true);
 
     try {
+      // Include the new user message in the request
+      const messagesToSend = [...messages, userMessage].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: messagesToSend,
           organizationId,
           includeContext: true,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get AI response');
       }
 
       const reader = response.body?.getReader();
@@ -158,13 +162,13 @@ export function AIChatPanel({ isOpen, onClose, organizationId }: AIChatPanelProp
           return newMessages;
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: error.message || 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date(),
       };
       

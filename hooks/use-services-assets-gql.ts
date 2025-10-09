@@ -562,6 +562,66 @@ export function useAssetTypesGQL(params: { organization_id?: string; is_active?:
 }
 
 // ============================================
+// MUTATIONS - SERVICE CATEGORIES
+// ============================================
+
+export async function createServiceCategoryGQL(categoryData: any): Promise<any> {
+  const client = await createGraphQLClient()
+  const mutation = gql`
+    mutation CreateServiceCategory($input: service_categoriesInsertInput!) {
+      insertIntoservice_categoriesCollection(objects: [$input]) {
+        records {
+          id
+          name
+          description
+          icon
+          color
+          is_active
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  const response: any = await client.request(mutation, { input: categoryData })
+  return response.insertIntoservice_categoriesCollection.records[0]
+}
+
+export async function updateServiceCategoryGQL(id: string, updates: any): Promise<any> {
+  const client = await createGraphQLClient()
+  const mutation = gql`
+    mutation UpdateServiceCategory($id: UUID!, $set: service_categoriesUpdateInput!) {
+      updateservice_categoriesCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          name
+          description
+          icon
+          color
+          is_active
+          updated_at
+        }
+      }
+    }
+  `
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_categoriesCollection.records[0]
+}
+
+export async function deleteServiceCategoryGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  const mutation = gql`
+    mutation DeleteServiceCategory($id: UUID!) {
+      deleteFromservice_categoriesCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromservice_categoriesCollection.affectedCount > 0
+}
+
+// ============================================
 // MUTATIONS - SERVICES
 // ============================================
 

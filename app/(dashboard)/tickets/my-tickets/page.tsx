@@ -18,7 +18,6 @@ import {
   Edit,
   Copy,
   Trash2,
-  Loader2,
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
 import { AIAssistantPanel } from "@/components/ai/ai-assistant-panel"
@@ -33,6 +32,7 @@ import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table"
 import { AIChatPanel } from "@/components/ai/ai-chat-panel"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const mockTickets_UNUSED = [
   {
@@ -144,29 +144,6 @@ export default function MyTicketsPage() {
     const matchesPriority = selectedPriority === "all" || ticket.priority === selectedPriority
     return matchesSearch && matchesType && matchesPriority
   })
-
-  // Show loading state
-  if (loading) {
-    return (
-      <PageContent breadcrumb={[{ label: "My Tickets" }]}>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </PageContent>
-    )
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <PageContent breadcrumb={[{ label: "My Tickets" }]}>
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <p className="text-red-500">Error loading tickets: {error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </PageContent>
-    )
-  }
 
   const getTicketsByStatus = (status: string) => {
     return filteredTickets.filter((ticket) => ticket.status === status)
@@ -424,10 +401,17 @@ export default function MyTicketsPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-[13px] font-semibold tracking-tight">My Tickets</h1>
                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded text-sm font-medium">
-                  {filteredTickets.length}
+                  {loading ? (
+                    <Skeleton className="h-3 w-10 inline-block" />
+                  ) : (
+                    filteredTickets.length
+                  )}
                 </span>
               </div>
               <p className="text-muted-foreground text-sm">View and manage tickets assigned to you.</p>
+              {error && (
+                <p className="text-red-500 text-xs mt-1">Error loading tickets: {error}</p>
+              )}
             </div>
 
             <div className="flex items-center gap-3">

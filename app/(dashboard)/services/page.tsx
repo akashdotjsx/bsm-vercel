@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { PageContent } from "@/components/layout/page-content"
-import { ServiceRequestForm } from "@/components/services/service-request-form"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,13 +42,21 @@ interface ServiceRequestFormData {
   additionalRequirements: string
 }
 
+const ServiceRequestDrawer = dynamic(
+  () => import("@/components/services/service-request-drawer"),
+  {
+    loading: () => <Skeleton className="h-8 w-24" />,
+    ssr: false,
+  },
+)
+
 export default function ServicesPage() {
   const { canView } = useAuth()
   const { user } = useStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedService, setSelectedService] = useState<Service | null>(null)
-  const [showRequestForm, setShowRequestForm] = useState(false)
+  const [showRequestDrawer, setShowRequestDrawer] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Fetch services and categories with GraphQL
@@ -89,7 +97,7 @@ export default function ServicesPage() {
 
   const handleServiceRequest = (service: Service) => {
     setSelectedService(service)
-    setShowRequestForm(true)
+    setShowRequestDrawer(true)
   }
 
   const handleSubmitRequest = async (formData: ServiceRequestFormData) => {
@@ -352,12 +360,14 @@ export default function ServicesPage() {
           )}
         </div>
 
-        {/* Service Request Form */}
-        <ServiceRequestForm
-          open={showRequestForm}
-          onOpenChange={setShowRequestForm}
+        {/* Service Request Drawer (Ticket Drawer-style) */}
+        <ServiceRequestDrawer
+          isOpen={showRequestDrawer}
+          onClose={() => {
+            setShowRequestDrawer(false)
+            setSelectedService(null)
+          }}
           service={selectedService}
-          onSubmit={handleSubmitRequest}
         />
       </div>
     </PageContent>

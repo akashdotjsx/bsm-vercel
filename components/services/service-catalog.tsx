@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useMode } from "@/lib/contexts/mode-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useServices } from "@/lib/hooks/use-services"
+import { createServiceGQL, updateServiceGQL } from "@/hooks/use-services-assets-gql"
+import { createServiceCategoryGQL, updateServiceCategoryGQL } from "@/hooks/use-services-assets-gql"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +56,17 @@ import {
 import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
 import { useToast } from "@/components/ui/use-toast"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import dynamic from "next/dynamic"
+
+const ServiceCategoryDrawer = dynamic(
+  () => import("@/components/services/service-category-drawer"),
+  { ssr: false }
+)
+
+const ServiceCreateDrawer = dynamic(
+  () => import("@/components/services/service-create-drawer"),
+  { ssr: false }
+)
 
 export function ServiceCatalog() {
   const { mode } = useMode()
@@ -84,6 +97,9 @@ export function ServiceCatalog() {
   
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
   const [showAddServiceModal, setShowAddServiceModal] = useState(false)
+  // New drawer states (TicketDrawer-style)
+  const [showCategoryDrawer, setShowCategoryDrawer] = useState(false)
+  const [showServiceDrawer, setShowServiceDrawer] = useState(false)
   const [showEditServiceModal, setShowEditServiceModal] = useState(false)
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false)
   const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false)
@@ -190,7 +206,8 @@ export function ServiceCatalog() {
       description: category.description,
       color: category.color
     })
-    setShowEditCategoryModal(true)
+    // Open drawer in edit mode
+    setShowCategoryDrawer(true)
   }
 
   const handleDeleteCategory = (category) => {
@@ -203,15 +220,17 @@ export function ServiceCatalog() {
     const originalCategory = categories.find(cat => cat.id === category.id)
     const originalService = originalCategory?.services?.find(s => s.name === service.name)
     
-    setSelectedServiceForEdit(originalService || service)
+    const svc = originalService || service
+    setSelectedServiceForEdit(svc)
     setSelectedCategoryForService(category.id)
     setNewService({
-      name: service.name,
-      description: service.description,
+      name: svc.name,
+      description: svc.description,
       sla: service.sla,
       popularity: service.popularity
     })
-    setShowEditServiceModal(true)
+    // Open drawer in edit mode
+    setShowServiceDrawer(true)
   }
 
   const handleDeleteService = (service, category) => {
@@ -430,14 +449,10 @@ export function ServiceCatalog() {
         <div>
           {/* Removed duplicate header - title and description are now handled by PlatformLayout */}
         </div>
-        <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
-          <DialogTrigger asChild>
-            <Button className="bg-black text-white hover:bg-gray-800">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+          <Button className="bg-black text-white hover:bg-gray-800" onClick={() => { setSelectedCategoryForEdit(null); setShowCategoryDrawer(true) }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Category
+          </Button>
       </div>
 
       {/* Search Bar */}
@@ -491,6 +506,77 @@ export function ServiceCatalog() {
         </Card>
       </div>
 
+      {/* Drawers (TicketDrawer-style) */}
+      <ServiceCategoryDrawer
+        isOpen={showCategoryDrawer}
+        onClose={() => setShowCategoryDrawer(false)}
+        onSubmit={async (payload) => {
+          try {
+            if (selectedCategoryForEdit) {
+              await updateServiceCategoryGQL(selectedCategoryForEdit.id, {
+                name: payload.name,
+                description: payload.description,
+                icon: payload.icon,
+                color: payload.color,
+              })
+              toast({ title: "Category updated", description: `"${payload.name}" has been updated.` })
+            } else {
+              await createServiceCategoryGQL({
+                name: payload.name,
+                description: payload.description || "",
+                icon: payload.icon || "Settings",
+                color: payload.color || "bg-blue-500",
+                is_active: true
+              })
+              toast({ title: "Category created", description: `"${payload.name}" has been added successfully.` })
+            }
+            await refetch()
+          } catch (e) {
+            toast({ title: selectedCategoryForEdit ? "Failed to update category" : "Failed to create category", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
+          }
+        }}
+        title={selectedCategoryForEdit ? "Edit Category" : "Create Category"}
+      />
+      <ServiceCreateDrawer
+        isOpen={showServiceDrawer}
+        onClose={() => setShowServiceDrawer(false)}
+        onSubmit={async (serviceData) => {
+          try {
+            if (selectedServiceForEdit && selectedServiceForEdit.id) {
+              const updates: any = {
+                name: serviceData.name,
+                description: serviceData.description,
+                estimated_delivery_days: Number(serviceData.estimated_delivery_days) || 3,
+                popularity_score: Number(serviceData.popularity_score) || 3,
+                is_requestable: !!serviceData.is_requestable,
+                requires_approval: !!serviceData.requires_approval,
+                category_id: serviceData.category_id || selectedCategoryForService || undefined
+              }
+              await updateServiceGQL(selectedServiceForEdit.id, updates)
+              toast({ title: "Service updated", description: `"${serviceData.name}" has been updated.` })
+            } else {
+              const payload = {
+                name: serviceData.name,
+                description: serviceData.description || "",
+                category_id: serviceData.category_id || selectedCategoryForService,
+                estimated_delivery_days: Number(serviceData.estimated_delivery_days) || 3,
+                popularity_score: Number(serviceData.popularity_score) || 3,
+                is_requestable: !!serviceData.is_requestable,
+                requires_approval: !!serviceData.requires_approval,
+                status: 'active'
+              }
+              await createServiceGQL(payload)
+              toast({ title: "Service created", description: `"${payload.name}" has been added successfully.` })
+            }
+            await refetch()
+          } catch (e) {
+            toast({ title: selectedServiceForEdit ? "Failed to update service" : "Failed to create service", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
+          }
+        }}
+        title={selectedServiceForEdit ? "Edit Service" : "Create Service"}
+        categories={categories.map(c => ({ id: c.id, name: c.name }))}
+      />
+
       {/* Service Categories */}
       <div className="space-y-6">
         {filteredServices.length === 0 ? (
@@ -525,15 +611,17 @@ export function ServiceCatalog() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-[11px]"
-                        onClick={() => {
-                          setSelectedCategoryForService(category.id)
-                          setShowAddServiceModal(true)
-                        }}
-                      >
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-[11px]"
+            onClick={() => {
+              setSelectedCategoryForEdit(null)
+              setSelectedServiceForEdit(null)
+              setSelectedCategoryForService(category.id)
+              setShowServiceDrawer(true)
+            }}
+          >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Service
                       </Button>
