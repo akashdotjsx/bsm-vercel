@@ -81,23 +81,6 @@ export default function ServiceRequestDrawer({ isOpen, onClose, service }: Servi
     additionalRequirements: ""
   })
 
-  // Initialize form when service changes
-  useEffect(() => {
-    if (service) {
-      setForm({
-        requestName: `Request for ${service.name}`,
-        department: "",
-        priority: "medium",
-        urgency: "low",
-        expectedDeliveryDate: "",
-        costCenter: "",
-        approverEmail: "",
-        description: "",
-        businessJustification: "",
-        additionalRequirements: ""
-      })
-    }
-  }, [service])
 
   const handleSave = async () => {
     if (!service || !user) return

@@ -234,14 +234,23 @@ export function useTeamsGQL(params: { organization_id?: string; is_active?: bool
       }
 
       const data = await client.request<any>(GET_TEAMS_QUERY, variables)
+      
+      console.log('📊 GraphQL: Raw teams data:', JSON.stringify(data.teamsCollection.edges.slice(0, 1), null, 2))
 
-      const transformedTeams: Team[] = data.teamsCollection.edges.map((edge: any) => ({
-        ...edge.node,
-        members: edge.node.members?.edges.map((e: any) => e.node) || []
-      }))
+      const transformedTeams: Team[] = data.teamsCollection.edges.map((edge: any) => {
+        const team = edge.node
+        const teamMembers = team.members?.edges.map((e: any) => e.node) || []
+        
+        console.log(`👥 Team "${team.name}": ${teamMembers.length} members`, teamMembers.map((m: any) => m.user?.display_name || m.user?.email))
+        
+        return {
+          ...team,
+          team_members: teamMembers // Use team_members to match the page expectations
+        }
+      })
       
       setTeams(transformedTeams)
-      console.log('✅ GraphQL: Teams loaded successfully:', transformedTeams.length)
+      console.log('✅ GraphQL: Teams loaded successfully:', transformedTeams.length, 'teams')
     } catch (err) {
       console.error('❌ GraphQL Error fetching teams:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch teams')

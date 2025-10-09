@@ -54,6 +54,7 @@ import { UserAvatar } from "@/components/users/user-avatar"
 import { UserSelector } from "@/components/users/user-selector"
 import { TeamSelector } from "@/components/users/team-selector"
 import { departmentAPI } from "@/lib/api/departments"
+import AddUserDrawer from "@/components/users/add-user-drawer"
 
 // Type definitions
 interface User {
@@ -326,13 +327,24 @@ export default function UsersPage() {
     })
   }
 
-  const handleAddUser = async () => {
+  const handleAddUser = async (userData: { first_name: string; last_name: string; email: string; role: string; department: string }) => {
     try {
-      await inviteUser(newUser)
-      setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "", status: "Active" })
+      await inviteUser({
+        ...userData,
+        display_name: `${userData.first_name} ${userData.last_name}`.trim()
+      })
+      toast({
+        title: "User added successfully",
+        description: `${userData.first_name} ${userData.last_name} has been invited`,
+      })
       setShowAddUser(false)
     } catch (error) {
       console.error('Error adding user:', error)
+      toast({
+        title: "Error adding user",
+        description: error instanceof Error ? error.message : 'Failed to add user',
+        variant: "destructive"
+      })
     }
   }
 
@@ -631,100 +643,13 @@ export default function UsersPage() {
               Manage Departments
             </Button>
           </div>
-           <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
-             <DialogTrigger asChild>
-              <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add User
-              </Button>
-             </DialogTrigger>
-            <DialogContent className="font-sans">
-              <DialogHeader>
-                <DialogTitle className="text-base">Add New User</DialogTitle>
-                <DialogDescription className="text-sm">
-                  Create a new user account with appropriate permissions.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="first_name" className="text-right text-sm">
-                    First Name
-                  </Label>
-                  <Input
-                    id="first_name"
-                    value={newUser.first_name}
-                    onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
-                    className="col-span-3 text-sm"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="last_name" className="text-right text-[13px]">
-                    Last Name
-                  </Label>
-                  <Input
-                    id="last_name"
-                    value={newUser.last_name}
-                    onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
-                    className="col-span-3 text-[13px]"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right text-[13px]">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="col-span-3 text-[13px]"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right text-[13px]">
-                    Role
-                  </Label>
-                  <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
-                    <SelectTrigger className="col-span-3 text-[13px]">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="department" className="text-right text-[13px]">
-                    Department
-                  </Label>
-                  <Select
-                    value={newUser.department}
-                    onValueChange={(value) => setNewUser({ ...newUser, department: value })}
-                  >
-                    <SelectTrigger className="col-span-3 text-[13px]">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept} value={dept}>
-                          {dept}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleAddUser} className="text-sm">
-                  Add User
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            onClick={() => setShowAddUser(true)}
+            className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
         </div>
 
          {/* Stats Cards */}
@@ -827,9 +752,9 @@ export default function UsersPage() {
                       <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
                       <td className="py-3 px-4">
                         {user.is_active ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">Active</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">Active</span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400">Inactive</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30">Inactive</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-sm">{formatDate(user.created_at)}</td>
@@ -1525,6 +1450,14 @@ export default function UsersPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Add User Drawer */}
+        <AddUserDrawer
+          isOpen={showAddUser}
+          onClose={() => setShowAddUser(false)}
+          onSubmit={handleAddUser}
+          departments={departments}
+        />
       </div>
     </PageContent>
   )
