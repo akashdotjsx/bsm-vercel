@@ -73,7 +73,7 @@ export default function Page() {
       // Sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password,
+        password: password.trim(),
       })
 
       console.log('Auth response:', { authData, authError })
