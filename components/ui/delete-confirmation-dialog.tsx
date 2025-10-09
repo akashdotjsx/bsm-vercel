@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Trash2, X } from "lucide-react"
+import { cleanupAfterModalClose } from "@/lib/utils/cleanup-blocking-elements"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -65,9 +66,20 @@ export function DeleteConfirmationDialog({
     console.log('[DeleteDialog] handleOpenChange called:', { newOpen, isDeleting })
     if (!newOpen) {
       setIsChecked(false)
+      // CRITICAL: Clean up any blocking elements when modal closes
+      cleanupAfterModalClose()
     }
     onOpenChange(newOpen)
   }
+  
+  // Also cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      if (!open) {
+        cleanupAfterModalClose()
+      }
+    }
+  }, [open])
 
   const displayDescription = itemName
     ? `${description} "${itemName}"?`

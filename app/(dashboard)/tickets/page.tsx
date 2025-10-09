@@ -36,6 +36,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { continuousCleanup } from "@/lib/utils/cleanup-blocking-elements"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -921,91 +922,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     setShowDeleteModal(false)
     setTicketToDelete(null)
     
-    // Force cleanup body state RIGHT AWAY
-    console.log('🗑️ [DELETE FLOW] Step 3: Force cleanup body state')
-    
-    // DEBUG: Check what's blocking
-    console.log('🔍 [DEBUG] Body styles:', {
-      overflow: document.body.style.overflow,
-      pointerEvents: document.body.style.pointerEvents,
-      hasInert: document.body.hasAttribute('inert')
-    })
-    
-    document.body.style.overflow = ''
-    document.body.style.pointerEvents = ''
-    document.body.removeAttribute('inert')
-    
-    // DEBUG: Check all elements with pointer-events none or high z-index
-    const allElements = document.querySelectorAll('*')
-    const blockingElements: any[] = []
-    allElements.forEach(el => {
-      const style = window.getComputedStyle(el)
-      const zIndex = parseInt(style.zIndex)
-      
-      // Check for blocking conditions
-      if (style.pointerEvents === 'none' && el.offsetWidth > 100 && el.offsetHeight > 100) {
-        blockingElements.push({
-          element: el.tagName,
-          class: el.className,
-          pointerEvents: style.pointerEvents,
-          zIndex: style.zIndex,
-          position: style.position
-        })
-      }
-      
-      // Check for high z-index overlays
-      if (zIndex >= 40 && (style.position === 'fixed' || style.position === 'absolute')) {
-        blockingElements.push({
-          element: el.tagName,
-          class: el.className,
-          zIndex: style.zIndex,
-          position: style.position,
-          width: el.offsetWidth,
-          height: el.offsetHeight
-        })
-      }
-    })
-    
-    console.log('🔍 [DEBUG] Found potential blocking elements:', blockingElements)
-    
-    // AGGRESSIVE CONTINUOUS CLEANUP
-    const cleanupInterval = setInterval(() => {
-      // Force body to be clean
-      document.body.style.overflow = '';
-      document.body.style.pointerEvents = '';
-      document.body.removeAttribute('inert');
-      
-      // Remove all Radix portals
-      const portals = document.querySelectorAll('[data-radix-portal]');
-      portals.forEach(portal => portal.remove());
-      
-      // COMPLETELY REMOVE React Query Devtools from DOM
-      const devtools = document.querySelector('.tsqd-main-panel');
-      if (devtools) {
-        console.log('🧹 [CLEANUP] REMOVING React Query Devtools from DOM');
-        devtools.remove(); // REMOVE, not hide!
-      }
-      
-      // Find and remove any blocking overlays
-      const allEls = document.querySelectorAll('*');
-      allEls.forEach((el) => {
-        const style = window.getComputedStyle(el);
-        const zIndex = parseInt(style.zIndex);
-        if (zIndex >= 40 && (style.position === 'fixed' || style.position === 'absolute')) {
-          const rect = el.getBoundingClientRect();
-          if (rect.width > window.innerWidth * 0.5 && rect.height > window.innerHeight * 0.5) {
-            console.log('💣 [CLEANUP] REMOVING blocker from DOM:', el.tagName, el.className);
-            (el as HTMLElement).remove(); // REMOVE from DOM completely!
-          }
-        }
-      });
-    }, 50); // Run every 50ms
-    
-    // Stop cleanup after 2 seconds
-    setTimeout(() => {
-      clearInterval(cleanupInterval);
-      console.log('✅ [CLEANUP] Continuous cleanup stopped');
-    }, 2000)
+    // Force cleanup body state RIGHT AWAY using utility
+    console.log('🗑️ [DELETE FLOW] Step 3: Running cleanup')
+    continuousCleanup(2000, 50)
     
     // Run delete in background
     console.log('🗑️ [DELETE FLOW] Step 4: Running delete in background')
