@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
@@ -116,7 +118,10 @@ export async function POST(request: NextRequest) {
       .update({ total_requests: (service.total_requests || 0) + 1 })
       .eq('id', serviceId)
 
-    return NextResponse.json({ 
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.serviceRequests)
+
+    return NextResponse.json({
       serviceRequest,
       requestNumber,
       requiresApproval: service.requires_approval
@@ -188,10 +193,21 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', status)
     }
 
-    // Apply pagination and ordering
-    const { data: serviceRequests, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+    // Apply pagination and ordering - wrapped with cache
+    const fetchServiceRequests = unstable_cache(
+      async () => {
+        return await query
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1)
+      },
+      [`service-requests-${scope}-${status || 'all'}-${limit}-${offset}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.serviceRequests],
+      }
+    )
+    
+    const { data: serviceRequests, error, count } = await fetchServiceRequests()
 
     if (error) {
       console.error('Error fetching service requests:', error)

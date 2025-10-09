@@ -10,6 +10,7 @@ import { AuthProvider } from "@/lib/contexts/auth-context"
 import { Suspense } from "react"
 import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
 import { ReactQueryProvider } from "@/components/providers/react-query-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
@@ -35,21 +36,23 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ReactQueryProvider>
-            <NavbarFixProvider>
-              <AuthProvider>
-                <ModeProvider>
-                  <NotificationProvider>
-                    <Suspense fallback={null}>
-                      <SearchProvider>
-                        <div className="h-screen">{children}</div>
-                      </SearchProvider>
-                    </Suspense>
-                  </NotificationProvider>
-                </ModeProvider>
-              </AuthProvider>
-            </NavbarFixProvider>
-            <Toaster />
-            <SonnerToaster />
+            <TooltipProvider delayDuration={200}>
+              <NavbarFixProvider>
+                <AuthProvider>
+                  <ModeProvider>
+                    <NotificationProvider>
+                      <Suspense fallback={null}>
+                        <SearchProvider>
+                          <div className="h-screen">{children}</div>
+                        </SearchProvider>
+                      </Suspense>
+                    </NotificationProvider>
+                  </ModeProvider>
+                </AuthProvider>
+              </NavbarFixProvider>
+              <Toaster />
+              <SonnerToaster />
+            </TooltipProvider>
           </ReactQueryProvider>
         </ThemeProvider>
       </body>

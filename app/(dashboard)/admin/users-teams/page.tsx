@@ -506,7 +506,15 @@ export default function UsersTeamsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{user.role}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{user.department}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={user.status === "Active" ? "default" : "secondary"}>{user.status}</Badge>
+                        <Badge 
+                          variant="outline"
+                          className={user.status === "Active" 
+                            ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400" 
+                            : "border-border bg-muted text-muted-foreground"
+                          }
+                        >
+                          {user.status}
+                        </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{user.lastLogin}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">

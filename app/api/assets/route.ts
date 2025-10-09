@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,10 +85,21 @@ export async function GET(request: NextRequest) {
     const { count } = await countQuery
     const total = count || 0
 
-    // Get paginated data
-    const { data: assets, error } = await dataQuery
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1)
+    // Get paginated data - wrapped with cache
+    const fetchAssets = unstable_cache(
+      async () => {
+        return await dataQuery
+          .order('created_at', { ascending: false })
+          .range((page - 1) * limit, page * limit - 1)
+      },
+      [`assets-${search || 'all'}-${asset_type_id || 'all'}-${status || 'all'}-${page}-${limit}`],
+      {
+        revalidate: 300,
+        tags: [CACHE_TAGS.assets],
+      }
+    )
+    
+    const { data: assets, error } = await fetchAssets()
 
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch assets' }, { status: 500 })
@@ -146,6 +159,9 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: 'Failed to create asset' }, { status: 500 })
     }
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.assets)
 
     return NextResponse.json({ asset })
   } catch (error) {

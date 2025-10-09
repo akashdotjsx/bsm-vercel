@@ -4,6 +4,7 @@ import { Sun, Moon, HelpCircle, ChevronDown, User, Lock, RefreshCw, Settings, Lo
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useTheme } from "next-themes"
 import Image from "next/image"
 import { useState, useEffect } from "react"
@@ -95,18 +96,25 @@ export function GlobalHeader() {
     <header className="h-12 md:h-14 bg-[var(--background)] border-b border-[var(--border)] flex items-center px-4 md:px-6 gap-3 md:gap-6 fixed top-0 left-0 right-0 z-50">
       <div className="flex items-center gap-2">
         {mounted && (
-          <button
-            onClick={() => router.push('/')}
-            className="cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <Image
-              src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
-              alt="Kroolo"
-              width={isMobile ? 80 : 100}
-              height={isMobile ? 22 : 28}
-              className={`${isMobile ? "h-5" : "h-7"} w-auto`}
-            />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => router.push('/')}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <Image
+                  src={theme === 'dark' ? '/images/kroolo-light-logo1.svg' : '/images/kroolo-dark-logo2.svg'}
+                  alt="Kroolo"
+                  width={isMobile ? 80 : 100}
+                  height={isMobile ? 22 : 28}
+                  className={`${isMobile ? "h-5" : "h-7"} w-auto`}
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              Go to home
+            </TooltipContent>
+          </Tooltip>
         )}
         {!mounted && (
           <div className={`${isMobile ? "h-5" : "h-7"} ${isMobile ? "w-20" : "w-25"} bg-muted dark:bg-gray-700 animate-pulse rounded`} />
@@ -119,59 +127,82 @@ export function GlobalHeader() {
 
       <div className="flex items-center gap-2 md:gap-3">
         {!isMobile && (
-          <Button variant="ghost" size="sm" className="h-8 px-2">
-            <div className="w-4 h-4 text-pink-500">✦</div>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <div className="w-4 h-4 text-pink-500">✦</div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              AI Assistant
+            </TooltipContent>
+          </Tooltip>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`${isMobile ? "h-7 px-2 text-[10px]" : "h-7 px-3 text-[11px]"} font-medium`}
+                >
+                  {isMobile ? "Kroolo" : "Kroolo Enterprise"}
+                  <ChevronDown className="ml-1 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Kroolo Enterprise</DropdownMenuItem>
+                <DropdownMenuItem>Switch Organization</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Switch organization
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className={`${isMobile ? "h-7 px-2 text-[10px]" : "h-7 px-3 text-[11px]"} font-medium`}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-8 w-8 p-0"
             >
-              {isMobile ? "Kroolo" : "Kroolo Enterprise"}
-              <ChevronDown className="ml-1 h-3 w-3" />
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Kroolo Enterprise</DropdownMenuItem>
-            <DropdownMenuItem>Switch Organization</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="h-8 w-8 p-0"
-        >
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Change theme
+          </TooltipContent>
+        </Tooltip>
 
 
         <NotificationBell notifications={notifications} />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50"
-            >
-              <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
-                  {userData.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50"
+                >
+                  <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
+                      {userData.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
             className={`${isMobile ? "w-64" : "w-72"} p-0 border border-[var(--border)] shadow-lg bg-[var(--popover)] text-[var(--popover-foreground)]`}
@@ -273,7 +304,12 @@ export function GlobalHeader() {
               </DropdownMenuItem>
             </div>
           </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            My account
+          </TooltipContent>
+        </Tooltip>
       </div>
     </header>
   )

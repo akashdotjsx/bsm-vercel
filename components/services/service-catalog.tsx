@@ -53,6 +53,7 @@ import {
 } from "lucide-react"
 import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
 import { useToast } from "@/components/ui/use-toast"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 
 export function ServiceCatalog() {
   const { mode } = useMode()
@@ -85,8 +86,8 @@ export function ServiceCatalog() {
   const [showAddServiceModal, setShowAddServiceModal] = useState(false)
   const [showEditServiceModal, setShowEditServiceModal] = useState(false)
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false)
-  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false)
-  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState(false)
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false)
+  const [showDeleteServiceDialog, setShowDeleteServiceDialog] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [selectedCategoryForService, setSelectedCategoryForService] = useState("")
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState(null)
@@ -194,7 +195,7 @@ export function ServiceCatalog() {
 
   const handleDeleteCategory = (category) => {
     setSelectedCategoryForEdit(category)
-    setShowDeleteCategoryModal(true)
+    setShowDeleteCategoryDialog(true)
   }
 
   const handleEditServiceClick = (service, category) => {
@@ -220,7 +221,7 @@ export function ServiceCatalog() {
     
     setSelectedServiceForEdit(originalService || service)
     setSelectedCategoryForEdit(category)
-    setShowDeleteServiceModal(true)
+    setShowDeleteServiceDialog(true)
   }
 
   const handleUpdateCategory = async () => {
@@ -260,7 +261,7 @@ export function ServiceCatalog() {
     
     try {
       await deleteCategory(selectedCategoryForEdit.id)
-      setShowDeleteCategoryModal(false)
+      setShowDeleteCategoryDialog(false)
       setSelectedCategoryForEdit(null)
       toast({
         title: "Category deleted",
@@ -321,7 +322,7 @@ export function ServiceCatalog() {
       // Refresh categories to show the changes
       await refetch()
       
-      setShowDeleteServiceModal(false)
+      setShowDeleteServiceDialog(false)
       setSelectedServiceForEdit(null)
       toast({
         title: "Service deleted",
@@ -832,31 +833,20 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Category Modal */}
-      <Dialog open={showDeleteCategoryModal} onOpenChange={setShowDeleteCategoryModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              {(() => {
-                const serviceCount = selectedCategoryForEdit?.services?.length || 0
-                if (serviceCount > 0) {
-                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. This action cannot be undone and will remove all services in this category.`
-                } else {
-                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This action cannot be undone.`
-                }
-              })()}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteCategoryModal(false)} className="text-[13px]">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDeleteCategory} className="text-[13px]">
-              Delete Category {selectedCategoryForEdit?.services?.length > 0 ? `& ${selectedCategoryForEdit.services.length} Service${selectedCategoryForEdit.services.length === 1 ? '' : 's'}` : ''}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteCategoryDialog}
+        onOpenChange={setShowDeleteCategoryDialog}
+        onConfirm={handleConfirmDeleteCategory}
+        title="Delete Category"
+        description={(() => {
+          const serviceCount = selectedCategoryForEdit?.services?.length || 0
+          if (serviceCount > 0) {
+            return `This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. Do you want to delete`
+          }
+          return "Do you want to delete category"
+        })()}
+        itemName={selectedCategoryForEdit?.name}
+      />
 
       {/* Edit Service Modal */}
       <Dialog open={showEditServiceModal} onOpenChange={setShowEditServiceModal}>
@@ -937,24 +927,14 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Service Modal */}
-      <Dialog open={showDeleteServiceModal} onOpenChange={setShowDeleteServiceModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Service</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              Are you sure you want to delete "{selectedServiceForEdit?.name}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteServiceModal(false)} className="text-[13px]">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDeleteService} className="text-[13px]">
-              Delete Service
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteServiceDialog}
+        onOpenChange={setShowDeleteServiceDialog}
+        onConfirm={handleConfirmDeleteService}
+        title="Delete Service"
+        description="Do you want to delete service"
+        itemName={selectedServiceForEdit?.name}
+      />
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,7 +62,19 @@ export async function GET(request: NextRequest) {
       query = query.eq('role', role)
     }
 
-    const { data: profiles, error } = await query
+    // Wrap query with cache
+    const fetchProfiles = unstable_cache(
+      async () => {
+        return await query
+      },
+      [`profiles-${search || 'all'}-${department || 'all'}-${role || 'all'}-${limit}`],
+      {
+        revalidate: 300,
+        tags: [CACHE_TAGS.users],
+      }
+    )
+    
+    const { data: profiles, error } = await fetchProfiles()
 
     if (error) {
       console.error('Error fetching profiles:', error)

@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteAssetGQL } from "@/hooks/use-services-assets-gql"
 import { useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
@@ -77,6 +78,8 @@ export default function AssetManagementPage() {
   const [showEditAssetModal, setShowEditAssetModal] = useState(false)
   const [showDependenciesModal, setShowDependenciesModal] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [showDeleteAssetDialog, setShowDeleteAssetDialog] = useState(false)
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null)
 
   // Form data
   const [newAsset, setNewAsset] = useState<CreateAssetData>({
@@ -215,9 +218,17 @@ export default function AssetManagementPage() {
     }
   }
 
-  const handleDeleteAsset = async (assetId: string) => {
+  const handleDeleteAsset = (asset: Asset) => {
+    setAssetToDelete(asset)
+    setShowDeleteAssetDialog(true)
+  }
+
+  const confirmDeleteAsset = async () => {
+    if (!assetToDelete) return
     try {
-      await deleteAsset(assetId)
+      await deleteAsset(assetToDelete.id)
+      setShowDeleteAssetDialog(false)
+      setAssetToDelete(null)
     } catch (error) {
       // Handle error silently or show user-friendly message
     }
@@ -1271,6 +1282,16 @@ export default function AssetManagementPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Asset Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          open={showDeleteAssetDialog}
+          onOpenChange={setShowDeleteAssetDialog}
+          onConfirm={confirmDeleteAsset}
+          title="Delete Asset"
+          description="Do you want to delete this asset?"
+          itemName={assetToDelete?.name}
+        />
       </div>
     </PageContent>
   )

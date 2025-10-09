@@ -24,6 +24,7 @@ import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { 
   X, 
   Save, 
@@ -88,6 +89,10 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   
   // State for checklist
   const [newChecklistItem, setNewChecklistItem] = useState("")
+  
+  // State for delete confirmation
+  const [showDeleteChecklistDialog, setShowDeleteChecklistDialog] = useState(false)
+  const [checklistItemToDelete, setChecklistItemToDelete] = useState<string | null>(null)
 
   // Local editable form
   const [form, setForm] = useState({
@@ -202,10 +207,18 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     }
   }
 
-  const handleDeleteChecklistItem = async (itemId: string) => {
+  const handleDeleteChecklistItem = (itemId: string) => {
+    setChecklistItemToDelete(itemId)
+    setShowDeleteChecklistDialog(true)
+  }
+
+  const confirmDeleteChecklistItem = async () => {
+    if (!checklistItemToDelete) return
     try {
-      await deleteChecklistItemMutation.mutateAsync(itemId)
+      await deleteChecklistItemMutation.mutateAsync(checklistItemToDelete)
       toast.success("Checklist item deleted!")
+      setShowDeleteChecklistDialog(false)
+      setChecklistItemToDelete(null)
     } catch (error) {
       console.error("Error deleting checklist item:", error)
       toast.error("Failed to delete checklist item")
@@ -215,7 +228,17 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex" style={{ top: '60px' }}>
+    <>
+      <DeleteConfirmationDialog
+        open={showDeleteChecklistDialog}
+        onOpenChange={setShowDeleteChecklistDialog}
+        onConfirm={confirmDeleteChecklistItem}
+        title="Delete Checklist Item"
+        description="Do you want to delete this checklist item?"
+        isDeleting={deleteChecklistItemMutation.isPending}
+      />
+
+      <div className="fixed inset-0 z-50 flex" style={{ top: '60px' }}>
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
       <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
         <div className="p-6 bg-background flex items-center justify-between flex-shrink-0">
@@ -911,5 +934,6 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         )}
       </div>
     </div>
+    </>
   )
 }

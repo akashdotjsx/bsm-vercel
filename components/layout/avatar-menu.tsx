@@ -11,23 +11,37 @@ import {
   Clock,
   ChevronDown,
   Sparkles,
-  MoreHorizontal
+  MoreHorizontal,
+  Pencil
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { CustomMenuItem, CustomMenuSeparator } from "@/components/ui/custom-menu"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 // Status options from the main-components reference
 const statusOptions = [
-  { id: "online", label: "Online", color: "bg-green-500", description: "Available for work" },
-  { id: "busy", label: "Busy", color: "bg-red-500", description: "In a meeting" },
-  { id: "away", label: "Away", color: "bg-yellow-500", description: "Stepping out" },
-  { id: "dnd", label: "Do Not Disturb", color: "bg-red-600", description: "Focus time" },
-  { id: "offline", label: "Appear Offline", color: "bg-gray-400", description: "Not available" },
+  { key: "online", label: "Online", color: "#16a34a", description: "Available for work" },
+  { key: "busy", label: "Busy", color: "#dc2626", description: "In a meeting" },
+  { key: "away", label: "Away", color: "#eab308", description: "Stepping out" },
+  { key: "dnd", label: "Do Not Disturb", color: "#dc2626", description: "Focus time" },
+  { key: "offline", label: "Appear Offline", color: "#9ca3af", description: "Not available" },
+  { key: "custom", label: "Custom Status", color: "#8b5cf6", description: "" },
 ]
 
 interface AvatarMenuProps {
@@ -38,10 +52,13 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
   const router = useRouter()
   const isMobile = useIsMobile()
   const { user, profile, organization, signOut, loading } = useAuth()
-  const [userStatus, setUserStatus] = useState("online")
-  const [customStatus, setCustomStatus] = useState("")
-  const [isEditingStatus, setIsEditingStatus] = useState(false)
+  const [status, setStatus] = useState({ label: "Online", color: "#16a34a" })
+  const [customColor, setCustomColor] = useState("#8b5cf6")
+  const [editCustom, setEditCustom] = useState(false)
+  const [customInput, setCustomInput] = useState("")
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const [localTime, setLocalTime] = useState("")
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Update local time every minute
   useEffect(() => {
@@ -77,11 +94,19 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
       user?.email?.split('@')[0]?.slice(0, 2)?.toUpperCase() || 'U'
   }
 
-  const currentStatusData = statusOptions.find(s => s.id === userStatus) || statusOptions[0]
+  // Determine if current status is custom (i.e., not one of the predefined labels)
+  const baseLabels = statusOptions.filter((o) => o.key !== "custom").map((o) => o.label)
+  const isCustomSelected = !baseLabels.includes(status.label)
+  const customDisplayLabel = isCustomSelected ? status.label : "Custom Status"
+  
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
   const isDemoAccount = organization?.name?.includes('Demo') || false
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutDialog(true)
+  }
+
+  const confirmLogout = async () => {
     await signOut()
     router.push('/auth/login')
   }
@@ -94,15 +119,48 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
     router.push("/profile")
   }
 
-  const handleStatusChange = (statusId: string) => {
-    setUserStatus(statusId)
-    // Here you would typically update the status in your backend
-    console.log('Status changed to:', statusId)
+  const handleSaveCustomStatus = () => {
+    if (customInput.trim()) {
+      setStatus({ label: customInput.trim(), color: customColor })
+      setEditCustom(false)
+      setCustomInput("")
+      setStatusMenuOpen(false)
+    }
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <>
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent className="bg-background border-border">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20">
+                <LogOut className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-foreground">Logout Session</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground">
+                  Are you sure you want to logout?
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border hover:bg-muted">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmLogout}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
@@ -145,44 +203,120 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Status:</span>
               <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 ${currentStatusData.color} rounded-full`}></div>
-                <span className="text-sm font-medium text-foreground">{currentStatusData.label}</span>
+                <div 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: status.color }}
+                ></div>
+                <span className="text-sm font-medium text-foreground">{status.label}</span>
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            
+            {/* Keep popover open until an explicit click (outside or option) */}
+            <Popover open={statusMenuOpen}>
+              <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-sm h-8 px-3 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setStatusMenuOpen(!statusMenuOpen)
+                  }}
                 >
                   Set a status
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {statusOptions.map((status) => (
-                  <CustomMenuItem
-                    key={status.id}
-                    onClick={() => handleStatusChange(status.id)}
-                    className="flex items-center gap-3 px-3 py-2"
-                  >
-                    <div className={`w-3 h-3 ${status.color} rounded-full`}></div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{status.label}</div>
-                      <div className="text-xs text-muted-foreground">{status.description}</div>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                side="bottom"
+                avoidCollisions={false}
+                className="w-56 p-0 rounded-lg"
+                sideOffset={8}
+                onFocusOutside={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => e.preventDefault()}
+                onPointerDownOutside={() => setStatusMenuOpen(false)}
+              >
+                <div className="py-1">
+                  {statusOptions.map((opt) => (
+                    <CustomMenuItem
+                      key={opt.key}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (opt.key === "custom") return
+                        setStatus({ label: opt.label, color: opt.color })
+                        setEditCustom(false)
+                        setStatusMenuOpen(false)
+                      }}
+                      className="flex items-center gap-2 cursor-pointer h-7 px-3 py-0"
+                      style={{
+                        backgroundColor: (opt.key === "custom" ? isCustomSelected : status.label === opt.label)
+                          ? "var(--accent)"
+                          : "transparent",
+                      }}
+                    >
+                      <span
+                        className="min-w-[10px] h-[10px] rounded-full"
+                        style={{ backgroundColor: opt.key === "custom" ? customColor : opt.color }}
+                      />
+                      <span className="truncate text-sm">
+                        {opt.key === "custom" ? customDisplayLabel : opt.label}
+                      </span>
+                      {opt.key === "custom" && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditCustom((v) => !v)
+                          }}
+                          className="ml-auto grid place-items-center rounded hover:bg-muted"
+                          style={{ width: 20, height: 20 }}
+                          aria-label="Edit custom status"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
+                    </CustomMenuItem>
+                  ))}
+                  
+                  {editCustom && (
+                    <div className="px-3 py-2 border-t">
+                      <Input
+                        value={customInput}
+                        onChange={(e) => setCustomInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSaveCustomStatus()
+                          }
+                        }}
+                        placeholder="What's your status?"
+                        className="text-sm h-8"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 h-7 text-xs"
+                          onClick={handleSaveCustomStatus}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 h-7 text-xs"
+                          onClick={() => {
+                            setEditCustom(false)
+                            setCustomInput("")
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                    {userStatus === status.id && (
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    )}
-                  </CustomMenuItem>
-                ))}
-                <CustomMenuSeparator />
-                <CustomMenuItem className="flex items-center gap-3 px-3 py-2">
-                  <Sparkles className="w-3 h-3" />
-                  <span className="text-sm">Set custom status...</span>
-                </CustomMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -271,5 +405,6 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   )
 }

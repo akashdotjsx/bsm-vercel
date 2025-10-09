@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 import { GlobalSearch } from "@/components/search/global-search"
 import { AvatarMenu } from "./avatar-menu"
 import { OrganizationSwitcher } from "./organization-switcher"
+import { HelpCenterDropdown } from "./help-center-dropdown"
 import { useRouter } from "next/navigation"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/lib/contexts/auth-context"
@@ -164,17 +165,7 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
         </Button>
 
         {/* Help Center */}
-        {!isMobile && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 p-0"
-            onClick={handleHelpCenter}
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span className="sr-only">Help Center</span>
-          </Button>
-        )}
+        {!isMobile && <HelpCenterDropdown />}
 
         {/* Notifications */}
         <NotificationBell notifications={notifications} />

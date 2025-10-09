@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -36,21 +38,32 @@ export async function GET(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
     }
 
-    // Get attachments
-    const { data: attachments, error } = await supabase
-      .from('ticket_attachments')
-      .select(`
-        id,
-        filename,
-        file_size,
-        mime_type,
-        storage_path,
-        is_public,
-        created_at,
-        uploaded_by:profiles!ticket_attachments_uploaded_by_fkey(id, first_name, last_name, display_name, email)
-      `)
-      .eq('ticket_id', params.id)
-      .order('created_at', { ascending: false })
+    // Get attachments - wrapped with cache
+    const fetchAttachments = unstable_cache(
+      async () => {
+        return await supabase
+          .from('ticket_attachments')
+          .select(`
+            id,
+            filename,
+            file_size,
+            mime_type,
+            storage_path,
+            is_public,
+            created_at,
+            uploaded_by:profiles!ticket_attachments_uploaded_by_fkey(id, first_name, last_name, display_name, email)
+          `)
+          .eq('ticket_id', params.id)
+          .order('created_at', { ascending: false })
+      },
+      [`ticket-attachments-${params.id}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.tickets],
+      }
+    )
+    
+    const { data: attachments, error } = await fetchAttachments()
 
     if (error) {
       console.error('Error fetching attachments:', error)
@@ -192,6 +205,9 @@ export async function POST(
         new_value: 'File uploaded',
         change_reason: `Uploaded file: ${file.name}`
       })
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.tickets)
 
     return NextResponse.json({
       success: true,

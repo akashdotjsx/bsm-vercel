@@ -16,10 +16,17 @@ export async function createGraphQLClient() {
   const { data: { session } } = await supabase.auth.getSession()
   const accessToken = session?.access_token
 
+  console.log('🔧 GraphQL Client Config:', {
+    hasSession: !!session,
+    hasAccessToken: !!accessToken,
+    accessTokenPrefix: accessToken?.substring(0, 20) + '...',
+  })
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://uzbozldsdzsfytsteqlb.supabase.co'
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6Ym96bGRzZHpzZnl0c3RlcWxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDc1MzIsImV4cCI6MjA3Mzc4MzUzMn0.01VQh8PRqphCIbUCB2gLJjUZPX-AtzAF5ZRjJWyy24g'
   
   const endpoint = `${supabaseUrl}/graphql/v1`
+  console.log('🌐 GraphQL Endpoint:', endpoint)
 
   const headers: Record<string, string> = {
     apikey: supabaseAnonKey,
@@ -30,10 +37,13 @@ export async function createGraphQLClient() {
     headers['Authorization'] = `Bearer ${accessToken}`
   }
 
+  console.log('📋 GraphQL Headers:', {
+    hasApiKey: !!headers.apikey,
+    hasAuth: !!headers.Authorization,
+  })
+
   return new GraphQLClient(endpoint, {
     headers,
-    // Enable automatic error extraction
-    errorPolicy: 'all',
   })
 }
 
@@ -56,7 +66,6 @@ export function createServerGraphQLClient() {
       apikey: serviceRoleKey,
       Authorization: `Bearer ${serviceRoleKey}`,
     },
-    errorPolicy: 'all',
   })
 }
 

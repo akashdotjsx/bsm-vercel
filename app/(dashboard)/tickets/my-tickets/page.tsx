@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,13 +18,17 @@ import {
   Edit,
   Copy,
   Trash2,
+  Loader2,
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
 import { AIAssistantPanel } from "@/components/ai/ai-assistant-panel"
 import { TicketTray } from "@/components/tickets/ticket-tray"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useTicketsGQL } from "@/hooks/use-tickets-gql"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { format } from "date-fns"
 
-const mockTickets = [
+const mockTickets_UNUSED = [
   {
     id: "#5081",
     title: "Inability to Save Changes in Profile Settings",
@@ -112,17 +116,47 @@ export default function MyTicketsPage() {
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
 
-  const currentUser = "John Smith"
-  const myTickets = mockTickets.filter((ticket) => ticket.assignee.name === currentUser)
+  const { user } = useAuth()
+  
+  // Fetch tickets assigned to current user
+  const { tickets: allTickets, loading, error } = useTicketsGQL({
+    assignee_id: user?.id,
+    limit: 100
+  })
+
+  const myTickets = allTickets || []
 
   const filteredTickets = myTickets.filter((ticket) => {
     const matchesSearch =
-      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
+      ticket.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.ticket_number?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = selectedType === "all" || ticket.type === selectedType
     const matchesPriority = selectedPriority === "all" || ticket.priority === selectedPriority
     return matchesSearch && matchesType && matchesPriority
   })
+
+  // Show loading state
+  if (loading) {
+    return (
+      <PageContent breadcrumb={[{ label: "My Tickets" }]}>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageContent>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <PageContent breadcrumb={[{ label: "My Tickets" }]}>
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-red-500">Error loading tickets: {error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </PageContent>
+    )
+  }
 
   const getTicketsByStatus = (status: string) => {
     return filteredTickets.filter((ticket) => ticket.status === status)
@@ -273,7 +307,7 @@ export default function MyTicketsPage() {
                       >
                         {ticket.title}
                       </div>
-                      <div className="text-xs text-muted-foreground">{ticket.id}</div>
+                      <div className="text-xs text-muted-foreground">{ticket.ticket_number}</div>
                     </div>
                   </td>
                   <td className="p-3 border-r border-border">
@@ -283,29 +317,47 @@ export default function MyTicketsPage() {
                   </td>
                   <td className="p-3 border-r border-border">
                     <div className="flex items-center justify-center">
-                      <div
-                        className={`w-6 h-6 rounded-full ${ticket.companyColor} flex items-center justify-center text-white text-xs font-medium`}
-                        title={ticket.reportedBy}
-                      >
-                        {ticket.reportedByAvatar}
-                      </div>
+                      {ticket.requester ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-medium"
+                            title={ticket.requester.display_name || ticket.requester.email}
+                          >
+                            {(ticket.requester.first_name?.[0] || '') + (ticket.requester.last_name?.[0] || '')}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
+                          ?
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-3 border-r border-border">
                     <div className="flex items-center justify-center">
-                      <div
-                        className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
-                        title={ticket.assignee.name}
-                      >
-                        {ticket.assignee.avatar}
-                      </div>
+                      {ticket.assignee ? (
+                        <div
+                          className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                          title={ticket.assignee.display_name || ticket.assignee.email}
+                        >
+                          {(ticket.assignee.first_name?.[0] || '') + (ticket.assignee.last_name?.[0] || '')}
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
+                          ?
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-3 border-r border-border">
-                    <span className="text-[13px]">{ticket.reportedDate}</span>
+                    <span className="text-[13px]">
+                      {ticket.created_at ? format(new Date(ticket.created_at), 'MMM dd, yyyy') : '-'}
+                    </span>
                   </td>
                   <td className="p-3 border-r border-border">
-                    <span className="text-[13px]">{ticket.dueDate}</span>
+                    <span className="text-[13px]">
+                      {ticket.due_date ? format(new Date(ticket.due_date), 'MMM dd, yyyy') : '-'}
+                    </span>
                   </td>
                   <td className="p-3 border-r border-border">
                     <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full">
@@ -331,7 +383,7 @@ export default function MyTicketsPage() {
                     <Input
                       placeholder="Add notes..."
                       className="h-7 text-xs border-0 bg-transparent focus:bg-background"
-                      defaultValue={ticket.notes}
+                      defaultValue={ticket.metadata?.notes || ''}
                     />
                   </td>
                   <td className="p-3 border-r border-border text-center">

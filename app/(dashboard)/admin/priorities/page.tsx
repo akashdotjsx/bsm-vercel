@@ -216,18 +216,18 @@ export default function PriorityMatrixPage() {
                     <TabsContent value="matrix" className="space-y-4">
                       <div className="grid grid-cols-4 gap-4">
                         <div className="text-center font-medium text-[13px] text-muted-foreground p-2">Impact / Urgency</div>
-                        <div className="text-center font-medium text-[13px] bg-red-50 p-2 rounded">High Urgency</div>
-                        <div className="text-center font-medium text-[13px] bg-yellow-50 p-2 rounded">
+                        <div className="text-center font-medium text-[13px] bg-red-100 dark:bg-red-950/50 text-red-900 dark:text-red-100 p-2 rounded">High Urgency</div>
+                        <div className="text-center font-medium text-[13px] bg-yellow-100 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-100 p-2 rounded">
                           Medium Urgency
                         </div>
-                        <div className="text-center font-medium text-[13px] bg-green-50 p-2 rounded">Low Urgency</div>
+                        <div className="text-center font-medium text-[13px] bg-green-100 dark:bg-green-950/50 text-green-900 dark:text-green-100 p-2 rounded">Low Urgency</div>
 
                         {["high", "medium", "low"].map((impact) => (
                           <>
                             <div
                               key={`${impact}-label`}
                               className={`text-center font-medium text-[13px] p-2 rounded ${
-                                impact === "high" ? "bg-red-50" : impact === "medium" ? "bg-yellow-50" : "bg-green-50"
+                                impact === "high" ? "bg-red-100 dark:bg-red-950/50 text-red-900 dark:text-red-100" : impact === "medium" ? "bg-yellow-100 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-100" : "bg-green-100 dark:bg-green-950/50 text-green-900 dark:text-green-100"
                               }`}
                             >
                               {impact.charAt(0).toUpperCase() + impact.slice(1)} Impact
@@ -372,16 +372,16 @@ export default function PriorityMatrixPage() {
           <CardContent>
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center font-medium text-[13px] text-muted-foreground p-2">Impact / Urgency</div>
-              <div className="text-center font-medium text-[13px] bg-red-50 p-2 rounded">High Urgency</div>
-              <div className="text-center font-medium text-[13px] bg-yellow-50 p-2 rounded">Medium Urgency</div>
-              <div className="text-center font-medium text-[13px] bg-green-50 p-2 rounded">Low Urgency</div>
+              <div className="text-center font-medium text-[13px] bg-red-100 dark:bg-red-950/50 text-red-900 dark:text-red-100 p-2 rounded">High Urgency</div>
+              <div className="text-center font-medium text-[13px] bg-yellow-100 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-100 p-2 rounded">Medium Urgency</div>
+              <div className="text-center font-medium text-[13px] bg-green-100 dark:bg-green-950/50 text-green-900 dark:text-green-100 p-2 rounded">Low Urgency</div>
 
               {["high", "medium", "low"].map((impact) => (
                 <>
                   <div
                     key={`${impact}-label`}
                     className={`text-center font-medium text-[13px] p-2 rounded ${
-                      impact === "high" ? "bg-red-50" : impact === "medium" ? "bg-yellow-50" : "bg-green-50"
+                      impact === "high" ? "bg-red-100 dark:bg-red-950/50 text-red-900 dark:text-red-100" : impact === "medium" ? "bg-yellow-100 dark:bg-yellow-950/50 text-yellow-900 dark:text-yellow-100" : "bg-green-100 dark:bg-green-950/50 text-green-900 dark:text-green-100"
                     }`}
                   >
                     {impact.charAt(0).toUpperCase() + impact.slice(1)} Impact
@@ -390,14 +390,14 @@ export default function PriorityMatrixPage() {
                     const cell = getMatrixCell(impact, urgency)
                     const bgColor =
                       impact === "high" && urgency === "high"
-                        ? "bg-red-50 border-red-200"
+                        ? "bg-red-100 dark:bg-red-950/50 border-red-300 dark:border-red-800"
                         : (impact === "high" && urgency === "medium") || (impact === "medium" && urgency === "high")
-                          ? "bg-orange-50 border-orange-200"
+                          ? "bg-orange-100 dark:bg-orange-950/50 border-orange-300 dark:border-orange-800"
                           : (impact === "high" && urgency === "low") ||
                               (impact === "medium" && urgency === "medium") ||
                               (impact === "low" && urgency === "high")
-                            ? "bg-yellow-50 border-yellow-200"
-                            : "bg-green-50 border-green-200"
+                            ? "bg-yellow-100 dark:bg-yellow-950/50 border-yellow-300 dark:border-yellow-800"
+                            : "bg-green-100 dark:bg-green-950/50 border-green-300 dark:border-green-800"
 
                     return (
                       <div key={`${impact}-${urgency}`} className={`text-center p-4 border-2 rounded-lg ${bgColor}`}>

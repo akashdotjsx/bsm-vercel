@@ -37,6 +37,7 @@ import { useStore } from "@/lib/store"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { 
   useTicketsGraphQLQuery, 
   useCreateTicketGraphQL, 
@@ -2257,37 +2258,15 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       </Dialog>
 
       {/* Delete Ticket Modal */}
-      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Ticket</DialogTitle>
-          </DialogHeader>
-          {ticketToDelete && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete ticket <strong>#{ticketToDelete.id}</strong>? 
-                This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={confirmDeleteTicket}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? 'Deleting...' : 'Delete Ticket'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={confirmDeleteTicket}
+        title="Delete Ticket"
+        description="Do you want to delete ticket"
+        itemName={ticketToDelete ? `#${ticketToDelete.id} - ${ticketToDelete.title}` : undefined}
+        isDeleting={deleteTicketMutation.isPending}
+      />
     </PageContent>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createGraphQLClient } from '@/lib/graphql/client'
 import { gql } from 'graphql-request'
 
@@ -37,11 +38,40 @@ export function useServicesGQL(params: ServicesParams = {}) {
       setLoading(true)
       setError(null)
 
+      console.log('🔑 Creating GraphQL client for services...')
       const client = await createGraphQLClient()
+      console.log('✅ GraphQL client created for services')
+
+      // Build filter based on params
+      const filter: any = {}
+      
+      if (stableParams.category_id) {
+        filter.category_id = { eq: stableParams.category_id }
+      }
+      
+      if (stableParams.status) {
+        filter.status = { eq: stableParams.status }
+      }
+      
+      if (stableParams.is_requestable !== undefined) {
+        filter.is_requestable = { eq: stableParams.is_requestable }
+      }
+      
+      if (stableParams.organization_id) {
+        filter.organization_id = { eq: stableParams.organization_id }
+      }
+      
+      if (stableParams.search) {
+        filter.or = [
+          { name: { ilike: `%${stableParams.search}%` } },
+          { description: { ilike: `%${stableParams.search}%` } },
+          { short_description: { ilike: `%${stableParams.search}%` } }
+        ]
+      }
 
       const query = gql`
-        query GetServices($first: Int!, $offset: Int!) {
-          servicesCollection(first: $first, offset: $offset) {
+        query GetServices($filter: servicesFilter, $first: Int!, $offset: Int!) {
+          servicesCollection(filter: $filter, first: $first, offset: $offset, orderBy: [{ name: AscNullsLast }]) {
             edges {
               node {
                 id
@@ -49,17 +79,23 @@ export function useServicesGQL(params: ServicesParams = {}) {
                 description
                 icon
                 short_description
-                detailed_description
                 is_requestable
                 requires_approval
                 estimated_delivery_days
                 popularity_score
                 total_requests
                 status
-                form_schema
+                request_form_config
                 category_id
+                organization_id
                 created_at
                 updated_at
+                category: service_categories {
+                  id
+                  name
+                  icon
+                  description
+                }
               }
             }
           }
@@ -67,17 +103,49 @@ export function useServicesGQL(params: ServicesParams = {}) {
       `
 
       const variables = {
+        filter: Object.keys(filter).length > 0 ? filter : undefined,
         first: stableParams.limit || 100,
         offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 100)
       }
 
-      const data: any = await client.request(query, variables)
-      const transformedServices = data.servicesCollection.edges.map((edge: any) => edge.node)
+      console.log('🔍 Executing services query with variables:', variables)
+      
+      let data: any
+      try {
+        data = await client.request(query, variables)
+        console.log('📦 Raw services response:', data)
+        console.log('📦 Response type:', typeof data)
+        console.log('📦 Response keys:', data ? Object.keys(data) : 'null')
+      } catch (requestError: any) {
+        console.error('💥 GraphQL Request Error:', requestError)
+        console.error('💥 Error name:', requestError?.name)
+        console.error('💥 Error message:', requestError?.message)
+        console.error('💥 Error response:', requestError?.response)
+        console.error('💥 Error request:', requestError?.request)
+        throw requestError
+      }
+      
+      if (!data?.servicesCollection?.edges) {
+        console.warn('⚠️ No servicesCollection.edges in response')
+        setServices([])
+        setLoading(false)
+        return
+      }
+      
+      const transformedServices = data.servicesCollection.edges.map((edge: any) => ({
+        ...edge.node,
+        category_name: edge.node.category?.name || 'Uncategorized',
+        category_icon: edge.node.category?.icon || 'Package',
+        category_color: 'blue'
+      }))
       
       setServices(transformedServices)
-      console.log('✅ GraphQL: Services loaded successfully:', transformedServices.length)
-    } catch (err) {
+      console.log('✅ GraphQL: Services loaded successfully:', transformedServices.length, transformedServices)
+    } catch (err: any) {
       console.error('❌ GraphQL Error fetching services:', err)
+      console.error('Error message:', err?.message)
+      console.error('Error response:', err?.response)
+      console.error('Error stack:', err?.stack)
       setError(err instanceof Error ? err.message : 'Failed to fetch services')
     } finally {
       setLoading(false)
@@ -110,6 +178,7 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
       setError(null)
 
       const client = await createGraphQLClient()
+      console.log('✅ GraphQL Client created for service categories')
 
       const query = gql`
         query GetServiceCategories {
@@ -120,7 +189,8 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
                 name
                 description
                 icon
-                display_order
+                color
+                sort_order
                 is_active
                 created_at
                 updated_at
@@ -130,13 +200,36 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
         }
       `
 
-      const data: any = await client.request(query)
+      console.log('🔍 Executing service categories query...')
+      
+      let data: any
+      try {
+        data = await client.request(query)
+        console.log('📦 Raw GraphQL response:', data)
+        console.log('📦 Response type:', typeof data)
+        console.log('📦 Response keys:', data ? Object.keys(data) : 'null')
+      } catch (requestError: any) {
+        console.error('💥 GraphQL Request Error:', requestError)
+        console.error('💥 Error name:', requestError?.name)
+        console.error('💥 Error message:', requestError?.message)
+        console.error('💥 Error response:', requestError?.response)
+        console.error('💥 Error request:', requestError?.request)
+        throw requestError
+      }
+      
+      if (!data?.service_categoriesCollection?.edges) {
+        console.warn('⚠️ No service_categoriesCollection.edges in response')
+        setCategories([])
+        return
+      }
+      
       const transformedCategories = data.service_categoriesCollection.edges.map((edge: any) => edge.node)
       
       setCategories(transformedCategories)
-      console.log('✅ GraphQL: Service categories loaded:', transformedCategories.length)
+      console.log('✅ GraphQL: Service categories loaded:', transformedCategories.length, transformedCategories)
     } catch (err) {
       console.error('❌ GraphQL Error fetching service categories:', err)
+      console.error('Error details:', JSON.stringify(err, null, 2))
       setError(err instanceof Error ? err.message : 'Failed to fetch service categories')
     } finally {
       setLoading(false)
@@ -484,14 +577,13 @@ export async function createServiceGQL(serviceData: any): Promise<any> {
           description
           icon
           short_description
-          detailed_description
           is_requestable
           requires_approval
           estimated_delivery_days
           popularity_score
           total_requests
           status
-          form_schema
+          request_form_config
           category_id
           created_at
           updated_at
@@ -516,14 +608,13 @@ export async function updateServiceGQL(id: string, updates: any): Promise<any> {
           description
           icon
           short_description
-          detailed_description
           is_requestable
           requires_approval
           estimated_delivery_days
           popularity_score
           total_requests
           status
-          form_schema
+          request_form_config
           category_id
           created_at
           updated_at
@@ -713,6 +804,62 @@ export async function updateServiceRequestStatusGQL(id: string, status: string, 
   
   const response: any = await client.request(mutation, { id, set: updates })
   return response.updateservice_requestsCollection.records[0]
+}
+
+// ============================================
+// REACT QUERY HOOKS - SERVICE REQUESTS
+// ============================================
+
+export function useApproveServiceRequest() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ requestId, comment }: { requestId: string; comment?: string }) => {
+      return await approveServiceRequestGQL(requestId, comment)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+    },
+  })
+}
+
+export function useRejectServiceRequest() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ requestId, comment }: { requestId: string; comment?: string }) => {
+      return await rejectServiceRequestGQL(requestId, comment)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+    },
+  })
+}
+
+export function useAssignServiceRequest() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ requestId, assigneeId, comment }: { requestId: string; assigneeId: string; comment?: string }) => {
+      return await assignServiceRequestGQL(requestId, assigneeId, comment)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+    },
+  })
+}
+
+export function useUpdateServiceRequestStatus() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ requestId, status, comment }: { requestId: string; status: string; comment?: string }) => {
+      return await updateServiceRequestStatusGQL(requestId, status, comment)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+    },
+  })
 }
 
 // ============================================
