@@ -32,6 +32,7 @@ import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table"
+import { AIChatPanel } from "@/components/ai/ai-chat-panel"
 
 const mockTickets_UNUSED = [
   {
@@ -125,7 +126,7 @@ export default function MyTicketsPage() {
   // Custom columns store
   const { columns: customColumns } = useCustomColumnsStore()
 
-  const { user } = useAuth()
+  const { user, organization } = useAuth()
   
   // Fetch tickets assigned to current user
   const { tickets: allTickets, loading, error } = useTicketsGQL({
@@ -531,6 +532,15 @@ export default function MyTicketsPage() {
         open={showCustomColumnsDialog}
         onOpenChange={setShowCustomColumnsDialog}
       />
+
+      {/* AI Chat Panel */}
+      {organization?.id && (
+        <AIChatPanel
+          isOpen={showAIPanel}
+          onClose={() => setShowAIPanel(false)}
+          organizationId={organization.id}
+        />
+      )}
     </PageContent>
   )
 }

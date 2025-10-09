@@ -54,6 +54,7 @@ import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table"
+import { AIChatPanel } from "@/components/ai/ai-chat-panel"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -1481,7 +1482,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <div className="flex items-center gap-3">
 <Button
 className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/90 hover:to-[var(--primary-pink)] text-white text-sm h-8 px-4 rounded-lg shadow-xs"
-                onClick={() => setShowAIChat(true)}
+                onClick={() => setShowAIPanel(true)}
               >
                 <Sparkles className="h-3 w-3 mr-2" />
                 Ask AI
@@ -2103,6 +2104,15 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         open={showCustomColumnsDialog}
         onOpenChange={setShowCustomColumnsDialog}
       />
+
+      {/* AI Chat Panel */}
+      {organization?.id && (
+        <AIChatPanel
+          isOpen={showAIPanel}
+          onClose={() => setShowAIPanel(false)}
+          organizationId={organization.id}
+        />
+      )}
     </PageContent>
   )
 }
