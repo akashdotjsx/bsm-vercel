@@ -27,6 +27,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTicketsGQL } from "@/hooks/use-tickets-gql"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
+import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
 
 const mockTickets_UNUSED = [
   {
@@ -335,18 +336,19 @@ export default function MyTicketsPage() {
                   </td>
                   <td className="p-3 border-r border-border">
                     <div className="flex items-center justify-center">
-                      {ticket.assignee ? (
-                        <div
-                          className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium"
-                          title={ticket.assignee.display_name || ticket.assignee.email}
-                        >
-                          {(ticket.assignee.first_name?.[0] || '') + (ticket.assignee.last_name?.[0] || '')}
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-medium">
-                          ?
-                        </div>
-                      )}
+                      <MultiAssigneeAvatars
+                        assignees={ticket.assignee ? [{
+                          id: ticket.assignee_id || ticket.assignee.id,
+                          name: ticket.assignee.display_name || ticket.assignee.email,
+                          avatar: (ticket.assignee.first_name?.[0] || '') + (ticket.assignee.last_name?.[0] || ''),
+                          display_name: ticket.assignee.display_name,
+                          first_name: ticket.assignee.first_name,
+                          last_name: ticket.assignee.last_name,
+                          avatar_url: ticket.assignee.avatar_url
+                        }] : []}
+                        maxDisplay={3}
+                        size="sm"
+                      />
                     </div>
                   </td>
                   <td className="p-3 border-r border-border">

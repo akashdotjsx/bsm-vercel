@@ -49,6 +49,7 @@ import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
 import { Skeleton } from "@/components/ui/skeleton"
+import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -139,6 +140,7 @@ export default function TicketsPage() {
   } = useTicketsGraphQLQuery(ticketsParams)
   
   const tickets = ticketsData?.tickets || []
+  
   const pagination = {
     page: ticketsParams.page || 1,
     limit: ticketsParams.limit || 50,
@@ -298,14 +300,19 @@ export default function TicketsPage() {
   const transformedTickets = useMemo(() => {
     if (!tickets || tickets.length === 0) return []
     
-    console.log('🔄 Transforming tickets:', tickets)
-    
     return tickets.map((ticket) => {
-      console.log('🎫 Processing ticket:', ticket.title)
-      console.log('🎫 Requester data:', ticket.requester)
-      console.log('🎫 Requester display_name:', ticket.requester?.display_name)
-      console.log('🎫 Requester first_name:', ticket.requester?.first_name)
-      console.log('🎫 Requester last_name:', ticket.requester?.last_name)
+      // Multi-assignees from GraphQL assignees array
+      const assigneesList = (ticket.assignees || []).map((assignee: any) => ({
+        id: assignee.id,
+        name: assignee.name || assignee.display_name || assignee.email,
+        avatar: getAvatarInitials(assignee.first_name, assignee.last_name, assignee.display_name),
+        display_name: assignee.display_name,
+        first_name: assignee.first_name,
+        last_name: assignee.last_name,
+        avatar_url: assignee.avatar_url,
+        email: assignee.email,
+      }))
+      
       return {
       id: `#${ticket.ticket_number}`, // Display ID for UI
       dbId: ticket.id, // Database ID for API calls
@@ -317,10 +324,14 @@ export default function TicketsPage() {
       customer: ticket.requester?.display_name || ticket.requester?.email || "Unknown",
       reportedBy: ticket.requester?.display_name || ticket.requester?.email || "Unknown",
       reportedByAvatar: getAvatarInitials(ticket.requester?.first_name, ticket.requester?.last_name, ticket.requester?.display_name) || "??",
-      assignee: ticket.assignee?.display_name ? {
+      // Multi-assignee array from GraphQL
+      assignees: assigneesList,
+      // Single assignee (backward compatibility) - use first assignee
+      assignee: assigneesList.length > 0 ? assigneesList[0] : (ticket.assignee?.display_name ? {
+        id: ticket.assignee_id,
         name: ticket.assignee.display_name,
         avatar: getAvatarInitials(ticket.assignee.first_name, ticket.assignee.last_name, ticket.assignee.display_name)
-      } : null,
+      } : null),
       status: ticket.status,
       timestamp: formatDate(ticket.created_at),
       date: formatDate(ticket.created_at),
@@ -1151,21 +1162,11 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
                        <div className="flex items-center">
-                         {ticket.assignee ? (
-                           <div
-                             className="h-6 w-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[9px] font-medium"
-                             title={ticket.assignee.name}
-                           >
-                             {ticket.assignee.avatar}
-                           </div>
-                         ) : (
-                           <div
-                             className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[9px] font-medium"
-                             title="Unassigned"
-                           >
-                             ?
-                           </div>
-                         )}
+                         <MultiAssigneeAvatars
+                           assignees={ticket.assignees || []}
+                           maxDisplay={3}
+                           size="sm"
+                         />
                        </div>
                      </td>
  <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">

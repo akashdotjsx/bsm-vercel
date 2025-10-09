@@ -60,7 +60,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   const { user, organization } = useAuth()
   
   // GraphQL hooks - Single query fetches everything!
-  const { data: dbTicket, isLoading: loading, error } = useTicketDetailsGraphQL(ticketId)
+  const { data: dbTicket, isLoading: loading, error, refetch: refetchTicket } = useTicketDetailsGraphQL(ticketId)
   const createTicketMutation = useCreateTicketGraphQL()
   const updateTicketMutation = useUpdateTicketDetailsGraphQL()
   const addCommentMutation = useAddCommentGraphQL(ticketId)
@@ -86,8 +86,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     }
   }, [isOpen])
 
-  // State for editing - CREATE mode is always in edit state
-  const [isEditing, setIsEditing] = useState(isCreateMode)
+  // Always in edit mode - no view mode needed
   const [saving, setSaving] = useState(false)
   
   // State for comments
@@ -123,7 +122,6 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   useEffect(() => {
     if (isCreateMode) {
       // CREATE mode - set defaults
-      setIsEditing(true)
       setForm({
         title: "",
         description: "",
@@ -209,8 +207,43 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       } else {
         // UPDATE MODE - Update existing ticket
         console.log("[UPDATE] Updating ticket:", ticketId, ticketData)
-        await updateTicketMutation.mutateAsync({ id: ticketId, updates: ticketData })
-        setIsEditing(false)
+        
+        // Clean up: remove empty strings and null values for optional fields
+        const cleanedData: any = {}
+        Object.keys(ticketData).forEach(key => {
+          const value = ticketData[key]
+          // Only include non-empty values (skip empty strings and null for optional fields)
+          if (value !== '' && value !== null && value !== undefined) {
+            cleanedData[key] = value
+          } else if (key === 'assignee_id' && value === null) {
+            // Allow null for assignee_id (unassigning)
+            cleanedData[key] = null
+          }
+        })
+        
+        console.log("[UPDATE] Cleaned data:", cleanedData)
+        const updatedTicket = await updateTicketMutation.mutateAsync({ id: ticketId, updates: cleanedData })
+        
+        // Update form with the returned data to stay in sync
+        // Cache invalidation already happened in the mutation hook
+        if (updatedTicket) {
+          setForm({
+            title: updatedTicket.title || form.title,
+            description: updatedTicket.description || form.description,
+            type: updatedTicket.type || form.type,
+            priority: updatedTicket.priority || form.priority,
+            status: updatedTicket.status || form.status,
+            impact: updatedTicket.impact || form.impact,
+            urgency: updatedTicket.urgency || form.urgency,
+            category: updatedTicket.category || form.category,
+            subcategory: updatedTicket.subcategory || form.subcategory,
+            assignee_ids: updatedTicket.assignee_id ? [updatedTicket.assignee_id] : [],
+            due_date: updatedTicket.due_date || form.due_date,
+            tags: updatedTicket.tags || form.tags,
+          })
+        }
+        
+        // Stay in edit mode - no need to toggle
         toast.success("Ticket updated successfully!")
       }
     } catch (error) {
@@ -347,8 +380,51 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
               </div>
             </div>
           ) : !isCreateMode && loading ? (
-            <div className="p-4 md:p-6 flex items-center justify-center">
-              <LoadingSpinner className="h-8 w-8" />
+            // Skeleton loader while fetching ticket
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+              {/* Title skeleton */}
+              <div className="space-y-2">
+                <div className="h-3 w-16 bg-muted animate-pulse rounded" />
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              </div>
+              
+              {/* Description skeleton */}
+              <div className="space-y-2">
+                <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                <div className="h-32 bg-muted animate-pulse rounded" />
+              </div>
+              
+              {/* Fields grid skeleton */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="h-3 w-12 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-16 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-14 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+              </div>
+              
+              {/* More fields skeleton */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="h-3 w-18 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-16 bg-muted animate-pulse rounded" />
+                  <div className="h-10 bg-muted animate-pulse rounded" />
+                </div>
+              </div>
             </div>
           ) : (
             <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
@@ -416,9 +492,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
-                {/* Always show edit form in CREATE mode */}
-                {(isEditing || isCreateMode) ? (
-                  <>
+                {/* Always in edit mode - no view mode */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
                       <Input 
@@ -563,148 +637,6 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                         </Select>
                       </div>
                     </div>
-                  </>
-                ) : !isCreateMode ? (
-                  <>
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-[13px] font-semibold text-foreground">Ticket Details</h3>
-                      <Button variant="outline" size="sm" className="text-[11px] h-8 px-4" onClick={() => setIsEditing(true)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
-                      <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                        {dbTicket?.title || ticket?.title ? (
-                          <span className="text-[11px] text-foreground">{dbTicket?.title || ticket?.title}</span>
-                        ) : (
-                          <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
-                      <div className="min-h-24 border rounded-md p-3 bg-muted/30">
-                        {dbTicket?.description || ticket?.description ? (
-                          <span className="text-[11px] text-foreground whitespace-pre-wrap leading-relaxed">{dbTicket?.description || ticket?.description}</span>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="h-4 bg-muted animate-pulse rounded w-full" />
-                            <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
-                            <div className="h-4 bg-muted animate-pulse rounded w-4/6" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.type || ticket?.type || ticket?.displayType ? (
-                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.type || ticket?.type || ticket?.displayType}</span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-14" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.priority || ticket?.priority ? (
-                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.priority || ticket?.priority}</span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.status || ticket?.status ? (
-                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.status || ticket?.status}</span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-16" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {(() => {
-                            const assigneeId = dbTicket?.assignee_id || ticket?.assignee?.id
-                            const assigneeName = dbTicket?.assignee?.display_name || ticket?.assignee?.name
-                            
-                            if (assigneeId && assigneeName) {
-                              return <span className="text-[11px] text-foreground">{assigneeName}</span>
-                            } else if (assigneeName) {
-                              return <span className="text-[11px] text-foreground">{assigneeName}</span>
-                            } else if (assigneeId) {
-                              const assignedUser = users.find(u => u.id === assigneeId)
-                              return (
-                                <span className="text-[11px] text-foreground">
-                                  {assignedUser?.display_name || assignedUser?.first_name || assignedUser?.email || 'Assigned User'}
-                                </span>
-                              )
-                            } else {
-                              return <span className="text-[11px] text-muted-foreground">Unassigned</span>
-                            }
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due date</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.due_date || ticket?.dueDate ? (
-                            <span className="text-[11px] text-foreground">
-                              {dbTicket?.due_date ? format(new Date(dbTicket.due_date), "MMM d, yyyy h:mm a") : ticket?.dueDate || "Not set"}
-                            </span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-24" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          <span className="text-[11px] text-muted-foreground">Select category</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Subcategory</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          <span className="text-[11px] text-muted-foreground">Select category first</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.urgency || ticket?.urgency ? (
-                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.urgency || ticket?.urgency}</span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
-                        <div className="h-8 border rounded-md px-3 flex items-center bg-muted/30">
-                          {dbTicket?.impact || ticket?.impact ? (
-                            <span className="text-[11px] text-foreground capitalize">{dbTicket?.impact || ticket?.impact}</span>
-                          ) : (
-                            <div className="h-4 bg-muted animate-pulse rounded w-12" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
               </TabsContent>
 
               <TabsContent value="accounts" className="p-6">
@@ -1025,42 +957,34 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
             </Tabs>
           )}
 
-          {/* Footer - show when editing or creating */}
-          {(isEditing || isCreateMode) && (
-            <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  if (isCreateMode) {
-                    onClose() // Close drawer in CREATE mode
-                  } else {
-                    setIsEditing(false) // Just cancel edit in EDIT mode
-                  }
-                }} 
-                className="text-[11px] h-8 px-3"
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave} 
-                disabled={saving || (!isCreateMode && loading)} 
-                className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
-              >
-                {saving ? (
-                  <>
-                    <LoadingSpinner className="h-3 w-3 mr-2" />
-                    {isCreateMode ? "Creating..." : "Saving..."}
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-3 w-3 mr-2" />
-                    {isCreateMode ? "Create Ticket" : "Save Changes"}
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+          {/* Footer - always show */}
+          <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="text-[11px] h-8 px-3"
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={saving || (!isCreateMode && loading)} 
+              className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
+            >
+              {saving ? (
+                <>
+                  <LoadingSpinner className="h-3 w-3 mr-2" />
+                  {isCreateMode ? "Creating..." : "Saving..."}
+                </>
+              ) : (
+                <>
+                  <Save className="h-3 w-3 mr-2" />
+                  {isCreateMode ? "Create Ticket" : "Save Changes"}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </>

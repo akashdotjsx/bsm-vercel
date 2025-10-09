@@ -33,11 +33,43 @@ async function fetchTicketWithDetailsGraphQL(id: string) {
 
   const ticketNode = data.ticketsCollection.edges[0].node
 
+  // Fetch assignee profiles if assignee_ids exist
+  let assignees: any[] = []
+  if (ticketNode.assignee_ids && ticketNode.assignee_ids.length > 0) {
+    const profilesQuery = gql`
+      query GetProfiles($ids: [UUID!]) {
+        profilesCollection(filter: { id: { in: $ids } }, first: 100) {
+          edges {
+            node {
+              id
+              first_name
+              last_name
+              display_name
+              email
+              avatar_url
+            }
+          }
+        }
+      }
+    `
+    const profilesData: any = await client.request(profilesQuery, { ids: ticketNode.assignee_ids })
+    assignees = profilesData.profilesCollection.edges.map((e: any) => ({
+      id: e.node.id,
+      name: e.node.display_name || e.node.email,
+      display_name: e.node.display_name,
+      first_name: e.node.first_name,
+      last_name: e.node.last_name,
+      email: e.node.email,
+      avatar_url: e.node.avatar_url,
+    }))
+  }
+
   // Transform the nested collections
   const ticket = {
     ...ticketNode,
     requester: ticketNode.requester || null,
     assignee: ticketNode.assignee || null,
+    assignees: assignees,
     team: ticketNode.team || null,
     comments: ticketNode.comments?.edges.map((e: any) => ({
       ...e.node,
@@ -96,6 +128,7 @@ async function updateTicketDetailsGraphQL({ id, updates }: { id: string; updates
           impact
           status
           assignee_id
+          assignee_ids
           team_id
           due_date
           custom_fields
@@ -135,7 +168,13 @@ export function useUpdateTicketDetailsGraphQL() {
       }
     },
     onSettled: (data, error, { id }) => {
+      // Invalidate the specific ticket detail
       queryClient.invalidateQueries({ queryKey: ticketDetailKeys.ticket(id) })
+      // Invalidate ALL ticket details
+      queryClient.invalidateQueries({ queryKey: ticketDetailKeys.all })
+      // CRITICAL: Invalidate ALL ticket LISTS (separate query key namespace)
+      queryClient.invalidateQueries({ queryKey: ["tickets"] })
+      console.log("✅ Ticket updated - invalidated detail and all ticket lists")
     },
   })
 }

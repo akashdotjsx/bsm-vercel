@@ -388,6 +388,7 @@ CREATE TABLE public.tickets (
   status USER-DEFINED DEFAULT 'new'::ticket_status,
   requester_id uuid,
   assignee_id uuid,
+  assignee_ids uuid[] DEFAULT ARRAY[]::uuid[],
   team_id uuid,
   sla_policy_id uuid,
   due_date timestamp with time zone,

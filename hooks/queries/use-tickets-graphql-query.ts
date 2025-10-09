@@ -33,7 +33,7 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
 
   const client = await createGraphQLClient()
 
-  // Your existing GraphQL query - NO CHANGES!
+  // GraphQL query with assignee_ids array (simplified data model)
   const query = gql`
     query GetTickets($first: Int!, $offset: Int!) {
       ticketsCollection(first: $first, offset: $offset) {
@@ -52,6 +52,7 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
             status
             requester_id
             assignee_id
+            assignee_ids
             team_id
             sla_policy_id
             due_date
@@ -78,7 +79,11 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   // Batch-fetch requester and assignee profiles via GraphQL
   const requesterIds = Array.from(new Set(rawTickets.map((t: any) => t.requester_id).filter(Boolean)))
   const assigneeIds = Array.from(new Set(rawTickets.map((t: any) => t.assignee_id).filter(Boolean)))
-  const allIds = Array.from(new Set([...requesterIds, ...assigneeIds]))
+  
+  // Get all user IDs from assignee_ids array
+  const arrayAssigneeIds = rawTickets.flatMap((t: any) => t.assignee_ids || []).filter(Boolean)
+  
+  const allIds = Array.from(new Set([...requesterIds, ...assigneeIds, ...arrayAssigneeIds]))
 
   let profileById: Record<string, any> = {}
   if (allIds.length > 0) {
@@ -106,11 +111,28 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
     }, {})
   }
 
-  const tickets = rawTickets.map((t: any) => ({
-    ...t,
-    requester: t.requester_id ? profileById[t.requester_id] || null : null,
-    assignee: t.assignee_id ? profileById[t.assignee_id] || null : null,
-  }))
+  const tickets = rawTickets.map((t: any) => {
+    // Map assignees from assignee_ids array with full profile data
+    const assignees = (t.assignee_ids || []).map((userId: string) => {
+      const profile = profileById[userId]
+      return profile ? {
+        id: profile.id,
+        name: profile.display_name || profile.email,
+        display_name: profile.display_name,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        email: profile.email,
+        avatar_url: profile.avatar_url,
+      } : null
+    }).filter(Boolean)
+    
+    return {
+      ...t,
+      requester: t.requester_id ? profileById[t.requester_id] || null : null,
+      assignee: t.assignee_id ? profileById[t.assignee_id] || null : null,
+      assignees: assignees, // Add the mapped assignees array from assignee_ids
+    }
+  })
 
   console.log("✅ GraphQL response processed:", tickets.length, "tickets")
 
@@ -146,6 +168,7 @@ async function fetchTicketGraphQL(id: string) {
             status
             requester_id
             assignee_id
+            assignee_ids
             team_id
             sla_policy_id
             due_date
@@ -164,8 +187,12 @@ async function fetchTicketGraphQL(id: string) {
 
   if (!ticket) throw new Error("Ticket not found")
 
-  // Fetch profiles if needed
-  const profileIds = [ticket.requester_id, ticket.assignee_id].filter(Boolean)
+  // Fetch profiles if needed (including assignee_ids array)
+  const profileIds = [
+    ticket.requester_id, 
+    ticket.assignee_id,
+    ...(ticket.assignee_ids || [])
+  ].filter(Boolean)
   let profileById: Record<string, any> = {}
 
   if (profileIds.length > 0) {
@@ -193,10 +220,25 @@ async function fetchTicketGraphQL(id: string) {
     }, {})
   }
 
+  // Map assignees from assignee_ids array
+  const assignees = (ticket.assignee_ids || []).map((userId: string) => {
+    const profile = profileById[userId]
+    return profile ? {
+      id: profile.id,
+      name: profile.display_name || profile.email,
+      display_name: profile.display_name,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      email: profile.email,
+      avatar_url: profile.avatar_url,
+    } : null
+  }).filter(Boolean)
+
   return {
     ...ticket,
     requester: ticket.requester_id ? profileById[ticket.requester_id] || null : null,
     assignee: ticket.assignee_id ? profileById[ticket.assignee_id] || null : null,
+    assignees: assignees,
   }
 }
 

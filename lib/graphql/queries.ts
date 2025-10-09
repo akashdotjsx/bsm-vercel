@@ -30,6 +30,7 @@ export const GET_TICKETS_QUERY = gql`
           status
           requester_id
           assignee_id
+          assignee_ids
           team_id
           sla_policy_id
           due_date
@@ -74,6 +75,7 @@ export const GET_TICKET_BY_ID_QUERY = gql`
           status
           requester_id
           assignee_id
+          assignee_ids
           team_id
           sla_policy_id
           due_date
