@@ -40,7 +40,8 @@ import {
   Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useAssets, useAssetTypes, useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
+import { useAssetsGQL, useAssetTypesGQL } from "@/hooks/use-services-assets-gql"
+import { useAssets, useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
 import { useAuth } from "@/lib/contexts/auth-context"
 
@@ -90,17 +91,18 @@ export default function AssetManagementPage() {
     criticality: "medium",
   })
 
-  // API hooks
-  const { assets, loading: assetsLoading, error: assetsError, createAsset, updateAsset, deleteAsset } = useAssets(
-    organizationId,
-    { 
-      search: searchTerm,
-      asset_type_id: selectedType !== "all" ? selectedType : undefined,
-      status: selectedStatus !== "all" ? selectedStatus : undefined,
-    }
-  )
+  // API hooks - GraphQL for reads, REST for writes
+  const { assets, loading: assetsLoading, error: assetsError } = useAssetsGQL({ 
+    organization_id: organizationId,
+    search: searchTerm,
+    asset_type_id: selectedType !== "all" ? selectedType : undefined,
+    status: selectedStatus !== "all" ? selectedStatus : undefined,
+  })
+  
+  // Use REST hooks for write operations (create, update, delete)
+  const { createAsset, updateAsset, deleteAsset } = useAssets(organizationId, {})
 
-  const { assetTypes, loading: typesLoading } = useAssetTypes(organizationId)
+  const { assetTypes, loading: typesLoading } = useAssetTypesGQL({ organization_id: organizationId })
   const { stats, loading: statsLoading } = useAssetStats(organizationId)
   const { services, loading: servicesLoading } = useBusinessServices(organizationId)
   const { rules, loading: rulesLoading, runRule } = useDiscoveryRules(organizationId)

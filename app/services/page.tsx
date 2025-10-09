@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, Star, Search, ShoppingCart, CheckCircle, AlertCircle, Package } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { useServicesGQL, useServiceCategoriesGQL } from "@/hooks/use-services-assets-gql"
 
 interface Service {
   id: string
@@ -41,44 +42,33 @@ interface ServiceRequestFormData {
 
 export default function ServicesPage() {
   const { canView } = useAuth()
-  const [services, setServices] = useState<Service[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [showRequestForm, setShowRequestForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  // Fetch services and categories
+  // Fetch services and categories with GraphQL
+  const { services, loading: servicesLoading, error: servicesError } = useServicesGQL({
+    is_requestable: true,
+    status: 'active',
+    search: searchTerm || undefined
+  })
+  
+  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategoriesGQL({ is_active: true })
+  
+  const loading = servicesLoading || categoriesLoading
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        
-        // Fetch services
-        const servicesResponse = await fetch('/api/services/requestable')
-        if (servicesResponse.ok) {
-          const data = await servicesResponse.json()
-          setServices(data.services || [])
-        }
-        
-        // Fetch categories
-        const categoriesResponse = await fetch('/api/service-categories')
-        if (categoriesResponse.ok) {
-          const data = await categoriesResponse.json()
-          setCategories(data.categories || [])
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        toast.error('Failed to load services')
-      } finally {
-        setLoading(false)
-      }
+    if (servicesError) {
+      console.error('Error fetching services:', servicesError)
+      toast.error('Failed to load services')
     }
-
-    fetchData()
-  }, [])
+    if (categoriesError) {
+      console.error('Error fetching categories:', categoriesError)
+      toast.error('Failed to load categories')
+    }
+  }, [servicesError, categoriesError])
 
   const handleServiceRequest = (service: Service) => {
     setSelectedService(service)

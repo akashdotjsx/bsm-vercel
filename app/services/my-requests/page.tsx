@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { useServiceRequestsGQL } from "@/hooks/use-services-assets-gql"
 
 interface ServiceRequest {
   id: string
@@ -59,34 +60,23 @@ const priorityConfig = {
 }
 
 export default function MyServiceRequestsPage() {
-  const { canView } = useAuth()
-  const [requests, setRequests] = useState<ServiceRequest[]>([])
-  const [loading, setLoading] = useState(true)
+  const { canView, user } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
 
+  // Fetch service requests with GraphQL
+  const { serviceRequests: requests, loading, error } = useServiceRequestsGQL({
+    requester_id: user?.id,
+    status: statusFilter !== "all" ? statusFilter : undefined
+  })
+  
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/service-requests?scope=own')
-        if (response.ok) {
-          const data = await response.json()
-          setRequests(data.serviceRequests || [])
-        } else {
-          toast.error('Failed to load service requests')
-        }
-      } catch (error) {
-        console.error('Error fetching service requests:', error)
-        toast.error('Failed to load service requests')
-      } finally {
-        setLoading(false)
-      }
+    if (error) {
+      console.error('Error fetching service requests:', error)
+      toast.error('Failed to load service requests')
     }
-
-    fetchRequests()
-  }, [])
+  }, [error])
 
   const filteredRequests = requests.filter(request => {
     if (statusFilter !== "all" && request.status !== statusFilter) return false

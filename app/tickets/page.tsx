@@ -37,7 +37,8 @@ import { useStore } from "@/lib/store"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { useTickets } from "@/hooks/use-tickets"
+import { useTicketsGQL } from "@/hooks/use-tickets-gql"
+import { ticketAPI } from "@/lib/api/tickets"
 import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
@@ -120,16 +121,32 @@ export default function TicketsPage() {
     search: searchTerm || undefined
   }), [selectedStatus, selectedPriority, selectedType, searchTerm])
 
+  // GraphQL for reads (fast, optimized)
   const {
     tickets, 
     loading, 
     error, 
     pagination, 
-    refetch,
-    createTicket,
-    updateTicket,
-    deleteTicket
-  } = useTickets(ticketsParams)
+    refetch
+  } = useTicketsGQL(ticketsParams)
+
+  // REST API for writes (mutations)
+  const createTicket = async (data: any) => {
+    const result = await ticketAPI.createTicket(data)
+    refetch() // Refresh GraphQL data after create
+    return result
+  }
+  
+  const updateTicket = async (id: string, data: any) => {
+    const result = await ticketAPI.updateTicket(id, data)
+    refetch() // Refresh GraphQL data after update
+    return result
+  }
+  
+  const deleteTicket = async (id: string) => {
+    await ticketAPI.deleteTicket(id)
+    refetch() // Refresh GraphQL data after delete
+  }
 
   // Get dynamic ticket types from database
   const { ticketTypes, loading: typesLoading } = useTicketTypes()
