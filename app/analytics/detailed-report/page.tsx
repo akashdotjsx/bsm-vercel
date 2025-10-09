@@ -192,7 +192,7 @@ export default function DetailedReportPage() {
                 Back to Analytics
               </Button>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900 text-[13px] leading-relaxed">{reportTitle}</h1>
+                <h1 className="text-[13px] font-semibold text-gray-900 text-[13px] leading-relaxed">{reportTitle}</h1>
                 <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">
                   Detailed breakdown of tickets • {reportData.length} records
                 </p>
@@ -213,23 +213,23 @@ export default function DetailedReportPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-card p-4 rounded-lg shadow-sm">
               <div className="text-[13px] text-gray-600 leading-relaxed">Total Tickets</div>
-              <div className="text-2xl font-semibold text-gray-900">{reportData.length}</div>
+              <div className="text-[13px] font-semibold text-gray-900">{reportData.length}</div>
             </div>
             <div className="bg-card p-4 rounded-lg shadow-sm">
               <div className="text-[13px] text-gray-600 leading-relaxed">Open Tickets</div>
-              <div className="text-2xl font-semibold text-red-600">
+              <div className="text-[13px] font-semibold text-red-600">
                 {reportData.filter((t) => t.status === "Open").length}
               </div>
             </div>
             <div className="bg-card p-4 rounded-lg shadow-sm">
               <div className="text-[13px] text-gray-600 leading-relaxed">Resolved Tickets</div>
-              <div className="text-2xl font-semibold text-green-600">
+              <div className="text-[13px] font-semibold text-green-600">
                 {reportData.filter((t) => t.status === "Resolved").length}
               </div>
             </div>
             <div className="bg-card p-4 rounded-lg shadow-sm">
               <div className="text-[13px] text-gray-600 leading-relaxed">SLA Compliance</div>
-              <div className="text-2xl font-semibold text-blue-600">
+              <div className="text-[13px] font-semibold text-blue-600">
                 {Math.round((reportData.filter((t) => t.slaStatus === "Met").length / reportData.length) * 100)}%
               </div>
             </div>

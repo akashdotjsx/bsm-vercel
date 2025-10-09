@@ -349,7 +349,7 @@ export default function AccountDetailPage() {
     return (
       <PlatformLayout title="Account Not Found" description="The requested account could not be found">
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold mb-4">Account Not Found</h2>
+          <h2 className="text-[13px] font-semibold mb-4">Account Not Found</h2>
           <Button onClick={() => router.push("/accounts")} className="text-[13px]">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Accounts
@@ -378,7 +378,7 @@ export default function AccountDetailPage() {
               Accounts
             </Button>
             <div className="text-[13px] text-muted-foreground">/</div>
-            <h1 className="text-xl font-semibold">{account.name}</h1>
+            <h1 className="text-[13px] font-semibold">{account.name}</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
@@ -568,7 +568,7 @@ export default function AccountDetailPage() {
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Tickets</h3>
+              <h3 className="text-[11px] font-medium">Tickets</h3>
               <Button size="sm" className="text-[13px]">
                 <Plus className="mr-2 h-4 w-4" />
                 New Ticket
@@ -609,7 +609,7 @@ export default function AccountDetailPage() {
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Tasks</h3>
+              <h3 className="text-[11px] font-medium">Tasks</h3>
               <Button size="sm" className="text-[13px]">
                 <Plus className="mr-2 h-4 w-4" />
                 New Task
@@ -678,7 +678,7 @@ export default function AccountDetailPage() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg font-semibold">Contacts</CardTitle>
+                      <CardTitle className="text-[11px] font-semibold">Contacts</CardTitle>
                       <CardDescription className="text-[13px] text-gray-600">
                         Manage account contacts and their information
                       </CardDescription>
@@ -773,7 +773,7 @@ export default function AccountDetailPage() {
           {/* Activity Tab */}
           <TabsContent value="activity" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Activity Timeline</h3>
+              <h3 className="text-[11px] font-medium">Activity Timeline</h3>
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" className="text-[13px] bg-transparent">
                   <Filter className="mr-2 h-4 w-4" />
@@ -811,7 +811,7 @@ export default function AccountDetailPage() {
           {/* Files Tab */}
           <TabsContent value="files" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Files</h3>
+              <h3 className="text-[11px] font-medium">Files</h3>
               <Button size="sm" className="text-[13px]">
                 <Upload className="mr-2 h-4 w-4" />
                 Upload File
@@ -856,7 +856,7 @@ export default function AccountDetailPage() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
-            <h3 className="text-lg font-medium">Account Settings</h3>
+            <h3 className="text-[11px] font-medium">Account Settings</h3>
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -923,7 +923,7 @@ export default function AccountDetailPage() {
             <div className="bg-white h-full w-96 shadow-xl overflow-y-auto">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h3>
+                  <h3 className="text-[11px] font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h3>
                   <Button variant="ghost" size="sm" onClick={handleCancelContact}>
                     <X className="h-4 w-4" />
                   </Button>

@@ -378,7 +378,7 @@ export default function SettingsPage() {
   const renderProfileSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-[15px] font-semibold">Profile</h2>
+        <h2 className="text-[13px] font-semibold">Profile</h2>
         <p className="text-sm text-muted-foreground mt-1">Manage your personal information and account settings</p>
       </div>
 
@@ -397,7 +397,7 @@ export default function SettingsPage() {
                   className="w-full h-full object-cover rounded-full"
                 />
               ) : (
-                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                <AvatarFallback className="bg-primary text-primary-foreground text-[13px]">
                   {profileData.name.charAt(0)}
                 </AvatarFallback>
               )}
@@ -549,7 +549,7 @@ export default function SettingsPage() {
   const renderNotificationsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Notifications</h2>
+        <h2 className="text-[13px] font-semibold">Notifications</h2>
         <p className="text-sm text-muted-foreground mt-1">Manage how you receive notifications and updates</p>
       </div>
 
@@ -655,7 +655,7 @@ export default function SettingsPage() {
   const renderWorkspaceSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Workspace</h2>
+        <h2 className="text-[13px] font-semibold">Workspace</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure your workspace settings and preferences</p>
       </div>
 
@@ -820,7 +820,7 @@ export default function SettingsPage() {
   const renderAppearanceSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Appearance</h2>
+        <h2 className="text-[13px] font-semibold">Appearance</h2>
         <p className="text-sm text-muted-foreground mt-1">Customize the look and feel of your interface</p>
       </div>
 
@@ -911,7 +911,7 @@ export default function SettingsPage() {
   const renderTicketingSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Ticketing System</h2>
+        <h2 className="text-[13px] font-semibold">Ticketing System</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure ticket management, SLA, and automation settings</p>
       </div>
 
@@ -1002,7 +1002,7 @@ export default function SettingsPage() {
   const renderAnalyticsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Analytics & Reports</h2>
+        <h2 className="text-[13px] font-semibold">Analytics & Reports</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Configure dashboard settings, reporting, and data retention
         </p>
@@ -1063,7 +1063,7 @@ export default function SettingsPage() {
   const renderSecuritySection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Security & Access</h2>
+        <h2 className="text-[13px] font-semibold">Security & Access</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Manage authentication, authorization, and security policies
         </p>
@@ -1124,7 +1124,7 @@ export default function SettingsPage() {
   const renderWorkflowsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Workflow Builder</h2>
+        <h2 className="text-[13px] font-semibold">Workflow Builder</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure workflow automation and approval processes</p>
       </div>
       <Card>
@@ -1160,7 +1160,7 @@ export default function SettingsPage() {
   const renderAssetsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Asset Management</h2>
+        <h2 className="text-[13px] font-semibold">Asset Management</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure CMDB, asset discovery, and lifecycle management</p>
       </div>
       <Card>
@@ -1196,7 +1196,7 @@ export default function SettingsPage() {
   const renderKnowledgeSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Knowledge Base</h2>
+        <h2 className="text-[13px] font-semibold">Knowledge Base</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure knowledge base settings and content management</p>
       </div>
       <Card>
@@ -1232,7 +1232,7 @@ export default function SettingsPage() {
   const renderAISection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">AI & Automation</h2>
+        <h2 className="text-[13px] font-semibold">AI & Automation</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure AI settings and automation features</p>
       </div>
       <Card>
@@ -1268,7 +1268,7 @@ export default function SettingsPage() {
   const renderUsersTeamsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Users & Teams</h2>
+        <h2 className="text-[13px] font-semibold">Users & Teams</h2>
         <p className="text-sm text-muted-foreground mt-1">Manage users, teams, and access permissions</p>
       </div>
       <Card>
@@ -1304,7 +1304,7 @@ export default function SettingsPage() {
   const renderIntegrationsSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Integrations</h2>
+        <h2 className="text-[13px] font-semibold">Integrations</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure integrations with third-party services</p>
       </div>
       <Card>
@@ -1340,7 +1340,7 @@ export default function SettingsPage() {
   const renderSystemSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">System Settings</h2>
+        <h2 className="text-[13px] font-semibold">System Settings</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure core system settings and maintenance options</p>
       </div>
       <Card>
@@ -1376,13 +1376,13 @@ export default function SettingsPage() {
   const renderDefaultSection = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Settings</h2>
+        <h2 className="text-[13px] font-semibold">Settings</h2>
         <p className="text-sm text-muted-foreground mt-1">Configure your platform settings and preferences</p>
       </div>
       <Card>
         <CardContent className="p-8 text-center">
           <Settings className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Select a Settings Category</h3>
+          <h3 className="text-[11px] font-medium mb-2">Select a Settings Category</h3>
           <p className="text-sm text-muted-foreground">Choose a category from the sidebar to configure your settings</p>
         </CardContent>
       </Card>
@@ -1435,7 +1435,7 @@ export default function SettingsPage() {
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <Settings className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <h1 className="text-lg font-semibold">Settings</h1>
+                <h1 className="text-[11px] font-semibold">Settings</h1>
               </div>
               <Button
                 variant="ghost"

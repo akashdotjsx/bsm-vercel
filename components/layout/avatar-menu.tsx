@@ -124,12 +124,12 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
         <div className="p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarFallback className="bg-gradient-to-br from-amber-600 to-amber-700 text-white text-base font-semibold">
+              <AvatarFallback className="bg-gradient-to-br from-amber-600 to-amber-700 text-white text-[11px] font-semibold">
                 {userData.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-base text-foreground truncate">
+              <div className="font-semibold text-[11px] text-foreground truncate">
                 {userData.name}
               </div>
               <div className="text-sm text-muted-foreground truncate">

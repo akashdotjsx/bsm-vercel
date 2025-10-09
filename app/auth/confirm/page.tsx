@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -86,13 +87,9 @@ export default function AuthConfirm() {
         <div className="text-center">
           {status === 'loading' && (
             <>
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Confirming Authentication...
-              </h2>
-              <p className="text-gray-600">
-                Please wait while we complete your sign-in.
-              </p>
+              <Skeleton className="w-12 h-12 rounded-full mx-auto mb-4" />
+              <Skeleton className="h-6 w-64 mx-auto mb-2" />
+              <Skeleton className="h-4 w-80 mx-auto" />
             </>
           )}
 
@@ -103,7 +100,7 @@ export default function AuthConfirm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-[13px] font-semibold text-gray-900 mb-2">
                 Authentication Successful!
               </h2>
               <p className="text-gray-600">
@@ -122,7 +119,7 @@ export default function AuthConfirm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-[13px] font-semibold text-gray-900 mb-2">
                 Authentication Failed
               </h2>
               <p className="text-gray-600 mb-4">

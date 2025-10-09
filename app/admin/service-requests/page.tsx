@@ -185,8 +185,8 @@ export default function AdminServiceRequestsPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You need administrator privileges to view all service requests.</p>
+            <h2 className="text-[11px] font-semibold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-[10px] text-gray-600">You need administrator privileges to view all service requests.</p>
           </CardContent>
         </Card>
       </PlatformLayout>
@@ -205,8 +205,8 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold">{statusCounts.total}</p>
+                  <p className="text-[10px] text-gray-600">Total Requests</p>
+                  <p className="text-[13px] font-bold">{statusCounts.total}</p>
                 </div>
                 <Users className="h-8 w-8 text-gray-600" />
               </div>
@@ -217,8 +217,8 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">{statusCounts.pending}</p>
+                  <p className="text-[10px] text-gray-600">Pending</p>
+                  <p className="text-[13px] font-bold">{statusCounts.pending}</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
               </div>
@@ -229,8 +229,8 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold">{statusCounts.approved}</p>
+                  <p className="text-[10px] text-gray-600">Approved</p>
+                  <p className="text-[13px] font-bold">{statusCounts.approved}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-blue-600" />
               </div>
@@ -241,8 +241,8 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold">{statusCounts.in_progress}</p>
+                  <p className="text-[10px] text-gray-600">In Progress</p>
+                  <p className="text-[13px] font-bold">{statusCounts.in_progress}</p>
                 </div>
                 <RefreshCw className="h-8 w-8 text-purple-600" />
               </div>
@@ -253,8 +253,8 @@ export default function AdminServiceRequestsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold">{statusCounts.completed}</p>
+                  <p className="text-[10px] text-gray-600">Completed</p>
+                  <p className="text-[13px] font-bold">{statusCounts.completed}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
               </div>
@@ -319,7 +319,7 @@ export default function AdminServiceRequestsPage() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No service requests found</h3>
+                <h3 className="text-[11px] font-semibold text-gray-900 mb-2">No service requests found</h3>
                 <p className="text-gray-600">
                   {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
                     ? "Try adjusting your search or filter criteria"
@@ -334,7 +334,7 @@ export default function AdminServiceRequestsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-[11px] font-semibold text-gray-900">
                           {request.title}
                         </h3>
                         {getStatusBadge(request.status)}

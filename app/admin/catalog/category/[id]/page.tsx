@@ -177,7 +177,7 @@ export default function CategoryServicesPage() {
               Back to Categories
             </Button>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{categoryName}</h1>
+              <h1 className="text-[13px] font-semibold tracking-tight">{categoryName}</h1>
               <p className="text-sm text-gray-500">Manage services in this category</p>
             </div>
           </div>
@@ -194,7 +194,7 @@ export default function CategoryServicesPage() {
                 <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                 <div>
                   <p className="text-sm font-medium">Active Services</p>
-                  <p className="text-2xl font-bold">{services.filter((s) => s.status === "Active").length}</p>
+                  <p className="text-[13px] font-bold">{services.filter((s) => s.status === "Active").length}</p>
                 </div>
               </div>
             </CardContent>
@@ -205,7 +205,7 @@ export default function CategoryServicesPage() {
                 <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
                 <div>
                   <p className="text-sm font-medium">Inactive Services</p>
-                  <p className="text-2xl font-bold">{services.filter((s) => s.status === "Inactive").length}</p>
+                  <p className="text-[13px] font-bold">{services.filter((s) => s.status === "Inactive").length}</p>
                 </div>
               </div>
             </CardContent>
@@ -216,7 +216,7 @@ export default function CategoryServicesPage() {
                 <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                 <div>
                   <p className="text-sm font-medium">Total Requests</p>
-                  <p className="text-2xl font-bold">{services.reduce((sum, s) => sum + s.requestCount, 0)}</p>
+                  <p className="text-[13px] font-bold">{services.reduce((sum, s) => sum + s.requestCount, 0)}</p>
                 </div>
               </div>
             </CardContent>
@@ -225,7 +225,7 @@ export default function CategoryServicesPage() {
 
         <Card className="bg-white shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Services</CardTitle>
+            <CardTitle className="text-[11px] font-semibold">Services</CardTitle>
             <CardDescription>All services in the {categoryName} category</CardDescription>
           </CardHeader>
           <CardContent>

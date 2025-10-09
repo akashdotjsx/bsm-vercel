@@ -13,7 +13,7 @@ export default function WorkflowsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
+            <h1 className="text-[13px] font-semibold tracking-tight">Workflows</h1>
             <p className="text-sm text-muted-foreground">Automate your service management processes</p>
           </div>
           <div className="flex space-x-2">
@@ -168,7 +168,7 @@ function WorkflowsList() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <Link href={`/workflow-builder?id=${workflow.id}`} className="hover:underline">
-                    <CardTitle className="text-lg cursor-pointer hover:text-[#7073fc]">{workflow.name}</CardTitle>
+                    <CardTitle className="text-[11px] cursor-pointer hover:text-[#7073fc]">{workflow.name}</CardTitle>
                   </Link>
                   <Badge variant={getStatusColor(workflow.status)} className="text-xs">
                     {workflow.status}

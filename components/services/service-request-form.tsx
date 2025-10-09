@@ -128,7 +128,7 @@ export function ServiceRequestForm({ open, onOpenChange, service, onSubmit }: Se
                 <div className="w-6 h-6 bg-blue-600 rounded" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-semibold">
+                <DialogTitle className="text-[11px] font-semibold">
                   Request Service: {service.name}
                 </DialogTitle>
                 <DialogDescription className="text-sm text-gray-600">

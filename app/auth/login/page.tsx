@@ -197,7 +197,7 @@ export default function Page() {
             {/* Header */}
             <div className="text-center">
               <h1 
-                className="text-xl font-medium text-gray-900" 
+                className="text-[13px] font-medium text-gray-900" 
                 style={{ 
                   fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
                   fontSize: '20px', 

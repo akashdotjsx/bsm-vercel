@@ -158,7 +158,7 @@ export function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalPr
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className="text-[11px] font-semibold">
               {role ? 'Edit User Role' : 'Create New Role'}
             </DialogTitle>
             <p className="text-sm text-gray-600 mt-1">

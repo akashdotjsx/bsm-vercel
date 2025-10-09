@@ -184,6 +184,128 @@ export function useTicketsGQL(params: TicketsParams = {}) {
 }
 
 /**
+ * GraphQL mutation for creating a ticket
+ */
+export async function createTicketGQL(ticketData: Partial<Ticket>): Promise<Ticket> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateTicket($input: ticketsInsertInput!) {
+      insertIntoticketsCollection(objects: [$input]) {
+        records {
+          id
+          ticket_number
+          title
+          description
+          type
+          category
+          subcategory
+          priority
+          urgency
+          impact
+          status
+          requester_id
+          assignee_id
+          team_id
+          sla_policy_id
+          due_date
+          created_at
+          updated_at
+          custom_fields
+          tags
+        }
+      }
+    }
+  `
+  
+  const variables = {
+    input: {
+      title: ticketData.title,
+      description: ticketData.description,
+      type: ticketData.type,
+      category: ticketData.category,
+      subcategory: ticketData.subcategory,
+      priority: ticketData.priority,
+      urgency: ticketData.urgency,
+      impact: ticketData.impact,
+      status: ticketData.status || 'open',
+      requester_id: ticketData.requester_id,
+      assignee_id: ticketData.assignee_id,
+      team_id: ticketData.team_id,
+      sla_policy_id: ticketData.sla_policy_id,
+      due_date: ticketData.due_date,
+      custom_fields: ticketData.custom_fields,
+      tags: ticketData.tags
+    }
+  }
+  
+  const response: any = await client.request(mutation, variables)
+  return response.insertIntoticketsCollection.records[0]
+}
+
+/**
+ * GraphQL mutation for updating a ticket
+ */
+export async function updateTicketGQL(id: string, updates: Partial<Ticket>): Promise<Ticket> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateTicket($id: UUID!, $set: ticketsUpdateInput!) {
+      updateticketsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          ticket_number
+          title
+          description
+          type
+          category
+          subcategory
+          priority
+          urgency
+          impact
+          status
+          requester_id
+          assignee_id
+          team_id
+          sla_policy_id
+          due_date
+          created_at
+          updated_at
+          custom_fields
+          tags
+        }
+      }
+    }
+  `
+  
+  const variables = {
+    id,
+    set: updates
+  }
+  
+  const response: any = await client.request(mutation, variables)
+  return response.updateticketsCollection.records[0]
+}
+
+/**
+ * GraphQL mutation for deleting a ticket
+ */
+export async function deleteTicketGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation DeleteTicket($id: UUID!) {
+      deleteFromticketsCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromticketsCollection.affectedCount > 0
+}
+
+/**
  * GraphQL hook for fetching a single ticket with all related data
  * Benefits: Single query fetches ticket + comments + attachments + checklist
  */

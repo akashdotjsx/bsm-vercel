@@ -44,7 +44,7 @@ import {
   AlertCircle,
   ShieldCheck,
 } from "lucide-react"
-import { useUsers } from "@/hooks/use-users"
+import { useProfilesGQL, useTeamsGQL, createProfileGQL, updateProfileGQL, deleteProfileGQL, createTeamGQL, updateTeamGQL, deleteTeamGQL, addTeamMemberGQL, removeTeamMemberGQL } from "@/hooks/use-users-gql"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { RoleEditModal } from "@/components/rbac/role-edit-modal"
@@ -115,7 +115,71 @@ const initialDepartments = [
 
 export default function UsersPage() {
   const { user: authUser, profile, loading: authLoading } = useAuth()
-  const { users, teams, loading, inviteUser, updateUser, deactivateUser, reactivateUser, resetUserPassword, createTeam, updateTeam, deleteTeam, addUserToTeam, removeUserFromTeam, updateTeamMemberRole } = useUsers()
+  
+  // GraphQL hooks for data fetching
+  const { profiles: users, loading: usersLoading, refetch: refetchUsers } = useProfilesGQL()
+  const { teams, loading: teamsLoading, refetch: refetchTeams } = useTeamsGQL()
+  const loading = usersLoading || teamsLoading
+  
+  // GraphQL mutation wrappers
+  const inviteUser = async (userData: any) => {
+    const result = await createProfileGQL(userData)
+    refetchUsers()
+    return result
+  }
+  
+  const updateUser = async (userId: string, updates: any) => {
+    const result = await updateProfileGQL(userId, updates)
+    refetchUsers()
+    return result
+  }
+  
+  const deactivateUser = async (userId: string) => {
+    return updateUser(userId, { is_active: false })
+  }
+  
+  const reactivateUser = async (userId: string) => {
+    return updateUser(userId, { is_active: true })
+  }
+  
+  const resetUserPassword = async (email: string) => {
+    // This still needs to use Supabase auth API
+    console.log('Password reset for:', email)
+  }
+  
+  const createTeam = async (teamData: any) => {
+    const result = await createTeamGQL(teamData)
+    refetchTeams()
+    return result
+  }
+  
+  const updateTeam = async (teamId: string, updates: any) => {
+    const result = await updateTeamGQL(teamId, updates)
+    refetchTeams()
+    return result
+  }
+  
+  const deleteTeam = async (teamId: string) => {
+    await deleteTeamGQL(teamId)
+    refetchTeams()
+  }
+  
+  const addUserToTeam = async (teamId: string, userId: string, role: string = 'member') => {
+    const result = await addTeamMemberGQL(teamId, userId, role)
+    refetchTeams()
+    return result
+  }
+  
+  const removeUserFromTeam = async (teamId: string, userId: string) => {
+    await removeTeamMemberGQL(teamId, userId)
+    refetchTeams()
+  }
+  
+  const updateTeamMemberRole = async (teamId: string, userId: string, role: string) => {
+    await removeTeamMemberGQL(teamId, userId)
+    await addTeamMemberGQL(teamId, userId, role)
+    refetchTeams()
+  }
   
   // Debug logging
   console.log('🏠 Users page render - users:', users?.length || 0, 'teams:', teams?.length || 0, 'loading:', loading)
@@ -172,7 +236,7 @@ export default function UsersPage() {
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <h2 className="text-[13px] font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please log in to access user management</p>
             <a 
               href="/auth/login" 
@@ -672,8 +736,8 @@ export default function UsersPage() {
 <User className="h-7 w-7 text-blue-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[11px] font-medium text-muted-foreground">Total Users</p>
-                   <p className="text-2xl font-bold">{users.length}</p>
+                   <p className="text-[10px] font-medium text-muted-foreground">Total Users</p>
+                   <p className="text-[13px] font-bold">{users.length}</p>
                  </div>
                </div>
              </CardContent>
@@ -685,8 +749,8 @@ export default function UsersPage() {
 <Shield className="h-7 w-7 text-emerald-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[11px] font-medium text-muted-foreground">Active Users</p>
-                   <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
+                   <p className="text-[10px] font-medium text-muted-foreground">Active Users</p>
+                   <p className="text-[13px] font-bold">{users.filter((u) => u.is_active).length}</p>
                  </div>
                </div>
              </CardContent>
@@ -698,8 +762,8 @@ export default function UsersPage() {
 <Users className="h-7 w-7 text-purple-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[11px] font-medium text-muted-foreground">Teams</p>
-                   <p className="text-2xl font-bold">{teams.length}</p>
+                   <p className="text-[10px] font-medium text-muted-foreground">Teams</p>
+                   <p className="text-[13px] font-bold">{teams.length}</p>
                  </div>
                </div>
              </CardContent>
@@ -711,8 +775,8 @@ export default function UsersPage() {
 <Calendar className="h-7 w-7 text-orange-600" />
                  </div>
                  <div className="ml-4">
-                   <p className="text-[11px] font-medium text-muted-foreground">New This Month</p>
-                   <p className="text-2xl font-bold">{users.filter((u) => {
+                   <p className="text-[10px] font-medium text-muted-foreground">New This Month</p>
+                   <p className="text-[13px] font-bold">{users.filter((u) => {
                      const createdDate = new Date(u.created_at)
                      const now = new Date()
                      const thisMonth = now.getMonth()
@@ -729,7 +793,7 @@ export default function UsersPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-[15px] font-bold">Users</CardTitle>
+              <CardTitle className="text-[13px] font-bold">Users</CardTitle>
             </div>
             <CardDescription className="text-sm">Manage user accounts and permissions</CardDescription>
           </CardHeader>
@@ -817,7 +881,7 @@ export default function UsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-[15px] font-bold">Teams</CardTitle>
+                  <CardTitle className="text-[13px] font-bold">Teams</CardTitle>
                 </div>
                 <CardDescription className="text-sm">
                   Organize users into teams for better collaboration
@@ -1311,7 +1375,7 @@ export default function UsersPage() {
         <Dialog open={showManageMembers} onOpenChange={setShowManageMembers}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle className="text-[16px] font-semibold">
+              <DialogTitle className="text-[13px] font-semibold">
                 Manage Team Members - {selectedTeamForMembers?.name}
               </DialogTitle>
               <DialogDescription className="text-[13px]">
@@ -1323,7 +1387,7 @@ export default function UsersPage() {
               {/* Add Member Section */}
               <div className="border-b pb-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-[14px] font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || 0})</h3>
+                  <h3 className="text-[13px] font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || 0})</h3>
                   <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="text-[12px]">
@@ -1333,7 +1397,7 @@ export default function UsersPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
-                        <DialogTitle className="text-[14px]">Add Team Member</DialogTitle>
+                        <DialogTitle className="text-[13px]">Add Team Member</DialogTitle>
                         <DialogDescription className="text-[12px]">
                           Select a user to add to {selectedTeamForMembers?.name}
                         </DialogDescription>

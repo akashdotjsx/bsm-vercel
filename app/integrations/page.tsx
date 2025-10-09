@@ -279,7 +279,7 @@ export default function IntegrationsPage() {
     >
       <div className="space-y-6 font-sans text-[13px]">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
+          <h1 className="text-[13px] font-semibold tracking-tight">Integrations</h1>
           <p className="text-muted-foreground">
             Connect and manage third-party integrations to extend your platform capabilities
           </p>
@@ -315,8 +315,8 @@ export default function IntegrationsPage() {
               <div className="flex items-center">
                 <Zap className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Integrations</p>
-                  <p className="text-2xl font-bold">16</p>
+                  <p className="text-[10px] font-medium text-muted-foreground">Total Integrations</p>
+                  <p className="text-[13px] font-bold">16</p>
                 </div>
               </div>
             </CardContent>
@@ -326,8 +326,8 @@ export default function IntegrationsPage() {
               <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Connected</p>
-                  <p className="text-2xl font-bold">8</p>
+                  <p className="text-[10px] font-medium text-muted-foreground">Connected</p>
+                  <p className="text-[13px] font-bold">8</p>
                 </div>
               </div>
             </CardContent>
@@ -337,8 +337,8 @@ export default function IntegrationsPage() {
               <div className="flex items-center">
                 <AlertCircle className="h-8 w-8 text-orange-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Available</p>
-                  <p className="text-2xl font-bold">8</p>
+                  <p className="text-[10px] font-medium text-muted-foreground">Available</p>
+                  <p className="text-[13px] font-bold">8</p>
                 </div>
               </div>
             </CardContent>
@@ -348,8 +348,8 @@ export default function IntegrationsPage() {
               <div className="flex items-center">
                 <Shield className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Secure</p>
-                  <p className="text-2xl font-bold">100%</p>
+                  <p className="text-[10px] font-medium text-muted-foreground">Secure</p>
+                  <p className="text-[13px] font-bold">100%</p>
                 </div>
               </div>
             </CardContent>
@@ -382,7 +382,7 @@ export default function IntegrationsPage() {
                     <div className="flex items-center space-x-3">
                       <Icon className={`h-8 w-8 ${integration.color}`} />
                       <div>
-                        <CardTitle className="text-lg font-sans">{integration.name}</CardTitle>
+                        <CardTitle className="text-[11px] font-sans">{integration.name}</CardTitle>
                         <Badge
                           variant={integration.status === "Connected" ? "default" : "secondary"}
                           className="mt-1 text-[13px]"

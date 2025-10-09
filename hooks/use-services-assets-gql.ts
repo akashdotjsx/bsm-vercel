@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createGraphQLClient } from '@/lib/graphql/client'
-import {
-  GET_SERVICES_QUERY,
-  GET_SERVICE_CATEGORIES_QUERY,
-  GET_SERVICE_REQUESTS_QUERY,
-  GET_ASSETS_QUERY,
-  GET_ASSET_TYPES_QUERY
-} from '@/lib/graphql/queries'
+import { gql } from 'graphql-request'
 
 // ============================================
 // SERVICES HOOKS
@@ -39,45 +33,45 @@ export function useServicesGQL(params: ServicesParams = {}) {
 
   const fetchServices = useCallback(async () => {
     try {
-      console.log('🔄 GraphQL: Fetching services with params:', stableParams)
+      console.log('🚀 GraphQL: Fetching services with params:', stableParams)
       setLoading(true)
       setError(null)
 
       const client = await createGraphQLClient()
 
-      const filter: any = {}
-      
-      if (stableParams.organization_id) {
-        filter.organization_id = { eq: stableParams.organization_id }
-      }
-      
-      if (stableParams.category_id) {
-        filter.category_id = { eq: stableParams.category_id }
-      }
-      
-      if (stableParams.status) {
-        filter.status = { eq: stableParams.status }
-      }
-      
-      if (stableParams.is_requestable !== undefined) {
-        filter.is_requestable = { eq: stableParams.is_requestable }
-      }
-      
-      if (stableParams.search) {
-        filter.or = [
-          { name: { ilike: `%${stableParams.search}%` } },
-          { description: { ilike: `%${stableParams.search}%` } }
-        ]
-      }
+      const query = gql`
+        query GetServices($first: Int!, $offset: Int!) {
+          servicesCollection(first: $first, offset: $offset) {
+            edges {
+              node {
+                id
+                name
+                description
+                icon
+                short_description
+                detailed_description
+                is_requestable
+                requires_approval
+                estimated_delivery_days
+                popularity_score
+                total_requests
+                status
+                form_schema
+                category_id
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
 
       const variables = {
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        orderBy: [{ popularity_score: 'DescNullsLast' }, { name: 'AscNullsLast' }],
         first: stableParams.limit || 100,
         offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 100)
       }
 
-      const data = await client.request<any>(GET_SERVICES_QUERY, variables)
+      const data: any = await client.request(query, variables)
       const transformedServices = data.servicesCollection.edges.map((edge: any) => edge.node)
       
       setServices(transformedServices)
@@ -111,33 +105,33 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
 
   const fetchCategories = useCallback(async () => {
     try {
-      console.log('🔄 GraphQL: Fetching service categories')
+      console.log('🚀 GraphQL: Fetching service categories')
       setLoading(true)
       setError(null)
 
       const client = await createGraphQLClient()
 
-      const filter: any = {}
-      
-      if (stableParams.organization_id) {
-        filter.organization_id = { eq: stableParams.organization_id }
-      }
-      
-      if (stableParams.is_active !== undefined) {
-        filter.is_active = { eq: stableParams.is_active }
-      }
+      const query = gql`
+        query GetServiceCategories {
+          service_categoriesCollection {
+            edges {
+              node {
+                id
+                name
+                description
+                icon
+                display_order
+                is_active
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
 
-      const variables = {
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        orderBy: [{ display_order: 'AscNullsLast' }, { name: 'AscNullsLast' }]
-      }
-
-      const data = await client.request<any>(GET_SERVICE_CATEGORIES_QUERY, variables)
-      
-      const transformedCategories = data.service_categoriesCollection.edges.map((edge: any) => ({
-        ...edge.node,
-        services: edge.node.services?.edges.map((e: any) => e.node) || []
-      }))
+      const data: any = await client.request(query)
+      const transformedCategories = data.service_categoriesCollection.edges.map((edge: any) => edge.node)
       
       setCategories(transformedCategories)
       console.log('✅ GraphQL: Service categories loaded:', transformedCategories.length)
@@ -190,38 +184,39 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
 
   const fetchServiceRequests = useCallback(async () => {
     try {
-      console.log('🔄 GraphQL: Fetching service requests with params:', stableParams)
+      console.log('🚀 GraphQL: Fetching service requests with params:', stableParams)
       setLoading(true)
       setError(null)
 
       const client = await createGraphQLClient()
 
-      const filter: any = {}
-      
-      if (stableParams.organization_id) {
-        filter.organization_id = { eq: stableParams.organization_id }
-      }
-      
-      if (stableParams.status && stableParams.status !== 'all') {
-        filter.status = { eq: stableParams.status }
-      }
-      
-      if (stableParams.requester_id) {
-        filter.requester_id = { eq: stableParams.requester_id }
-      }
-      
-      if (stableParams.service_id) {
-        filter.service_id = { eq: stableParams.service_id }
-      }
+      const query = gql`
+        query GetServiceRequests($first: Int!, $offset: Int!) {
+          service_requestsCollection(first: $first, offset: $offset) {
+            edges {
+              node {
+                id
+                service_id
+                requester_id
+                status
+                priority
+                form_data
+                approval_status
+                fulfilled_at
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
 
       const variables = {
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        orderBy: [{ created_at: 'DescNullsLast' }],
         first: stableParams.limit || 50,
         offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 50)
       }
 
-      const data = await client.request<any>(GET_SERVICE_REQUESTS_QUERY, variables)
+      const data: any = await client.request(query, variables)
       const transformedRequests = data.service_requestsCollection.edges.map((edge: any) => edge.node)
       
       setServiceRequests(transformedRequests)
@@ -289,49 +284,39 @@ export function useAssetsGQL(params: AssetsParams = {}) {
 
       const client = await createGraphQLClient()
 
-      const filter: any = {}
-      
-      if (stableParams.organization_id) {
-        filter.organization_id = { eq: stableParams.organization_id }
-      }
-      
-      if (stableParams.asset_type_id) {
-        filter.asset_type_id = { eq: stableParams.asset_type_id }
-      }
-      
-      if (stableParams.status) {
-        filter.status = { eq: stableParams.status }
-      }
-      
-      if (stableParams.criticality) {
-        filter.criticality = { eq: stableParams.criticality }
-      }
-      
-      if (stableParams.owner_id) {
-        filter.owner_id = { eq: stableParams.owner_id }
-      }
-      
-      if (stableParams.support_team_id) {
-        filter.support_team_id = { eq: stableParams.support_team_id }
-      }
-      
-      if (stableParams.search) {
-        filter.or = [
-          { name: { ilike: `%${stableParams.search}%` } },
-          { hostname: { ilike: `%${stableParams.search}%` } },
-          { ip_address: { ilike: `%${stableParams.search}%` } },
-          { asset_tag: { ilike: `%${stableParams.search}%` } }
-        ]
-      }
+      const query = gql`
+        query GetAssets($first: Int!, $offset: Int!) {
+          assetsCollection(first: $first, offset: $offset) {
+            edges {
+              node {
+                id
+                name
+                asset_tag
+                hostname
+                ip_address
+                status
+                criticality
+                asset_type_id
+                owner_id
+                support_team_id
+                location
+                purchase_date
+                warranty_end_date
+                attributes
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
 
       const variables = {
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        orderBy: [{ created_at: 'DescNullsLast' }],
         first: stableParams.limit || 50,
         offset: ((stableParams.page || 1) - 1) * (stableParams.limit || 50)
       }
 
-      const data = await client.request<any>(GET_ASSETS_QUERY, variables)
+      const data: any = await client.request(query, variables)
       const transformedAssets = data.assetsCollection.edges.map((edge: any) => edge.node)
       
       setAssets(transformedAssets)
@@ -371,22 +356,26 @@ export function useAssetTypesGQL(params: { organization_id?: string; is_active?:
 
       const client = await createGraphQLClient()
 
-      const filter: any = {}
-      
-      if (stableParams.organization_id) {
-        filter.organization_id = { eq: stableParams.organization_id }
-      }
-      
-      if (stableParams.is_active !== undefined) {
-        filter.is_active = { eq: stableParams.is_active }
-      }
+      const query = gql`
+        query GetAssetTypes {
+          asset_typesCollection {
+            edges {
+              node {
+                id
+                name
+                description
+                icon
+                attributes_schema
+                is_active
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
 
-      const variables = {
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        orderBy: [{ name: 'AscNullsLast' }]
-      }
-
-      const data = await client.request<any>(GET_ASSET_TYPES_QUERY, variables)
+      const data: any = await client.request(query)
       const transformedTypes = data.asset_typesCollection.edges.map((edge: any) => edge.node)
       
       setAssetTypes(transformedTypes)
@@ -409,4 +398,226 @@ export function useAssetTypesGQL(params: { organization_id?: string; is_active?:
     error,
     refetch: fetchAssetTypes
   }
+}
+
+// ============================================
+// MUTATIONS - SERVICES
+// ============================================
+
+export async function createServiceGQL(serviceData: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateService($input: servicesInsertInput!) {
+      insertIntoservicesCollection(objects: [$input]) {
+        records {
+          id
+          name
+          description
+          icon
+          short_description
+          detailed_description
+          is_requestable
+          requires_approval
+          estimated_delivery_days
+          popularity_score
+          total_requests
+          status
+          form_schema
+          category_id
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { input: serviceData })
+  return response.insertIntoservicesCollection.records[0]
+}
+
+export async function updateServiceGQL(id: string, updates: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateService($id: UUID!, $set: servicesUpdateInput!) {
+      updateservicesCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          name
+          description
+          icon
+          short_description
+          detailed_description
+          is_requestable
+          requires_approval
+          estimated_delivery_days
+          popularity_score
+          total_requests
+          status
+          form_schema
+          category_id
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservicesCollection.records[0]
+}
+
+export async function deleteServiceGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation DeleteService($id: UUID!) {
+      deleteFromservicesCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromservicesCollection.affectedCount > 0
+}
+
+// ============================================
+// MUTATIONS - SERVICE REQUESTS
+// ============================================
+
+export async function createServiceRequestGQL(requestData: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateServiceRequest($input: service_requestsInsertInput!) {
+      insertIntoservice_requestsCollection(objects: [$input]) {
+        records {
+          id
+          service_id
+          requester_id
+          status
+          priority
+          form_data
+          approval_status
+          fulfilled_at
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { input: requestData })
+  return response.insertIntoservice_requestsCollection.records[0]
+}
+
+export async function updateServiceRequestGQL(id: string, updates: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateServiceRequest($id: UUID!, $set: service_requestsUpdateInput!) {
+      updateservice_requestsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          service_id
+          requester_id
+          status
+          priority
+          form_data
+          approval_status
+          fulfilled_at
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateservice_requestsCollection.records[0]
+}
+
+// ============================================
+// MUTATIONS - ASSETS
+// ============================================
+
+export async function createAssetGQL(assetData: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateAsset($input: assetsInsertInput!) {
+      insertIntoassetsCollection(objects: [$input]) {
+        records {
+          id
+          name
+          asset_tag
+          hostname
+          ip_address
+          status
+          criticality
+          asset_type_id
+          owner_id
+          support_team_id
+          location
+          purchase_date
+          warranty_end_date
+          attributes
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { input: assetData })
+  return response.insertIntoassetsCollection.records[0]
+}
+
+export async function updateAssetGQL(id: string, updates: any): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateAsset($id: UUID!, $set: assetsUpdateInput!) {
+      updateassetsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          name
+          asset_tag
+          hostname
+          ip_address
+          status
+          criticality
+          asset_type_id
+          owner_id
+          support_team_id
+          location
+          purchase_date
+          warranty_end_date
+          attributes
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateassetsCollection.records[0]
+}
+
+export async function deleteAssetGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation DeleteAsset($id: UUID!) {
+      deleteFromassetsCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromassetsCollection.affectedCount > 0
 }

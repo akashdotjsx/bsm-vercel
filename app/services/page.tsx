@@ -12,6 +12,7 @@ import { Clock, Star, Search, ShoppingCart, CheckCircle, AlertCircle, Package } 
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
 import { useServicesGQL, useServiceCategoriesGQL } from "@/hooks/use-services-assets-gql"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Service {
   id: string
@@ -142,8 +143,8 @@ export default function ServicesPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Services</h1>
-            <p className="text-gray-600 mt-1">Browse and request available services</p>
+            <h1 className="text-[13px] font-bold text-gray-900">Services</h1>
+            <p className="text-[10px] text-gray-600 mt-1">Browse and request available services</p>
           </div>
         </div>
 
@@ -155,11 +156,11 @@ export default function ServicesPage() {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-[11px]"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px] text-[11px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
@@ -175,50 +176,68 @@ export default function ServicesPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Services</p>
-                  <p className="text-2xl font-bold text-gray-900">{services.length}</p>
-                </div>
-                <Package className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Categories</p>
-                  <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Approval Required</p>
-                  <p className="text-2xl font-bold text-gray-900">{services.filter(s => s.requires_approval).length}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold text-gray-900">{services.reduce((acc, s) => acc + (s.total_requests || 0), 0)}</p>
-                </div>
-                <ShoppingCart className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Card key={`stat-skel-${i}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-5 w-12" />
+                    </div>
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-gray-600">Total Services</p>
+                      <p className="text-[13px] font-bold text-gray-900">{services.length}</p>
+                    </div>
+                    <Package className="h-8 w-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-gray-600">Categories</p>
+                      <p className="text-[13px] font-bold text-gray-900">{categories.length}</p>
+                    </div>
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-gray-600">Approval Required</p>
+                      <p className="text-[13px] font-bold text-gray-900">{services.filter(s => s.requires_approval).length}</p>
+                    </div>
+                    <AlertCircle className="h-8 w-8 text-orange-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-gray-600">Total Requests</p>
+                      <p className="text-[13px] font-bold text-gray-900">{services.reduce((acc, s) => acc + (s.total_requests || 0), 0)}</p>
+                    </div>
+                    <ShoppingCart className="h-8 w-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Services Grid */}
@@ -226,15 +245,27 @@ export default function ServicesPage() {
           {loading ? (
             // Loading skeleton
             Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
+              <Card key={`service-skel-${i}`}>
                 <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-2/3" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                    <Skeleton className="h-9 w-full rounded" />
                   </div>
                 </CardContent>
               </Card>
@@ -242,8 +273,8 @@ export default function ServicesPage() {
           ) : filteredServices.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">No services found</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-[11px] font-semibold text-gray-900">No services found</h3>
+              <p className="mt-1 text-[10px] text-gray-500">
                 {searchTerm || selectedCategory !== "all" 
                   ? "Try adjusting your search or filter criteria" 
                   : "No services are available for request at this time"}
@@ -255,18 +286,18 @@ export default function ServicesPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{service.name}</CardTitle>
-                      <CardDescription className="mt-1 line-clamp-2">
+                      <CardTitle className="text-[11px]">{service.name}</CardTitle>
+                      <CardDescription className="mt-1 line-clamp-2 text-[10px]">
                         {service.description}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[10px]">
                       {service.category_name}
                     </Badge>
                     {service.requires_approval && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px]">
                         Approval Required
                       </Badge>
                     )}
@@ -274,7 +305,7 @@ export default function ServicesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-[10px] text-gray-600">
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
                         <span>SLA: {getSLAText(service.estimated_delivery_days)}</span>

@@ -128,7 +128,7 @@ export default function CustomersPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-xl font-semibold text-foreground">Customers</h1>
+            <h1 className="text-[13px] font-semibold text-foreground">Customers</h1>
           </div>
           <Button className="bg-black hover:bg-gray-800 text-white">
             <Plus className="mr-2 h-4 w-4" />

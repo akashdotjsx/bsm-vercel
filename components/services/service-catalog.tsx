@@ -7,6 +7,7 @@ import { useServices } from "@/lib/hooks/use-services"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -384,9 +385,25 @@ export function ServiceCatalog() {
   // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"></div>
-        <span>Loading service catalog...</span>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-12" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
@@ -438,8 +455,8 @@ export function ServiceCatalog() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Services</p>
-              <p className="text-3xl font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
+              <p className="text-[10px] text-gray-600">Total Services</p>
+              <p className="text-[13px] font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
             </div>
             <Building2 className="h-8 w-8 text-gray-400" />
           </div>
@@ -447,8 +464,8 @@ export function ServiceCatalog() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Services</p>
-              <p className="text-3xl font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
+              <p className="text-[10px] text-gray-600">Active Services</p>
+              <p className="text-[13px] font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
             </div>
             <Settings className="h-8 w-8 text-gray-400" />
           </div>
@@ -456,8 +473,8 @@ export function ServiceCatalog() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Service Owners</p>
-              <p className="text-3xl font-bold text-gray-900">{services.length}</p>
+              <p className="text-[10px] text-gray-600">Service Owners</p>
+              <p className="text-[13px] font-bold text-gray-900">{services.length}</p>
             </div>
             <Users className="h-8 w-8 text-gray-400" />
           </div>
@@ -465,8 +482,8 @@ export function ServiceCatalog() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Categories</p>
-              <p className="text-3xl font-bold text-gray-900">{services.length}</p>
+              <p className="text-[10px] text-gray-600">Categories</p>
+              <p className="text-[13px] font-bold text-gray-900">{services.length}</p>
             </div>
             <Layers className="h-8 w-8 text-gray-400" />
           </div>
@@ -500,17 +517,17 @@ export function ServiceCatalog() {
                       </div>
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                          <h3 className="text-[11px] font-bold text-gray-900">{category.name}</h3>
+                          <span className="bg-green-100 text-green-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full">Active</span>
                         </div>
-                        <p className="text-gray-600 mt-1">{category.description} • Owner: System</p>
+                        <p className="text-[10px] text-gray-600 mt-1">{category.description} • Owner: System</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-sm"
+                        className="text-[11px]"
                         onClick={() => {
                           setSelectedCategoryForService(category.id)
                           setShowAddServiceModal(true)
@@ -546,9 +563,9 @@ export function ServiceCatalog() {
                         <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 mb-1">{service.name}</h4>
-                              <p className="text-sm text-gray-600 mb-3">{service.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <h4 className="font-semibold text-[11px] text-gray-900 mb-1">{service.name}</h4>
+                              <p className="text-[10px] text-gray-600 mb-3">{service.description}</p>
+                              <div className="flex items-center gap-4 text-[10px] text-gray-500">
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
                                   <span>{service.sla}</span>

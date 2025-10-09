@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { 
   Mail, 
   Phone, 
@@ -76,9 +77,44 @@ export default function UserPage({ params }: UserPageProps) {
   if (loading) {
     return (
       <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center min-h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-muted-foreground">Loading user...</span>
+        <div className="flex items-center gap-4 mb-6">
+          <Skeleton className="h-9 w-24" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="md:col-span-1">
+            <Card>
+              <CardHeader className="text-center">
+                <Skeleton className="w-20 h-20 rounded-full mx-auto mb-4" />
+                <Skeleton className="h-5 w-32 mx-auto mb-2" />
+                <Skeleton className="h-4 w-24 mx-auto mb-2" />
+                <Skeleton className="h-5 w-20 mx-auto rounded-full" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 flex-1" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="md:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-5 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     )
@@ -88,7 +124,7 @@ export default function UserPage({ params }: UserPageProps) {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-muted-foreground mb-4">User Not Found</h2>
+          <h2 className="text-[13px] font-bold text-muted-foreground mb-4">User Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => router.back()}>Go Back</Button>
         </div>
@@ -130,7 +166,7 @@ export default function UserPage({ params }: UserPageProps) {
           Back
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{user.full_name}</h1>
+          <h1 className="text-[13px] font-bold tracking-tight">{user.full_name}</h1>
           <p className="text-muted-foreground">{user.position} {user.department && `• ${user.department}`}</p>
         </div>
       </div>
@@ -142,11 +178,11 @@ export default function UserPage({ params }: UserPageProps) {
             <CardHeader className="text-center">
               <Avatar className="w-20 h-20 mx-auto mb-4">
                 <AvatarImage src={user.avatar_url} />
-                <AvatarFallback className="text-lg">
+                <AvatarFallback className="text-[11px]">
                   {getInitials(user.full_name)}
                 </AvatarFallback>
               </Avatar>
-              <CardTitle className="text-xl">{user.full_name}</CardTitle>
+              <CardTitle className="text-[13px]">{user.full_name}</CardTitle>
               <CardDescription>{user.position || 'User'}</CardDescription>
               <Badge variant="secondary" className={getStatusColor(user.status)}>
                 {user.status}
@@ -215,7 +251,7 @@ export default function UserPage({ params }: UserPageProps) {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-[11px] flex items-center gap-2">
                 <Settings className="h-5 w-5" />
                 Quick Actions
               </CardTitle>
@@ -249,7 +285,7 @@ export default function UserPage({ params }: UserPageProps) {
           {/* Recent Activity Placeholder */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Recent Activity</CardTitle>
+              <CardTitle className="text-[11px]">Recent Activity</CardTitle>
               <CardDescription>User activity and ticket interactions</CardDescription>
             </CardHeader>
             <CardContent>

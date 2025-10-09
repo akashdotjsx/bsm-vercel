@@ -100,7 +100,7 @@ export function NotificationBell() {
         {/* Header with tabs */}
         <div className="p-4 pb-0">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-foreground">Notifications</h3>
+            <h3 className="text-[11px] font-semibold text-foreground">Notifications</h3>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -155,7 +155,7 @@ export function NotificationBell() {
               </div>
               
               {/* Empty state text */}
-              <h4 className="text-lg font-semibold text-foreground mb-2">
+              <h4 className="text-[11px] font-semibold text-foreground mb-2">
                 {activeTab === "All" ? "You're All Caught Up" : `No ${activeTab} Notifications`}
               </h4>
               <p className="text-sm text-muted-foreground text-center max-w-xs">

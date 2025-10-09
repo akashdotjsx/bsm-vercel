@@ -81,7 +81,7 @@ export default function TestGraphQLPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold">GraphQL Phase 1 Test</h1>
+          <h1 className="text-[13px] font-bold">GraphQL Phase 1 Test</h1>
           <p className="text-muted-foreground">
             Compare REST API vs GraphQL performance for fetching tickets
           </p>
@@ -116,7 +116,7 @@ export default function TestGraphQLPage() {
               
               {restTime !== null && (
                 <div className="space-y-2">
-                  <div className="text-2xl font-bold text-center">
+                  <div className="text-[13px] font-bold text-center">
                     {restTime.toFixed(0)}ms
                   </div>
                   <Badge variant="secondary" className="w-full justify-center">
@@ -154,7 +154,7 @@ export default function TestGraphQLPage() {
               
               {graphqlTime !== null && (
                 <div className="space-y-2">
-                  <div className="text-2xl font-bold text-center text-purple-600">
+                  <div className="text-[13px] font-bold text-center text-purple-600">
                     {graphqlTime.toFixed(0)}ms
                   </div>
                   <Badge variant="default" className="w-full justify-center">
@@ -176,15 +176,15 @@ export default function TestGraphQLPage() {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm text-muted-foreground">REST</div>
-                  <div className="text-xl font-bold">{restTime.toFixed(0)}ms</div>
+                  <div className="text-[13px] font-bold">{restTime.toFixed(0)}ms</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">GraphQL</div>
-                  <div className="text-xl font-bold text-purple-600">{graphqlTime.toFixed(0)}ms</div>
+                  <div className="text-[13px] font-bold text-purple-600">{graphqlTime.toFixed(0)}ms</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Improvement</div>
-                  <div className="text-xl font-bold text-green-600">
+                  <div className="text-[13px] font-bold text-green-600">
                     {improvement}% faster
                   </div>
                 </div>
@@ -235,7 +235,7 @@ export default function TestGraphQLPage() {
         <Card className="bg-purple-50 dark:bg-purple-950">
           <CardContent className="pt-6">
             <div className="text-center space-y-2">
-              <h3 className="font-semibold text-lg">Ready to migrate?</h3>
+              <h3 className="font-semibold text-[11px]">Ready to migrate?</h3>
               <p className="text-sm text-muted-foreground">
                 Check out the complete migration guide in GRAPHQL_MIGRATION.md
               </p>

@@ -509,7 +509,7 @@ export default function MyTicketsPage() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">My Tickets</h1>
+                <h1 className="text-[13px] font-semibold tracking-tight">My Tickets</h1>
                 <span className="bg-muted text-muted-foreground px-2 py-1 rounded text-sm font-medium">
                   {filteredTickets.length}
                 </span>

@@ -183,7 +183,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       <div className="ml-auto w-[40vw] min-w-[700px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
         <div className="p-6 bg-background flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 className="text-[16px] font-semibold text-foreground mb-1">{dbTicket?.title || ticket?.title || "Loading..."}</h2>
+            <h2 className="text-[13px] font-semibold text-foreground mb-1">{dbTicket?.title || ticket?.title || "Loading..."}</h2>
             {(dbTicket?.ticket_number || ticket?.id) && (
               <p className="text-[11px] text-muted-foreground">#{dbTicket?.ticket_number || ticket?.id} • Created {dbTicket?.created_at ? format(new Date(dbTicket.created_at), "MMM d, y h:mm a") : ""}</p>
             )}
@@ -406,7 +406,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 ) : (
                   <>
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-[14px] font-semibold text-foreground">Ticket Details</h3>
+                      <h3 className="text-[13px] font-semibold text-foreground">Ticket Details</h3>
                       <Button variant="outline" size="sm" className="text-[11px] h-8 px-4" onClick={() => setIsEditing(true)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit

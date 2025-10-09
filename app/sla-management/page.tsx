@@ -56,8 +56,8 @@ export default function SLAManagementPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">SLA Management</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">SLA Management</h1>
+            <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1">
               Configure service level agreements and response time policies
             </p>
           </div>
@@ -76,8 +76,8 @@ export default function SLAManagementPage() {
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active SLAs</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">12</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Active SLAs</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">12</p>
                 </div>
               </div>
             </CardContent>
@@ -90,8 +90,8 @@ export default function SLAManagementPage() {
                   <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">2.3h</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Avg Response Time</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">2.3h</p>
                 </div>
               </div>
             </CardContent>
@@ -104,8 +104,8 @@ export default function SLAManagementPage() {
                   <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">SLA Breaches</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">3</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">SLA Breaches</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">3</p>
                 </div>
               </div>
             </CardContent>
@@ -118,8 +118,8 @@ export default function SLAManagementPage() {
                   <CheckCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Compliance Rate</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">94.2%</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Compliance Rate</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">94.2%</p>
                 </div>
               </div>
             </CardContent>
@@ -146,13 +146,13 @@ export default function SLAManagementPage() {
                       {sla.priority}
                     </Badge>
                     <div>
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">{sla.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <h3 className="font-medium text-[11px] text-gray-900 dark:text-gray-100">{sla.name}</h3>
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
                         Response: {sla.responseTime} • Resolution: {sla.resolutionTime} • {sla.businessHours}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         {sla.departments.map((dept) => (
-                          <Badge key={dept} variant="outline" className="text-xs">
+                          <Badge key={dept} variant="outline" className="text-[10px]">
                             {dept}
                           </Badge>
                         ))}

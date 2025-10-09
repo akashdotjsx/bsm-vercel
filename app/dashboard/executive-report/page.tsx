@@ -218,7 +218,7 @@ export default function ExecutiveReportPage() {
               Back to Dashboard
             </Button>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{reportTitle}</h1>
+              <h1 className="text-[13px] font-semibold tracking-tight">{reportTitle}</h1>
               <p className="text-[13px] text-muted-foreground">
                 Detailed executive analysis for {itemName} • {reportData?.summary.period}
               </p>
@@ -238,7 +238,7 @@ export default function ExecutiveReportPage() {
 
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center">
+            <CardTitle className="text-[11px] font-semibold flex items-center">
               <TrendingUp className="mr-2 h-5 w-5 text-green-600" />
               Executive Summary
             </CardTitle>
@@ -246,15 +246,15 @@ export default function ExecutiveReportPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{reportData?.summary.totalValue}</div>
+                <div className="text-[13px] font-bold text-green-600">{reportData?.summary.totalValue}</div>
                 <div className="text-[13px] text-muted-foreground">Total Business Value</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">+{reportData?.summary.change}%</div>
+                <div className="text-[13px] font-bold text-blue-600">+{reportData?.summary.change}%</div>
                 <div className="text-[13px] text-muted-foreground">Performance Change</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">{reportData?.summary.period}</div>
+                <div className="text-[13px] font-bold text-purple-600">{reportData?.summary.period}</div>
                 <div className="text-[13px] text-muted-foreground">Reporting Period</div>
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function ExecutiveReportPage() {
             <Card key={item.id} className="bg-white">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold">{item.metric}</CardTitle>
+                  <CardTitle className="text-[11px] font-semibold">{item.metric}</CardTitle>
                   <Badge
                     variant={item.status === "excellent" ? "default" : item.status === "good" ? "secondary" : "outline"}
                     className="text-[11px]"
@@ -278,7 +278,7 @@ export default function ExecutiveReportPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold">{item.value}</div>
+                    <div className="text-[13px] font-bold">{item.value}</div>
                     <div className="flex items-center text-green-600">
                       <TrendingUp className="h-4 w-4 mr-1" />
                       <span className="text-[13px] font-medium">+{item.change}%</span>

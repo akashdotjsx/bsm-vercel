@@ -132,7 +132,7 @@ export default function PriorityMatrixPage() {
     >
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Priority Matrix</h1>
+          <h1 className="text-[13px] font-semibold text-gray-900">Priority Matrix</h1>
           <p className="text-[13px] text-gray-600 mt-1">Configure priority levels based on impact and urgency</p>
         </div>
 
@@ -143,7 +143,7 @@ export default function PriorityMatrixPage() {
                 <AlertTriangle className="h-4 w-4 text-red-500" />
                 <div>
                   <p className="text-[13px] font-medium">Critical Tickets</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-[13px] font-bold">12</p>
                 </div>
               </div>
             </CardContent>
@@ -154,7 +154,7 @@ export default function PriorityMatrixPage() {
                 <Clock className="h-4 w-4 text-orange-500" />
                 <div>
                   <p className="text-[13px] font-medium">Avg Response Time</p>
-                  <p className="text-2xl font-bold">2.4h</p>
+                  <p className="text-[13px] font-bold">2.4h</p>
                 </div>
               </div>
             </CardContent>
@@ -165,7 +165,7 @@ export default function PriorityMatrixPage() {
                 <TrendingUp className="h-4 w-4 text-green-500" />
                 <div>
                   <p className="text-[13px] font-medium">SLA Compliance</p>
-                  <p className="text-2xl font-bold">94.2%</p>
+                  <p className="text-[13px] font-bold">94.2%</p>
                 </div>
               </div>
             </CardContent>
@@ -176,7 +176,7 @@ export default function PriorityMatrixPage() {
                 <Users className="h-4 w-4 text-blue-500" />
                 <div>
                   <p className="text-[13px] font-medium">Priority Levels</p>
-                  <p className="text-2xl font-bold">{priorityLevels.length}</p>
+                  <p className="text-[13px] font-bold">{priorityLevels.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -187,7 +187,7 @@ export default function PriorityMatrixPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Impact vs Urgency Matrix</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">Impact vs Urgency Matrix</CardTitle>
                 <CardDescription className="text-[13px]">
                   Define priority levels based on business impact and urgency
                 </CardDescription>

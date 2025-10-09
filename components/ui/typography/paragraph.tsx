@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 export const PARAGRAPH_SIZES = {
   xs: "text-xs",        // 10px
   sm: "text-sm",        // 12px
-  default: "text-base", // 13px
-  lg: "text-lg",        // ~18px
+  default: "text-[11px]", // 13px
+  lg: "text-[11px]",        // ~18px
 
   // Special variants
   lead: "font-inter text-[1.125rem] font-medium leading-[1.35rem] tracking-[-0.01em]",

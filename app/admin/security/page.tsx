@@ -198,7 +198,7 @@ export default function SecurityAccessPage() {
                 <Users className="h-4 w-4 text-blue-500" />
                 <div>
                   <p className="text-[13px] font-medium">Active Users</p>
-                  <p className="text-2xl font-bold">247</p>
+                  <p className="text-[13px] font-bold">247</p>
                 </div>
               </div>
             </CardContent>
@@ -209,7 +209,7 @@ export default function SecurityAccessPage() {
                 <Shield className="h-4 w-4 text-green-500" />
                 <div>
                   <p className="text-[13px] font-medium">Security Policies</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-[13px] font-bold">12</p>
                 </div>
               </div>
             </CardContent>
@@ -220,7 +220,7 @@ export default function SecurityAccessPage() {
                 <Key className="h-4 w-4 text-orange-500" />
                 <div>
                   <p className="text-[13px] font-medium">API Keys</p>
-                  <p className="text-2xl font-bold">8</p>
+                  <p className="text-[13px] font-bold">8</p>
                 </div>
               </div>
             </CardContent>
@@ -231,7 +231,7 @@ export default function SecurityAccessPage() {
                 <Eye className="h-4 w-4 text-purple-500" />
                 <div>
                   <p className="text-[13px] font-medium">Audit Logs</p>
-                  <p className="text-2xl font-bold">1,234</p>
+                  <p className="text-[13px] font-bold">1,234</p>
                 </div>
               </div>
             </CardContent>
@@ -242,7 +242,7 @@ export default function SecurityAccessPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Single Sign-On (SSO)</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">Single Sign-On (SSO)</CardTitle>
                 <CardDescription className="text-[13px]">
                   Configure SSO providers and authentication settings
                 </CardDescription>
@@ -405,7 +405,7 @@ export default function SecurityAccessPage() {
               {providers.map((provider) => (
                 <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50">
                   <div className="flex items-center space-x-4">
-                    <div className="text-2xl">{provider.icon}</div>
+                    <div className="text-[13px]">{provider.icon}</div>
                     <div>
                       <div className="flex items-center space-x-2">
                         <p className="font-medium text-[13px]">{provider.name}</p>
@@ -488,7 +488,7 @@ export default function SecurityAccessPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">User Roles & Permissions</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">User Roles & Permissions</CardTitle>
                 <CardDescription className="text-[13px]">
                   Manage user roles and their associated permissions
                 </CardDescription>
@@ -655,7 +655,7 @@ export default function SecurityAccessPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Security Policies</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">Security Policies</CardTitle>
                 <CardDescription className="text-[13px]">
                   Configure security settings and access controls
                 </CardDescription>

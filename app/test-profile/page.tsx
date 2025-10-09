@@ -51,7 +51,7 @@ export default function TestProfilePage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Profile Fetch Test</h1>
+      <h1 className="text-[13px] font-bold mb-6">Profile Fetch Test</h1>
       
       <div className="space-y-6">
         <div className="bg-gray-50 p-4 rounded-lg">

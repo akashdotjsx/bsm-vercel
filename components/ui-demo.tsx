@@ -108,7 +108,7 @@ export function UIDemo() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">UI Components Demo</h1>
+            <h1 className="text-[13px] font-bold text-foreground">UI Components Demo</h1>
             <p className="text-muted-foreground mt-2">Enhanced user selection components with better UI and dark mode support</p>
           </div>
           <Button onClick={toggleTheme} variant="outline" size="icon">

@@ -39,9 +39,10 @@ import {
   ArrowDown,
   Loader2,
 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useAssetsGQL, useAssetTypesGQL } from "@/hooks/use-services-assets-gql"
-import { useAssets, useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
+import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteAssetGQL } from "@/hooks/use-services-assets-gql"
+import { useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
 import { useAuth } from "@/lib/contexts/auth-context"
 
@@ -91,16 +92,31 @@ export default function AssetManagementPage() {
     criticality: "medium",
   })
 
-  // API hooks - GraphQL for reads, REST for writes
-  const { assets, loading: assetsLoading, error: assetsError } = useAssetsGQL({ 
+  // API hooks - GraphQL for reads and writes
+  const { assets, loading: assetsLoading, error: assetsError, refetch } = useAssetsGQL({ 
     organization_id: organizationId,
     search: searchTerm,
     asset_type_id: selectedType !== "all" ? selectedType : undefined,
     status: selectedStatus !== "all" ? selectedStatus : undefined,
   })
   
-  // Use REST hooks for write operations (create, update, delete)
-  const { createAsset, updateAsset, deleteAsset } = useAssets(organizationId, {})
+  // GraphQL mutations for write operations
+  const createAsset = async (data: any) => {
+    const result = await createAssetGQL(data)
+    refetch()
+    return result
+  }
+  
+  const updateAsset = async (id: string, data: any) => {
+    const result = await updateAssetGQL(id, data)
+    refetch()
+    return result
+  }
+  
+  const deleteAsset = async (id: string) => {
+    await deleteAssetGQL(id)
+    refetch()
+  }
 
   const { assetTypes, loading: typesLoading } = useAssetTypesGQL({ organization_id: organizationId })
   const { stats, loading: statsLoading } = useAssetStats(organizationId)
@@ -241,8 +257,8 @@ export default function AssetManagementPage() {
                 ← Back to Assets
               </Button>
               <div>
-                <h1 className="text-2xl font-semibold text-foreground">{selectedTypeData?.name}</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-[13px] font-semibold text-foreground">{selectedTypeData?.name}</h1>
+                <p className="text-[10px] text-muted-foreground">
                   Detailed listing of all {selectedTypeData?.name?.toLowerCase()}
                 </p>
               </div>
@@ -267,11 +283,11 @@ export default function AssetManagementPage() {
                 placeholder={`Search ${selectedTypeData?.name?.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-48 text-[13px]"
+                className="pl-10 w-48 text-[11px]"
               />
             </div>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-48 text-[13px]">
+              <SelectTrigger className="w-48 text-[11px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -285,12 +301,37 @@ export default function AssetManagementPage() {
           </div>
 
           {/* Assets Table */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm overflow-hidden">
             {assetsLoading ? (
-              <div className="p-8 text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p>Loading assets...</p>
-              </div>
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Asset Name</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Hostname</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">IP Address</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Operating System</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Status</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Criticality</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600 dark:text-gray-400">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <tr key={`skel-${i}`}>
+                      <td className="p-3">
+                        <Skeleton className="h-4 w-32 mb-1" />
+                        <Skeleton className="h-3 w-20" />
+                      </td>
+                      <td className="p-3"><Skeleton className="h-4 w-24" /></td>
+                      <td className="p-3"><Skeleton className="h-4 w-28" /></td>
+                      <td className="p-3"><Skeleton className="h-4 w-32" /></td>
+                      <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="p-3"><Skeleton className="h-8 w-8 rounded" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : filteredAssets.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-muted-foreground">No assets found</p>
@@ -299,13 +340,13 @@ export default function AssetManagementPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Asset Name</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Hostname</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">IP Address</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Operating System</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Status</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Criticality</th>
-                    <th className="text-left p-3 text-[13px] font-medium text-gray-600">Actions</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Asset Name</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Hostname</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">IP Address</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Operating System</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Status</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Criticality</th>
+                    <th className="text-left p-3 text-[10px] font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -317,20 +358,20 @@ export default function AssetManagementPage() {
                     >
                       <td className="p-3">
                         <div>
-                          <p className="text-[13px] font-medium">{asset.name}</p>
-                          <p className="text-[11px] text-gray-500">{asset.asset_tag}</p>
+                          <p className="text-[11px] font-medium">{asset.name}</p>
+                          <p className="text-[10px] text-gray-500">{asset.asset_tag}</p>
                         </div>
                       </td>
-                      <td className="p-3 text-[13px]">{asset.hostname || '-'}</td>
-                      <td className="p-3 text-[13px]">{asset.ip_address || '-'}</td>
-                      <td className="p-3 text-[13px]">{asset.operating_system || '-'}</td>
+                      <td className="p-3 text-[11px]">{asset.hostname || '-'}</td>
+                      <td className="p-3 text-[11px]">{asset.ip_address || '-'}</td>
+                      <td className="p-3 text-[11px]">{asset.operating_system || '-'}</td>
                       <td className="p-3">
-                        <Badge className={`${getStatusColor(asset.status)} text-[11px]`}>
+                        <Badge className={`${getStatusColor(asset.status)} text-[10px]`}>
                           {asset.status}
                         </Badge>
                       </td>
                       <td className="p-3">
-                        <Badge className={`${getCriticalityColor(asset.criticality)} text-[11px]`}>
+                        <Badge className={`${getCriticalityColor(asset.criticality)} text-[10px]`}>
                           {asset.criticality}
                         </Badge>
                       </td>
@@ -341,7 +382,7 @@ export default function AssetManagementPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="text-[13px]">
+                          <DropdownMenuContent align="end" className="text-[11px]">
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -389,8 +430,8 @@ export default function AssetManagementPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Asset Management</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-[13px] font-semibold text-foreground">Asset Management</h1>
+            <p className="text-[10px] text-muted-foreground">
               Configuration Management Database (CMDB) - Service & Asset Mapping
             </p>
           </div>
@@ -436,7 +477,7 @@ export default function AssetManagementPage() {
                       <Icon className="h-3 w-3 text-white" />
                     </div>
                     <p className="text-[11px] font-medium mb-1">{type.name}</p>
-                    <p className="text-xl font-bold text-foreground">{type.count.toLocaleString()}</p>
+                    <p className="text-[13px] font-bold text-foreground">{type.count.toLocaleString()}</p>
                   </CardContent>
                 </Card>
               )
@@ -449,25 +490,25 @@ export default function AssetManagementPage() {
           <TabsList className="bg-transparent border-b border-gray-100 rounded-none p-0 h-auto w-full justify-start space-x-0">
             <TabsTrigger
               value="assets"
-              className="text-[13px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
+              className="text-[11px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
             >
               Assets
             </TabsTrigger>
             <TabsTrigger
               value="servicemap"
-              className="text-[13px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
+              className="text-[11px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
             >
               ServiceMap
             </TabsTrigger>
             <TabsTrigger
               value="dependencies"
-              className="text-[13px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
+              className="text-[11px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
             >
               Dependencies
             </TabsTrigger>
             <TabsTrigger
               value="discovery"
-              className="text-[13px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
+              className="text-[11px] font-medium px-4 py-2 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-500 data-[state=active]:bg-transparent text-gray-500 hover:text-gray-700 rounded-none shadow-none"
             >
               Discovery
             </TabsTrigger>
@@ -482,11 +523,11 @@ export default function AssetManagementPage() {
                   placeholder="Search assets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-48 text-[13px]"
+                  className="pl-10 w-48 text-[11px]"
                 />
               </div>
               <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger className="w-48 text-[13px]">
+                <SelectTrigger className="w-48 text-[11px]">
                   <SelectValue placeholder="Asset Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -497,7 +538,7 @@ export default function AssetManagementPage() {
                 </SelectContent>
               </Select>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-48 text-[13px]">
+                <SelectTrigger className="w-48 text-[11px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -516,18 +557,48 @@ export default function AssetManagementPage() {
 
             <Card className="border-gray-100">
               <CardHeader>
-                <CardTitle className="text-[15px]">Configuration Items (CIs)</CardTitle>
-                <CardDescription className="text-[13px]">
+                <CardTitle className="text-[12px]">Configuration Items (CIs)</CardTitle>
+                <CardDescription className="text-[10px]">
                   Centralized inventory of all IT assets and their relationships
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg overflow-hidden">
                   {assetsLoading ? (
-                    <div className="p-8 text-center">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                      <p>Loading assets...</p>
-                    </div>
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Asset Name</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Type</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Status</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Location</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Criticality</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Last Seen</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+                            <td className="p-3">
+                              <div className="flex items-center space-x-3">
+                                <Skeleton className="w-8 h-8 rounded-lg" />
+                                <div className="space-y-2">
+                                  <Skeleton className="h-4 w-32" />
+                                  <Skeleton className="h-3 w-24" />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3"><Skeleton className="h-4 w-20" /></td>
+                            <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                            <td className="p-3"><Skeleton className="h-4 w-24" /></td>
+                            <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                            <td className="p-3"><Skeleton className="h-4 w-20" /></td>
+                            <td className="p-3"><Skeleton className="h-8 w-8 rounded" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   ) : assets.length === 0 ? (
                     <div className="p-8 text-center">
                       <p className="text-muted-foreground">No assets found. Create your first asset to get started.</p>
@@ -540,13 +611,13 @@ export default function AssetManagementPage() {
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Asset Name</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Type</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Status</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Location</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Criticality</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Last Seen</th>
-                          <th className="text-left p-3 text-[13px] font-medium text-muted-foreground">Actions</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Asset Name</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Type</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Status</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Location</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Criticality</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Last Seen</th>
+                          <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -564,22 +635,22 @@ export default function AssetManagementPage() {
                                     <Icon className="h-4 w-4 text-primary" />
                                   </div>
                                   <div>
-                                    <p className="text-[13px] font-medium">{asset.name || 'Unnamed Asset'}</p>
-                                    <p className="text-[11px] text-muted-foreground">{asset.asset_tag || 'No Tag'}</p>
+                                    <p className="text-[11px] font-medium">{asset.name || 'Unnamed Asset'}</p>
+                                    <p className="text-[10px] text-muted-foreground">{asset.asset_tag || 'No Tag'}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="p-3 text-[13px]">{asset.asset_type?.name || 'Unknown Type'}</td>
+                              <td className="p-3 text-[11px]">{asset.asset_type?.name || 'Unknown Type'}</td>
                               <td className="p-3">
-                                <Badge className={`${getStatusColor(asset.status)} text-[11px]`}>{asset.status || 'Unknown'}</Badge>
+                                <Badge className={`${getStatusColor(asset.status)} text-[10px]`}>{asset.status || 'Unknown'}</Badge>
                               </td>
-                              <td className="p-3 text-[13px]">{asset.location || '-'}</td>
+                              <td className="p-3 text-[11px]">{asset.location || '-'}</td>
                               <td className="p-3">
                                 <Badge className={`${getCriticalityColor(asset.criticality)} text-[10px]`}>
                                   {asset.criticality || 'Unknown'}
                                 </Badge>
                               </td>
-                              <td className="p-3 text-[13px]">
+                              <td className="p-3 text-[11px]">
                                 {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Never'}
                               </td>
                               <td className="p-3">
@@ -589,7 +660,7 @@ export default function AssetManagementPage() {
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="text-[13px]">
+                                  <DropdownMenuContent align="end" className="text-[11px]">
                                     <DropdownMenuItem
                                       onClick={(e) => {
                                         e.stopPropagation()
@@ -634,8 +705,8 @@ export default function AssetManagementPage() {
           <TabsContent value="servicemap" className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Business Service Mapping</h2>
-                <p className="text-[13px] text-muted-foreground">
+                <h2 className="text-[12px] font-semibold">Business Service Mapping</h2>
+                <p className="text-[10px] text-muted-foreground">
                   Visual representation of business services and their supporting assets
                 </p>
               </div>
@@ -677,12 +748,12 @@ export default function AssetManagementPage() {
                   <Card key={service.id} className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[13px] font-medium">{service.name}</h3>
-                        <Badge className={`${getStatusColor(service.status)} text-[11px]`}>{service.status}</Badge>
+                        <h3 className="text-[11px] font-medium">{service.name}</h3>
+                        <Badge className={`${getStatusColor(service.status)} text-[10px]`}>{service.status}</Badge>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 text-[13px]">
+                      <div className="grid grid-cols-2 gap-3 text-[11px]">
                         <div>
-                          <p className="text-muted-foreground text-[11px]">Assets</p>
+                          <p className="text-muted-foreground text-[10px]">Assets</p>
                           <p className="font-medium">{service.asset_count || 0}</p>
                         </div>
                         <div>
@@ -710,7 +781,7 @@ export default function AssetManagementPage() {
           <TabsContent value="dependencies" className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Dependency Mapping</h2>
+                <h2 className="text-[11px] font-semibold">Dependency Mapping</h2>
                 <p className="text-[13px] text-muted-foreground">
                   Relationship visualization and impact analysis
                 </p>
@@ -736,7 +807,7 @@ export default function AssetManagementPage() {
           <TabsContent value="discovery" className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Asset Discovery</h2>
+                <h2 className="text-[11px] font-semibold">Asset Discovery</h2>
                 <p className="text-[13px] text-muted-foreground">
                   Automated discovery and inventory management
                 </p>
@@ -823,7 +894,7 @@ export default function AssetManagementPage() {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[15px]">Discovery Rules</CardTitle>
+                  <CardTitle className="text-[13px]">Discovery Rules</CardTitle>
                   <CardDescription className="text-[13px]">
                     Configure automated discovery schedules and criteria
                   </CardDescription>
@@ -1045,7 +1116,7 @@ export default function AssetManagementPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-[15px] font-medium mb-3">Technical Specifications</h3>
+                    <h3 className="text-[13px] font-medium mb-3">Technical Specifications</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-[13px] text-gray-600">Hostname:</span>
@@ -1070,7 +1141,7 @@ export default function AssetManagementPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-medium mb-3">Management Information</h3>
+                    <h3 className="text-[13px] font-medium mb-3">Management Information</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-[13px] text-gray-600">Asset Tag:</span>

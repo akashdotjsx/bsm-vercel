@@ -177,10 +177,10 @@ export default function LandingPage() {
             <Badge variant="secondary" className="mb-6 text-[12px]">
               AI-Powered Business Service Management
             </Badge>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
               Transform Your Service Operations with <span className="text-primary">Intelligent Automation</span>
             </h1>
-            <p className="mt-6 text-[14px] leading-6 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-6 text-[13px] leading-6 text-muted-foreground max-w-2xl mx-auto">
               Transform Enterprise Business Service Management for IT, HR, Finance, Legal and others. Built for modern
               enterprises.
             </p>
@@ -207,7 +207,7 @@ export default function LandingPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mr-3">
                     {stat.icon}
                   </div>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-[13px] font-bold text-foreground">{stat.value}</div>
               </div>
               <div className="text-[12px] text-muted-foreground">{stat.label}</div>
               </div>
@@ -220,10 +220,10 @@ export default function LandingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h2 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
               Everything you need for modern service management
             </h2>
-            <p className="mt-4 text-[14px] text-muted-foreground">
+            <p className="mt-4 text-[13px] text-muted-foreground">
               Comprehensive platform with AI-powered features designed for enterprise-scale operations
             </p>
           </div>
@@ -235,7 +235,7 @@ export default function LandingPage() {
                   <div className={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${feature.color} mb-4`}>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-[14px]">{feature.title}</CardTitle>
+                  <CardTitle className="text-[13px]">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-[12px] leading-relaxed">{feature.description}</CardDescription>
@@ -250,10 +250,10 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h2 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
               Ready to transform your service operations?
             </h2>
-            <p className="mt-4 text-[14px] text-muted-foreground">
+            <p className="mt-4 text-[13px] text-muted-foreground">
               Join thousands of organizations already using Kroolo BSM to deliver exceptional service experiences.
             </p>
             <div className="mt-8">

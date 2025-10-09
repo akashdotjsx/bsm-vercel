@@ -542,7 +542,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           <div className="p-6 bg-white dark:bg-gray-900">
             <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
+              <h1 className="text-[13px] font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -808,7 +808,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           {activeTab === "accounts" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Associated Accounts</h3>
+                <h3 className="text-[11px] font-medium">Associated Accounts</h3>
                 <Button size="sm" onClick={() => setShowAccountSearch(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Link Account
@@ -922,7 +922,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           {activeTab === "checklist" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Task Checklist</h3>
+                <h3 className="text-[11px] font-medium">Task Checklist</h3>
                 <div className="text-sm text-gray-500">
                   {ticketData.checklist.filter((item) => item.completed).length} of {ticketData.checklist.length}{" "}
                   completed
@@ -998,7 +998,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           {activeTab === "comments" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Comments & Updates</h3>
+                <h3 className="text-[11px] font-medium">Comments & Updates</h3>
                 <Button size="sm">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Internal Note
@@ -1084,7 +1084,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           {activeTab === "files" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Attachments</h3>
+                <h3 className="text-[11px] font-medium">Attachments</h3>
                 <div className="flex gap-2">
                   <input
                     type="file"
@@ -1142,7 +1142,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           {activeTab === "history" && (
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Activity History</h3>
+                <h3 className="text-[11px] font-medium">Activity History</h3>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Export
@@ -1180,7 +1180,7 @@ export function TicketTray({ isOpen, onClose, ticket, position = 'side' }: Ticke
           <div className="p-6 bg-white dark:bg-gray-900 border-b">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
+                <h1 className="text-[13px] font-semibold text-gray-900 dark:text-white">{ticketData.title}</h1>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCopyTicketId} title="Copy Ticket ID">

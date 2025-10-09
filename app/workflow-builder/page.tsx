@@ -479,7 +479,7 @@ export default function WorkflowBuilderPage() {
             <Input
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
-              className="text-lg font-semibold border-none p-0 h-auto bg-transparent"
+              className="text-[11px] font-semibold border-none p-0 h-auto bg-transparent"
               placeholder="Workflow Name"
             />
             <Input
@@ -697,7 +697,7 @@ export default function WorkflowBuilderPage() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
                     <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium">Start Building Your Workflow</p>
+                    <p className="text-[11px] font-medium">Start Building Your Workflow</p>
                     <p className="text-sm">Drag components from the left panel to create your approval workflow</p>
                     <p className="text-xs mt-2 text-blue-600">
                       💡 Tip: Click the + button on nodes to connect them together

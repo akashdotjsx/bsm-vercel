@@ -207,7 +207,7 @@ export default function InboxPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Tasks</h1>
+            <h1 className="text-[13px] font-semibold text-foreground">Tasks</h1>
             <p className="text-sm text-muted-foreground">Manage your assigned tickets and requests</p>
           </div>
           <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export default function InboxPage() {
         {showAdvancedFilters && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Advanced Filters</CardTitle>
+              <CardTitle className="text-[11px]">Advanced Filters</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -591,7 +591,7 @@ export default function InboxPage() {
             <div className="bg-background rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Task Details</h2>
+                  <h2 className="text-[11px] font-semibold">Task Details</h2>
                   <Button variant="ghost" size="sm" onClick={() => setShowTaskTray(false)}>
                     ×
                   </Button>

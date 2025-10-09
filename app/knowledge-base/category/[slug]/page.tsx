@@ -113,7 +113,7 @@ export default function CategoryArticlesPage() {
               Back
             </Button>
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight">{categoryName}</h1>
+              <h1 className="text-[13px] font-semibold tracking-tight">{categoryName}</h1>
               <p className="text-muted-foreground text-[13px]">{filteredArticles.length} articles in this category</p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function CategoryArticlesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 cursor-pointer" onClick={() => handleArticleClick(article)}>
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                      <h3 className="text-[11px] font-semibold group-hover:text-primary transition-colors">
                         {article.title}
                       </h3>
                       <Badge variant={article.status === "Published" ? "default" : "secondary"} className="text-[11px]">

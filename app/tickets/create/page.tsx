@@ -49,8 +49,8 @@ import {
 } from "lucide-react"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { format } from "date-fns"
-import { useTickets, useTicketChecklist, useTicketComments, useTicketAttachments, useProfiles } from "@/hooks/use-tickets"
-import { useUsers } from "@/hooks/use-users"
+import { createTicketGQL } from "@/hooks/use-tickets-gql"
+import { useProfilesGQL, useTeamsGQL } from "@/hooks/use-users-gql"
 import { createClient } from "@/lib/supabase/client"
 import { UserSelector } from "@/components/users/user-selector"
 import { TeamSelector } from "@/components/users/team-selector"
@@ -93,10 +93,13 @@ export default function CreateTicketPage() {
   const [departments, setDepartments] = useState<string[]>([])
   const [dataLoading, setDataLoading] = useState(true)
 
-  // Hooks for real data
-  const { createTicket } = useTickets()
-  const { searchProfiles, profiles, loading: profilesLoading } = useProfiles()
-  const { users, teams, loading: usersLoading } = useUsers()
+  // Hooks for real data - GraphQL
+  const createTicket = async (data: any) => {
+    return await createTicketGQL(data)
+  }
+  const { profiles, loading: profilesLoading } = useProfilesGQL()
+  const { teams, loading: usersLoading } = useTeamsGQL()
+  const users = profiles // Alias for compatibility
   const { mode } = useMode()
   const { categories: supabaseCategories, loading: categoriesLoading } = useServiceCategories()
   
@@ -404,7 +407,7 @@ export default function CreateTicketPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[15px] font-semibold tracking-tight">Create New Ticket</h1>
+            <h1 className="text-[13px] font-semibold tracking-tight">Create New Ticket</h1>
             <p className="text-[12px] text-muted-foreground">Create a new support ticket with all necessary details</p>
           </div>
           <div className="flex items-center gap-2">
@@ -893,7 +896,7 @@ export default function CreateTicketPage() {
             {/* Assignment */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
+                <CardTitle className="flex items-center gap-2 text-[13px]">
                   <Users className="h-4 w-4" />
                   Assignment
                 </CardTitle>
@@ -920,7 +923,7 @@ export default function CreateTicketPage() {
             {/* Tags */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
+                <CardTitle className="flex items-center gap-2 text-[13px]">
                   <Tag className="h-4 w-4" />
                   Tags
                 </CardTitle>
@@ -957,7 +960,7 @@ export default function CreateTicketPage() {
             {/* AI Suggestions */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
+                <CardTitle className="flex items-center gap-2 text-[13px]">
                   <Bot className="h-4 w-4" />
                   AI Suggestions
                 </CardTitle>

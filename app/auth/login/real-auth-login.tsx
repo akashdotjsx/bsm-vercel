@@ -119,14 +119,14 @@ export default function RealAuthLogin() {
           <div className="flex flex-col items-center gap-4 mb-6">
             <Image src="/images/kroolo-logo.png" alt="Kroolo Logo" width={120} height={40} className="h-10 w-auto" />
             <div className="text-center">
-              <h1 className="text-2xl font-semibold text-foreground">Business Service Management</h1>
+              <h1 className="text-[13px] font-semibold text-foreground">Business Service Management</h1>
               <p className="text-sm text-muted-foreground">AI-Native Enterprise Platform</p>
             </div>
           </div>
 
           <Card className="border border-border shadow-sm">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl font-semibold">Welcome Back</CardTitle>
+              <CardTitle className="text-[13px] font-semibold">Welcome Back</CardTitle>
               <CardDescription>Sign in to access your service management platform</CardDescription>
             </CardHeader>
             <CardContent>

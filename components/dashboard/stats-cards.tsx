@@ -96,10 +96,10 @@ export function StatsCards() {
         <Card key={index} className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[11px] font-medium text-gray-700">{stat.title}</CardTitle>
-            <div className="text-base sm:text-lg">{stat.icon}</div>
+            <div className="text-[11px] sm:text-[11px]">{stat.icon}</div>
           </CardHeader>
           <CardContent>
-            <div className={`text-lg font-bold ${stat.color} mb-1`}>{stat.value}</div>
+            <div className={`text-[11px] font-bold ${stat.color} mb-1`}>{stat.value}</div>
             <div className="flex items-center text-[10px] text-gray-700">
               {getTrendIcon(stat.trend)}
               <span className="ml-1 text-[10px]">{stat.change}</span>

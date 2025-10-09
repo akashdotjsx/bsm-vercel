@@ -280,7 +280,7 @@ export default function UsersTeamsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[15px] font-semibold text-gray-900">Users & Teams</h1>
+            <h1 className="text-[13px] font-semibold text-gray-900">Users & Teams</h1>
             <p className="text-sm text-gray-600 mt-1">Manage user accounts, permissions, and team organization</p>
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function UsersTeamsPage() {
             {/* Users Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-gray-900">Users</h2>
+                <h2 className="text-[11px] font-medium text-gray-900">Users</h2>
                 <p className="text-sm text-gray-600">Manage user accounts and permissions</p>
               </div>
               <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
@@ -550,7 +550,7 @@ export default function UsersTeamsPage() {
             {/* Teams Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-foreground">Teams</h2>
+                <h2 className="text-[11px] font-medium text-foreground">Teams</h2>
                 <p className="text-sm text-muted-foreground">Manage team organization and structure</p>
               </div>
               <Dialog open={showAddTeamModal} onOpenChange={setShowAddTeamModal}>
@@ -645,7 +645,7 @@ export default function UsersTeamsPage() {
                 <div key={team.id} className="bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-medium text-foreground">{team.name}</h3>
+                      <h3 className="text-[11px] font-medium text-foreground">{team.name}</h3>
                       <p className="text-sm text-muted-foreground mt-1">{team.description}</p>
                     </div>
                     <DropdownMenu>

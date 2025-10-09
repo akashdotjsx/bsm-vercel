@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createGraphQLClient } from '@/lib/graphql/client'
 import { GET_PROFILES_QUERY, GET_TEAMS_QUERY, GET_PROFILE_BY_ID_QUERY } from '@/lib/graphql/queries'
+import { gql } from 'graphql-request'
 
 interface Profile {
   id: string
@@ -259,4 +260,197 @@ export function useTeamsGQL(params: { organization_id?: string; is_active?: bool
     error,
     refetch: fetchTeams
   }
+}
+
+// ============================================
+// MUTATIONS - PROFILES/USERS
+// ============================================
+
+export async function createProfileGQL(profileData: Partial<Profile>): Promise<Profile> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateProfile($input: profilesInsertInput!) {
+      insertIntoprofilesCollection(objects: [$input]) {
+        records {
+          id
+          email
+          first_name
+          last_name
+          display_name
+          avatar_url
+          phone
+          department
+          role
+          is_active
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { input: profileData })
+  return response.insertIntoprofilesCollection.records[0]
+}
+
+export async function updateProfileGQL(id: string, updates: Partial<Profile>): Promise<Profile> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateProfile($id: UUID!, $set: profilesUpdateInput!) {
+      updateprofilesCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          email
+          first_name
+          last_name
+          display_name
+          avatar_url
+          phone
+          department
+          role
+          is_active
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateprofilesCollection.records[0]
+}
+
+export async function deleteProfileGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation DeleteProfile($id: UUID!) {
+      deleteFromprofilesCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromprofilesCollection.affectedCount > 0
+}
+
+// ============================================
+// MUTATIONS - TEAMS
+// ============================================
+
+export async function createTeamGQL(teamData: Partial<Team>): Promise<Team> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation CreateTeam($input: teamsInsertInput!) {
+      insertIntoteamsCollection(objects: [$input]) {
+        records {
+          id
+          name
+          description
+          department
+          is_active
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { input: teamData })
+  return response.insertIntoteamsCollection.records[0]
+}
+
+export async function updateTeamGQL(id: string, updates: Partial<Team>): Promise<Team> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation UpdateTeam($id: UUID!, $set: teamsUpdateInput!) {
+      updateteamsCollection(filter: { id: { eq: $id } }, set: $set) {
+        records {
+          id
+          name
+          description
+          department
+          is_active
+          created_at
+          updated_at
+        }
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id, set: updates })
+  return response.updateteamsCollection.records[0]
+}
+
+export async function deleteTeamGQL(id: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation DeleteTeam($id: UUID!) {
+      deleteFromteamsCollection(filter: { id: { eq: $id } }) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { id })
+  return response.deleteFromteamsCollection.affectedCount > 0
+}
+
+// ============================================
+// MUTATIONS - TEAM MEMBERS
+// ============================================
+
+export async function addTeamMemberGQL(teamId: string, userId: string, role: string = 'member'): Promise<any> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation AddTeamMember($input: team_membersInsertInput!) {
+      insertIntoteam_membersCollection(objects: [$input]) {
+        records {
+          id
+          team_id
+          user_id
+          role
+          created_at
+        }
+      }
+    }
+  `
+  
+  const input = {
+    team_id: teamId,
+    user_id: userId,
+    role
+  }
+  
+  const response: any = await client.request(mutation, { input })
+  return response.insertIntoteam_membersCollection.records[0]
+}
+
+export async function removeTeamMemberGQL(teamId: string, userId: string): Promise<boolean> {
+  const client = await createGraphQLClient()
+  
+  const mutation = gql`
+    mutation RemoveTeamMember($teamId: UUID!, $userId: UUID!) {
+      deleteFromteam_membersCollection(
+        filter: { 
+          and: [
+            { team_id: { eq: $teamId } },
+            { user_id: { eq: $userId } }
+          ]
+        }
+      ) {
+        affectedCount
+      }
+    }
+  `
+  
+  const response: any = await client.request(mutation, { teamId, userId })
+  return response.deleteFromteam_membersCollection.affectedCount > 0
 }

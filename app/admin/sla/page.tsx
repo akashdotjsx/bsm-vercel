@@ -167,7 +167,7 @@ export default function SLAManagementPage() {
     >
       <div className="space-y-6 font-sans text-[13px]">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">SLA Management</h1>
+          <h1 className="text-[13px] font-semibold tracking-tight">SLA Management</h1>
           <p className="text-muted-foreground">Configure and monitor Service Level Agreements</p>
         </div>
 
@@ -178,7 +178,7 @@ export default function SLAManagementPage() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <div>
                   <p className="text-sm font-medium">SLA Compliance</p>
-                  <p className="text-2xl font-bold">{calculateOverallCompliance()}%</p>
+                  <p className="text-[13px] font-bold">{calculateOverallCompliance()}%</p>
                 </div>
               </div>
             </CardContent>
@@ -189,7 +189,7 @@ export default function SLAManagementPage() {
                 <Clock className="h-4 w-4 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium">Avg Response Time</p>
-                  <p className="text-2xl font-bold">2.4h</p>
+                  <p className="text-[13px] font-bold">2.4h</p>
                 </div>
               </div>
             </CardContent>
@@ -200,7 +200,7 @@ export default function SLAManagementPage() {
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
                 <div>
                   <p className="text-sm font-medium">Breached SLAs</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-[13px] font-bold">12</p>
                 </div>
               </div>
             </CardContent>
@@ -211,7 +211,7 @@ export default function SLAManagementPage() {
                 <Clock className="h-4 w-4 text-purple-500" />
                 <div>
                   <p className="text-sm font-medium">Active SLAs</p>
-                  <p className="text-2xl font-bold">{slas.length}</p>
+                  <p className="text-[13px] font-bold">{slas.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -222,7 +222,7 @@ export default function SLAManagementPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">SLA Policies</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">SLA Policies</CardTitle>
                 <CardDescription>Configure response and resolution time targets</CardDescription>
               </div>
               <Button size="sm" onClick={() => setShowCreateDialog(true)}>

@@ -17,7 +17,7 @@ export default function ApprovalWorkflowsPage() {
     >
       <div className="space-y-6 font-sans text-[13px]">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Approval Workflows</h1>
+          <h1 className="text-[13px] font-semibold tracking-tight">Approval Workflows</h1>
           <p className="text-muted-foreground">
             Configure and manage multi-step approval processes for different request types
           </p>
@@ -30,7 +30,7 @@ export default function ApprovalWorkflowsPage() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <div>
                   <p className="text-sm font-medium">Active Workflows</p>
-                  <p className="text-2xl font-bold">15</p>
+                  <p className="text-[13px] font-bold">15</p>
                 </div>
               </div>
             </CardContent>
@@ -41,7 +41,7 @@ export default function ApprovalWorkflowsPage() {
                 <Clock className="h-4 w-4 text-orange-500" />
                 <div>
                   <p className="text-sm font-medium">Pending Approvals</p>
-                  <p className="text-2xl font-bold">23</p>
+                  <p className="text-[13px] font-bold">23</p>
                 </div>
               </div>
             </CardContent>
@@ -52,7 +52,7 @@ export default function ApprovalWorkflowsPage() {
                 <Users className="h-4 w-4 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium">Approvers</p>
-                  <p className="text-2xl font-bold">42</p>
+                  <p className="text-[13px] font-bold">42</p>
                 </div>
               </div>
             </CardContent>
@@ -63,7 +63,7 @@ export default function ApprovalWorkflowsPage() {
                 <CheckCircle className="h-4 w-4 text-purple-500" />
                 <div>
                   <p className="text-sm font-medium">Avg Approval Time</p>
-                  <p className="text-2xl font-bold">1.2d</p>
+                  <p className="text-[13px] font-bold">1.2d</p>
                 </div>
               </div>
             </CardContent>
@@ -74,7 +74,7 @@ export default function ApprovalWorkflowsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Approval Workflows</CardTitle>
+                <CardTitle className="text-[11px] font-semibold">Approval Workflows</CardTitle>
                 <CardDescription>Configure approval processes for different request types</CardDescription>
               </div>
               <Button size="sm" asChild>

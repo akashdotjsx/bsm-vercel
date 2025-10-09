@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Skeleton } from "@/components/ui/skeleton"
 import { 
   Clock, 
   User, 
@@ -189,8 +190,26 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   if (ticketLoading) {
     return (
       <PlatformLayout breadcrumb={[{ label: "Tickets", href: "/tickets" }, { label: "Loading..." }]}>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-96" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <Skeleton className="h-4 w-32" />
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </PlatformLayout>
     )
@@ -201,7 +220,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
       <PlatformLayout breadcrumb={[{ label: "Tickets", href: "/tickets" }, { label: "Not Found" }]}>
         <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Ticket Not Found</h2>
+          <h2 className="text-[13px] font-semibold mb-2">Ticket Not Found</h2>
           <p className="text-muted-foreground">The ticket you're looking for doesn't exist or has been deleted.</p>
         </div>
       </PlatformLayout>
@@ -214,12 +233,12 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-[13px] font-semibold tracking-tight">
               {isEditing ? (
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="text-2xl font-semibold border-0 px-0 focus-visible:ring-0 bg-transparent"
+                  className="text-[13px] font-semibold border-0 px-0 focus-visible:ring-0 bg-transparent"
                 />
               ) : (
                 ticket.title
@@ -499,7 +518,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                 <div className="text-center py-8">
                   <div className="mb-4">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Linked Accounts</h3>
+                    <h3 className="text-[11px] font-semibold mb-2">No Linked Accounts</h3>
                     <p className="text-muted-foreground mb-4">
                       Link customer accounts or contacts related to this ticket
                     </p>
@@ -513,7 +532,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
 
               <TabsContent value="checklist" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Task Checklist</h3>
+                  <h3 className="text-[11px] font-semibold">Task Checklist</h3>
                   <span className="text-sm text-muted-foreground">
                     {checklist.filter(item => item.completed).length} of {checklist.length} completed
                   </span>
@@ -591,7 +610,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
 
               <TabsContent value="comments" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Comments & Updates</h3>
+                  <h3 className="text-[11px] font-semibold">Comments & Updates</h3>
                   <Button variant="outline" size="sm">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Internal Note
@@ -692,7 +711,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
 
               <TabsContent value="files" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Attachments</h3>
+                  <h3 className="text-[11px] font-semibold">Attachments</h3>
                   <Button>
                     <Upload className="h-4 w-4 mr-2" />
                     Upload File
@@ -758,7 +777,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
 
               <TabsContent value="history" className="p-6 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">History</h3>
+                  <h3 className="text-[11px] font-semibold">History</h3>
                 </div>
                 
                 <div className="space-y-3">

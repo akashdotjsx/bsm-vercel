@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -145,12 +146,18 @@ const knowledgeCategories = [
 ]
 
 export default function KnowledgeBasePage() {
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [showEditCategory, setShowEditCategory] = useState(false)
   const [showDeleteCategory, setShowDeleteCategory] = useState(false)
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
   const [editForm, setEditForm] = useState({ name: "", description: "" })
+  
+  // Simulate data loading
+  useState(() => {
+    setTimeout(() => setLoading(false), 500)
+  })
 
   const [showAIChat, setShowAIChat] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -355,7 +362,7 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
       <div className="space-y-6 text-[13px]">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Knowledge Base</h1>
+            <h1 className="text-[13px] font-semibold tracking-tight">Knowledge Base</h1>
             <p className="text-muted-foreground text-[13px]">
               Find answers and documentation for all platform features
             </p>
@@ -395,19 +402,19 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
               <div className="flex items-center gap-3">
 <Bot className="h-5 w-5 text-[var(--primary)]" />
                 <div>
-                  <h3 className="font-medium text-sm">AI Knowledge Intelligence</h3>
-                  <p className="text-xs text-muted-foreground">
+                  <h3 className="font-medium text-[11px]">AI Knowledge Intelligence</h3>
+                  <p className="text-[10px] text-muted-foreground">
                     12 content gaps identified • 8 articles need updates •
 <span className="text-[var(--primary)] font-medium"> 3 auto-generated drafts</span>
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
                   <TrendingUp className="h-3 w-3 mr-1" />
                   89% Accuracy
                 </Badge>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
                   <BookOpen className="h-3 w-3 mr-1" />
                   247 Articles
                 </Badge>
@@ -430,13 +437,36 @@ className="pl-10 h-10 text-13"
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCategories.map((category) => {
-            const Icon = category.icon
-            return (
-              <div
-                key={category.name}
-                className="bg-card rounded-lg border p-6 hover:shadow-md transition-all duration-200 group hover:border-primary/20 relative"
-              >
+          {loading ? (
+            Array.from({ length: 9 }).map((_, i) => (
+              <div key={`kb-skel-${i}`} className="bg-card rounded-lg border p-6">
+                <div className="flex items-start space-x-4">
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                  <div className="flex-1 space-y-3">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-3/4" />
+                    </div>
+                    <div className="p-2 rounded-md border">
+                      <div className="flex items-start gap-2">
+                        <Skeleton className="h-3 w-3" />
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            filteredCategories.map((category) => {
+              const Icon = category.icon
+              return (
+                <div
+                  key={category.name}
+                  className="bg-card rounded-lg border p-6 hover:shadow-md transition-all duration-200 group hover:border-primary/20 relative"
+                >
                 <div className="absolute top-4 right-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -472,29 +502,30 @@ className="pl-10 h-10 text-13"
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-semibold">{category.name}</h3>
+                      <h3 className="text-[11px] font-semibold">{category.name}</h3>
                       {category.trending && (
-                        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
                           <TrendingUp className="h-3 w-3 mr-1" />
                           Trending
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{category.description}</p>
+                    <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{category.description}</p>
 
 <div className="mb-3 p-2 rounded-md bg-[var(--primary)]/5 border border-[var(--primary)]/10">
                       <div className="flex items-start gap-2">
 <Sparkles className="h-3 w-3 text-[var(--primary)] mt-0.5 shrink-0" />
-                        <p className="text-xs text-gray-700 leading-relaxed">{category.aiInsights}</p>
+                        <p className="text-[10px] text-gray-700 leading-relaxed">{category.aiInsights}</p>
                       </div>
                     </div>
 
-                    <p className="text-sm font-medium text-primary">{category.articles} articles</p>
+                    <p className="text-[10px] font-medium text-primary">{category.articles} articles</p>
                   </div>
                 </div>
               </div>
             )
-          })}
+          })
+          )}
         </div>
       </div>
 

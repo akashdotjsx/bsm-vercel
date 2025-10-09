@@ -55,8 +55,8 @@ export default function SecurityAccessPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Security & Access Control</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">Security & Access Control</h1>
+            <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1">
               Manage user roles, permissions, and security policies
             </p>
           </div>
@@ -81,8 +81,8 @@ export default function SecurityAccessPage() {
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">195</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Total Users</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">195</p>
                 </div>
               </div>
             </CardContent>
@@ -95,8 +95,8 @@ export default function SecurityAccessPage() {
                   <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Roles</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">8</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Active Roles</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">8</p>
                 </div>
               </div>
             </CardContent>
@@ -109,8 +109,8 @@ export default function SecurityAccessPage() {
                   <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Pending Requests</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">7</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Pending Requests</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">7</p>
                 </div>
               </div>
             </CardContent>
@@ -123,8 +123,8 @@ export default function SecurityAccessPage() {
                   <Lock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Security Score</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">87%</p>
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">Security Score</p>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">87%</p>
                 </div>
               </div>
             </CardContent>
@@ -151,11 +151,11 @@ export default function SecurityAccessPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-gray-900 dark:text-gray-100">{role.name}</h4>
-                        <Badge variant={role.color as any} className="text-xs">
+                        <Badge variant={role.color as any} className="text-[10px]">
                           {role.level}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
                         {role.users} users • {role.permissions} permissions
                       </p>
                     </div>
@@ -185,8 +185,8 @@ export default function SecurityAccessPage() {
                     className="flex items-center justify-between p-3 border border-gray-100 dark:border-gray-800 rounded-lg"
                   >
                     <div className="space-y-1">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{request.user}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <h4 className="font-medium text-[11px] text-gray-900 dark:text-gray-100">{request.user}</h4>
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">
                         {request.role} • {request.department} • {request.requestedAt}
                       </p>
                     </div>

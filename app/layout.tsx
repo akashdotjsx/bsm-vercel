@@ -9,6 +9,7 @@ import { SearchProvider } from "@/lib/contexts/search-context"
 import { AuthProvider } from "@/lib/contexts/auth-context"
 import { Suspense } from "react"
 import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
+import { ReactQueryProvider } from "@/components/providers/react-query-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
@@ -33,21 +34,23 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <NavbarFixProvider>
-            <AuthProvider>
-              <ModeProvider>
-                <NotificationProvider>
-                  <Suspense fallback={null}>
-                    <SearchProvider>
-                      <div className="h-screen">{children}</div>
-                    </SearchProvider>
-                  </Suspense>
-                </NotificationProvider>
-              </ModeProvider>
-            </AuthProvider>
-          </NavbarFixProvider>
-          <Toaster />
-          <SonnerToaster />
+          <ReactQueryProvider>
+            <NavbarFixProvider>
+              <AuthProvider>
+                <ModeProvider>
+                  <NotificationProvider>
+                    <Suspense fallback={null}>
+                      <SearchProvider>
+                        <div className="h-screen">{children}</div>
+                      </SearchProvider>
+                    </Suspense>
+                  </NotificationProvider>
+                </ModeProvider>
+              </AuthProvider>
+            </NavbarFixProvider>
+            <Toaster />
+            <SonnerToaster />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

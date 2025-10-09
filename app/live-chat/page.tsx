@@ -15,7 +15,7 @@ export default function LiveChatPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Live Chat</h1>
+            <h1 className="text-[13px] font-semibold text-foreground">Live Chat</h1>
             <p className="text-sm text-muted-foreground mt-1">Real-time customer support conversations</p>
           </div>
           <Button>
@@ -33,7 +33,7 @@ export default function LiveChatPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Chats</p>
-                <p className="text-2xl font-semibold">12</p>
+                <p className="text-[13px] font-semibold">12</p>
               </div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function LiveChatPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Queue</p>
-                <p className="text-2xl font-semibold">3</p>
+                <p className="text-[13px] font-semibold">3</p>
               </div>
             </div>
           </div>
@@ -57,7 +57,7 @@ export default function LiveChatPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Avg Response</p>
-                <p className="text-2xl font-semibold">2m</p>
+                <p className="text-[13px] font-semibold">2m</p>
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function LiveChatPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Satisfaction</p>
-                <p className="text-2xl font-semibold">4.8</p>
+                <p className="text-[13px] font-semibold">4.8</p>
               </div>
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function LiveChatPage() {
         {/* Chat Interface Placeholder */}
         <div className="bg-card rounded-lg border p-8 text-center">
           <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Live Chat Interface</h3>
+          <h3 className="text-[11px] font-medium mb-2">Live Chat Interface</h3>
           <p className="text-muted-foreground mb-4">
             Real-time chat interface would be implemented here with WebSocket connections
           </p>

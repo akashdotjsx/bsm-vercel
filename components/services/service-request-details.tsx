@@ -232,7 +232,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl font-semibold">
+              <DialogTitle className="text-[13px] font-semibold">
                 {request.title}
               </DialogTitle>
               <div className="flex items-center gap-2 mt-1">
@@ -323,7 +323,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
               {/* Request Content */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Request Description</CardTitle>
+                  <CardTitle className="text-[11px]">Request Description</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -376,7 +376,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
               {(request.assignee || request.approver) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Assignment & Approval</CardTitle>
+                    <CardTitle className="text-[11px]">Assignment & Approval</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {request.assignee && (
@@ -409,7 +409,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
               {request.status === 'pending' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Approval Actions</CardTitle>
+                    <CardTitle className="text-[11px]">Approval Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -447,7 +447,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
               {/* Status Update */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Update Status</CardTitle>
+                  <CardTitle className="text-[11px]">Update Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -489,7 +489,7 @@ export function ServiceRequestDetails({ open, onOpenChange, request, onUpdate }:
               {/* Assignment */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Assign Request</CardTitle>
+                  <CardTitle className="text-[11px]">Assign Request</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>

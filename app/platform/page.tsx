@@ -10,38 +10,38 @@ export default function PlatformAccessPage() {
           <div className="flex items-center justify-center mb-4">
             <img src="/images/kroolo-logo.png" alt="Kroolo" className="h-8" />
           </div>
-          <CardTitle className="text-3xl font-bold text-slate-900">Kroolo BSM Platform Access</CardTitle>
-          <CardDescription className="text-lg">AI-Native Business Service Management Platform</CardDescription>
+          <CardTitle className="text-[13px] font-bold text-slate-900">Kroolo BSM Platform Access</CardTitle>
+          <CardDescription className="text-[11px]">AI-Native Business Service Management Platform</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link href="/dashboard">
-              <Button className="w-full h-16 text-lg" size="lg">
+              <Button className="w-full h-16 text-[11px]" size="lg">
                 🏠 Dashboard
               </Button>
             </Link>
             <Link href="/tickets">
-              <Button className="w-full h-16 text-lg bg-transparent" variant="outline" size="lg">
+              <Button className="w-full h-16 text-[11px] bg-transparent" variant="outline" size="lg">
                 🎫 Tickets
               </Button>
             </Link>
             <Link href="/workflows">
-              <Button className="w-full h-16 text-lg bg-transparent" variant="outline" size="lg">
+              <Button className="w-full h-16 text-[11px] bg-transparent" variant="outline" size="lg">
                 ⚡ Workflows
               </Button>
             </Link>
             <Link href="/services">
-              <Button className="w-full h-16 text-lg bg-transparent" variant="outline" size="lg">
+              <Button className="w-full h-16 text-[11px] bg-transparent" variant="outline" size="lg">
                 🛠️ Services
               </Button>
             </Link>
             <Link href="/analytics">
-              <Button className="w-full h-16 text-lg bg-transparent" variant="outline" size="lg">
+              <Button className="w-full h-16 text-[11px] bg-transparent" variant="outline" size="lg">
                 📊 Analytics
               </Button>
             </Link>
             <Link href="/auth/login">
-              <Button className="w-full h-16 text-lg" variant="secondary" size="lg">
+              <Button className="w-full h-16 text-[11px]" variant="secondary" size="lg">
                 🔐 Login Page
               </Button>
             </Link>

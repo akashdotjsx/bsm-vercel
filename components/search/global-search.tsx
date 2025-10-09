@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -567,18 +568,17 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 
           {/* Loading States */}
           {(isSearching || isFetchingSuggestions) && (
-            <div className="p-4 flex items-center justify-center border-b border-border">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-[11px] text-muted-foreground">
-                {isSearching ? 'Searching real-time data...' : 'Loading smart suggestions...'}
-              </span>
-              {isTyping && (
-                <div className="ml-2 flex gap-1">
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-2 py-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                  {i === 0 && <Skeleton className="h-5 w-16 rounded-full" />}
                 </div>
-              )}
+              ))}
             </div>
           )}
 

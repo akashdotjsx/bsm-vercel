@@ -144,7 +144,7 @@ export default function MyServiceRequestsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold">{statusCounts.total}</p>
+                  <p className="text-[13px] font-bold">{statusCounts.total}</p>
                 </div>
                 <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <Clock className="h-4 w-4 text-blue-600" />
@@ -158,7 +158,7 @@ export default function MyServiceRequestsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">{statusCounts.pending}</p>
+                  <p className="text-[13px] font-bold">{statusCounts.pending}</p>
                 </div>
                 <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <AlertCircle className="h-4 w-4 text-yellow-600" />
@@ -172,7 +172,7 @@ export default function MyServiceRequestsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold">{statusCounts.in_progress}</p>
+                  <p className="text-[13px] font-bold">{statusCounts.in_progress}</p>
                 </div>
                 <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
                   <RefreshCw className="h-4 w-4 text-purple-600" />
@@ -186,7 +186,7 @@ export default function MyServiceRequestsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold">{statusCounts.completed}</p>
+                  <p className="text-[13px] font-bold">{statusCounts.completed}</p>
                 </div>
                 <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -253,7 +253,7 @@ export default function MyServiceRequestsPage() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No service requests found</h3>
+                <h3 className="text-[11px] font-semibold text-gray-900 mb-2">No service requests found</h3>
                 <p className="text-gray-600 mb-4">
                   {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
                     ? "Try adjusting your search or filter criteria"
@@ -271,7 +271,7 @@ export default function MyServiceRequestsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-[11px] font-semibold text-gray-900">
                           {request.title}
                         </h3>
                         {getStatusBadge(request.status)}

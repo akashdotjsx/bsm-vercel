@@ -205,7 +205,7 @@ export default function ArticleEditPage() {
     switch (block.type) {
       case "heading":
         const HeadingTag = `h${block.level || 1}` as keyof JSX.IntrinsicElements
-        const headingSize = block.level === 1 ? "text-2xl" : block.level === 2 ? "text-xl" : "text-lg"
+        const headingSize = block.level === 1 ? "text-[13px]" : block.level === 2 ? "text-[13px]" : "text-[11px]"
         return blockWrapper(
           <HeadingTag className={`${headingSize} font-bold outline-none`}>
             <input
@@ -373,7 +373,7 @@ export default function ArticleEditPage() {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="text-2xl font-bold border-none p-0 focus-visible:ring-0"
+                  className="text-[13px] font-bold border-none p-0 focus-visible:ring-0"
                   placeholder="Article title"
                 />
                 <div className="flex items-center gap-2">
