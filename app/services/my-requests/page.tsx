@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { PlatformLayout } from "@/components/layout/platform-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -61,6 +62,7 @@ const priorityConfig = {
 
 export default function MyServiceRequestsPage() {
   const { canView, user } = useAuth()
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
@@ -259,7 +261,7 @@ export default function MyServiceRequestsPage() {
                     ? "Try adjusting your search or filter criteria"
                     : "You haven't submitted any service requests yet"}
                 </p>
-                <Button onClick={() => window.location.href = '/services'}>
+                <Button onClick={() => router.push('/services')}>
                   Request a Service
                 </Button>
               </CardContent>

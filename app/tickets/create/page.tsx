@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,6 +62,7 @@ import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { categoryIconMap, getBgColorClass, formatSLA } from "@/lib/utils/icon-map"
 
 export default function CreateTicketPage() {
+  const router = useRouter()
   // Form state
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -350,7 +352,7 @@ export default function CreateTicketPage() {
       }))
       
       // Redirect back to tickets list page
-      window.location.href = `/tickets`
+      router.push(`/tickets`)
       
     } catch (error) {
       console.error("Error creating ticket:", error)

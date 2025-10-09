@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Link from "next/link"
 import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
 import { KrooloNavbar } from "@/components/layout/kroolo-navbar"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -58,9 +59,9 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
                   <div key={index} className="flex items-center space-x-2">
                     {index > 0 && <span>/</span>}
                     {item.href ? (
-                      <a href={item.href} className="hover:text-foreground transition-colors truncate">
+                      <Link href={item.href} className="hover:text-foreground transition-colors truncate">
                         {item.label}
-                      </a>
+                      </Link>
                     ) : (
                       <span className="text-foreground font-medium truncate">{item.label}</span>
                     )}

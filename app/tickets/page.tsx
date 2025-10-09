@@ -5,7 +5,7 @@ import type { FC } from "react"
 
 import dynamic from "next/dynamic"
 import { useState, useCallback, useMemo, Suspense, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -108,6 +108,7 @@ const formatDate = (dateString: string) => {
 export default function TicketsPage() {
   const { user } = useStore()
   const searchParams = useSearchParams()
+  const router = useRouter()
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState("")
@@ -1055,7 +1056,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     <td colSpan={9} className="p-8 text-center">
                       <div className="text-muted-foreground">
                         No tickets found. <button 
-                          onClick={() => window.location.href = '/tickets/create'} 
+                          onClick={() => router.push('/tickets/create')} 
                           className="text-[#6E72FF] hover:underline"
                         >
                           Create your first ticket
@@ -1587,7 +1588,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   variant="ghost"
                   size="sm"
                   className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => window.location.href = '/tickets/create'}
+                  onClick={() => router.push('/tickets/create')}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Add Ticket
@@ -1668,7 +1669,7 @@ className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5
               </Button>
 <Button 
 className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-[11px] h-8 px-4 rounded-lg shadow-xs"
-                onClick={() => window.location.href = '/tickets/create'} 
+                onClick={() => router.push('/tickets/create')} 
               >
                 + Create Ticket
               </Button>

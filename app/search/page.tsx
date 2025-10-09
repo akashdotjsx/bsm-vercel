@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search, TrendingUp, Clock } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,8 @@ import { SearchFilters } from "@/components/search/search-filters"
 import { cn } from "@/lib/utils"
 
 export default function SearchPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { searchTerm, setSearchTerm, results, isSearching, recentSearches, performSearch, addToRecent } = useSearch()
 
   const [filters, setFilters] = useState({})
@@ -19,13 +22,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     // Auto-search if there's a search term from URL params
-    const urlParams = new URLSearchParams(window.location.search)
-    const query = urlParams.get("q")
+    const query = searchParams?.get("q")
     if (query) {
       setSearchTerm(query)
       performSearch(query)
     }
-  }, [])
+  }, [searchParams])
 
   const handleSearch = async (term: string) => {
     await performSearch(term)
@@ -163,7 +165,7 @@ export default function SearchPage() {
                   <Card 
                     key={result.id} 
                     className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => window.location.href = result.url}
+                    onClick={() => router.push(result.url)}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">

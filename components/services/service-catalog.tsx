@@ -494,7 +494,7 @@ export function ServiceCatalog() {
       <div className="space-y-6">
         {filteredServices.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">
+            <div className="text-[11px] text-gray-500 mb-4">
               {searchTerm ? `No categories found matching "${searchTerm}"` : 'No service categories found.'}
             </div>
             {!searchTerm && (
@@ -511,16 +511,16 @@ export function ServiceCatalog() {
               <Card key={category.id} className="overflow-hidden">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${category.color} text-white`}>
-                        <Icon className="h-6 w-6" />
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-lg ${category.color} text-white flex items-center justify-center`}>
+                        <Icon className="h-5 w-5" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-[11px] font-bold text-gray-900">{category.name}</h3>
-                          <span className="bg-green-100 text-green-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-[13px] font-semibold text-gray-900">{category.name}</h3>
+                          <span className="bg-green-100 text-green-700 text-[10px] font-medium px-2 py-0.5 rounded-full">Active</span>
                         </div>
-                        <p className="text-[10px] text-gray-600 mt-1">{category.description} • Owner: System</p>
+                        <p className="text-[10px] text-gray-600">{category.description} • Owner: System</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -560,29 +560,16 @@ export function ServiceCatalog() {
                   {category.services.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {category.services.map((service, index) => (
-                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-[11px] text-gray-900 mb-1">{service.name}</h4>
-                              <p className="text-[10px] text-gray-600 mb-3">{service.description}</p>
-                              <div className="flex items-center gap-4 text-[10px] text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{service.sla}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: service.popularity }).map((_, i) => (
-                                  <span key={i} className="text-yellow-400">
-                                    ★
-                                  </span>
-                                ))}
+                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-gray-300 transition-all cursor-pointer bg-white">
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-[13px] text-gray-900 mb-1.5">{service.name}</h4>
+                                <p className="text-[11px] text-gray-600 leading-relaxed">{service.description}</p>
                               </div>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 -mt-1">
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -598,12 +585,25 @@ export function ServiceCatalog() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>{service.sla}</span>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: service.popularity }).map((_, i) => (
+                                  <span key={i} className="text-yellow-400 text-sm">
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-[11px] text-gray-500">
                       No services in this category yet. Click "Add Service" to get started.
                     </div>
                   )}
