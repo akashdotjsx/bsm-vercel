@@ -36,6 +36,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { continuousCleanup } from "@/lib/utils/cleanup-blocking-elements"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -174,7 +175,7 @@ export default function TicketsPage() {
   
   const deleteTicket = async (id: string) => {
     await deleteTicketMutation.mutateAsync(id)
-    toast.success('Ticket deleted successfully!')
+    // Toast is shown in confirmDeleteTicket function
   }
 
   // Get dynamic ticket types from database
@@ -259,7 +260,6 @@ export default function TicketsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [ticketToEdit, setTicketToEdit] = useState<any>(null)
   const [ticketToDelete, setTicketToDelete] = useState<any>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   
   // Edit form state
@@ -914,28 +914,35 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   const confirmDeleteTicket = async () => {
     if (!ticketToDelete) return
 
-    console.log('🗑️ DELETE CONFIRMED - Ticket to delete:', {
-      displayId: ticketToDelete.id,
-      dbId: ticketToDelete.dbId,
-      title: ticketToDelete.title
-    })
-
-    setIsDeleting(true)
+    console.log('🗑️ [DELETE FLOW] Step 1: Delete button clicked')
+    const ticketToDeleteCopy = { ...ticketToDelete }
+    
+    // CLOSE MODAL IMMEDIATELY - Don't wait for async operation
+    console.log('🗑️ [DELETE FLOW] Step 2: Closing modal IMMEDIATELY')
+    setShowDeleteModal(false)
+    setTicketToDelete(null)
+    
+    // Force cleanup body state RIGHT AWAY using utility
+    console.log('🗑️ [DELETE FLOW] Step 3: Running cleanup')
+    continuousCleanup(2000, 50)
+    
+    // Run delete in background
+    console.log('🗑️ [DELETE FLOW] Step 4: Running delete in background')
     try {
-      console.log('🗑️ Calling deleteTicket with dbId:', ticketToDelete.dbId)
-      await deleteTicket(ticketToDelete.dbId)
-      console.log('✅ deleteTicket completed successfully')
-      toast.success('Ticket deleted successfully!', {
-        description: `Ticket #${ticketToDelete.id} has been removed.`,
-        duration: 5000,
-      })
-      setShowDeleteModal(false)
-      setTicketToDelete(null)
+      await deleteTicket(ticketToDeleteCopy.dbId)
+      console.log('✅ [DELETE FLOW] Step 5: Delete completed successfully')
+      
+      // TOAST DISABLED FOR TESTING
+      // toast.success('Ticket deleted successfully!', {
+      //   description: `Ticket #${ticketToDeleteCopy.id} has been removed.`,
+      //   duration: 5000,
+      // })
+      console.log('✅ SUCCESS: Ticket deleted:', ticketToDeleteCopy.id)
     } catch (error) {
-      console.error('❌ Error deleting ticket:', error)
-      toast.error('Failed to delete ticket')
-    } finally {
-      setIsDeleting(false)
+      console.error('❌ [DELETE FLOW] Error deleting ticket:', error)
+      // TOAST DISABLED FOR TESTING
+      // toast.error('Failed to delete ticket')
+      console.error('❌ ERROR: Failed to delete ticket')
     }
   }
 
@@ -1495,8 +1502,17 @@ className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5
                 <Download className="h-3 w-3 mr-2" />
                 Import
               </Button>
-<Button 
-className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white text-sm h-8 px-4 rounded-lg shadow-xs mr-2"
+                onClick={() => {
+                  alert('CLICK TEST: This button works!')
+                  console.log('🧪 TEST: Button is clickable')
+                }} 
+              >
+                🧪 TEST CLICK
+              </Button>
+              <Button 
+                className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
                 onClick={() => {
                   console.log("[CREATE] Opening drawer for new ticket")
                   setSelectedTicket(null) // No ticket = CREATE mode
@@ -2091,7 +2107,20 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       {/* Delete Ticket Modal */}
       <DeleteConfirmationDialog
         open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
+        onOpenChange={(open) => {
+          console.log('🚪 [MODAL] onOpenChange called:', { open, isPending: deleteTicketMutation.isPending })
+          // Prevent closing while deleting
+          if (!deleteTicketMutation.isPending) {
+            console.log('🚪 [MODAL] Setting showDeleteModal to:', open)
+            setShowDeleteModal(open)
+            if (!open) {
+              console.log('🚪 [MODAL] Clearing ticketToDelete')
+              setTicketToDelete(null)
+            }
+          } else {
+            console.log('⚠️ [MODAL] Blocked close attempt - mutation still pending')
+          }
+        }}
         onConfirm={confirmDeleteTicket}
         title="Delete Ticket"
         description="Do you want to delete ticket"
