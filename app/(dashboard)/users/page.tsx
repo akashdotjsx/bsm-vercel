@@ -122,7 +122,101 @@ export default function UsersPage() {
   const { teams, loading: teamsLoading, refetch: refetchTeams } = useTeamsGQL()
   const loading = usersLoading || teamsLoading
   
-  // GraphQL mutation wrappers
+  // All useState hooks MUST be called before any conditional returns
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [departmentFilter, setDepartmentFilter] = useState("all")
+  const [showAddUser, setShowAddUser] = useState(false)
+  const [showEditUser, setShowEditUser] = useState(false)
+  const [showAddTeam, setShowAddTeam] = useState(false)
+  const [showEditTeam, setShowEditTeam] = useState(false)
+  const [showManageDepartments, setShowManageDepartments] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [showEditRole, setShowEditRole] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [departments, setDepartments] = useState(initialDepartments)
+  const [newDepartment, setNewDepartment] = useState("")
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [showManageMembers, setShowManageMembers] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [selectedTeamForMembers, setSelectedTeamForMembers] = useState<Team | null>(null)
+  const [selectedUserToAdd, setSelectedUserToAdd] = useState('')
+  const [selectedUserRole, setSelectedUserRole] = useState('member')
+  const [newUser, setNewUser] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    role: "user",
+    department: "",
+    status: "Active"
+  })
+  const [newTeam, setNewTeam] = useState({
+    name: "",
+    lead_id: "",
+    description: "",
+    department: "",
+  })
+  const { toast } = useToast()
+  
+  // Load roles and departments on component mount
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const allRoles = await rbacApi.getRoles()
+        setRoles(allRoles)
+      } catch (error) {
+        console.error('Error loading roles:', error)
+      }
+    }
+    
+    const loadDepartments = async () => {
+      try {
+        const allDepartments = await departmentAPI.getAllDepartments()
+        // Combine with initial departments
+        const combined = [...initialDepartments, ...allDepartments]
+          .filter((dept, index, arr) => arr.indexOf(dept) === index)
+          .sort()
+        setDepartments(combined)
+      } catch (error) {
+        console.error('Error loading departments:', error)
+      }
+    }
+    
+    loadRoles()
+    loadDepartments()
+  }, [])
+
+  // Update departments when users change - with null safety
+  useEffect(() => {
+    if (users.length > 0) {
+      const userDepartments = users
+        .map(user => user.department)
+        .filter((dept): dept is string => {
+          return dept !== null && dept !== undefined && typeof dept === 'string' && dept.trim() !== ''
+        })
+        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
+      
+      const allDepartments = [...initialDepartments, ...userDepartments]
+        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
+        .sort()
+      
+      setDepartments(allDepartments)
+    }
+  }, [users])
+
+  // Update selectedTeamForMembers when teams data changes
+  useEffect(() => {
+    if (selectedTeamForMembers && teams.length > 0) {
+      const updatedTeam = teams.find(t => t.id === selectedTeamForMembers.id)
+      if (updatedTeam) {
+        setSelectedTeamForMembers(updatedTeam)
+      }
+    }
+  }, [teams, selectedTeamForMembers])
+  
+  // GraphQL mutation wrappers (non-hooks)
   const inviteUser = async (userData: any) => {
     const result = await createProfileGQL(userData)
     refetchUsers()
@@ -187,42 +281,6 @@ export default function UsersPage() {
   console.log('🔐 Auth status - user:', !!authUser, 'profile:', !!profile, 'authLoading:', authLoading)
   console.log('👤 Auth user ID:', authUser?.id, 'Email:', authUser?.email)
   console.log('🏢 Teams data structure:', teams?.slice(0, 1)) // Log first team to see structure
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [departmentFilter, setDepartmentFilter] = useState("all")
-  const [showAddUser, setShowAddUser] = useState(false)
-  const [showEditUser, setShowEditUser] = useState(false)
-  const [showAddTeam, setShowAddTeam] = useState(false)
-  const [showEditTeam, setShowEditTeam] = useState(false)
-  const [showManageDepartments, setShowManageDepartments] = useState(false)
-  const [showResetPassword, setShowResetPassword] = useState(false)
-  const [showEditRole, setShowEditRole] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
-  const [roles, setRoles] = useState<Role[]>([])
-  const [departments, setDepartments] = useState(initialDepartments)
-  const [newDepartment, setNewDepartment] = useState("")
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-  const [showManageMembers, setShowManageMembers] = useState(false)
-  const [showAddMember, setShowAddMember] = useState(false)
-  const [selectedTeamForMembers, setSelectedTeamForMembers] = useState<Team | null>(null)
-  const [selectedUserToAdd, setSelectedUserToAdd] = useState('')
-  const [selectedUserRole, setSelectedUserRole] = useState('member')
-  const [newUser, setNewUser] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    role: "user",
-    department: "",
-    status: "Active"
-  })
-  const [newTeam, setNewTeam] = useState({
-    name: "",
-    lead_id: "",
-    description: "",
-    department: "",
-  })
-  const { toast } = useToast()
 
   // If not authenticated, show login prompt
   if (!authLoading && !authUser) {
@@ -250,62 +308,6 @@ export default function UsersPage() {
       </PageContent>
     )
   }
-
-  // Load roles and departments on component mount
-  useEffect(() => {
-    const loadRoles = async () => {
-      try {
-        const allRoles = await rbacApi.getRoles()
-        setRoles(allRoles)
-      } catch (error) {
-        console.error('Error loading roles:', error)
-      }
-    }
-    
-    const loadDepartments = async () => {
-      try {
-        const allDepartments = await departmentAPI.getAllDepartments()
-        // Combine with initial departments
-        const combined = [...initialDepartments, ...allDepartments]
-          .filter((dept, index, arr) => arr.indexOf(dept) === index)
-          .sort()
-        setDepartments(combined)
-      } catch (error) {
-        console.error('Error loading departments:', error)
-      }
-    }
-    
-    loadRoles()
-    loadDepartments()
-  }, [])
-
-  // Update departments when users change - with null safety
-  useEffect(() => {
-    if (users.length > 0) {
-      const userDepartments = users
-        .map(user => user.department)
-        .filter((dept): dept is string => {
-          return dept !== null && dept !== undefined && typeof dept === 'string' && dept.trim() !== ''
-        })
-        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
-      
-      const allDepartments = [...initialDepartments, ...userDepartments]
-        .filter((dept, index, arr) => arr.indexOf(dept) === index) // Remove duplicates
-        .sort()
-      
-      setDepartments(allDepartments)
-    }
-  }, [users])
-
-  // Update selectedTeamForMembers when teams data changes
-  useEffect(() => {
-    if (selectedTeamForMembers && teams.length > 0) {
-      const updatedTeam = teams.find(t => t.id === selectedTeamForMembers.id)
-      if (updatedTeam) {
-        setSelectedTeamForMembers(updatedTeam)
-      }
-    }
-  }, [teams, selectedTeamForMembers])
 
   const filteredUsers = users.filter((user) => {
     const userName = user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
