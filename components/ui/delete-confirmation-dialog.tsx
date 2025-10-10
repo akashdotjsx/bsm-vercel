@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Trash2, X } from "lucide-react"
-import { cleanupAfterModalClose } from "@/lib/utils/cleanup-blocking-elements"
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -12,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
@@ -42,44 +41,17 @@ export function DeleteConfirmationDialog({
   const [isChecked, setIsChecked] = useState(false)
 
   const handleConfirm = async () => {
-    console.log('[DeleteDialog] handleConfirm START', { isChecked, requireCheckbox, isDeleting })
-    
-    if (requireCheckbox && !isChecked) {
-      console.log('[DeleteDialog] Checkbox not checked, returning')
-      return
-    }
-    
-    console.log('[DeleteDialog] Calling onConfirm...')
-    try {
-      await onConfirm()
-      console.log('[DeleteDialog] onConfirm completed successfully')
-      setIsChecked(false)
-      // The parent component should handle closing the modal
-    } catch (error) {
-      console.error('[DeleteDialog] Delete operation failed:', error)
-      setIsChecked(false)
-      // Don't close modal on error - let parent handle it
-    }
+    if (requireCheckbox && !isChecked) return
+    await onConfirm()
+    setIsChecked(false)
   }
 
   const handleOpenChange = (newOpen: boolean) => {
-    console.log('[DeleteDialog] handleOpenChange called:', { newOpen, isDeleting })
     if (!newOpen) {
       setIsChecked(false)
-      // CRITICAL: Clean up any blocking elements when modal closes
-      cleanupAfterModalClose()
     }
     onOpenChange(newOpen)
   }
-  
-  // Also cleanup when component unmounts
-  useEffect(() => {
-    return () => {
-      if (!open) {
-        cleanupAfterModalClose()
-      }
-    }
-  }, [open])
 
   const displayDescription = itemName
     ? `${description} "${itemName}"?`
@@ -90,8 +62,7 @@ export function DeleteConfirmationDialog({
       <AlertDialogContent className="bg-background border-border max-w-xl">
         <button
           onClick={() => handleOpenChange(false)}
-          disabled={isDeleting}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-30"
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
@@ -137,13 +108,13 @@ export function DeleteConfirmationDialog({
           >
             Cancel
           </AlertDialogCancel>
-          <Button
+          <AlertDialogAction
             onClick={handleConfirm}
             disabled={(requireCheckbox && !isChecked) || isDeleting}
             className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

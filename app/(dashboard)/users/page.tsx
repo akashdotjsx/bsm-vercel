@@ -55,7 +55,6 @@ import { UserSelector } from "@/components/users/user-selector"
 import { TeamSelector } from "@/components/users/team-selector"
 import { departmentAPI } from "@/lib/api/departments"
 import AddUserDrawer from "@/components/users/add-user-drawer"
-import AddTeamDrawer from "@/components/teams/add-team-drawer"
 
 // Type definitions
 interface User {
@@ -405,21 +404,13 @@ export default function UsersPage() {
     }
   }
 
-  const handleAddTeam = async (teamData: { name: string; lead_id: string; description: string; department: string }) => {
+  const handleAddTeam = async () => {
     try {
-      await createTeam(teamData)
-      toast({
-        title: "Team created successfully",
-        description: `${teamData.name} has been created`,
-      })
+      await createTeam(newTeam)
+      setNewTeam({ name: "", lead_id: "", description: "", department: "" })
       setShowAddTeam(false)
     } catch (error) {
       console.error('Error creating team:', error)
-      toast({
-        title: "Error creating team",
-        description: error instanceof Error ? error.message : 'Failed to create team',
-        variant: "destructive"
-      })
     }
   }
 
@@ -821,13 +812,86 @@ export default function UsersPage() {
                   Organize users into teams for better collaboration
                 </CardDescription>
               </div>
-              <Button 
-                onClick={() => setShowAddTeam(true)}
-                className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Team
-              </Button>
+              <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Team
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="font-sans">
+                  <DialogHeader>
+                    <DialogTitle className="text-[13px]">Add New Team</DialogTitle>
+                    <DialogDescription className="text-[13px]">
+                      Create a new team to organize users and improve collaboration.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="team-name" className="text-right text-[13px]">
+                        Name
+                      </Label>
+                      <Input
+                        id="team-name"
+                        value={newTeam.name}
+                        onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
+                        className="col-span-3 text-[13px]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="team-lead" className="text-right text-[13px]">
+                        Team Lead
+                      </Label>
+                      <UserSelector
+                        users={users}
+                        value={newTeam.lead_id}
+                        onValueChange={(value) => setNewTeam({ ...newTeam, lead_id: value })}
+                        placeholder="Select team lead..."
+                        className="col-span-3"
+                        disabled={loading}
+                        showOnlyActive
+                        filterByRole={["admin", "manager", "agent"]}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="team-department" className="text-right text-[13px]">
+                        Department
+                      </Label>
+                      <Select
+                        value={newTeam.department}
+                        onValueChange={(value) => setNewTeam({ ...newTeam, department: value })}
+                      >
+                        <SelectTrigger className="col-span-3 text-[13px]">
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="team-description" className="text-right text-[13px]">
+                        Description
+                      </Label>
+                      <Textarea
+                        id="team-description"
+                        value={newTeam.description}
+                        onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
+                        className="col-span-3 text-[13px]"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAddTeam} className="text-[13px]">
+                      Add Team
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardHeader>
           <CardContent>
@@ -1393,16 +1457,6 @@ export default function UsersPage() {
           onClose={() => setShowAddUser(false)}
           onSubmit={handleAddUser}
           departments={departments}
-        />
-
-        {/* Add Team Drawer */}
-        <AddTeamDrawer
-          isOpen={showAddTeam}
-          onClose={() => setShowAddTeam(false)}
-          onSubmit={handleAddTeam}
-          users={users}
-          departments={departments}
-          loading={loading}
         />
       </div>
     </PageContent>
