@@ -20,6 +20,7 @@ interface TicketsParams {
   priority?: string
   type?: string
   assignee_id?: string
+  requester_id?: string
   search?: string
   organization_id?: string
 }
@@ -35,8 +36,8 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
 
   // GraphQL query with assignee_ids array (simplified data model)
   const query = gql`
-    query GetTickets($first: Int!, $offset: Int!) {
-      ticketsCollection(first: $first, offset: $offset, orderBy: [{ created_at: DescNullsLast }]) {
+    query GetTickets($first: Int!, $offset: Int!, $filter: ticketsFilter) {
+      ticketsCollection(first: $first, offset: $offset, orderBy: [{ created_at: DescNullsLast }], filter: $filter) {
         edges {
           node {
             id
@@ -66,9 +67,37 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
     }
   `
 
-  const variables = {
+  // Build GraphQL filter
+  const filter: any = {}
+  
+  if (params.requester_id) {
+    filter.requester_id = { eq: params.requester_id }
+  }
+  
+  if (params.assignee_id) {
+    filter.assignee_ids = { contains: [params.assignee_id] }
+  }
+  
+  if (params.status) {
+    filter.status = { eq: params.status }
+  }
+  
+  if (params.priority) {
+    filter.priority = { eq: params.priority }
+  }
+  
+  if (params.type) {
+    filter.type = { eq: params.type }
+  }
+  
+  const variables: any = {
     first: params.limit || 50,
     offset: ((params.page || 1) - 1) * (params.limit || 50),
+  }
+  
+  // Only add filter if it has properties
+  if (Object.keys(filter).length > 0) {
+    variables.filter = filter
   }
 
   const data: any = await client.request(query, variables)

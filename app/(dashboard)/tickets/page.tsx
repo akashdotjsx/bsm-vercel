@@ -124,17 +124,31 @@ export default function TicketsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
+  const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
   
   // Use real data from API
   // Memoize the params to prevent unnecessary re-renders
-  const ticketsParams = useMemo(() => ({
-    page: 1,
-    limit: 50,
-    status: selectedStatus === "all" ? undefined : selectedStatus,
-    priority: selectedPriority === "all" ? undefined : selectedPriority,
-    type: selectedType === "all" ? undefined : selectedType,
-    search: searchTerm || undefined
-  }), [selectedStatus, selectedPriority, selectedType, searchTerm])
+  const ticketsParams = useMemo(() => {
+    const params: any = {
+      page: 1,
+      limit: 50,
+      status: selectedStatus === "all" ? undefined : selectedStatus,
+      priority: selectedPriority === "all" ? undefined : selectedPriority,
+      type: selectedType === "all" ? undefined : selectedType,
+      search: searchTerm || undefined
+    }
+    
+    // Add filtering based on ticket view
+    if (ticketView === "my" && user?.id) {
+      // My Tickets - filter by requester_id
+      params.requester_id = user.id
+    } else if (ticketView === "assigned" && user?.id) {
+      // Assigned to Me - filter by assignee_id
+      params.assignee_id = user.id
+    }
+    
+    return params
+  }, [selectedStatus, selectedPriority, selectedType, searchTerm, ticketView, user?.id])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -249,7 +263,6 @@ export default function TicketsPage() {
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [showCustomColumnsDialog, setShowCustomColumnsDialog] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
-  const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
   
   // Custom columns store
   const { columns: customColumns } = useCustomColumnsStore()
@@ -371,20 +384,8 @@ export default function TicketsPage() {
     // Use local tickets for Kanban view, transformed tickets for list view
     let baseTickets = currentView === "kanban" ? localTickets : (transformedTickets || [])
     
-    // Apply ticket view filter first (All Tickets, My Tickets, Assigned to Me)
-    if (ticketView === "my" && user) {
-      baseTickets = baseTickets.filter(ticket => 
-        ticket.reportedBy === user.display_name || 
-        ticket.reportedBy === user.email ||
-        ticket.customer === user.display_name ||
-        ticket.customer === user.email
-      )
-    } else if (ticketView === "assigned" && user) {
-      baseTickets = baseTickets.filter(ticket => 
-        ticket.assignee?.name === user.display_name ||
-        ticket.assignee?.name === user.email
-      )
-    }
+    // Note: Server-side filtering is now applied via GraphQL query for My Tickets and Assigned to Me
+    // No need to filter client-side for these views
     
     // Apply client-side filtering for list view (API already handles some filtering)
     if (currentView === "list") {
