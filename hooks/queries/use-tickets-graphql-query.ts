@@ -36,7 +36,7 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   // GraphQL query with assignee_ids array (simplified data model)
   const query = gql`
     query GetTickets($first: Int!, $offset: Int!) {
-      ticketsCollection(first: $first, offset: $offset) {
+      ticketsCollection(first: $first, offset: $offset, orderBy: [{ created_at: DescNullsLast }]) {
         edges {
           node {
             id

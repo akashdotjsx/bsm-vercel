@@ -27,6 +27,8 @@ import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { createGraphQLClient } from "@/lib/graphql/client"
+import { gql } from "graphql-request"
 import { 
   X, 
   Save, 
@@ -86,7 +88,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     }
   }, [isOpen])
 
-  // Always in edit mode - no view mode needed
+  // Edit mode toggle - for existing tickets, start in view mode
+  const [isEditMode, setIsEditMode] = useState(isCreateMode)
   const [saving, setSaving] = useState(false)
   
   // State for comments
@@ -95,6 +98,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   
   // State for checklist
   const [newChecklistItem, setNewChecklistItem] = useState("")
+  // Staged checklist items for create mode
+  const [draftChecklist, setDraftChecklist] = useState<string[]>([])
   
   // State for delete confirmation
   const [showDeleteChecklistDialog, setShowDeleteChecklistDialog] = useState(false)
@@ -121,7 +126,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   // Initialize form for CREATE mode or populate from existing ticket
   useEffect(() => {
     if (isCreateMode) {
-      // CREATE mode - set defaults
+      // CREATE mode - set defaults and enable edit mode
+      setIsEditMode(true)
       setForm({
         title: "",
         description: "",
@@ -136,7 +142,13 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         due_date: "",
         tags: [],
       })
+      // Clear comment/checklist state for new tickets
+      setNewComment("")
+      setDraftChecklist([])
+      setIsInternalComment(false)
     } else if (dbTicket) {
+      // EDIT mode - start in view mode for existing tickets
+      setIsEditMode(false)
       // EDIT mode - populate from ticket
       const assigneeIds = dbTicket.assignee_ids || (dbTicket.assignee_id ? [dbTicket.assignee_id] : [])
       setForm({
@@ -153,8 +165,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         due_date: dbTicket.due_date || "",
         tags: Array.isArray(dbTicket.tags) ? dbTicket.tags : [],
       })
+      // Clear create-mode state when editing existing tickets
+      setNewComment("")
+      setDraftChecklist([])
+      setIsInternalComment(false)
     }
-  }, [dbTicket, isCreateMode])
+  }, [dbTicket, isCreateMode, ticketId])
 
   const requesterName = useMemo(() => {
     if (!dbTicket?.requester) return ""
@@ -199,6 +215,49 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         
         const newTicket = await createTicketMutation.mutateAsync(ticketData)
         console.log("[CREATE] Ticket created:", newTicket)
+        
+        // After create, insert initial comment and checklist via GraphQL if provided
+        try {
+          const client = await createGraphQLClient()
+
+          // Initial comment
+          if (newComment && newComment.trim().length > 0) {
+            const addCommentMutation = gql`
+              mutation AddComment($input: ticket_commentsInsertInput!) {
+                insertIntoticket_commentsCollection(objects: [$input]) { records { id } }
+              }
+            `
+            await client.request(addCommentMutation, {
+              input: {
+                ticket_id: newTicket.id,
+                author_id: user?.id,
+                content: newComment.trim(),
+                is_internal: isInternalComment,
+                is_system: false,
+              },
+            })
+          }
+
+          // Checklist items (staged)
+          if (draftChecklist.length > 0) {
+            const addChecklistMutation = gql`
+              mutation AddChecklist($objects: [ticket_checklistInsertInput!]!) {
+                insertIntoticket_checklistCollection(objects: $objects) { affectedCount }
+              }
+            `
+            const objects = draftChecklist.map((text) => ({
+              ticket_id: newTicket.id,
+              created_by: user?.id,
+              text,
+              completed: false,
+            }))
+            if (objects.length > 0) {
+              await client.request(addChecklistMutation, { objects })
+            }
+          }
+        } catch (postErr) {
+          console.error("Error adding initial comment/checklist:", postErr)
+        }
         
         toast.success("Ticket created successfully!", {
           description: `Ticket #${newTicket.ticket_number} has been created.`
@@ -245,7 +304,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
           })
         }
         
-        // Stay in edit mode - no need to toggle
+        // Exit edit mode after successful update
+        setIsEditMode(false)
         toast.success("Ticket updated successfully!")
       }
     } catch (error) {
@@ -258,13 +318,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return
+    if (isCreateMode) {
+      // In create mode, comment is staged and added after ticket creation
+      return
+    }
     
     try {
       await addCommentMutation.mutateAsync({
         content: newComment.trim(),
-        isInternal: isInternalComment
+        isInternal: isInternalComment,
+        authorId: user?.id
       })
       setNewComment("")
+      setIsInternalComment(false)
       toast.success("Comment added successfully!")
     } catch (error) {
       console.error("Error adding comment:", error)
@@ -274,10 +340,15 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
   const handleAddChecklistItem = async () => {
     if (!newChecklistItem.trim()) return
+    if (isCreateMode) {
+      // In create mode, staged locally and added after ticket creation
+      return
+    }
     
     try {
       await addChecklistItemMutation.mutateAsync({
-        text: newChecklistItem.trim()
+        text: newChecklistItem.trim(),
+        createdBy: user?.id
       })
       setNewChecklistItem("")
       toast.success("Checklist item added!")
@@ -363,14 +434,27 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </p>
               )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 w-8 p-0 shrink-0" 
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {!isCreateMode && !loading && (
+                <Button 
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm" 
+                  className="h-8 px-3 text-[11px]" 
+                  onClick={() => setIsEditMode(!isEditMode)}
+                >
+                  <Edit className="h-3 w-3 mr-2" />
+                  {isEditMode ? "View Mode" : "Edit"}
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0 shrink-0" 
+                onClick={onClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Error state - only for EDIT mode */}
@@ -494,151 +578,249 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
-                {/* Always in edit mode - no view mode */}
+                {/* Edit/View mode based on isEditMode state */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
-                      <Input 
-                        value={form.title} 
-                        onChange={(e) => setForm({ ...form, title: e.target.value })} 
-                        className="text-[11px] h-8"
-                      />
+                      {isEditMode ? (
+                        <Input 
+                          value={form.title} 
+                          onChange={(e) => setForm({ ...form, title: e.target.value })} 
+                          className="text-[11px] h-8"
+                        />
+                      ) : (
+                        <div className="text-[11px] p-2 border rounded bg-muted/30">{form.title || "—"}</div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
-                      <Textarea 
-                        rows={4} 
-                        value={form.description} 
-                        onChange={(e) => setForm({ ...form, description: e.target.value })} 
-                        className="text-[11px] resize-none"
-                        placeholder="Describe the issue or request in detail..."
-                      />
+                      {isEditMode ? (
+                        <Textarea 
+                          rows={4} 
+                          value={form.description} 
+                          onChange={(e) => setForm({ ...form, description: e.target.value })} 
+                          className="text-[11px] resize-none"
+                          placeholder="Describe the issue or request in detail..."
+                        />
+                      ) : (
+                        <div className="text-[11px] p-2 border rounded bg-muted/30 whitespace-pre-wrap min-h-[100px]">{form.description || "—"}</div>
+                      )}
                     </div>
 
+                    {/* Row 1: Type and Priority */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
-                        <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="request" className="text-[11px]">Request</SelectItem>
-                            <SelectItem value="incident" className="text-[11px]">Incident</SelectItem>
-                            <SelectItem value="problem" className="text-[11px]">Problem</SelectItem>
-                            <SelectItem value="change" className="text-[11px]">Change</SelectItem>
-                            <SelectItem value="task" className="text-[11px]">Task</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {isEditMode ? (
+                          <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="request" className="text-[11px]">Request</SelectItem>
+                              <SelectItem value="incident" className="text-[11px]">Incident</SelectItem>
+                              <SelectItem value="problem" className="text-[11px]">Problem</SelectItem>
+                              <SelectItem value="change" className="text-[11px]">Change</SelectItem>
+                              <SelectItem value="task" className="text-[11px]">Task</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.type || "—"}</div>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
-                        <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
-                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
-                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
-                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
-                            <SelectItem value="urgent" className="text-[11px]">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {isEditMode ? (
+                          <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                              <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                              <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                              <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
+                              <SelectItem value="urgent" className="text-[11px]">Urgent</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.priority || "—"}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Row 2: Category and Services (renamed from Subcategory) */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
+                        {isEditMode ? (
+                          <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder={supabaseCategories.length ? "Select category" : "Loading..."} className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {supabaseCategories.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id} className="text-[11px]">{cat.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30">{selectedCategory?.name || "—"}</div>
+                        )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</label>
-                        <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="new" className="text-[11px]">New</SelectItem>
-                            <SelectItem value="open" className="text-[11px]">Open</SelectItem>
-                            <SelectItem value="in_progress" className="text-[11px]">In Progress</SelectItem>
-                            <SelectItem value="resolved" className="text-[11px]">Resolved</SelectItem>
-                            <SelectItem value="closed" className="text-[11px]">Closed</SelectItem>
-                            <SelectItem value="on_hold" className="text-[11px]">On Hold</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Services</label>
+                        {isEditMode ? (
+                          <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })} disabled={!form.category}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder={!form.category ? "Select category first" : (availableServices.length ? "Select service" : "No services")} className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableServices.map((s: any) => (
+                                <SelectItem key={s.name} value={s.name} className="text-[11px]">{s.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30">{form.subcategory || "—"}</div>
+                        )}
                       </div>
                     </div>
 
                     {/* Assignee - full width for better UX */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
-                      <TeamSelector
-                        teams={teams}
-                        users={users}
-                        selectedUserIds={form.assignee_ids}
-                        onUsersChange={(userIds) => setForm({ ...form, assignee_ids: userIds })}
-                        placeholder="Assign to user or team..."
-                        className="h-9 text-[11px]"
-                      />
+                      {isEditMode ? (
+                        <TeamSelector
+                          teams={teams}
+                          users={users}
+                          selectedUserIds={form.assignee_ids}
+                          onUsersChange={(userIds) => setForm({ ...form, assignee_ids: userIds })}
+                          placeholder="Assign to user or team..."
+                          className="h-9 text-[11px]"
+                        />
+                      ) : (
+                        <div className="text-[11px] p-2 border rounded bg-muted/30">
+                          {form.assignee_ids.length > 0 ? (
+                            form.assignee_ids.map((id) => {
+                              const user = users.find((u) => u.id === id)
+                              return user?.display_name || user?.email || id
+                            }).join(", ")
+                          ) : "—"}
+                        </div>
+                      )}
                     </div>
 
+                    {/* Row 3: Due date and Urgency (Impact removed) */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due date</label>
-                        <DateTimePicker
-                          value={form.due_date ? new Date(form.due_date) : undefined}
-                          onChange={(d) => setForm({ ...form, due_date: d ? d.toISOString() : "" })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
-                        <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue placeholder={supabaseCategories.length ? "Select category" : "Loading..."} className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {supabaseCategories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id} className="text-[11px]">{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Subcategory</label>
-                        <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })} disabled={!form.category}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue placeholder={!form.category ? "Select category first" : (availableServices.length ? "Select service" : "No services")} className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableServices.map((s: any) => (
-                              <SelectItem key={s.name} value={s.name} className="text-[11px]">{s.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {isEditMode ? (
+                          <DateTimePicker
+                            value={form.due_date ? new Date(form.due_date) : undefined}
+                            onChange={(d) => setForm({ ...form, due_date: d ? d.toISOString() : "" })}
+                          />
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30">
+                            {form.due_date ? format(new Date(form.due_date), "MMM d, y h:mm a") : "—"}
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
-                        <Select value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
-                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
-                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
-                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Impact</label>
-                        <Select value={form.impact} onValueChange={(v) => setForm({ ...form, impact: v })}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue className="text-[11px]" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low" className="text-[11px]">Low</SelectItem>
-                            <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
-                            <SelectItem value="high" className="text-[11px]">High</SelectItem>
-                            <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {isEditMode ? (
+                          <Select value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low" className="text-[11px]">Low</SelectItem>
+                              <SelectItem value="medium" className="text-[11px]">Medium</SelectItem>
+                              <SelectItem value="high" className="text-[11px]">High</SelectItem>
+                              <SelectItem value="critical" className="text-[11px]">Critical</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.urgency || "—"}</div>
+                        )}
                       </div>
                     </div>
+
+                    {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
+                    {isCreateMode && (
+                      <div className="space-y-8 pt-4">
+                        {/* Checklist */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[11px] font-semibold text-foreground">Checklist</h3>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add checklist item..."
+                              value={newChecklistItem}
+                              onChange={(e) => setNewChecklistItem(e.target.value)}
+                              onKeyPress={(e) => e.key === "Enter" && newChecklistItem.trim() && setDraftChecklist((prev) => { const next=[...prev, newChecklistItem.trim()]; setNewChecklistItem(""); return next })}
+                              className="text-[11px] h-8"
+                            />
+                            <Button 
+                              onClick={() => {
+                                if (!newChecklistItem.trim()) return
+                                setDraftChecklist((prev) => [...prev, newChecklistItem.trim()])
+                                setNewChecklistItem("")
+                              }} 
+                              disabled={!newChecklistItem.trim()} 
+                              className="text-[10px] h-8 px-3"
+                            >
+                              <Plus className="h-3 w-3 mr-2" />
+                              Add
+                            </Button>
+                          </div>
+                          {draftChecklist.length > 0 && (
+                            <div className="space-y-2">
+                              {draftChecklist.map((text, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-2 border rounded">
+                                  <span className="text-[11px]">{text}</span>
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setDraftChecklist((prev) => prev.filter((_, i) => i !== idx))}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Initial Comment */}
+                        <div className="space-y-3">
+                          <h3 className="text-[11px] font-semibold text-foreground">Initial Comment</h3>
+                          <div className="flex items-center gap-2">
+                            <Switch id="internal-comment-create" checked={isInternalComment} onCheckedChange={setIsInternalComment} />
+                            <Label htmlFor="internal-comment-create" className="text-[11px]">Internal Note</Label>
+                          </div>
+                          <div className="flex gap-2">
+                            <Textarea
+                              placeholder="Add a comment..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              className="min-h-20 resize-none text-[11px]"
+                            />
+                            <Button onClick={() => { /* staged; saved on ticket creation */ }} disabled={!newComment.trim()} className="h-10 text-[10px]" title="This comment will be added when you create the ticket">
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Attachments */}
+                        <div className="space-y-3">
+                          <h3 className="text-[11px] font-semibold text-foreground">Attachments</h3>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                            <p className="text-[10px] text-muted-foreground mb-2">Upload files after the ticket is created</p>
+                            <Button variant="outline" size="sm" className="text-[10px] h-8 px-3">
+                              <Upload className="h-3 w-3 mr-2" />
+                              Choose Files
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
               </TabsContent>
 
               <TabsContent value="accounts" className="p-6">
@@ -959,34 +1141,42 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
             </Tabs>
           )}
 
-          {/* Footer - always show */}
-          <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="text-[11px] h-8 px-3"
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={saving || (!isCreateMode && loading)} 
-              className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
-            >
-              {saving ? (
-                <>
-                  <LoadingSpinner className="h-3 w-3 mr-2" />
-                  {isCreateMode ? "Creating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <Save className="h-3 w-3 mr-2" />
-                  {isCreateMode ? "Create Ticket" : "Save Changes"}
-                </>
-              )}
-            </Button>
-          </div>
+          {/* Footer - show save button only in edit mode or create mode */}
+          {(isCreateMode || isEditMode) && (
+            <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (isCreateMode) {
+                    onClose()
+                  } else {
+                    setIsEditMode(false)
+                  }
+                }}
+                className="text-[11px] h-8 px-3"
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={saving || (!isCreateMode && loading)} 
+                className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
+              >
+                {saving ? (
+                  <>
+                    <LoadingSpinner className="h-3 w-3 mr-2" />
+                    {isCreateMode ? "Creating..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-2" />
+                    {isCreateMode ? "Create Ticket" : "Save Changes"}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </>

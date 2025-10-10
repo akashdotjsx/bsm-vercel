@@ -186,7 +186,7 @@ export function useUpdateTicketDetailsGraphQL() {
 /**
  * Add comment to ticket using GraphQL
  */
-async function addCommentGraphQL(ticketId: string, content: string, isInternal: boolean = false) {
+async function addCommentGraphQL(ticketId: string, content: string, isInternal: boolean = false, authorId?: string) {
   const client = await createGraphQLClient()
 
   const mutation = gql`
@@ -195,6 +195,7 @@ async function addCommentGraphQL(ticketId: string, content: string, isInternal: 
         records {
           id
           ticket_id
+          author_id
           content
           is_internal
           is_system
@@ -212,11 +213,16 @@ async function addCommentGraphQL(ticketId: string, content: string, isInternal: 
     }
   `
 
-  const input = {
+  const input: any = {
     ticket_id: ticketId,
     content,
     is_internal: isInternal,
     is_system: false,
+  }
+
+  // Add author_id if provided
+  if (authorId) {
+    input.author_id = authorId
   }
 
   const data: any = await client.request(mutation, { input })
@@ -230,15 +236,15 @@ export function useAddCommentGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ content, isInternal }: { content: string; isInternal?: boolean }) =>
-      addCommentGraphQL(ticketId, content, isInternal || false),
+    mutationFn: ({ content, isInternal, authorId }: { content: string; isInternal?: boolean; authorId?: string }) =>
+      addCommentGraphQL(ticketId, content, isInternal || false, authorId),
     onSuccess: (newComment) => {
-      // Optimistically add comment to cache
+      // Optimistically add comment to cache at the beginning (newest first)
       queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
         if (!old) return old
         return {
           ...old,
-          comments: [...(old.comments || []), newComment],
+          comments: [newComment, ...(old.comments || [])],
         }
       })
       console.log("✅ Comment added to cache")
@@ -351,7 +357,8 @@ async function addChecklistItemGraphQL(
   ticketId: string,
   text: string,
   assigneeId?: string,
-  dueDate?: string
+  dueDate?: string,
+  createdBy?: string
 ) {
   const client = await createGraphQLClient()
 
@@ -364,6 +371,7 @@ async function addChecklistItemGraphQL(
           text
           completed
           due_date
+          created_by
           created_at
           updated_at
           assignee: profiles {
@@ -385,6 +393,7 @@ async function addChecklistItemGraphQL(
 
   if (assigneeId) input.assignee_id = assigneeId
   if (dueDate) input.due_date = dueDate
+  if (createdBy) input.created_by = createdBy
 
   const data: any = await client.request(mutation, { input })
   return data.insertIntoticket_checklistCollection.records[0]
@@ -450,14 +459,15 @@ export function useAddChecklistItemGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ text, assigneeId, dueDate }: { text: string; assigneeId?: string; dueDate?: string }) =>
-      addChecklistItemGraphQL(ticketId, text, assigneeId, dueDate),
+    mutationFn: ({ text, assigneeId, dueDate, createdBy }: { text: string; assigneeId?: string; dueDate?: string; createdBy?: string }) =>
+      addChecklistItemGraphQL(ticketId, text, assigneeId, dueDate, createdBy),
     onSuccess: (newItem) => {
+      // Optimistically add checklist item at the beginning (newest first)
       queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
         if (!old) return old
         return {
           ...old,
-          checklist: [...(old.checklist || []), newItem],
+          checklist: [newItem, ...(old.checklist || [])],
         }
       })
       console.log("✅ Checklist item added")

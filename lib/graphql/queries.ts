@@ -115,10 +115,11 @@ export const GET_TICKET_BY_ID_QUERY = gql`
             name
             description
           }
-          comments: ticket_commentsCollection {
+          comments: ticket_commentsCollection(filter: { ticket_id: { eq: $id } }, orderBy: [{ created_at: DescNullsLast }], first: 200) {
             edges {
               node {
                 id
+                ticket_id
                 content
                 is_internal
                 is_system
@@ -134,10 +135,11 @@ export const GET_TICKET_BY_ID_QUERY = gql`
               }
             }
           }
-          attachments: ticket_attachmentsCollection {
+          attachments: ticket_attachmentsCollection(filter: { ticket_id: { eq: $id } }, orderBy: [{ created_at: DescNullsLast }], first: 200) {
             edges {
               node {
                 id
+                ticket_id
                 filename
                 file_size
                 mime_type
@@ -151,10 +153,11 @@ export const GET_TICKET_BY_ID_QUERY = gql`
               }
             }
           }
-          checklist: ticket_checklistCollection {
+          checklist: ticket_checklistCollection(filter: { ticket_id: { eq: $id } }, orderBy: [{ created_at: DescNullsLast }], first: 200) {
             edges {
               node {
                 id
+                ticket_id
                 text
                 completed
                 due_date
