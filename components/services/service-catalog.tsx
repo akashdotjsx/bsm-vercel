@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Laptop,
@@ -138,6 +139,8 @@ export function ServiceCatalog() {
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState(null)
   const [selectedServiceForEdit, setSelectedServiceForEdit] = useState(null)
   const [selectedService, setSelectedService] = useState(null)
+  const [deleteServiceChecked, setDeleteServiceChecked] = useState(false)
+  const [deleteCategoryChecked, setDeleteCategoryChecked] = useState(false)
   const [selectedServiceCategory, setSelectedServiceCategory] = useState(null)
   const [newCategory, setNewCategory] = useState({ name: "", description: "", color: "bg-blue-500" })
   const [newService, setNewService] = useState({ name: "", description: "", sla: "", popularity: 3 })
@@ -355,6 +358,7 @@ export function ServiceCatalog() {
 
   const handleConfirmDeleteCategory = async () => {
     if (!selectedCategoryForEdit) return
+    if (!deleteCategoryChecked) return // Require checkbox to be checked
     
     const categoryName = selectedCategoryForEdit.name
     const serviceCount = selectedCategoryForEdit.services?.length || 0
@@ -366,6 +370,7 @@ export function ServiceCatalog() {
       // Close dialog and reset state
       setShowDeleteCategoryDialog(false)
       setSelectedCategoryForEdit(null)
+      setDeleteCategoryChecked(false)
       
       toast({
         title: "Category deleted",
@@ -416,6 +421,7 @@ export function ServiceCatalog() {
 
   const handleConfirmDeleteService = async () => {
     if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
+    if (!deleteServiceChecked) return // Require checkbox to be checked
     
     const serviceName = selectedServiceForEdit.name
     
@@ -426,6 +432,7 @@ export function ServiceCatalog() {
       // Close dialog and reset state
       setShowDeleteServiceDialog(false)
       setSelectedServiceForEdit(null)
+      setDeleteServiceChecked(false)
       
       toast({
         title: "Service deleted",
@@ -1036,7 +1043,10 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Category Modal */}
-      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={(open) => {
+        setShowDeleteCategoryDialog(open)
+        if (!open) setDeleteCategoryChecked(false)
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -1055,6 +1065,22 @@ export function ServiceCatalog() {
               })()}
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="flex items-center space-x-3 py-4">
+            <Checkbox
+              id="delete-category-confirm"
+              checked={deleteCategoryChecked}
+              onCheckedChange={(checked) => setDeleteCategoryChecked(checked as boolean)}
+              className="border-2 border-muted-foreground data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <Label
+              htmlFor="delete-category-confirm"
+              className="text-base font-medium text-foreground cursor-pointer select-none"
+            >
+              Click to Agree
+            </Label>
+          </div>
+          
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
@@ -1066,7 +1092,7 @@ export function ServiceCatalog() {
             <Button
               variant="destructive"
               onClick={handleConfirmDeleteCategory}
-              disabled={deleteServiceCategoryMutation.isPending}
+              disabled={deleteServiceCategoryMutation.isPending || !deleteCategoryChecked}
             >
               {deleteServiceCategoryMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
@@ -1153,7 +1179,10 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Service Modal */}
-      <Dialog open={showDeleteServiceDialog} onOpenChange={setShowDeleteServiceDialog}>
+      <Dialog open={showDeleteServiceDialog} onOpenChange={(open) => {
+        setShowDeleteServiceDialog(open)
+        if (!open) setDeleteServiceChecked(false)
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -1166,6 +1195,22 @@ export function ServiceCatalog() {
               Do you want to delete service "{selectedServiceForEdit?.name}"?
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="flex items-center space-x-3 py-4">
+            <Checkbox
+              id="delete-service-confirm"
+              checked={deleteServiceChecked}
+              onCheckedChange={(checked) => setDeleteServiceChecked(checked as boolean)}
+              className="border-2 border-muted-foreground data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <Label
+              htmlFor="delete-service-confirm"
+              className="text-base font-medium text-foreground cursor-pointer select-none"
+            >
+              Click to Agree
+            </Label>
+          </div>
+          
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
@@ -1177,7 +1222,7 @@ export function ServiceCatalog() {
             <Button
               variant="destructive"
               onClick={handleConfirmDeleteService}
-              disabled={deleteServiceMutation.isPending}
+              disabled={deleteServiceMutation.isPending || !deleteServiceChecked}
             >
               {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
             </Button>

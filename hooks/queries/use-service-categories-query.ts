@@ -205,14 +205,44 @@ export function useDeleteServiceMutation() {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = await createGraphQLClient()
-      const mutation = gql`
+      
+      // First, check if there are any service requests for this service
+      const checkRequestsQuery = gql`
+        query CheckServiceRequests($serviceId: UUID!) {
+          service_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      `
+      
+      const requestsResponse = await client.request(checkRequestsQuery, { serviceId: id })
+      const hasRequests = requestsResponse.service_requestsCollection?.edges?.length > 0
+      
+      if (hasRequests) {
+        // If there are service requests, first delete them
+        const deleteRequestsMutation = gql`
+          mutation DeleteServiceRequests($serviceId: UUID!) {
+            deleteFromservice_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+              affectedCount
+            }
+          }
+        `
+        await client.request(deleteRequestsMutation, { serviceId: id })
+      }
+      
+      // Then delete the service
+      const deleteServiceMutation = gql`
         mutation DeleteService($id: UUID!) {
           deleteFromservicesCollection(filter: { id: { eq: $id } }) {
             affectedCount
           }
         }
       `
-      await client.request(mutation, { id })
+      await client.request(deleteServiceMutation, { id })
     },
     onMutate: async (deletedId) => {
       // Cancel any outgoing refetches
@@ -291,14 +321,73 @@ export function useDeleteServiceCategoryMutation() {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = await createGraphQLClient()
-      const mutation = gql`
+      
+      // First, get all services in this category
+      const getServicesQuery = gql`
+        query GetServicesInCategory($categoryId: UUID!) {
+          servicesCollection(filter: { category_id: { eq: $categoryId } }) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      `
+      
+      const servicesResponse = await client.request(getServicesQuery, { categoryId: id })
+      const services = servicesResponse.servicesCollection?.edges?.map((edge: any) => edge.node) || []
+      
+      // Delete all services in this category first (which will also delete their service requests)
+      for (const service of services) {
+        // Check if there are any service requests for this service
+        const checkRequestsQuery = gql`
+          query CheckServiceRequests($serviceId: UUID!) {
+            service_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        `
+        
+        const requestsResponse = await client.request(checkRequestsQuery, { serviceId: service.id })
+        const hasRequests = requestsResponse.service_requestsCollection?.edges?.length > 0
+        
+        if (hasRequests) {
+          // If there are service requests, first delete them
+          const deleteRequestsMutation = gql`
+            mutation DeleteServiceRequests($serviceId: UUID!) {
+              deleteFromservice_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+                affectedCount
+              }
+            }
+          `
+          await client.request(deleteRequestsMutation, { serviceId: service.id })
+        }
+        
+        // Then delete the service
+        const deleteServiceMutation = gql`
+          mutation DeleteService($serviceId: UUID!) {
+            deleteFromservicesCollection(filter: { id: { eq: $serviceId } }) {
+              affectedCount
+            }
+          }
+        `
+        await client.request(deleteServiceMutation, { serviceId: service.id })
+      }
+      
+      // Finally, delete the category
+      const deleteCategoryMutation = gql`
         mutation DeleteServiceCategory($id: UUID!) {
           deleteFromservice_categoriesCollection(filter: { id: { eq: $id } }) {
             affectedCount
           }
         }
       `
-      await client.request(mutation, { id })
+      await client.request(deleteCategoryMutation, { id })
     },
     onMutate: async (deletedId) => {
       // Cancel any outgoing refetches
