@@ -61,7 +61,6 @@ import {
 } from "lucide-react"
 import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
 import { useToast } from "@/components/ui/use-toast"
-import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import dynamic from "next/dynamic"
 
 const ServiceCategoryDrawer = dynamic(
@@ -83,6 +82,7 @@ export function ServiceCatalog() {
   const { 
     data: categories = [], 
     isLoading: loading, 
+    isFetching,
     error 
   } = useServiceCategoriesQuery({ is_active: true })
   
@@ -360,9 +360,10 @@ export function ServiceCatalog() {
     const serviceCount = selectedCategoryForEdit.services?.length || 0
     
     try {
-      // Use React Query mutation - NO refetch needed!
+      // Use React Query mutation
       await deleteServiceCategoryMutation.mutateAsync(selectedCategoryForEdit.id)
       
+      // Close dialog and reset state
       setShowDeleteCategoryDialog(false)
       setSelectedCategoryForEdit(null)
       
@@ -419,11 +420,13 @@ export function ServiceCatalog() {
     const serviceName = selectedServiceForEdit.name
     
     try {
-      // Use React Query mutation - NO refetch needed!
+      // Use React Query mutation
       await deleteServiceMutation.mutateAsync(selectedServiceForEdit.id)
       
+      // Close dialog and reset state
       setShowDeleteServiceDialog(false)
       setSelectedServiceForEdit(null)
+      
       toast({
         title: "Service deleted",
         description: `"${serviceName}" has been deleted successfully.`,
@@ -483,8 +486,8 @@ export function ServiceCatalog() {
     return true
   })
 
-  // Show loading state
-  if (loading) {
+  // Show loading state only on initial load, not during refetches
+  if (loading && categories.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -1033,20 +1036,43 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Category Modal */}
-      <DeleteConfirmationDialog
-        open={showDeleteCategoryDialog}
-        onOpenChange={setShowDeleteCategoryDialog}
-        onConfirm={handleConfirmDeleteCategory}
-        title="Delete Category"
-        description={(() => {
-          const serviceCount = selectedCategoryForEdit?.services?.length || 0
-          if (serviceCount > 0) {
-            return `This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. Do you want to delete`
-          }
-          return "Do you want to delete category"
-        })()}
-        itemName={selectedCategoryForEdit?.name}
-      />
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={setShowDeleteCategoryDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              Delete Category
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              {(() => {
+                const serviceCount = selectedCategoryForEdit?.services?.length || 0
+                if (serviceCount > 0) {
+                  return `This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. Do you want to delete category "${selectedCategoryForEdit?.name}"?`
+                }
+                return `Do you want to delete category "${selectedCategoryForEdit?.name}"?`
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteCategoryDialog(false)}
+              disabled={deleteServiceCategoryMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteCategory}
+              disabled={deleteServiceCategoryMutation.isPending}
+            >
+              {deleteServiceCategoryMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Service Modal */}
       <Dialog open={showEditServiceModal} onOpenChange={setShowEditServiceModal}>
@@ -1127,14 +1153,37 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Service Modal */}
-      <DeleteConfirmationDialog
-        open={showDeleteServiceDialog}
-        onOpenChange={setShowDeleteServiceDialog}
-        onConfirm={handleConfirmDeleteService}
-        title="Delete Service"
-        description="Do you want to delete service"
-        itemName={selectedServiceForEdit?.name}
-      />
+      <Dialog open={showDeleteServiceDialog} onOpenChange={setShowDeleteServiceDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              Delete Service
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Do you want to delete service "{selectedServiceForEdit?.name}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteServiceDialog(false)}
+              disabled={deleteServiceMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteService}
+              disabled={deleteServiceMutation.isPending}
+            >
+              {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -79,6 +79,8 @@ export function useServiceCategoriesQuery(params: ServiceCategoryParams = {}) {
     gcTime: 10 * 60 * 1000,   // 10 minutes
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    // Keep data visible during refetches to prevent UI breaking (React Query v5)
+    placeholderData: (previousData) => previousData,
   })
 }
 
@@ -112,6 +114,9 @@ export function useCreateServiceCategoryMutation() {
     onSuccess: () => {
       // Invalidate and refetch service categories
       queryClient.invalidateQueries({ queryKey: serviceCategoryKeys.all })
+    },
+    onError: (error) => {
+      console.error('Delete service error:', error)
     },
   })
 }
@@ -184,7 +189,11 @@ export function useUpdateServiceMutation() {
       return response.updateservicesCollection.records[0]
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: serviceCategoryKeys.all })
+      // Use a more targeted invalidation to prevent UI breaking
+      queryClient.invalidateQueries({ 
+        queryKey: serviceCategoryKeys.all,
+        refetchType: 'active' // Only refetch active queries
+      })
     },
   })
 }
@@ -198,16 +207,41 @@ export function useDeleteServiceMutation() {
       const client = await createGraphQLClient()
       const mutation = gql`
         mutation DeleteService($id: UUID!) {
-          deleteservicesCollection(filter: { id: { eq: $id } }) {
-            records {
-              id
-            }
+          deleteFromservicesCollection(filter: { id: { eq: $id } }) {
+            affectedCount
           }
         }
       `
       await client.request(mutation, { id })
     },
-    onSuccess: () => {
+    onMutate: async (deletedId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: serviceCategoryKeys.all })
+      
+      // Snapshot the previous value
+      const previousCategories = queryClient.getQueryData(serviceCategoryKeys.all)
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(serviceCategoryKeys.all, (old: any) => {
+        if (!old) return old
+        
+        return old.map((category: any) => ({
+          ...category,
+          services: category.services.filter((service: any) => service.id !== deletedId)
+        }))
+      })
+      
+      return { previousCategories }
+    },
+    onError: (err, deletedId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousCategories) {
+        queryClient.setQueryData(serviceCategoryKeys.all, context.previousCategories)
+      }
+      console.error('Delete service error:', err)
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure server state
       queryClient.invalidateQueries({ queryKey: serviceCategoryKeys.all })
     },
   })
@@ -241,7 +275,11 @@ export function useUpdateServiceCategoryMutation() {
       return response.updateservice_categoriesCollection.records[0]
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: serviceCategoryKeys.all })
+      // Use a more targeted invalidation to prevent UI breaking
+      queryClient.invalidateQueries({ 
+        queryKey: serviceCategoryKeys.all,
+        refetchType: 'active' // Only refetch active queries
+      })
     },
   })
 }
@@ -255,16 +293,38 @@ export function useDeleteServiceCategoryMutation() {
       const client = await createGraphQLClient()
       const mutation = gql`
         mutation DeleteServiceCategory($id: UUID!) {
-          deleteservice_categoriesCollection(filter: { id: { eq: $id } }) {
-            records {
-              id
-            }
+          deleteFromservice_categoriesCollection(filter: { id: { eq: $id } }) {
+            affectedCount
           }
         }
       `
       await client.request(mutation, { id })
     },
-    onSuccess: () => {
+    onMutate: async (deletedId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: serviceCategoryKeys.all })
+      
+      // Snapshot the previous value
+      const previousCategories = queryClient.getQueryData(serviceCategoryKeys.all)
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(serviceCategoryKeys.all, (old: any) => {
+        if (!old) return old
+        
+        return old.filter((category: any) => category.id !== deletedId)
+      })
+      
+      return { previousCategories }
+    },
+    onError: (err, deletedId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousCategories) {
+        queryClient.setQueryData(serviceCategoryKeys.all, context.previousCategories)
+      }
+      console.error('Delete service category error:', err)
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure server state
       queryClient.invalidateQueries({ queryKey: serviceCategoryKeys.all })
     },
   })
