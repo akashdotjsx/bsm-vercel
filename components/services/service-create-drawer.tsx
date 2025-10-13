@@ -22,14 +22,45 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
   const [form, setForm] = useState<any>({
     name: initial?.name || "",
     description: initial?.description || "",
-    short_description: initial?.short_description || "",
-    category_id: initial?.category_id || "",
-    is_requestable: initial?.is_requestable ?? true,
-    requires_approval: initial?.requires_approval ?? false,
-    estimated_delivery_days: initial?.estimated_delivery_days || 3,
+    estimated_delivery_days: initial?.estimated_delivery_days || "",
     popularity_score: initial?.popularity_score || 3,
-    status: initial?.status || 'active'
+    category_id: initial?.category_id || "",
+    // Set default values for required fields
+    is_requestable: true,
+    requires_approval: false,
+    status: 'active'
   })
+
+  // Update form when drawer opens - prioritize isOpen to ensure fresh form on new service
+  useEffect(() => {
+    if (!isOpen) return // Don't do anything when drawer is closed
+    
+    if (initial) {
+      // Editing mode - populate with existing data
+      setForm({
+        name: initial.name || "",
+        description: initial.description || "",
+        estimated_delivery_days: initial.estimated_delivery_days || "",
+        popularity_score: initial.popularity_score || 3,
+        category_id: initial.category_id || "",
+        is_requestable: true,
+        requires_approval: false,
+        status: 'active'
+      })
+    } else {
+      // Creating new service - reset form to empty state
+      setForm({
+        name: "",
+        description: "",
+        estimated_delivery_days: "",
+        popularity_score: 3,
+        category_id: "",
+        is_requestable: true,
+        requires_approval: false,
+        status: 'active'
+      })
+    }
+  }, [isOpen, initial])
 
   useEffect(() => {
     if (!isOpen) return
@@ -39,11 +70,13 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
   }, [isOpen])
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.category_id) return
+    if (!form.name.trim() || !form.description.trim()) return
     setSaving(true)
     try {
       const payload = { ...form }
-      payload.estimated_delivery_days = Number(payload.estimated_delivery_days) || 3
+      // Extract number from SLA string (e.g., "3-5 days" -> 3, "1 week" -> 7)
+      const slaMatch = payload.estimated_delivery_days.match(/(\d+)/)
+      payload.estimated_delivery_days = slaMatch ? Number(slaMatch[1]) : 3
       payload.popularity_score = Number(payload.popularity_score) || 3
       await onSubmit(payload)
       onClose()
@@ -65,66 +98,57 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+          {/* Service Name */}
           <div className="space-y-2">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Name</label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-[11px] h-8" />
+            <label className="text-sm font-medium text-foreground">Service Name</label>
+            <Input 
+              value={form.name} 
+              onChange={(e) => setForm({ ...form, name: e.target.value })} 
+              placeholder="Enter service name"
+              className="h-10" 
+            />
           </div>
+
+          {/* Description */}
           <div className="space-y-2">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Short Description</label>
-            <Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="text-[11px] h-8" />
+            <label className="text-sm font-medium text-foreground">Description</label>
+            <Textarea 
+              rows={4} 
+              value={form.description} 
+              onChange={(e) => setForm({ ...form, description: e.target.value })} 
+              placeholder="Brief description of the service"
+              className="resize-none" 
+            />
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
-            <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="text-[11px] resize-none" />
-          </div>
+
+          {/* SLA and Popularity in a row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
-              <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                <SelectTrigger className="h-8">
-                  <SelectValue className="text-[11px]" placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="text-[11px]">{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SLA (days)</label>
-                <Input type="number" min={1} value={form.estimated_delivery_days} onChange={(e) => setForm({ ...form, estimated_delivery_days: e.target.value })} className="text-[11px] h-8" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Popularity</label>
-                <Input type="number" min={1} max={5} value={form.popularity_score} onChange={(e) => setForm({ ...form, popularity_score: e.target.value })} className="text-[11px] h-8" />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Requestable</label>
-              <Select value={String(form.is_requestable)} onValueChange={(v) => setForm({ ...form, is_requestable: v === 'true' })}>
-                <SelectTrigger className="h-8">
-                  <SelectValue className="text-[11px]" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true" className="text-[11px]">Yes</SelectItem>
-                  <SelectItem value="false" className="text-[11px]">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-foreground">SLA</label>
+              <Input 
+                type="text" 
+                value={form.estimated_delivery_days} 
+                onChange={(e) => setForm({ ...form, estimated_delivery_days: e.target.value })} 
+                placeholder="e.g., 3-5 days"
+                className="h-10" 
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Requires Approval</label>
-              <Select value={String(form.requires_approval)} onValueChange={(v) => setForm({ ...form, requires_approval: v === 'true' })}>
-                <SelectTrigger className="h-8">
-                  <SelectValue className="text-[11px]" />
+              <label className="text-sm font-medium text-foreground">Popularity (1-5)</label>
+              <Select 
+                value={String(form.popularity_score)} 
+                onValueChange={(value) => setForm({ ...form, popularity_score: Number(value) })}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select popularity" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true" className="text-[11px]">Yes</SelectItem>
-                  <SelectItem value="false" className="text-[11px]">No</SelectItem>
+                  <SelectItem value="1">1 Star</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -133,7 +157,7 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
 
         <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
           <Button variant="outline" onClick={onClose} className="text-[11px] h-8 px-3" disabled={saving}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving || !form.name.trim() || !form.category_id} className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90">
+          <Button onClick={handleSave} disabled={saving || !form.name.trim() || !form.description.trim()} className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90">
             {saving ? (<><LoadingSpinner className="h-3 w-3 mr-2" />Saving...</>) : (<><Save className="h-3 w-3 mr-2" />Save</>)}
           </Button>
         </div>

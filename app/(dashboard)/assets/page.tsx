@@ -42,10 +42,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
-import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteAssetGQL } from "@/hooks/use-services-assets-gql"
-import { useAssetStats, useBusinessServices, useDiscoveryRules } from "@/hooks/use-assets"
+import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteAssetGQL, useAssetStatsGQL, useBusinessServicesGQL, useDiscoveryRulesGQL } from "@/hooks/use-services-assets-gql"
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
 import { useAuth } from "@/lib/contexts/auth-context"
+import { toast } from "sonner"
 
 // Icon mapping for asset types
 const iconMap: Record<string, any> = {
@@ -105,26 +105,50 @@ export default function AssetManagementPage() {
   
   // GraphQL mutations for write operations
   const createAsset = async (data: any) => {
-    const result = await createAssetGQL(data)
-    refetch()
-    return result
+    try {
+      const result = await createAssetGQL(data)
+      refetch()
+      toast.success('Asset created successfully!')
+      return result
+    } catch (error) {
+      toast.error('Failed to create asset', {
+        description: error instanceof Error ? error.message : 'An error occurred'
+      })
+      throw error
+    }
   }
   
   const updateAsset = async (id: string, data: any) => {
-    const result = await updateAssetGQL(id, data)
-    refetch()
-    return result
+    try {
+      const result = await updateAssetGQL(id, data)
+      refetch()
+      toast.success('Asset updated successfully!')
+      return result
+    } catch (error) {
+      toast.error('Failed to update asset', {
+        description: error instanceof Error ? error.message : 'An error occurred'
+      })
+      throw error
+    }
   }
   
   const deleteAsset = async (id: string) => {
-    await deleteAssetGQL(id)
-    refetch()
+    try {
+      await deleteAssetGQL(id)
+      refetch()
+      toast.success('Asset deleted successfully!')
+    } catch (error) {
+      toast.error('Failed to delete asset', {
+        description: error instanceof Error ? error.message : 'An error occurred'
+      })
+      throw error
+    }
   }
 
   const { assetTypes, loading: typesLoading } = useAssetTypesGQL({ organization_id: organizationId })
-  const { stats, loading: statsLoading } = useAssetStats(organizationId)
-  const { services, loading: servicesLoading } = useBusinessServices(organizationId)
-  const { rules, loading: rulesLoading, runRule } = useDiscoveryRules(organizationId)
+  const { stats, loading: statsLoading } = useAssetStatsGQL(organizationId)
+  const { services, loading: servicesLoading } = useBusinessServicesGQL(organizationId)
+  const { rules, loading: rulesLoading } = useDiscoveryRulesGQL(organizationId)
 
   const getStatusColor = (status: string | undefined | null) => {
     if (!status) return "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-300"
@@ -203,7 +227,7 @@ export default function AssetManagementPage() {
         criticality: "medium",
       })
     } catch (error) {
-      // Handle error silently or show user-friendly message
+      // Error already handled in createAsset function
     }
   }
 
@@ -212,8 +236,9 @@ export default function AssetManagementPage() {
       try {
         await updateAsset(selectedAsset.id, newAsset)
         setShowEditAssetModal(false)
+        setSelectedAsset(null)
       } catch (error) {
-        // Handle error silently or show user-friendly message
+        // Error already handled in updateAsset function
       }
     }
   }
@@ -230,7 +255,7 @@ export default function AssetManagementPage() {
       setShowDeleteAssetDialog(false)
       setAssetToDelete(null)
     } catch (error) {
-      // Handle error silently or show user-friendly message
+      // Error already handled in deleteAsset function
     }
   }
 

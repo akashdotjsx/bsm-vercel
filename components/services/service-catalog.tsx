@@ -2,10 +2,16 @@
 
 import { useState } from "react"
 import { useMode } from "@/lib/contexts/mode-context"
-import { useServiceCategories } from "@/lib/hooks/use-service-categories"
-import { useServices } from "@/lib/hooks/use-services"
-import { createServiceGQL, updateServiceGQL } from "@/hooks/use-services-assets-gql"
-import { createServiceCategoryGQL, updateServiceCategoryGQL } from "@/hooks/use-services-assets-gql"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { 
+  useServiceCategoriesQuery,
+  useCreateServiceCategoryMutation,
+  useCreateServiceMutation,
+  useUpdateServiceMutation,
+  useDeleteServiceMutation,
+  useUpdateServiceCategoryMutation,
+  useDeleteServiceCategoryMutation
+} from "@/hooks/queries/use-service-categories-query"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,29 +77,52 @@ const ServiceCreateDrawer = dynamic(
 export function ServiceCatalog() {
   const { mode } = useMode()
   const { toast } = useToast()
-  const { categories, loading, error, addCategory, updateCategory, deleteCategory, refetch } = useServiceCategories()
-  const { addService, updateService, deleteService, loading: serviceLoading, error: serviceError } = useServices()
+  const { organization, loading: authLoading } = useAuth()
+  
+  // Use React Query hooks instead of manual state management
+  const { 
+    data: categories = [], 
+    isLoading: loading, 
+    error 
+  } = useServiceCategoriesQuery({ is_active: true })
+  
+  // Mutations with automatic cache invalidation
+  const createCategoryMutation = useCreateServiceCategoryMutation()
+  const createServiceMutation = useCreateServiceMutation()
+  const updateServiceMutation = useUpdateServiceMutation()
+  const deleteServiceMutation = useDeleteServiceMutation()
+  const updateServiceCategoryMutation = useUpdateServiceCategoryMutation()
+  const deleteServiceCategoryMutation = useDeleteServiceCategoryMutation()
+  
+  // Debug: Log organization state
+  console.log('🔍 ServiceCatalog - Organization:', organization)
+  console.log('🔍 ServiceCatalog - Organization ID:', organization?.id)
+  console.log('🔍 ServiceCatalog - Auth Loading:', authLoading)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("popularity")
 
-  // Convert Supabase categories to the expected format
-  const services = categories.map(cat => {
-    const IconComponent = categoryIconMap[cat.icon || 'settings'] || Settings
-    return {
-      id: cat.id,
-      name: cat.name,
-      description: cat.description || "",
-      icon: IconComponent,
-      color: getBgColorClass(cat.color || 'blue'),
-      services: (cat.services || []).map(service => ({
-        name: service.name,
-        description: service.description || "",
-        sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
-        popularity: service.popularity_score || 1
-      }))
-    }
-  })
+  // Convert Supabase categories to the expected format and sort alphabetically
+  const services = categories
+    .map(cat => {
+      const IconComponent = categoryIconMap[cat.icon || 'settings'] || Settings
+      return {
+        id: cat.id,
+        name: cat.name,
+        description: cat.description || "",
+        icon: IconComponent,
+        color: getBgColorClass(cat.color || 'blue'),
+        services: (cat.services || [])
+          .map(service => ({
+            name: service.name,
+            description: service.description || "",
+            sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
+            popularity: service.popularity_score || 1
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name)) // Sort services alphabetically
+      }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name)) // Sort categories alphabetically
   
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
   const [showAddServiceModal, setShowAddServiceModal] = useState(false)
@@ -127,15 +156,53 @@ export function ServiceCatalog() {
 
   const handleAddCategory = async () => {
     try {
-      await addCategory({
+      console.log('🎯 handleAddCategory - Organization:', organization)
+      console.log('🎯 handleAddCategory - Organization ID:', organization?.id)
+      console.log('🎯 handleAddCategory - Type of organization:', typeof organization)
+      console.log('🎯 handleAddCategory - Auth loading:', authLoading)
+      
+      // Wait for auth to finish loading
+      if (authLoading) {
+        toast({
+          title: "Loading",
+          description: "Please wait while we load your account information...",
+        })
+        return
+      }
+      
+      if (!organization || !organization.id) {
+        console.error('❌ Organization ID is missing!', { organization, id: organization?.id })
+        toast({
+          title: "Authentication Required",
+          description: "Please ensure you're logged in with a valid organization.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const orgId = String(organization.id) // Ensure it's a string
+      console.log('✅ Creating category with organization_id:', orgId)
+      
+      // Remove "bg-" prefix from color if present (Tailwind class to color name)
+      const colorValue = newCategory.color.replace(/^bg-/, '').replace(/-\d+$/, '') // "bg-blue-500" -> "blue"
+      
+      const categoryData = {
         name: newCategory.name,
-        description: newCategory.description,
+        description: newCategory.description || "",
         icon: "Settings",
-        color: newCategory.color,
-        services: [],
-      })
+        color: colorValue,
+        is_active: true,
+        organization_id: orgId
+      }
+      
+      console.log('📤 Sending category data:', JSON.stringify(categoryData, null, 2))
+      
+      // Use React Query mutation - NO refetch needed!
+      await createCategoryMutation.mutateAsync(categoryData)
+      
       setNewCategory({ name: "", description: "", color: "bg-blue-500" })
       setShowAddCategoryModal(false)
+      
       toast({
         title: "Category created",
         description: `"${newCategory.name}" has been added successfully.`,
@@ -161,24 +228,35 @@ export function ServiceCatalog() {
     }
 
     try {
+      if (!organization?.id) {
+        toast({
+          title: "Error",
+          description: "Organization ID is missing. Please ensure you're logged in.",
+          variant: "destructive",
+        })
+        return
+      }
+      
       const serviceData = {
         name: newService.name,
-        description: newService.description,
+        description: newService.description || "",
         category_id: selectedCategoryForService,
         estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
-        popularity_score: newService.popularity
+        popularity_score: newService.popularity,
+        is_requestable: true,
+        requires_approval: false,
+        status: 'active',
+        organization_id: organization.id
       }
 
-      await addService(serviceData)
+      // Use React Query mutation - NO refetch needed!
+      await createServiceMutation.mutateAsync(serviceData)
       
       // Reset form and close modal
       const serviceName = newService.name
       setNewService({ name: "", description: "", sla: "", popularity: 3 })
       setSelectedCategoryForService("")
       setShowAddServiceModal(false)
-      
-      // Refresh categories to show the new service
-      await refetch()
       
       toast({
         title: "Service created",
@@ -247,17 +325,20 @@ export function ServiceCatalog() {
     if (!selectedCategoryForEdit) return
     
     try {
-      await updateCategory({
+      // Use React Query mutation - NO refetch needed!
+      await updateServiceCategoryMutation.mutateAsync({
         id: selectedCategoryForEdit.id,
         name: newCategory.name,
         description: newCategory.description,
         color: newCategory.color,
         icon: "Settings"
       })
+      
       const categoryName = newCategory.name
       setShowEditCategoryModal(false)
       setSelectedCategoryForEdit(null)
       setNewCategory({ name: "", description: "", color: "bg-blue-500" })
+      
       toast({
         title: "Category updated",
         description: `"${categoryName}" has been updated successfully.`,
@@ -279,9 +360,12 @@ export function ServiceCatalog() {
     const serviceCount = selectedCategoryForEdit.services?.length || 0
     
     try {
-      await deleteCategory(selectedCategoryForEdit.id)
+      // Use React Query mutation - NO refetch needed!
+      await deleteServiceCategoryMutation.mutateAsync(selectedCategoryForEdit.id)
+      
       setShowDeleteCategoryDialog(false)
       setSelectedCategoryForEdit(null)
+      
       toast({
         title: "Category deleted",
         description: serviceCount > 0 
@@ -302,16 +386,14 @@ export function ServiceCatalog() {
     if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
     
     try {
-      await updateService({
+      // Use React Query mutation - NO refetch needed!
+      await updateServiceMutation.mutateAsync({
         id: selectedServiceForEdit.id,
         name: newService.name,
         description: newService.description,
         estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
         popularity_score: newService.popularity
       })
-      
-      // Refresh categories to show the updated service
-      await refetch()
       
       const serviceName = newService.name
       setShowEditServiceModal(false)
@@ -337,9 +419,8 @@ export function ServiceCatalog() {
     const serviceName = selectedServiceForEdit.name
     
     try {
-      await deleteService(selectedServiceForEdit.id)
-      // Refresh categories to show the changes
-      await refetch()
+      // Use React Query mutation - NO refetch needed!
+      await deleteServiceMutation.mutateAsync(selectedServiceForEdit.id)
       
       setShowDeleteServiceDialog(false)
       setSelectedServiceForEdit(null)
@@ -513,7 +594,8 @@ export function ServiceCatalog() {
         onSubmit={async (payload) => {
           try {
             if (selectedCategoryForEdit) {
-              await updateServiceCategoryGQL(selectedCategoryForEdit.id, {
+              await updateServiceCategoryMutation.mutateAsync({
+                id: selectedCategoryForEdit.id,
                 name: payload.name,
                 description: payload.description,
                 icon: payload.icon,
@@ -521,16 +603,26 @@ export function ServiceCatalog() {
               })
               toast({ title: "Category updated", description: `"${payload.name}" has been updated.` })
             } else {
-              await createServiceCategoryGQL({
+              // Ensure organization_id is available
+              if (!organization?.id) {
+                toast({ 
+                  title: "Authentication Required", 
+                  description: "Please ensure you're logged in with a valid organization.", 
+                  variant: "destructive" 
+                })
+                return
+              }
+              
+              await createCategoryMutation.mutateAsync({
                 name: payload.name,
                 description: payload.description || "",
                 icon: payload.icon || "Settings",
                 color: payload.color || "bg-blue-500",
-                is_active: true
+                is_active: true,
+                organization_id: organization.id
               })
               toast({ title: "Category created", description: `"${payload.name}" has been added successfully.` })
             }
-            await refetch()
           } catch (e) {
             toast({ title: selectedCategoryForEdit ? "Failed to update category" : "Failed to create category", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
           }
@@ -540,6 +632,13 @@ export function ServiceCatalog() {
       <ServiceCreateDrawer
         isOpen={showServiceDrawer}
         onClose={() => setShowServiceDrawer(false)}
+        initial={selectedServiceForEdit ? {
+          name: selectedServiceForEdit.name,
+          description: selectedServiceForEdit.description,
+          estimated_delivery_days: selectedServiceForEdit.estimated_delivery_days ? `${selectedServiceForEdit.estimated_delivery_days} days` : "",
+          popularity_score: selectedServiceForEdit.popularity_score || 3,
+          category_id: selectedServiceForEdit.category_id
+        } : undefined}
         onSubmit={async (serviceData) => {
           try {
             if (selectedServiceForEdit && selectedServiceForEdit.id) {
@@ -552,23 +651,36 @@ export function ServiceCatalog() {
                 requires_approval: !!serviceData.requires_approval,
                 category_id: serviceData.category_id || selectedCategoryForService || undefined
               }
-              await updateServiceGQL(selectedServiceForEdit.id, updates)
+              await updateServiceMutation.mutateAsync({
+                id: selectedServiceForEdit.id,
+                ...updates
+              })
               toast({ title: "Service updated", description: `"${serviceData.name}" has been updated.` })
             } else {
+              // Ensure organization_id is available
+              if (!organization?.id) {
+                toast({ 
+                  title: "Authentication Required", 
+                  description: "Please ensure you're logged in with a valid organization.", 
+                  variant: "destructive" 
+                })
+                return
+              }
+              
               const payload = {
                 name: serviceData.name,
                 description: serviceData.description || "",
-                category_id: serviceData.category_id || selectedCategoryForService,
+                category_id: serviceData.category_id || selectedCategoryForService || null,
                 estimated_delivery_days: Number(serviceData.estimated_delivery_days) || 3,
                 popularity_score: Number(serviceData.popularity_score) || 3,
                 is_requestable: !!serviceData.is_requestable,
                 requires_approval: !!serviceData.requires_approval,
-                status: 'active'
+                status: 'active',
+                organization_id: organization.id
               }
-              await createServiceGQL(payload)
+              await createServiceMutation.mutateAsync(payload)
               toast({ title: "Service created", description: `"${payload.name}" has been added successfully.` })
             }
-            await refetch()
           } catch (e) {
             toast({ title: selectedServiceForEdit ? "Failed to update service" : "Failed to create service", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
           }
@@ -845,9 +957,9 @@ export function ServiceCatalog() {
             <Button 
               onClick={handleAddService} 
               className="text-[13px]"
-              disabled={serviceLoading || !newService.name.trim()}
+              disabled={!newService.name.trim()}
             >
-              {serviceLoading ? 'Adding...' : 'Add Service'}
+              Add Service
             </Button>
           </DialogFooter>
         </DialogContent>

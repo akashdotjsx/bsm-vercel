@@ -436,7 +436,7 @@ export const GET_SERVICE_REQUESTS_QUERY = gql`
           priority
           urgency
           estimated_delivery_date
-          completed_at
+          actual_delivery_date
           cost_center
           form_data
           created_at

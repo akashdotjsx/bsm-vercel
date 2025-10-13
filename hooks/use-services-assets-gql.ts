@@ -182,7 +182,7 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
 
       const query = gql`
         query GetServiceCategories {
-          service_categoriesCollection {
+          service_categoriesCollection(orderBy: [{ sort_order: AscNullsLast }, { name: AscNullsLast }]) {
             edges {
               node {
                 id
@@ -194,6 +194,24 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
                 is_active
                 created_at
                 updated_at
+                servicesCollection {
+                  edges {
+                    node {
+                      id
+                      name
+                      description
+                      short_description
+                      is_requestable
+                      requires_approval
+                      estimated_delivery_days
+                      popularity_score
+                      total_requests
+                      status
+                      created_at
+                      updated_at
+                    }
+                  }
+                }
               }
             }
           }
@@ -223,7 +241,10 @@ export function useServiceCategoriesGQL(params: { organization_id?: string; is_a
         return
       }
       
-      const transformedCategories = data.service_categoriesCollection.edges.map((edge: any) => edge.node)
+      const transformedCategories = data.service_categoriesCollection.edges.map((edge: any) => ({
+        ...edge.node,
+        services: edge.node.servicesCollection?.edges.map((serviceEdge: any) => serviceEdge.node) || []
+      }))
       
       setCategories(transformedCategories)
       console.log('✅ GraphQL: Service categories loaded:', transformedCategories.length, transformedCategories)
@@ -330,7 +351,7 @@ export function useServiceRequestsGQL(params: ServiceRequestsParams = {}) {
                 priority
                 urgency
                 estimated_delivery_date
-                completed_at
+                actual_delivery_date
                 cost_center
                 form_data
                 created_at
@@ -566,12 +587,23 @@ export function useAssetTypesGQL(params: { organization_id?: string; is_active?:
 // ============================================
 
 export async function createServiceCategoryGQL(categoryData: any): Promise<any> {
+  console.log('🔧 createServiceCategoryGQL - Received data:', categoryData)
+  console.log('🔧 createServiceCategoryGQL - organization_id:', categoryData?.organization_id)
+  console.log('🔧 createServiceCategoryGQL - organization_id type:', typeof categoryData?.organization_id)
+  console.log('🔧 createServiceCategoryGQL - Full data:', JSON.stringify(categoryData, null, 2))
+  
+  // Ensure organization_id is present
+  if (!categoryData.organization_id) {
+    throw new Error('organization_id is required for creating service categories')
+  }
+  
   const client = await createGraphQLClient()
   const mutation = gql`
     mutation CreateServiceCategory($input: service_categoriesInsertInput!) {
       insertIntoservice_categoriesCollection(objects: [$input]) {
         records {
           id
+          organization_id
           name
           description
           icon
@@ -626,6 +658,11 @@ export async function deleteServiceCategoryGQL(id: string): Promise<boolean> {
 // ============================================
 
 export async function createServiceGQL(serviceData: any): Promise<any> {
+  // Ensure organization_id is present
+  if (!serviceData.organization_id) {
+    throw new Error('organization_id is required for creating services')
+  }
+  
   const client = await createGraphQLClient()
   
   const mutation = gql`
@@ -633,6 +670,7 @@ export async function createServiceGQL(serviceData: any): Promise<any> {
       insertIntoservicesCollection(objects: [$input]) {
         records {
           id
+          organization_id
           name
           description
           icon
@@ -859,7 +897,7 @@ export async function updateServiceRequestStatusGQL(id: string, status: string, 
   
   // Set completion timestamp if status is completed
   if (status === 'completed') {
-    updates.completed_at = new Date().toISOString()
+    updates.actual_delivery_date = new Date().toISOString()
   }
   
   const response: any = await client.request(mutation, { id, set: updates })
@@ -1003,4 +1041,222 @@ export async function deleteAssetGQL(id: string): Promise<boolean> {
   
   const response: any = await client.request(mutation, { id })
   return response.deleteFromassetsCollection.affectedCount > 0
+}
+
+// ============================================
+// ASSET STATS HOOK
+// ============================================
+
+export function useAssetStatsGQL(organizationId?: string) {
+  const [stats, setStats] = useState({
+    totalAssets: 0,
+    assetsByType: {} as Record<string, number>,
+    assetsByStatus: {} as Record<string, number>,
+    assetsByCriticality: {} as Record<string, number>,
+    recentAssets: [] as any[]
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchStats = useCallback(async () => {
+    try {
+      console.log('🔄 GraphQL: Fetching asset statistics')
+      setLoading(true)
+      setError(null)
+
+      const client = await createGraphQLClient()
+
+      const query = gql`
+        query GetAssetStats($orgId: UUID) {
+          assetsCollection(filter: { organization_id: { eq: $orgId } }, first: 1000) {
+            edges {
+              node {
+                id
+                name
+                asset_tag
+                status
+                criticality
+                asset_type_id
+                created_at
+                asset_type: asset_types {
+                  name
+                }
+              }
+            }
+          }
+        }
+      `
+
+      const data: any = await client.request(query, { orgId: organizationId })
+      const assets = data.assetsCollection.edges.map((edge: any) => edge.node)
+
+      const assetsByType: Record<string, number> = {}
+      const assetsByStatus: Record<string, number> = {}
+      const assetsByCriticality: Record<string, number> = {}
+
+      assets.forEach((asset: any) => {
+        const typeName = asset.asset_type?.name || 'Unknown'
+        assetsByType[typeName] = (assetsByType[typeName] || 0) + 1
+        assetsByStatus[asset.status] = (assetsByStatus[asset.status] || 0) + 1
+        assetsByCriticality[asset.criticality] = (assetsByCriticality[asset.criticality] || 0) + 1
+      })
+
+      const recentAssets = assets.slice(0, 10)
+
+      setStats({
+        totalAssets: assets.length,
+        assetsByType,
+        assetsByStatus,
+        assetsByCriticality,
+        recentAssets
+      })
+
+      console.log('✅ GraphQL: Asset stats loaded successfully')
+    } catch (err) {
+      console.error('❌ GraphQL Error fetching asset stats:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch asset stats')
+    } finally {
+      setLoading(false)
+    }
+  }, [organizationId])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  return {
+    stats,
+    loading,
+    error,
+    refetch: fetchStats
+  }
+}
+
+// ============================================
+// BUSINESS SERVICES HOOK
+// ============================================
+
+export function useBusinessServicesGQL(organizationId?: string) {
+  const [services, setServices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchServices = useCallback(async () => {
+    try {
+      console.log('🔄 GraphQL: Fetching business services')
+      setLoading(true)
+      setError(null)
+
+      const client = await createGraphQLClient()
+
+      const query = gql`
+        query GetBusinessServices($orgId: UUID) {
+          business_servicesCollection(filter: { organization_id: { eq: $orgId } }) {
+            edges {
+              node {
+                id
+                name
+                description
+                category
+                status
+                criticality
+                sla_target_uptime
+                current_uptime
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
+
+      const data: any = await client.request(query, { orgId: organizationId })
+      const businessServices = data.business_servicesCollection?.edges.map((edge: any) => edge.node) || []
+
+      setServices(businessServices)
+      console.log('✅ GraphQL: Business services loaded:', businessServices.length)
+    } catch (err) {
+      console.error('❌ GraphQL Error fetching business services:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch business services')
+    } finally {
+      setLoading(false)
+    }
+  }, [organizationId])
+
+  useEffect(() => {
+    fetchServices()
+  }, [fetchServices])
+
+  return {
+    services,
+    loading,
+    error,
+    refetch: fetchServices
+  }
+}
+
+// ============================================
+// DISCOVERY RULES HOOK
+// ============================================
+
+export function useDiscoveryRulesGQL(organizationId?: string) {
+  const [rules, setRules] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchRules = useCallback(async () => {
+    try {
+      console.log('🔄 GraphQL: Fetching discovery rules')
+      setLoading(true)
+      setError(null)
+
+      const client = await createGraphQLClient()
+
+      const query = gql`
+        query GetDiscoveryRules($orgId: UUID) {
+          discovery_rulesCollection(filter: { organization_id: { eq: $orgId } }) {
+            edges {
+              node {
+                id
+                name
+                description
+                rule_type
+                configuration
+                is_active
+                last_run_at
+                next_run_at
+                run_count
+                success_count
+                error_count
+                created_at
+                updated_at
+              }
+            }
+          }
+        }
+      `
+
+      const data: any = await client.request(query, { orgId: organizationId })
+      const discoveryRules = data.discovery_rulesCollection?.edges.map((edge: any) => edge.node) || []
+
+      setRules(discoveryRules)
+      console.log('✅ GraphQL: Discovery rules loaded:', discoveryRules.length)
+    } catch (err) {
+      console.error('❌ GraphQL Error fetching discovery rules:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch discovery rules')
+    } finally {
+      setLoading(false)
+    }
+  }, [organizationId])
+
+  useEffect(() => {
+    fetchRules()
+  }, [fetchRules])
+
+  return {
+    rules,
+    loading,
+    error,
+    refetch: fetchRules
+  }
 }
