@@ -37,10 +37,17 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
     
     if (initial) {
       // Editing mode - populate with existing data
+      // Extract number from SLA if it's a string with text
+      let slaValue = initial.estimated_delivery_days || ""
+      if (typeof slaValue === 'string' && slaValue.includes('days')) {
+        const slaMatch = slaValue.match(/(\d+)/)
+        slaValue = slaMatch ? slaMatch[1] : ""
+      }
+      
       setForm({
         name: initial.name || "",
         description: initial.description || "",
-        estimated_delivery_days: initial.estimated_delivery_days || "",
+        estimated_delivery_days: slaValue,
         popularity_score: initial.popularity_score || 3,
         category_id: initial.category_id || "",
         is_requestable: true,
@@ -74,9 +81,8 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
     setSaving(true)
     try {
       const payload = { ...form }
-      // Extract number from SLA string (e.g., "3-5 days" -> 3, "1 week" -> 7)
-      const slaMatch = payload.estimated_delivery_days.match(/(\d+)/)
-      payload.estimated_delivery_days = slaMatch ? Number(slaMatch[1]) : 3
+      // Convert SLA to number (already validated as positive integer)
+      payload.estimated_delivery_days = Number(payload.estimated_delivery_days) || 1
       payload.popularity_score = Number(payload.popularity_score) || 3
       await onSubmit(payload)
       onClose()
@@ -125,12 +131,20 @@ export default function ServiceCreateDrawer({ isOpen, onClose, onSubmit, initial
           {/* SLA and Popularity in a row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">SLA</label>
+              <label className="text-sm font-medium text-foreground">SLA (Days)</label>
               <Input 
-                type="text" 
+                type="number" 
                 value={form.estimated_delivery_days} 
-                onChange={(e) => setForm({ ...form, estimated_delivery_days: e.target.value })} 
-                placeholder="e.g., 3-5 days"
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Only allow positive numbers
+                  if (value === '' || (Number(value) > 0 && Number.isInteger(Number(value)))) {
+                    setForm({ ...form, estimated_delivery_days: value })
+                  }
+                }} 
+                placeholder="e.g., 3"
+                min="1"
+                step="1"
                 className="h-10" 
               />
             </div>
