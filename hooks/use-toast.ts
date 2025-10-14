@@ -6,7 +6,7 @@ import * as React from 'react'
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast'
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 5000 // 5 seconds (previously 16 minutes)
 
 type ToasterToast = ToastProps & {
   id: string
@@ -179,7 +179,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, []) // ✅ Removed state dependency - only register listener once
 
   return {
     ...state,
@@ -188,4 +188,37 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+// Helper methods for color-coded toasts
+const toastSuccess = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'success',
+  })
+}
+
+const toastError = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'error',
+  })
+}
+
+const toastWarning = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'warning',
+  })
+}
+
+const toastInfo = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: 'info',
+  })
+}
+
+export { useToast, toast, toastSuccess, toastError, toastWarning, toastInfo }

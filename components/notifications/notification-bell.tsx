@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useNotifications } from "@/lib/contexts/notification-context"
+import { useTheme } from "next-themes"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -21,6 +22,7 @@ const iconMap = {
 export function NotificationBell() {
   const { notifications, unreadCount, getUnreadCountByType, markAsRead, markAllAsRead, clearNotification } =
     useNotifications()
+  const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("All")
   const [isOpen, setIsOpen] = useState(false)
 
@@ -83,19 +85,17 @@ export function NotificationBell() {
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 relative">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 relative" title="Notifications">
+          <Bell className="h-4 w-4" style={{ color: theme === 'dark' ? '#d1d5db' : '#000000' }} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
         alignOffset={-20}
@@ -237,11 +237,6 @@ export function NotificationBell() {
           )}
         </div>
       </DropdownMenuContent>
-        </DropdownMenu>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'Notifications'}
-      </TooltipContent>
-    </Tooltip>
+    </DropdownMenu>
   )
 }

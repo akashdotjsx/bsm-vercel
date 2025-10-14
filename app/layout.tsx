@@ -12,7 +12,6 @@ import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
 import { ReactQueryProvider } from "@/components/providers/react-query-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
-import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,9 +20,30 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Kroolo BSM - AI-Native Business Service Management",
-  description: "Enterprise service management platform for employee and customer support",
-  generator: "v0.app",
+  title: {
+    default: "Kroolo BSM - AI-Native Business Service Management",
+    template: "%s | Kroolo BSM"
+  },
+  description: "Transform your Enterprise Business Service Management with AI-powered automation for IT, HR, Finance, Legal and more. Built for modern enterprises.",
+  keywords: ["Business Service Management", "BSM", "IT Service Management", "ITSM", "AI", "Enterprise", "Kroolo"],
+  authors: [{ name: "Kroolo" }],
+  creator: "Kroolo",
+  publisher: "Kroolo",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/kroolo-light-icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/icons/kroolo-light-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    ],
+  },
 }
 
 export default function RootLayout({
@@ -33,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} antialiased`} suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ReactQueryProvider>
             <TooltipProvider delayDuration={200}>
@@ -51,7 +71,6 @@ export default function RootLayout({
                 </AuthProvider>
               </NavbarFixProvider>
               <Toaster />
-              <SonnerToaster />
             </TooltipProvider>
           </ReactQueryProvider>
         </ThemeProvider>
