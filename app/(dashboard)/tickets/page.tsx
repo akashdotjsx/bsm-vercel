@@ -53,7 +53,7 @@ import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatar
 import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
-import { TicketsTable } from "@/components/tickets/tickets-table"
+import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
 import { AIChatPanel } from "@/components/ai/ai-chat-panel"
 import { useDebounce } from "@/hooks/use-debounce"
 
@@ -267,6 +267,9 @@ export default function TicketsPage() {
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [showCustomColumnsDialog, setShowCustomColumnsDialog] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
+  const [bulkDeleteTicketIds, setBulkDeleteTicketIds] = useState<string[]>([])
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   
   // Custom columns store
   const { columns: customColumns } = useCustomColumnsStore()
@@ -980,6 +983,60 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
     }
   }
 
+  // Bulk operation handlers
+  const handleBulkDeleteRequest = (ticketIds: string[]) => {
+    console.log('🗑️ Bulk delete requested for tickets:', ticketIds)
+    setBulkDeleteTicketIds(ticketIds)
+    setShowBulkDeleteDialog(true)
+  }
+
+  const confirmBulkDelete = async () => {
+    if (bulkDeleteTicketIds.length === 0) return
+    
+    console.log('🗑️ Confirming bulk delete for:', bulkDeleteTicketIds)
+    setIsBulkDeleting(true)
+    
+    try {
+      // Delete all selected tickets using GraphQL mutation
+      for (const id of bulkDeleteTicketIds) {
+        await deleteTicketMutation.mutateAsync(id)
+      }
+      
+      toast.success(
+        `${bulkDeleteTicketIds.length} ticket${bulkDeleteTicketIds.length > 1 ? 's' : ''} deleted successfully`,
+        'The selected tickets have been removed'
+      )
+      
+      // Close dialog and reset state
+      setShowBulkDeleteDialog(false)
+      setBulkDeleteTicketIds([])
+    } catch (error) {
+      console.error('Error in bulk delete:', error)
+      toast.error('Failed to delete some tickets')
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
+
+  const handleBulkUpdate = async (ticketIds: string[], updates: any) => {
+    console.log('✏️ Bulk updating tickets:', ticketIds, updates)
+    
+    try {
+      // Update all selected tickets using GraphQL mutation
+      for (const id of ticketIds) {
+        await updateTicketMutation.mutateAsync({ id, updates })
+      }
+      
+      toast.success(
+        `${ticketIds.length} ticket${ticketIds.length > 1 ? 's' : ''} updated successfully`,
+        'The selected tickets have been updated'
+      )
+    } catch (error) {
+      console.error('Error in bulk update:', error)
+      toast.error('Failed to update some tickets')
+    }
+  }
+
   const clearAIChat = () => {
     setAiMessages([])
     setAiInput("")
@@ -1056,6 +1113,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           onDeleteTicket={handleDeleteTicket}
           onUpdateTicket={updateTicket}
           onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
+          onBulkDelete={handleBulkDeleteRequest}
+          onBulkUpdate={handleBulkUpdate}
         />
       </div>
     ),
@@ -2110,6 +2169,19 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         description="Do you want to delete ticket"
         itemName={ticketToDelete ? `#${ticketToDelete.id} - ${ticketToDelete.title}` : undefined}
         isDeleting={deleteTicketMutation.isPending}
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        onConfirm={confirmBulkDelete}
+        title="Delete Multiple Tickets"
+        description={`Do you want to delete ${bulkDeleteTicketIds.length} ticket${bulkDeleteTicketIds.length > 1 ? 's' : ''}`}
+        itemName={undefined}
+        requireCheckbox={true}
+        checkboxLabel="I understand this action cannot be undone"
+        isDeleting={isBulkDeleting}
       />
 
       {/* Custom Columns Dialog */}
