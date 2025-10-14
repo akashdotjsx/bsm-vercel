@@ -1,0 +1,441 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  /* Enterprise Search Frontend Design System */
+  --background: #fafafa;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #2d2f34;
+  /* Primary blue color system */
+  --primary: #6E72FF;
+  --primary-foreground: #ffffff;
+  /* Primary pink color system */
+  --primary-pink: #FF2CB9;
+  --primary-pink-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #525252;
+  --muted: #f4f4f5;
+  --muted-foreground: #737373;
+  /* Accent matches primary for consistency */
+  --accent: #f9fafb;
+  --accent-foreground: #2d2f34;
+  --destructive: #f04438;
+  --destructive-foreground: #ffffff;
+  /* Border tokens */
+  --border: #eaecf0;
+  --card-border: #eaecf0; /* added to align component borders */
+  --input: #fbfcfd;
+  /* Ring color with blue primary */
+  --ring: rgba(110, 114, 255, 0.5);
+  /* Highlight colors */
+  --highlight: #f9fafb;
+  --highlight-foreground: #2d2f34;
+  --highlight-border: #eaecf0;
+
+  /* Enterprise Search Frontend specific colors */
+  --status-open: #fbbf24;
+  --status-open-bg: #fef3c7;
+  --priority-medium: #f97316;
+  --priority-medium-bg: #fed7aa;
+  --priority-high: #ef4444;
+  --priority-high-bg: #fecaca;
+  --priority-urgent: #dc2626;
+  --priority-urgent-bg: #fee2e2;
+  --success: #12b76a;
+  --success-bg: #d1fae5;
+  --active-green: #12b76a;
+  --active-green-border: #039855;
+  --active-red: #f04438;
+  --active-red-border: #d92d20;
+  --error-red: #d32f2f;
+  --error-border: #f44336;
+  --pink-600: #ff3465;
+  --action-icon-color: #6a707c;
+  --placeholder-text: #6a707c;
+  --main-text-color: #000000;
+  --text-color: #2d2f34;
+  --secondary-text-color: #6a707c;
+  --url-color: #f2f4f7;
+  
+  /* Shadows */
+  --popover-shadow: rgba(62, 62, 62, 0.4) 0px 0px 24px 6px;
+  --deep-gray-shadow: 0px 0px 24px 6px rgba(62, 62, 62, 0.4);
+  --dropdown-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1);
+  --select-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06), 0px 0px 1px rgba(0, 0, 0, 0.08);
+
+  --chart-1: #6E72FF;
+  --chart-2: #2d2f34;
+  --chart-3: #f04438;
+  --chart-4: #6E72FF;
+  --chart-5: #6a707c;
+  --radius: 0.625rem;
+  
+  /* Layout dimensions */
+  --header-height: 56px; /* h-14 on desktop */
+  
+  /* Kroolo button colors */
+  --btn-color-base: #6E72FF;
+  --btn-color-hover: #5A5FE0;
+
+  /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #f7f7f7;
+  --sidebar-primary-foreground: #525252;
+  --sidebar-accent: #f7f7f7;
+  --sidebar-accent-foreground: #525252;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: rgba(110, 114, 255, 0.5);
+  --sidebar-hover: #f1f1f1;
+  --sidebar-active: #ededed;
+  --menu-hover: #f4f4f5;
+  --menu-border: #e5e5e5;
+  
+  /* Scrollbar colors */
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+}
+
+.dark {
+  /* Enterprise Search Frontend dark mode */
+  --background: #1e2024;
+  --foreground: #ffffff;
+  --card: #1e2024;
+  --card-foreground: #ffffff;
+  --popover: #212222;
+  --popover-foreground: #ffffff;
+  /* Primary blue stays the same in dark */
+  --primary: #6E72FF;
+  --primary-foreground: #ffffff;
+  /* Primary pink for dark mode (same hex) */
+  --primary-pink: #FF2CB9;
+  --primary-pink-foreground: #ffffff;
+  --secondary: #282a2f;
+  --secondary-foreground: #acb1b9;
+  --muted: #282a2f;
+  --muted-foreground: #acb1b9;
+  --accent: #282a2f;
+  --accent-foreground: #ffffff;
+  --destructive: #f04438;
+  --destructive-foreground: #ffffff;
+  /* Border tokens */
+  --border: #2d2f34;
+  --card-border: #2d2f34; /* added to align component borders */
+  --input: #282a2f;
+  --ring: rgba(110, 114, 255, 0.5);
+  --highlight: #282a2f;
+  --highlight-foreground: #ffffff;
+  --highlight-border: #424447;
+  
+  /* Dark mode specific colors */
+  --main-text-color: #ffffff;
+  --text-color: #ffffff;
+  --secondary-text-color: #acb1b9;
+  --placeholder-text: #ffffff;
+  --action-icon-color: #ffffff;
+  --url-color: #282a2f;
+  --menu-hover: #282a2f;
+  --menu-border: #424447;
+  
+  /* Shadows for dark mode */
+  --popover-shadow: rgba(10, 10, 10) 0px 0px 24px 6px;
+  --deep-gray-shadow: 0px 0px 24px 6px rgba(10, 10, 10);
+  --dropdown-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4), 0px 0px 2px rgba(0, 0, 0, 0.3);
+  --select-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3), 0px 0px 2px rgba(0, 0, 0, 0.2);
+
+  /* Dark mode status and priority colors */
+  --status-open: #fbbf24;
+  --status-open-bg: #451a03;
+  --priority-medium: #f97316;
+  --priority-medium-bg: #431407;
+  --priority-high: #ef4444;
+  --priority-high-bg: #450a0a;
+  --priority-urgent: #dc2626;
+  --priority-urgent-bg: #450a0a;
+  --success: #12b76a;
+  --success-bg: #064e3b;
+  --active-green: #12b76a;
+  --active-green-border: #039855;
+  --active-red: #f04438;
+  --active-red-border: #d92d20;
+
+  --chart-1: #6E72FF;
+  --chart-2: #ffffff;
+  --chart-3: #f04438;
+  --chart-4: #6E72FF;
+  --chart-5: #acb1b9;
+  
+  /* Kroolo button colors for dark mode */
+  --btn-color-base: #6E72FF;
+  --btn-color-hover: #5A5FE0;
+  
+  /* Dark mode sidebar */
+  --sidebar: #1e2024;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #282a2f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #424447;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2d2f34;
+  --sidebar-ring: rgba(110, 114, 255, 0.5);
+  --sidebar-hover: #424447;
+  --sidebar-active: #2d2f34;
+  
+  /* Dark mode scrollbar */
+  --scrollbar-track: #2d2f34;
+  --scrollbar-thumb: #424447;
+  --scrollbar-thumb-hover: #525558;
+}
+
+/* LoadingSpinner styles */
+.loadingSpinner {
+  animation-name: spin;
+  animation-duration: 800ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@theme inline {
+  /* Updated font configuration to use Inter instead of Geist */
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  /* Expose primary pink via Tailwind color token */
+  --color-primary-pink: var(--primary-pink);
+  --color-primary-pink-foreground: var(--primary-pink-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  /* Added highlight color tokens for Tailwind usage */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-highlight-border: var(--highlight-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Added Kroolo-specific color tokens for Tailwind usage */
+  --color-status-open: var(--status-open);
+  --color-status-open-bg: var(--status-open-bg);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-medium-bg: var(--priority-medium-bg);
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-bg: var(--priority-high-bg);
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-urgent-bg: var(--priority-urgent-bg);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+}
+
+@layer base {
+  * {
+    /* Removed border-border and outline properties that were adding unwanted borders to all elements */
+    @apply border-0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Updated font-family to use Inter variable */
+    font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+    /* Smooth scrolling for a better UX across pages */
+    scroll-behavior: smooth;
+  }
+
+  /* Smooth transitions utility */
+  .transition-all-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Updated global font family rules to use Inter variable */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  div,
+  button,
+  input,
+  textarea,
+  select,
+  label {
+    font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar styles for sidebar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* Calculate scrollbar width as CSS variable */
+  :root {
+    --scrollbar-width: calc(100vw - 100%);
+  }
+  
+  /* Simple fix: Apply scrollbar-gutter to navbar */
+  header {
+    scrollbar-gutter: stable;
+    /* Force consistent width */
+    width: calc(100vw - 15px);
+    max-width: calc(100vw - 15px);
+  }
+  
+  /* ========================================
+   * KROOLO THEME FONT SIZES
+   * Centralized font size system
+   * Change the CSS variables to scale globally
+   * ======================================== */
+  
+  /* Font Size CSS Variables */
+  :root {
+    --text-xs: 10px;
+    --text-sm: 12px;
+    --text-base: 13px;
+    --text-md: 14px;
+    --text-lg: 16px;
+    --text-xl: 18px;
+    --text-2xl: 24px;
+    --text-3xl: 30px;
+    --text-4xl: 36px;
+  }
+  
+  /* Font Size Utility Classes */
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+  
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+  
+  .text-base {
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+  
+  .text-md {
+    font-size: var(--text-md);
+    line-height: 1.5;
+  }
+  
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: 1.5;
+  }
+  
+  .text-xl {
+    font-size: var(--text-xl);
+    line-height: 1.5;
+  }
+  
+  .text-2xl {
+    font-size: var(--text-2xl);
+    line-height: 1.25;
+  }
+  
+  .text-3xl {
+    font-size: var(--text-3xl);
+    line-height: 1.25;
+  }
+  
+  .text-4xl {
+    font-size: var(--text-4xl);
+    line-height: 1.25;
+  }
+  
+  /* Legacy aliases for backward compatibility */
+  .text-10 {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+  
+  .text-11 {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+  
+  .text-13 {
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+  
+  .text-xs-sm {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+  }
+
+  /* Font family helpers matching design system */
+  .font-inter {
+    font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .font-dmmono {
+    font-family: var(--font-mono);
+  }
+}
