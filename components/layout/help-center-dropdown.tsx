@@ -85,45 +85,45 @@ export function HelpCenterDropdown() {
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-9 w-9 p-0 relative hover:bg-muted"
+          className="h-7 w-7 p-0 relative"
         >
-          <HelpCircle className="h-5 w-5 text-muted-foreground" />
+          <HelpCircle className="h-4 w-4 text-muted-foreground" />
           <span className="sr-only">Help Center</span>
         </Button>
       </DropdownMenuTrigger>
       
       <DropdownMenuContent 
         align="end" 
-        className="w-[440px] p-0 bg-background border shadow-2xl"
-        sideOffset={8}
+        alignOffset={-20}
+        className="w-[440px] p-0 border border-border bg-popover shadow-lg rounded-lg"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 pb-2.5 border-b">
-          <div>
-            <h3 className="font-semibold text-foreground text-sm">Help Center</h3>
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              You can always write to us at{" "}
-              <a 
-                href="mailto:help@kroolo-bsm.com" 
-                className="text-blue-600 hover:underline"
-              >
-                help@kroolo-bsm.com
-              </a>
-            </p>
+        <div className="p-3 pb-0">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-foreground">Help Center</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 hover:bg-accent"
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 hover:bg-accent"
-            onClick={() => setOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <p className="text-muted-foreground text-[11px] mb-3">
+            You can always write to us at{" "}
+            <a 
+              href="mailto:help@kroolo-bsm.com" 
+              className="text-primary hover:underline"
+            >
+              help@kroolo-bsm.com
+            </a>
+          </p>
         </div>
 
         {/* Search Bar */}
-        <div className="p-3 pb-2.5">
-          <h4 className="font-medium text-foreground mb-2 text-xs">
+        <div className="px-3 pb-3">
+          <h4 className="text-xs font-medium text-foreground mb-2">
             Find instant answers
           </h4>
           <div className="relative">
@@ -133,7 +133,7 @@ export function HelpCenterDropdown() {
               placeholder="Ask any question..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-10 h-9 bg-muted/50 border-muted-foreground/20 text-xs"
+              className="pl-9 pr-10 h-9 bg-muted/50 border-0 text-xs focus-visible:ring-1"
             />
             <Button
               size="sm"
@@ -145,14 +145,14 @@ export function HelpCenterDropdown() {
         </div>
 
         {/* Featured Articles */}
-        <div className="px-3 pb-2.5">
+        <div className="px-3 pb-3">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-foreground text-xs">
+            <h4 className="text-xs font-medium text-foreground">
               Featured articles
             </h4>
             <Link 
               href="/help" 
-              className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+              className="text-primary hover:underline flex items-center gap-1 text-[11px]"
               onClick={() => setOpen(false)}
             >
               View help center
@@ -166,34 +166,33 @@ export function HelpCenterDropdown() {
                 key={index}
                 href={article.href}
                 onClick={() => setOpen(false)}
-                className="flex items-start gap-2 p-2 rounded-lg hover:bg-accent transition-colors group"
+                className="flex items-start gap-2.5 p-2.5 rounded-md hover:bg-accent transition-colors group"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                  {article.icon}
+                <div className="p-1.5 rounded-full bg-primary/10 flex-shrink-0 mt-0.5">
+                  <div className="text-primary">{article.icon}</div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h5 className="font-medium text-foreground group-hover:text-primary mb-0.5 text-xs">
+                  <h5 className="text-xs font-medium text-foreground group-hover:text-primary mb-0.5">
                     {article.title}
                   </h5>
                   <p className="text-muted-foreground line-clamp-2 text-[10px] leading-tight">
                     {article.description}
                   </p>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1.5" />
               </Link>
             ))}
           </div>
         </div>
 
         {/* Video Guides */}
-        <div className="px-3 pb-2.5">
+        <div className="px-3 pb-3">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-foreground text-xs">
+            <h4 className="text-xs font-medium text-foreground">
               Explore product videos
             </h4>
             <Link 
               href="/help/videos" 
-              className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+              className="text-primary hover:underline flex items-center gap-1 text-[11px]"
               onClick={() => setOpen(false)}
             >
               View all videos
@@ -201,13 +200,13 @@ export function HelpCenterDropdown() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 gap-2">
             {videoGuides.map((video, index) => (
               <button
                 key={index}
-                className="flex flex-col items-center gap-1 p-1.5 rounded-lg hover:bg-accent transition-colors group"
+                className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-accent transition-colors group"
               >
-                <div className={`w-11 h-11 rounded-xl ${video.color} flex items-center justify-center text-white shadow-sm`}>
+                <div className={`w-12 h-12 rounded-xl ${video.color} flex items-center justify-center text-white`}>
                   {video.icon}
                 </div>
                 <span className="text-center text-muted-foreground group-hover:text-foreground line-clamp-2 text-[10px] leading-tight">
@@ -219,19 +218,20 @@ export function HelpCenterDropdown() {
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-muted/30 p-2.5 flex items-center justify-between">
+        <div className="border-t border-border p-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 h-8 text-[11px]"
+            className="text-primary hover:bg-primary/10 h-8 text-[11px]"
             onClick={() => setOpen(false)}
           >
-            <Megaphone className="h-3 w-3 mr-1.5" />
+            <Megaphone className="h-3.5 w-3.5 mr-1.5" />
             Send Feedback
           </Button>
           <Button
             size="sm"
-            className="bg-foreground text-background hover:bg-foreground/90 h-8 px-3 text-[11px]"
+            variant="default"
+            className="h-8 px-3 text-[11px]"
             onClick={() => setOpen(false)}
           >
             Request Demo
