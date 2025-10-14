@@ -474,12 +474,12 @@ export default function WorkflowBuilderPage() {
     >
       <div className="h-[calc(100vh-8rem)] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-900">
+        <div className="flex items-center justify-between p-4 border-b 0 dark:bg-gray-900">
           <div className="flex-1">
             <Input
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
-              className="text-lg font-semibold border-none p-0 h-auto bg-transparent"
+              className="text-[11px] font-semibold border-none p-0 h-auto bg-transparent"
               placeholder="Workflow Name"
             />
             <Input
@@ -508,7 +508,7 @@ export default function WorkflowBuilderPage() {
 
         <div className="flex-1 flex">
           {/* Component Palette */}
-          <div className="w-80 border-r bg-gray-50 dark:bg-gray-900 p-4 overflow-y-auto">
+          <div className="w-80 border-r bg-muted/50 dark:bg-gray-900 p-4 overflow-y-auto">
             <Tabs defaultValue="triggers" className="w-full">
               <TabsList className="grid w-full grid-cols-5 text-xs">
                 <TabsTrigger value="triggers">Triggers</TabsTrigger>
@@ -687,7 +687,7 @@ export default function WorkflowBuilderPage() {
           <div className="flex-1 flex">
             <div
               ref={canvasRef}
-              className="flex-1 bg-gray-100 dark:bg-gray-800 relative overflow-auto"
+              className="flex-1 bg-muted dark:bg-gray-800 relative overflow-auto"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onMouseMove={handleCanvasMouseMove}
@@ -697,7 +697,7 @@ export default function WorkflowBuilderPage() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
                     <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium">Start Building Your Workflow</p>
+                    <p className="text-[11px] font-medium">Start Building Your Workflow</p>
                     <p className="text-sm">Drag components from the left panel to create your approval workflow</p>
                     <p className="text-xs mt-2 text-blue-600">
                       💡 Tip: Click the + button on nodes to connect them together
@@ -741,7 +741,7 @@ export default function WorkflowBuilderPage() {
 
             {/* Properties Panel */}
             {selectedNode && (
-              <div className="w-80 border-l bg-white dark:bg-gray-900 p-4 overflow-y-auto">
+              <div className="w-80 border-l 0 dark:bg-gray-900 p-4 overflow-y-auto">
                 <NodePropertiesPanel
                   node={selectedNode}
                   onUpdate={(updatedNode) => {
@@ -822,7 +822,7 @@ function WorkflowNodeComponent({
       case "merge":
         return "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
       default:
-        return "border-gray-500 bg-gray-50 dark:bg-gray-900/20"
+        return "border-gray-500 bg-muted/50 dark:bg-gray-900/20"
     }
   }
 

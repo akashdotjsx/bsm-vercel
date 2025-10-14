@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { PlatformLayout } from '@/components/layout/platform-layout'
 import { PermissionGuard } from '@/components/auth/permission-guard'
@@ -37,9 +38,9 @@ export function ProtectedLayout({
         fallback={
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-              <p className="text-gray-600 mb-4">You don't have permission to access this page.</p>
-              <a href="/dashboard" className="text-blue-600 hover:underline">Return to Dashboard</a>
+              <h1 className="text-[13px] font-bold text-foreground mb-4">Access Denied</h1>
+              <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
+              <Link href="/dashboard" className="text-blue-600 hover:underline">Return to Dashboard</Link>
             </div>
           </div>
         }
@@ -85,9 +86,9 @@ export function AdminLayout({
                 {breadcrumbs.map((crumb, index) => (
                   <span key={crumb.label}>
                     {crumb.href ? (
-                      <a href={crumb.href} className="text-muted-foreground hover:text-foreground">
+                      <Link href={crumb.href} className="text-muted-foreground hover:text-foreground">
                         {crumb.label}
-                      </a>
+                      </Link>
                     ) : (
                       <span className="text-foreground">{crumb.label}</span>
                     )}
@@ -98,7 +99,7 @@ export function AdminLayout({
                 ))}
               </nav>
             )}
-            {title && <h1 className="text-3xl font-bold">{title}</h1>}
+            {title && <h1 className="text-[13px] font-bold">{title}</h1>}
             {description && <p className="text-muted-foreground">{description}</p>}
           </div>
         )}

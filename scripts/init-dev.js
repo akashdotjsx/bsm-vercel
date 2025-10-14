@@ -164,24 +164,6 @@ async function initializeClients() {
     
     console.log('✅ Supabase client initialized successfully')
     
-    // Test GraphQL endpoint
-    const graphqlResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`, {
-      method: 'POST',
-      headers: {
-        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: '{ __schema { queryType { name } } }'
-      })
-    })
-    
-    if (graphqlResponse.ok) {
-      console.log('✅ GraphQL client connected successfully')
-    } else {
-      console.warn('⚠️  GraphQL endpoint not accessible')
-    }
-    
   } catch (error) {
     console.error('❌ Client initialization failed:', error.message)
     process.exit(1)

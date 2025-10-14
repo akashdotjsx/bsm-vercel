@@ -54,7 +54,7 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Sign up</CardTitle>
+              <CardTitle className="text-[13px]">Sign up</CardTitle>
               <CardDescription>Create a new account</CardDescription>
             </CardHeader>
             <CardContent>

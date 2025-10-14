@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -36,29 +38,40 @@ export async function GET(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
     }
 
-    // Get linked accounts (profiles) for this ticket
+    // Get linked accounts (profiles) for this ticket - wrapped with cache
     // Note: This assumes we're using the requester_id and assignee_id as "linked accounts"
     // In a real implementation, you might have a separate ticket_accounts table
-    const { data: linkedProfiles, error } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        display_name,
-        email,
-        avatar_url,
-        phone,
-        role,
-        department,
-        is_active,
-        created_at
-      `)
-      .eq('organization_id', profile.organization_id)
-      .in('id', [
-        // Get requester and assignee as linked accounts
-        // You might want to add a proper ticket_accounts junction table
-      ])
+    const fetchAccounts = unstable_cache(
+      async () => {
+        return await supabase
+          .from('profiles')
+          .select(`
+            id,
+            first_name,
+            last_name,
+            display_name,
+            email,
+            avatar_url,
+            phone,
+            role,
+            department,
+            is_active,
+            created_at
+          `)
+          .eq('organization_id', profile.organization_id)
+          .in('id', [
+            // Get requester and assignee as linked accounts
+            // You might want to add a proper ticket_accounts junction table
+          ])
+      },
+      [`ticket-accounts-${params.id}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.tickets],
+      }
+    )
+    
+    const { data: linkedProfiles, error } = await fetchAccounts()
 
     if (error) {
       console.error('Error fetching linked accounts:', error)
@@ -138,6 +151,9 @@ export async function POST(
         new_value: account.display_name,
         change_reason: `Linked account: ${account.display_name} (${account.email})`
       })
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.tickets)
 
     return NextResponse.json({
       success: true,

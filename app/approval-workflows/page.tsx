@@ -57,8 +57,8 @@ export default function ApprovalWorkflowsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Approval Workflows</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-[13px] font-semibold text-foreground dark:text-gray-100">Approval Workflows</h1>
+            <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-1">
               Configure and manage approval processes for different request types
             </p>
           </div>
@@ -79,8 +79,8 @@ export default function ApprovalWorkflowsPage() {
                   <Play className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Workflows</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">8</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">Active Workflows</p>
+                  <p className="text-[13px] font-semibold text-foreground dark:text-gray-100">8</p>
                 </div>
               </div>
             </CardContent>
@@ -93,8 +93,8 @@ export default function ApprovalWorkflowsPage() {
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Completion Rate</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">94.8%</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">Avg Completion Rate</p>
+                  <p className="text-[13px] font-semibold text-foreground dark:text-gray-100">94.8%</p>
                 </div>
               </div>
             </CardContent>
@@ -107,8 +107,8 @@ export default function ApprovalWorkflowsPage() {
                   <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Processing Time</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">1.8 days</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">Avg Processing Time</p>
+                  <p className="text-[13px] font-semibold text-foreground dark:text-gray-100">1.8 days</p>
                 </div>
               </div>
             </CardContent>
@@ -121,8 +121,8 @@ export default function ApprovalWorkflowsPage() {
                   <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Pending Approvals</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">23</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">Pending Approvals</p>
+                  <p className="text-[13px] font-semibold text-foreground dark:text-gray-100">23</p>
                 </div>
               </div>
             </CardContent>
@@ -132,8 +132,8 @@ export default function ApprovalWorkflowsPage() {
         {/* Workflows List */}
         <Card>
           <CardHeader>
-            <CardTitle>Workflow Templates</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-[12px]">Workflow Templates</CardTitle>
+            <CardDescription className="text-[10px]">
               Manage approval workflow templates for different departments and request types
             </CardDescription>
           </CardHeader>
@@ -142,19 +142,19 @@ export default function ApprovalWorkflowsPage() {
               {workflows.map((workflow) => (
                 <div
                   key={workflow.id}
-                  className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg"
+                  className="flex items-center justify-between p-4 border border-border dark:border-gray-800 rounded-lg"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      <Users className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                    <div className="p-2 bg-muted dark:bg-gray-800 rounded-lg">
+                      <Users className="h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{workflow.name}</h3>
+                        <h3 className="font-medium text-[11px] text-foreground dark:text-gray-100">{workflow.name}</h3>
                         <Badge variant="outline">{workflow.department}</Badge>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{workflow.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">{workflow.description}</p>
+                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground dark:text-muted-foreground">
                         <span>Steps: {workflow.steps.length}</span>
                         <span>Avg Time: {workflow.avgTime}</span>
                         <span>Success Rate: {workflow.completionRate}</span>
@@ -162,10 +162,10 @@ export default function ApprovalWorkflowsPage() {
                       <div className="flex items-center gap-1">
                         {workflow.steps.map((step, index) => (
                           <div key={index} className="flex items-center">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-[10px]">
                               {step}
                             </Badge>
-                            {index < workflow.steps.length - 1 && <span className="mx-1 text-gray-400">→</span>}
+                            {index < workflow.steps.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
                           </div>
                         ))}
                       </div>

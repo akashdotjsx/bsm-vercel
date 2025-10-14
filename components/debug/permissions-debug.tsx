@@ -10,7 +10,7 @@ export function PermissionsDebug() {
   }
 
   return (
-    <div className="p-4 bg-gray-100 border border-gray-400 rounded space-y-2 text-xs">
+    <div className="p-4 bg-muted border border-gray-400 rounded space-y-2 text-xs">
       <h3 className="font-bold text-sm">Debug: Auth State</h3>
       
       <div><strong>User Email:</strong> {user?.email || 'None'}</div>
@@ -19,7 +19,7 @@ export function PermissionsDebug() {
       
       <div><strong>Permissions Count:</strong> {permissions.length}</div>
       <div><strong>Permissions:</strong> 
-        <pre className="text-xs bg-white p-2 mt-1 rounded border">
+        <pre className="text-xs 0 p-2 mt-1 rounded border">
           {JSON.stringify(permissions, null, 2)}
         </pre>
       </div>

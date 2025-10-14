@@ -2,11 +2,20 @@
 
 import { useState } from "react"
 import { useMode } from "@/lib/contexts/mode-context"
-import { useServiceCategories } from "@/lib/hooks/use-service-categories"
-import { useServices } from "@/lib/hooks/use-services"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { 
+  useServiceCategoriesQuery,
+  useCreateServiceCategoryMutation,
+  useCreateServiceMutation,
+  useUpdateServiceMutation,
+  useDeleteServiceMutation,
+  useUpdateServiceCategoryMutation,
+  useDeleteServiceCategoryMutation
+} from "@/hooks/queries/use-service-categories-query"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -19,6 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Laptop,
@@ -52,45 +62,85 @@ import {
 } from "lucide-react"
 import { categoryIconMap, getBgColorClass, getStarRating, formatSLA } from "@/lib/utils/icon-map"
 import { useToast } from "@/components/ui/use-toast"
+import dynamic from "next/dynamic"
+
+const ServiceCategoryDrawer = dynamic(
+  () => import("@/components/services/service-category-drawer"),
+  { ssr: false }
+)
+
+const ServiceCreateDrawer = dynamic(
+  () => import("@/components/services/service-create-drawer"),
+  { ssr: false }
+)
 
 export function ServiceCatalog() {
   const { mode } = useMode()
   const { toast } = useToast()
-  const { categories, loading, error, addCategory, updateCategory, deleteCategory, refetch } = useServiceCategories()
-  const { addService, updateService, deleteService, loading: serviceLoading, error: serviceError } = useServices()
+  const { organization, loading: authLoading } = useAuth()
+  
+  // Use React Query hooks instead of manual state management
+  const { 
+    data: categories = [], 
+    isLoading: loading, 
+    isFetching,
+    error 
+  } = useServiceCategoriesQuery({ is_active: true })
+  
+  // Mutations with automatic cache invalidation
+  const createCategoryMutation = useCreateServiceCategoryMutation()
+  const createServiceMutation = useCreateServiceMutation()
+  const updateServiceMutation = useUpdateServiceMutation()
+  const deleteServiceMutation = useDeleteServiceMutation()
+  const updateServiceCategoryMutation = useUpdateServiceCategoryMutation()
+  const deleteServiceCategoryMutation = useDeleteServiceCategoryMutation()
+  
+  // Debug: Log organization state
+  console.log('🔍 ServiceCatalog - Organization:', organization)
+  console.log('🔍 ServiceCatalog - Organization ID:', organization?.id)
+  console.log('🔍 ServiceCatalog - Auth Loading:', authLoading)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("popularity")
 
-  // Convert Supabase categories to the expected format
-  const services = categories.map(cat => {
-    const IconComponent = categoryIconMap[cat.icon || 'settings'] || Settings
-    return {
-      id: cat.id,
-      name: cat.name,
-      description: cat.description || "",
-      icon: IconComponent,
-      color: getBgColorClass(cat.color || 'blue'),
-      services: (cat.services || []).map(service => ({
-        name: service.name,
-        description: service.description || "",
-        sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
-        popularity: service.popularity_score || 1
-      }))
-    }
-  })
+  // Convert Supabase categories to the expected format and sort alphabetically
+  const services = categories
+    .map(cat => {
+      const IconComponent = categoryIconMap[cat.icon || 'settings'] || Settings
+      return {
+        id: cat.id,
+        name: cat.name,
+        description: cat.description || "",
+        icon: IconComponent,
+        color: getBgColorClass(cat.color || 'blue'),
+        services: (cat.services || [])
+          .map(service => ({
+            name: service.name,
+            description: service.description || "",
+            sla: service.estimated_delivery_days ? formatSLA(service.estimated_delivery_days) : "TBD",
+            popularity: service.popularity_score || 1
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name)) // Sort services alphabetically
+      }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name)) // Sort categories alphabetically
   
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
   const [showAddServiceModal, setShowAddServiceModal] = useState(false)
+  // New drawer states (TicketDrawer-style)
+  const [showCategoryDrawer, setShowCategoryDrawer] = useState(false)
+  const [showServiceDrawer, setShowServiceDrawer] = useState(false)
   const [showEditServiceModal, setShowEditServiceModal] = useState(false)
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false)
-  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false)
-  const [showDeleteServiceModal, setShowDeleteServiceModal] = useState(false)
+  const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState(false)
+  const [showDeleteServiceDialog, setShowDeleteServiceDialog] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [selectedCategoryForService, setSelectedCategoryForService] = useState("")
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState(null)
   const [selectedServiceForEdit, setSelectedServiceForEdit] = useState(null)
   const [selectedService, setSelectedService] = useState(null)
+  const [deleteServiceChecked, setDeleteServiceChecked] = useState(false)
+  const [deleteCategoryChecked, setDeleteCategoryChecked] = useState(false)
   const [selectedServiceCategory, setSelectedServiceCategory] = useState(null)
   const [newCategory, setNewCategory] = useState({ name: "", description: "", color: "bg-blue-500" })
   const [newService, setNewService] = useState({ name: "", description: "", sla: "", popularity: 3 })
@@ -109,15 +159,53 @@ export function ServiceCatalog() {
 
   const handleAddCategory = async () => {
     try {
-      await addCategory({
+      console.log('🎯 handleAddCategory - Organization:', organization)
+      console.log('🎯 handleAddCategory - Organization ID:', organization?.id)
+      console.log('🎯 handleAddCategory - Type of organization:', typeof organization)
+      console.log('🎯 handleAddCategory - Auth loading:', authLoading)
+      
+      // Wait for auth to finish loading
+      if (authLoading) {
+        toast({
+          title: "Loading",
+          description: "Please wait while we load your account information...",
+        })
+        return
+      }
+      
+      if (!organization || !organization.id) {
+        console.error('❌ Organization ID is missing!', { organization, id: organization?.id })
+        toast({
+          title: "Authentication Required",
+          description: "Please ensure you're logged in with a valid organization.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const orgId = String(organization.id) // Ensure it's a string
+      console.log('✅ Creating category with organization_id:', orgId)
+      
+      // Remove "bg-" prefix from color if present (Tailwind class to color name)
+      const colorValue = newCategory.color.replace(/^bg-/, '').replace(/-\d+$/, '') // "bg-blue-500" -> "blue"
+      
+      const categoryData = {
         name: newCategory.name,
-        description: newCategory.description,
+        description: newCategory.description || "",
         icon: "Settings",
-        color: newCategory.color,
-        services: [],
-      })
+        color: colorValue,
+        is_active: true,
+        organization_id: orgId
+      }
+      
+      console.log('📤 Sending category data:', JSON.stringify(categoryData, null, 2))
+      
+      // Use React Query mutation - NO refetch needed!
+      await createCategoryMutation.mutateAsync(categoryData)
+      
       setNewCategory({ name: "", description: "", color: "bg-blue-500" })
       setShowAddCategoryModal(false)
+      
       toast({
         title: "Category created",
         description: `"${newCategory.name}" has been added successfully.`,
@@ -143,24 +231,35 @@ export function ServiceCatalog() {
     }
 
     try {
+      if (!organization?.id) {
+        toast({
+          title: "Error",
+          description: "Organization ID is missing. Please ensure you're logged in.",
+          variant: "destructive",
+        })
+        return
+      }
+      
       const serviceData = {
         name: newService.name,
-        description: newService.description,
+        description: newService.description || "",
         category_id: selectedCategoryForService,
         estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
-        popularity_score: newService.popularity
+        popularity_score: newService.popularity,
+        is_requestable: true,
+        requires_approval: false,
+        status: 'active',
+        organization_id: organization.id
       }
 
-      await addService(serviceData)
+      // Use React Query mutation - NO refetch needed!
+      await createServiceMutation.mutateAsync(serviceData)
       
       // Reset form and close modal
       const serviceName = newService.name
       setNewService({ name: "", description: "", sla: "", popularity: 3 })
       setSelectedCategoryForService("")
       setShowAddServiceModal(false)
-      
-      // Refresh categories to show the new service
-      await refetch()
       
       toast({
         title: "Service created",
@@ -188,12 +287,13 @@ export function ServiceCatalog() {
       description: category.description,
       color: category.color
     })
-    setShowEditCategoryModal(true)
+    // Open drawer in edit mode
+    setShowCategoryDrawer(true)
   }
 
   const handleDeleteCategory = (category) => {
     setSelectedCategoryForEdit(category)
-    setShowDeleteCategoryModal(true)
+    setShowDeleteCategoryDialog(true)
   }
 
   const handleEditServiceClick = (service, category) => {
@@ -201,15 +301,17 @@ export function ServiceCatalog() {
     const originalCategory = categories.find(cat => cat.id === category.id)
     const originalService = originalCategory?.services?.find(s => s.name === service.name)
     
-    setSelectedServiceForEdit(originalService || service)
+    const svc = originalService || service
+    setSelectedServiceForEdit(svc)
     setSelectedCategoryForService(category.id)
     setNewService({
-      name: service.name,
-      description: service.description,
+      name: svc.name,
+      description: svc.description,
       sla: service.sla,
       popularity: service.popularity
     })
-    setShowEditServiceModal(true)
+    // Open drawer in edit mode
+    setShowServiceDrawer(true)
   }
 
   const handleDeleteService = (service, category) => {
@@ -219,24 +321,27 @@ export function ServiceCatalog() {
     
     setSelectedServiceForEdit(originalService || service)
     setSelectedCategoryForEdit(category)
-    setShowDeleteServiceModal(true)
+    setShowDeleteServiceDialog(true)
   }
 
   const handleUpdateCategory = async () => {
     if (!selectedCategoryForEdit) return
     
     try {
-      await updateCategory({
+      // Use React Query mutation - NO refetch needed!
+      await updateServiceCategoryMutation.mutateAsync({
         id: selectedCategoryForEdit.id,
         name: newCategory.name,
         description: newCategory.description,
         color: newCategory.color,
         icon: "Settings"
       })
+      
       const categoryName = newCategory.name
       setShowEditCategoryModal(false)
       setSelectedCategoryForEdit(null)
       setNewCategory({ name: "", description: "", color: "bg-blue-500" })
+      
       toast({
         title: "Category updated",
         description: `"${categoryName}" has been updated successfully.`,
@@ -253,14 +358,20 @@ export function ServiceCatalog() {
 
   const handleConfirmDeleteCategory = async () => {
     if (!selectedCategoryForEdit) return
+    if (!deleteCategoryChecked) return // Require checkbox to be checked
     
     const categoryName = selectedCategoryForEdit.name
     const serviceCount = selectedCategoryForEdit.services?.length || 0
     
     try {
-      await deleteCategory(selectedCategoryForEdit.id)
-      setShowDeleteCategoryModal(false)
+      // Use React Query mutation
+      await deleteServiceCategoryMutation.mutateAsync(selectedCategoryForEdit.id)
+      
+      // Close dialog and reset state
+      setShowDeleteCategoryDialog(false)
       setSelectedCategoryForEdit(null)
+      setDeleteCategoryChecked(false)
+      
       toast({
         title: "Category deleted",
         description: serviceCount > 0 
@@ -281,16 +392,14 @@ export function ServiceCatalog() {
     if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
     
     try {
-      await updateService({
+      // Use React Query mutation - NO refetch needed!
+      await updateServiceMutation.mutateAsync({
         id: selectedServiceForEdit.id,
         name: newService.name,
         description: newService.description,
         estimated_delivery_days: newService.sla ? parseInt(newService.sla.replace(/\D/g, '')) || 3 : 3,
         popularity_score: newService.popularity
       })
-      
-      // Refresh categories to show the updated service
-      await refetch()
       
       const serviceName = newService.name
       setShowEditServiceModal(false)
@@ -312,16 +421,19 @@ export function ServiceCatalog() {
 
   const handleConfirmDeleteService = async () => {
     if (!selectedServiceForEdit || !selectedServiceForEdit.id) return
+    if (!deleteServiceChecked) return // Require checkbox to be checked
     
     const serviceName = selectedServiceForEdit.name
     
     try {
-      await deleteService(selectedServiceForEdit.id)
-      // Refresh categories to show the changes
-      await refetch()
+      // Use React Query mutation
+      await deleteServiceMutation.mutateAsync(selectedServiceForEdit.id)
       
-      setShowDeleteServiceModal(false)
+      // Close dialog and reset state
+      setShowDeleteServiceDialog(false)
       setSelectedServiceForEdit(null)
+      setDeleteServiceChecked(false)
+      
       toast({
         title: "Service deleted",
         description: `"${serviceName}" has been deleted successfully.`,
@@ -381,12 +493,28 @@ export function ServiceCatalog() {
     return true
   })
 
-  // Show loading state
-  if (loading) {
+  // Show loading state only on initial load, not during refetches
+  if (loading && categories.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"></div>
-        <span>Loading service catalog...</span>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-12" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
@@ -412,24 +540,20 @@ export function ServiceCatalog() {
         <div>
           {/* Removed duplicate header - title and description are now handled by PlatformLayout */}
         </div>
-        <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
-          <DialogTrigger asChild>
-            <Button className="bg-black text-white hover:bg-gray-800">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+          <Button className="bg-black text-white hover:bg-gray-800" onClick={() => { setSelectedCategoryForEdit(null); setShowCategoryDrawer(true) }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Category
+          </Button>
       </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder="Search categories and services..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-gray-50 border-gray-200 rounded-lg"
+          className="pl-10 bg-muted/50 border-gray-200 rounded-lg"
         />
       </div>
 
@@ -438,46 +562,148 @@ export function ServiceCatalog() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Services</p>
-              <p className="text-3xl font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
+              <p className="text-[10px] text-muted-foreground">Total Services</p>
+              <p className="text-[13px] font-bold text-foreground">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
             </div>
-            <Building2 className="h-8 w-8 text-gray-400" />
+            <Building2 className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Services</p>
-              <p className="text-3xl font-bold text-gray-900">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
+              <p className="text-[10px] text-muted-foreground">Active Services</p>
+              <p className="text-[13px] font-bold text-foreground">{services.reduce((acc, cat) => acc + cat.services.length, 0)}</p>
             </div>
-            <Settings className="h-8 w-8 text-gray-400" />
+            <Settings className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Service Owners</p>
-              <p className="text-3xl font-bold text-gray-900">{services.length}</p>
+              <p className="text-[10px] text-muted-foreground">Service Owners</p>
+              <p className="text-[13px] font-bold text-foreground">{services.length}</p>
             </div>
-            <Users className="h-8 w-8 text-gray-400" />
+            <Users className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Categories</p>
-              <p className="text-3xl font-bold text-gray-900">{services.length}</p>
+              <p className="text-[10px] text-muted-foreground">Categories</p>
+              <p className="text-[13px] font-bold text-foreground">{services.length}</p>
             </div>
-            <Layers className="h-8 w-8 text-gray-400" />
+            <Layers className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
       </div>
+
+      {/* Drawers (TicketDrawer-style) */}
+      <ServiceCategoryDrawer
+        isOpen={showCategoryDrawer}
+        onClose={() => setShowCategoryDrawer(false)}
+        onSubmit={async (payload) => {
+          try {
+            if (selectedCategoryForEdit) {
+              await updateServiceCategoryMutation.mutateAsync({
+                id: selectedCategoryForEdit.id,
+                name: payload.name,
+                description: payload.description,
+                icon: payload.icon,
+                color: payload.color,
+              })
+              toast({ title: "Category updated", description: `"${payload.name}" has been updated.` })
+            } else {
+              // Ensure organization_id is available
+              if (!organization?.id) {
+                toast({ 
+                  title: "Authentication Required", 
+                  description: "Please ensure you're logged in with a valid organization.", 
+                  variant: "destructive" 
+                })
+                return
+              }
+              
+              await createCategoryMutation.mutateAsync({
+                name: payload.name,
+                description: payload.description || "",
+                icon: payload.icon || "Settings",
+                color: payload.color || "bg-blue-500",
+                is_active: true,
+                organization_id: organization.id
+              })
+              toast({ title: "Category created", description: `"${payload.name}" has been added successfully.` })
+            }
+          } catch (e) {
+            toast({ title: selectedCategoryForEdit ? "Failed to update category" : "Failed to create category", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
+          }
+        }}
+        title={selectedCategoryForEdit ? "Edit Category" : "Create Category"}
+      />
+      <ServiceCreateDrawer
+        isOpen={showServiceDrawer}
+        onClose={() => setShowServiceDrawer(false)}
+        initial={selectedServiceForEdit ? {
+          name: selectedServiceForEdit.name,
+          description: selectedServiceForEdit.description,
+          estimated_delivery_days: selectedServiceForEdit.estimated_delivery_days ? `${selectedServiceForEdit.estimated_delivery_days} days` : "",
+          popularity_score: selectedServiceForEdit.popularity_score || 3,
+          category_id: selectedServiceForEdit.category_id
+        } : undefined}
+        onSubmit={async (serviceData) => {
+          try {
+            if (selectedServiceForEdit && selectedServiceForEdit.id) {
+              const updates: any = {
+                name: serviceData.name,
+                description: serviceData.description,
+                estimated_delivery_days: Number(serviceData.estimated_delivery_days) || 3,
+                popularity_score: Number(serviceData.popularity_score) || 3,
+                is_requestable: !!serviceData.is_requestable,
+                requires_approval: !!serviceData.requires_approval,
+                category_id: serviceData.category_id || selectedCategoryForService || undefined
+              }
+              await updateServiceMutation.mutateAsync({
+                id: selectedServiceForEdit.id,
+                ...updates
+              })
+              toast({ title: "Service updated", description: `"${serviceData.name}" has been updated.` })
+            } else {
+              // Ensure organization_id is available
+              if (!organization?.id) {
+                toast({ 
+                  title: "Authentication Required", 
+                  description: "Please ensure you're logged in with a valid organization.", 
+                  variant: "destructive" 
+                })
+                return
+              }
+              
+              const payload = {
+                name: serviceData.name,
+                description: serviceData.description || "",
+                category_id: serviceData.category_id || selectedCategoryForService || null,
+                estimated_delivery_days: Number(serviceData.estimated_delivery_days) || 3,
+                popularity_score: Number(serviceData.popularity_score) || 3,
+                is_requestable: !!serviceData.is_requestable,
+                requires_approval: !!serviceData.requires_approval,
+                status: 'active',
+                organization_id: organization.id
+              }
+              await createServiceMutation.mutateAsync(payload)
+              toast({ title: "Service created", description: `"${payload.name}" has been added successfully.` })
+            }
+          } catch (e) {
+            toast({ title: selectedServiceForEdit ? "Failed to update service" : "Failed to create service", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" })
+          }
+        }}
+        title={selectedServiceForEdit ? "Edit Service" : "Create Service"}
+        categories={categories.map(c => ({ id: c.id, name: c.name }))}
+      />
 
       {/* Service Categories */}
       <div className="space-y-6">
         {filteredServices.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">
+            <div className="text-[11px] text-muted-foreground mb-4">
               {searchTerm ? `No categories found matching "${searchTerm}"` : 'No service categories found.'}
             </div>
             {!searchTerm && (
@@ -494,28 +720,30 @@ export function ServiceCatalog() {
               <Card key={category.id} className="overflow-hidden">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${category.color} text-white`}>
-                        <Icon className="h-6 w-6" />
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-lg ${category.color} text-white flex items-center justify-center`}>
+                        <Icon className="h-5 w-5" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-[13px] font-semibold text-foreground">{category.name}</h3>
+                          <span className="bg-green-100 text-green-700 text-[10px] font-medium px-2 py-0.5 rounded-full">Active</span>
                         </div>
-                        <p className="text-gray-600 mt-1">{category.description} • Owner: System</p>
+                        <p className="text-[10px] text-muted-foreground">{category.description} • Owner: System</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-sm"
-                        onClick={() => {
-                          setSelectedCategoryForService(category.id)
-                          setShowAddServiceModal(true)
-                        }}
-                      >
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-[11px]"
+            onClick={() => {
+              setSelectedCategoryForEdit(null)
+              setSelectedServiceForEdit(null)
+              setSelectedCategoryForService(category.id)
+              setShowServiceDrawer(true)
+            }}
+          >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Service
                       </Button>
@@ -543,29 +771,16 @@ export function ServiceCatalog() {
                   {category.services.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {category.services.map((service, index) => (
-                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 mb-1">{service.name}</h4>
-                              <p className="text-sm text-gray-600 mb-3">{service.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{service.sla}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: service.popularity }).map((_, i) => (
-                                  <span key={i} className="text-yellow-400">
-                                    ★
-                                  </span>
-                                ))}
+                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-border transition-all cursor-pointer 0">
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-[13px] text-foreground mb-1.5">{service.name}</h4>
+                                <p className="text-[11px] text-muted-foreground leading-relaxed">{service.description}</p>
                               </div>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 -mt-1">
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -581,12 +796,25 @@ export function ServiceCatalog() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
+                            <div className="flex items-center justify-between pt-2 border-t border-border">
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>{service.sla}</span>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: service.popularity }).map((_, i) => (
+                                  <span key={i} className="text-yellow-400 text-sm">
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-[11px] text-muted-foreground">
                       No services in this category yet. Click "Add Service" to get started.
                     </div>
                   )}
@@ -739,9 +967,9 @@ export function ServiceCatalog() {
             <Button 
               onClick={handleAddService} 
               className="text-[13px]"
-              disabled={serviceLoading || !newService.name.trim()}
+              disabled={!newService.name.trim()}
             >
-              {serviceLoading ? 'Adding...' : 'Add Service'}
+              Add Service
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -815,27 +1043,58 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Category Modal */}
-      <Dialog open={showDeleteCategoryModal} onOpenChange={setShowDeleteCategoryModal}>
-        <DialogContent>
+      <Dialog open={showDeleteCategoryDialog} onOpenChange={(open) => {
+        setShowDeleteCategoryDialog(open)
+        if (!open) setDeleteCategoryChecked(false)
+      }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription className="text-[13px]">
+            <DialogTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              Delete Category
+            </DialogTitle>
+            <DialogDescription className="text-base">
               {(() => {
                 const serviceCount = selectedCategoryForEdit?.services?.length || 0
                 if (serviceCount > 0) {
-                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. This action cannot be undone and will remove all services in this category.`
-                } else {
-                  return `Are you sure you want to delete "${selectedCategoryForEdit?.name}"? This action cannot be undone.`
+                  return `This category contains ${serviceCount} service${serviceCount === 1 ? '' : 's'}. Do you want to delete category "${selectedCategoryForEdit?.name}"?`
                 }
+                return `Do you want to delete category "${selectedCategoryForEdit?.name}"?`
               })()}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteCategoryModal(false)} className="text-[13px]">
+          
+          <div className="flex items-center space-x-3 py-4">
+            <Checkbox
+              id="delete-category-confirm"
+              checked={deleteCategoryChecked}
+              onCheckedChange={(checked) => setDeleteCategoryChecked(checked as boolean)}
+              className="border-2 border-muted-foreground data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <Label
+              htmlFor="delete-category-confirm"
+              className="text-base font-medium text-foreground cursor-pointer select-none"
+            >
+              Click to Agree
+            </Label>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteCategoryDialog(false)}
+              disabled={deleteServiceCategoryMutation.isPending}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleConfirmDeleteCategory} className="text-[13px]">
-              Delete Category {selectedCategoryForEdit?.services?.length > 0 ? `& ${selectedCategoryForEdit.services.length} Service${selectedCategoryForEdit.services.length === 1 ? '' : 's'}` : ''}
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteCategory}
+              disabled={deleteServiceCategoryMutation.isPending || !deleteCategoryChecked}
+            >
+              {deleteServiceCategoryMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -920,20 +1179,52 @@ export function ServiceCatalog() {
       </Dialog>
 
       {/* Delete Service Modal */}
-      <Dialog open={showDeleteServiceModal} onOpenChange={setShowDeleteServiceModal}>
-        <DialogContent>
+      <Dialog open={showDeleteServiceDialog} onOpenChange={(open) => {
+        setShowDeleteServiceDialog(open)
+        if (!open) setDeleteServiceChecked(false)
+      }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Service</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              Are you sure you want to delete "{selectedServiceForEdit?.name}"? This action cannot be undone.
+            <DialogTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              Delete Service
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Do you want to delete service "{selectedServiceForEdit?.name}"?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteServiceModal(false)} className="text-[13px]">
+          
+          <div className="flex items-center space-x-3 py-4">
+            <Checkbox
+              id="delete-service-confirm"
+              checked={deleteServiceChecked}
+              onCheckedChange={(checked) => setDeleteServiceChecked(checked as boolean)}
+              className="border-2 border-muted-foreground data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <Label
+              htmlFor="delete-service-confirm"
+              className="text-base font-medium text-foreground cursor-pointer select-none"
+            >
+              Click to Agree
+            </Label>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteServiceDialog(false)}
+              disabled={deleteServiceMutation.isPending}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleConfirmDeleteService} className="text-[13px]">
-              Delete Service
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteService}
+              disabled={deleteServiceMutation.isPending || !deleteServiceChecked}
+            >
+              {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

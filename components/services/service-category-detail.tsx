@@ -123,8 +123,8 @@ export function ServiceCategoryDetail({ categoryId }: ServiceCategoryDetailProps
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{category.name}</h1>
-        <p className="text-muted-foreground text-lg">{category.description}</p>
+        <h1 className="text-[13px] font-bold tracking-tight">{category.name}</h1>
+        <p className="text-muted-foreground text-[11px]">{category.description}</p>
       </div>
 
       <div className="grid gap-6">
@@ -133,8 +133,8 @@ export function ServiceCategoryDetail({ categoryId }: ServiceCategoryDetailProps
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                  <CardTitle className="text-xl">{service.name}</CardTitle>
-                  <CardDescription className="text-base">{service.description}</CardDescription>
+                  <CardTitle className="text-[13px]">{service.name}</CardTitle>
+                  <CardDescription className="text-[11px]">{service.description}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="flex items-center gap-1">

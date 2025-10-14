@@ -50,7 +50,7 @@ export function AuthDebug() {
     <div className="fixed top-4 right-4 bg-gray-900 text-white p-3 rounded-lg shadow-lg max-w-sm text-xs z-50 font-mono max-h-96 overflow-y-auto">
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-bold text-yellow-400">🐛 Auth Debug</h3>
-        <span className="text-gray-400">{timestamp}</span>
+        <span className="text-muted-foreground">{timestamp}</span>
       </div>
       
       <div className="space-y-2">
@@ -78,7 +78,7 @@ export function AuthDebug() {
           ) : (
             localStorageData.map(item => (
               <div key={item.key} className="text-xs">
-                <span className="text-gray-400">{item.key.split('.').pop()}:</span> {item.exists ? '✅' : '❌'}
+                <span className="text-muted-foreground">{item.key.split('.').pop()}:</span> {item.exists ? '✅' : '❌'}
               </div>
             ))
           )}

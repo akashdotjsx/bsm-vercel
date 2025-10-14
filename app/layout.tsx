@@ -9,7 +9,10 @@ import { SearchProvider } from "@/lib/contexts/search-context"
 import { AuthProvider } from "@/lib/contexts/auth-context"
 import { Suspense } from "react"
 import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
+import { ReactQueryProvider } from "@/components/providers/react-query-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,20 +35,25 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <NavbarFixProvider>
-            <AuthProvider>
-              <ModeProvider>
-                <NotificationProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <SearchProvider>
-                      <div className="h-screen">{children}</div>
-                    </SearchProvider>
-                  </Suspense>
-                </NotificationProvider>
-              </ModeProvider>
-            </AuthProvider>
-          </NavbarFixProvider>
-          <Toaster />
+          <ReactQueryProvider>
+            <TooltipProvider delayDuration={200}>
+              <NavbarFixProvider>
+                <AuthProvider>
+                  <ModeProvider>
+                    <NotificationProvider>
+                      <Suspense fallback={null}>
+                        <SearchProvider>
+                          <div className="h-screen">{children}</div>
+                        </SearchProvider>
+                      </Suspense>
+                    </NotificationProvider>
+                  </ModeProvider>
+                </AuthProvider>
+              </NavbarFixProvider>
+              <Toaster />
+              <SonnerToaster />
+            </TooltipProvider>
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

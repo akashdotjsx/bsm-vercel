@@ -86,7 +86,7 @@ export function StatsCards() {
       case "down":
         return <TrendingDown className="h-4 w-4 text-green-600" />
       default:
-        return <Minus className="h-4 w-4 text-gray-600" />
+        return <Minus className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -95,14 +95,14 @@ export function StatsCards() {
       {stats.map((stat, index) => (
         <Card key={index} className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-700">{stat.title}</CardTitle>
-            <div className="text-base sm:text-lg">{stat.icon}</div>
+            <CardTitle className="text-[11px] font-medium text-foreground">{stat.title}</CardTitle>
+            <div className="text-[11px] sm:text-[11px]">{stat.icon}</div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl sm:text-3xl font-bold ${stat.color} mb-1`}>{stat.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className={`text-[11px] font-bold ${stat.color} mb-1`}>{stat.value}</div>
+            <div className="flex items-center text-[10px] text-foreground">
               {getTrendIcon(stat.trend)}
-              <span className="ml-1 text-xs sm:text-sm">{stat.change}</span>
+              <span className="ml-1 text-[10px]">{stat.change}</span>
             </div>
           </CardContent>
         </Card>

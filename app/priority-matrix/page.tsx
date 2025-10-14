@@ -29,8 +29,8 @@ export default function PriorityMatrixPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Priority Matrix</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Priority Matrix</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Configure priority levels based on impact and urgency combinations
             </p>
           </div>
@@ -62,13 +62,13 @@ export default function PriorityMatrixPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="p-4 text-left font-medium text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800">
+                    <th className="p-4 text-left font-medium text-foreground border border-border">
                       Impact / Urgency
                     </th>
                     {urgencyLevels.map((urgency) => (
                       <th
                         key={urgency}
-                        className="p-4 text-center font-medium text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800 min-w-[120px]"
+                        className="p-4 text-center font-medium text-foreground border border-border min-w-[120px]"
                       >
                         {urgency} Urgency
                       </th>
@@ -78,18 +78,18 @@ export default function PriorityMatrixPage() {
                 <tbody>
                   {impactLevels.map((impact) => (
                     <tr key={impact}>
-                      <td className="p-4 font-medium text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <td className="p-4 font-medium text-foreground border border-border bg-muted/50">
                         {impact} Impact
                       </td>
                       {urgencyLevels.map((urgency) => {
                         const priority = getPriorityLevel(impact, urgency)
                         return (
-                          <td key={urgency} className="p-4 text-center border border-gray-100 dark:border-gray-800">
+                          <td key={urgency} className="p-4 text-center border border-border">
                             <div className="space-y-2">
-                              <Badge variant={priority.color as any} className="text-sm font-medium">
+                              <Badge variant={priority.color as any} className="text-xs font-medium">
                                 {priority.level}
                               </Badge>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">{priority.label}</p>
+                              <p className="text-sm text-muted-foreground">{priority.label}</p>
                             </div>
                           </td>
                         )
@@ -111,20 +111,20 @@ export default function PriorityMatrixPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-red-600 dark:text-red-400">High Impact</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-red-600 dark:text-red-400">High Impact</h4>
+                <p className="text-sm text-muted-foreground">
                   Critical business functions affected, multiple users impacted, revenue loss potential
                 </p>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-yellow-600 dark:text-yellow-400">Medium Impact</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-yellow-600 dark:text-yellow-400">Medium Impact</h4>
+                <p className="text-sm text-muted-foreground">
                   Important business functions affected, limited user impact, workaround available
                 </p>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-green-600 dark:text-green-400">Low Impact</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-green-600 dark:text-green-400">Low Impact</h4>
+                <p className="text-sm text-muted-foreground">
                   Minor inconvenience, single user affected, cosmetic issues
                 </p>
               </div>
@@ -138,20 +138,20 @@ export default function PriorityMatrixPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-red-600 dark:text-red-400">High Urgency</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-red-600 dark:text-red-400">High Urgency</h4>
+                <p className="text-sm text-muted-foreground">
                   Immediate attention required, business operations at risk
                 </p>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-yellow-600 dark:text-yellow-400">Medium Urgency</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-yellow-600 dark:text-yellow-400">Medium Urgency</h4>
+                <p className="text-sm text-muted-foreground">
                   Should be addressed within business hours, planned resolution acceptable
                 </p>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-green-600 dark:text-green-400">Low Urgency</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium text-sm text-green-600 dark:text-green-400">Low Urgency</h4>
+                <p className="text-sm text-muted-foreground">
                   Can be scheduled for future resolution, no immediate impact
                 </p>
               </div>

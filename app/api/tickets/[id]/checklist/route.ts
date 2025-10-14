@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -36,21 +38,32 @@ export async function GET(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
     }
 
-    // Get checklist items
-    const { data: checklist, error } = await supabase
-      .from('ticket_checklist')
-      .select(`
-        id,
-        text,
-        completed,
-        due_date,
-        created_at,
-        updated_at,
-        assignee:profiles!ticket_checklist_assignee_id_fkey(id, first_name, last_name, display_name, email, avatar_url),
-        created_by:profiles!ticket_checklist_created_by_fkey(id, first_name, last_name, display_name, email)
-      `)
-      .eq('ticket_id', params.id)
-      .order('created_at', { ascending: true })
+    // Get checklist items - wrapped with cache
+    const fetchChecklist = unstable_cache(
+      async () => {
+        return await supabase
+          .from('ticket_checklist')
+          .select(`
+            id,
+            text,
+            completed,
+            due_date,
+            created_at,
+            updated_at,
+            assignee:profiles!ticket_checklist_assignee_id_fkey(id, first_name, last_name, display_name, email, avatar_url),
+            created_by:profiles!ticket_checklist_created_by_fkey(id, first_name, last_name, display_name, email)
+          `)
+          .eq('ticket_id', params.id)
+          .order('created_at', { ascending: true })
+      },
+      [`ticket-checklist-${params.id}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.tickets],
+      }
+    )
+    
+    const { data: checklist, error } = await fetchChecklist()
 
     if (error) {
       console.error('Error fetching checklist:', error)
@@ -144,6 +157,9 @@ export async function POST(
         new_value: 'Checklist item added',
         change_reason: `Added: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`
       })
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.tickets)
 
     return NextResponse.json({
       success: true,

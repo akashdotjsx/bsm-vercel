@@ -1,16 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search, TrendingUp, Clock } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useSearch } from "@/lib/contexts/search-context"
 import { SearchFilters } from "@/components/search/search-filters"
 import { cn } from "@/lib/utils"
 
 export default function SearchPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { searchTerm, setSearchTerm, results, isSearching, recentSearches, performSearch, addToRecent } = useSearch()
 
   const [filters, setFilters] = useState({})
@@ -18,13 +22,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     // Auto-search if there's a search term from URL params
-    const urlParams = new URLSearchParams(window.location.search)
-    const query = urlParams.get("q")
+    const query = searchParams?.get("q")
     if (query) {
       setSearchTerm(query)
       performSearch(query)
     }
-  }, [])
+  }, [searchParams])
 
   const handleSearch = async (term: string) => {
     await performSearch(term)
@@ -52,11 +55,11 @@ export default function SearchPage() {
       user: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       knowledge: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
       service: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      asset: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+      asset: "bg-muted text-foreground dark:bg-gray-900 dark:text-gray-200",
       workflow: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       account: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
     }
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800"
+    return colors[type as keyof typeof colors] || "bg-muted text-foreground"
   }
 
   const trendingSearches = [
@@ -72,7 +75,7 @@ export default function SearchPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Search Workspace</h1>
+          <h1 className="text-[13px] font-bold tracking-tight">Search Workspace</h1>
           <p className="text-muted-foreground text-[13px] mt-1">
             Search across tickets, users, knowledge base, services, and more
           </p>
@@ -90,7 +93,7 @@ export default function SearchPage() {
                 handleSearch(searchTerm)
               }
             }}
-            className="pl-12 h-12 text-[14px] text-lg"
+            className="pl-12 h-12 text-[13px] text-[11px]"
           />
           <Button
             onClick={() => handleSearch(searchTerm)}
@@ -108,7 +111,7 @@ export default function SearchPage() {
         {searchTerm && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-[13px] font-semibold">
                 {isSearching ? "Searching..." : `Results for "${searchTerm}"`}
                 {!isSearching && results.length > 0 && (
                   <span className="text-muted-foreground font-normal ml-2">({results.length} found)</span>
@@ -117,9 +120,29 @@ export default function SearchPage() {
             </div>
 
             {isSearching && (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3 text-muted-foreground">Searching across workspace...</span>
+              <div className="grid gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <Skeleton className="h-8 w-8 rounded" />
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-5 w-48" />
+                            <Skeleton className="h-5 w-16" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
 
@@ -127,7 +150,7 @@ export default function SearchPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Search className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No results found</h3>
+                  <h3 className="text-[11px] font-medium mb-2">No results found</h3>
                   <p className="text-muted-foreground text-center text-[13px] max-w-md">
                     We couldn't find anything matching "{searchTerm}". Try different keywords, check your spelling, or
                     use filters to narrow your search.
@@ -139,13 +162,17 @@ export default function SearchPage() {
             {!isSearching && results.length > 0 && (
               <div className="grid gap-4">
                 {results.map((result) => (
-                  <Card key={result.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Card 
+                    key={result.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => router.push(result.url)}
+                  >
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="text-2xl mt-1">{getTypeIcon(result.type)}</div>
+                        <div className="text-[13px] mt-1">{getTypeIcon(result.type)}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-[15px] truncate">{result.title}</h3>
+                            <h3 className="font-semibold text-[13px] truncate">{result.title}</h3>
                             <Badge variant="secondary" className={cn("text-xs px-2 py-1", getTypeColor(result.type))}>
                               {result.type}
                             </Badge>
@@ -158,6 +185,11 @@ export default function SearchPage() {
                             {result.category && <span>in {result.category}</span>}
                             {result.metadata && (
                               <>
+                                {result.metadata.ticket_number && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {result.metadata.ticket_number}
+                                  </Badge>
+                                )}
                                 {result.metadata.status && (
                                   <Badge variant="outline" className="text-xs">
                                     {result.metadata.status}
@@ -169,6 +201,10 @@ export default function SearchPage() {
                                   </Badge>
                                 )}
                                 {result.metadata.assignee && <span>Assigned to {result.metadata.assignee}</span>}
+                                {result.metadata.department && <span>{result.metadata.department}</span>}
+                                {result.metadata.email && result.type === 'user' && (
+                                  <span className="truncate">{result.metadata.email}</span>
+                                )}
                               </>
                             )}
                           </div>
@@ -189,7 +225,7 @@ export default function SearchPage() {
             {recentSearches.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
+                  <CardTitle className="flex items-center gap-2 text-[11px]">
                     <Clock className="h-5 w-5" />
                     Recent Searches
                   </CardTitle>
@@ -216,7 +252,7 @@ export default function SearchPage() {
             {/* Trending Searches */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2 text-[11px]">
                   <TrendingUp className="h-5 w-5" />
                   Trending Searches
                 </CardTitle>

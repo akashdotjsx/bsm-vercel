@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,

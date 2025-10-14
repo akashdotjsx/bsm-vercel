@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +23,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    // Get asset types for the organization
-    const { data: assetTypes, error } = await supabase
-      .from('asset_types')
-      .select('*')
-      .eq('organization_id', profile.organization_id)
-      .eq('is_active', true)
-      .order('name')
+    // Get asset types for the organization - wrapped with cache
+    const fetchAssetTypes = unstable_cache(
+      async () => {
+        return await supabase
+          .from('asset_types')
+          .select('*')
+          .eq('organization_id', profile.organization_id)
+          .eq('is_active', true)
+          .order('name')
+      },
+      [`asset-types-${profile.organization_id}`],
+      {
+        revalidate: 3600,
+        tags: [CACHE_TAGS.assets],
+      }
+    )
+    
+    const { data: assetTypes, error } = await fetchAssetTypes()
 
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch asset types' }, { status: 500 })

@@ -1,0 +1,74 @@
+{
+  "email": {
+    "required": "Please enter an email",
+    "validate": "Please enter valid email"
+  },
+  "name": {
+    "required": "Please enter name",
+    "validate": "Please enter valid name"
+  },
+  "password": {
+    "required": "Please enter a password",
+    "lowercase": "Please enter one lowercase character",
+    "uppercase": "Please enter one uppercase character",
+    "number": "Please enter one number or digit",
+    "symbol": "Please enter one symbol",
+    "minimum": "Please enter at least 8 characters long",
+    "maximum": "Please enter maximum 16 characters",
+    "confirm": "Password doesn't matched",
+    "notMatched": "Password doesn't matched"
+  },
+  "confirmpassword": {
+    "required": "Please enter confirm password",
+    "notmatched": "Password doesn't matched"
+  },
+  "text": {
+    "required": "This field required",
+    "custom": "Please enter ",
+    "minimum": "Please enter minimum 2 digits"
+  },
+  "organizationName": {
+    "required": "Enter organization name",
+    "maximum": "Organization name cannot be greater than 200."
+  },
+  "workspaceName": {
+    "required": "Enter workspace name",
+    "maximum": "Workspace name cannot be greater than 200.",
+    "validate": "Please enter at least 3 characters workspace name."
+  },
+  "teamName": {
+    "required": "Enter team name",
+    "maximum": "Team name cannot be greater than 200.",
+    "validate": "Please enter at least 3 characters team name."
+  },
+  "boardName": {
+    "required": "Enter board name",
+    "maximum": "Board name cannot be greater than 200.",
+    "validate": "Please enter at least 3 characters board name.",
+    "alphaNumericSpace": "Only letters, numbers, and spaces allowed."
+  },
+  "goalName": {
+    "required": "Enter goal name",
+    "maximum": "Goal name cannot be greater than 200.",
+    "validate": "Please enter at least 3 characters goal name."
+  },
+  "workspaceDescription": {
+    "required": "Enter workspace description",
+    "maximum": "Workspace description cannot be greater than 1000.",
+    "validate": "Please enter at least 3 characters workspace name."
+  },
+  "projectName": {
+    "required": "Enter project name",
+    "maximum": "Project name cannot be greater than 200.",
+    "validate": "Please enter at least 3 characters project name.",
+    "alphaNumericSpace": "Only letters, numbers, and spaces allowed."
+  },
+  "taskName": {
+    "required": "Enter task name",
+    "maximum": "Task name cannot be greater than 200."
+  },
+  "ssoEmail": {
+    "required": "Please enter an work email address",
+    "validate": "Please enter valid work email address"
+  }
+}

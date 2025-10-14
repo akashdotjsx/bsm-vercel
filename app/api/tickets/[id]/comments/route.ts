@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -36,20 +38,31 @@ export async function GET(
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
     }
 
-    // Get comments
-    const { data: comments, error } = await supabase
-      .from('ticket_comments')
-      .select(`
-        id,
-        content,
-        is_internal,
-        is_system,
-        metadata,
-        created_at,
-        author:profiles!ticket_comments_author_id_fkey(id, first_name, last_name, display_name, email, avatar_url)
-      `)
-      .eq('ticket_id', params.id)
-      .order('created_at', { ascending: true })
+    // Get comments - wrapped with cache
+    const fetchComments = unstable_cache(
+      async () => {
+        return await supabase
+          .from('ticket_comments')
+          .select(`
+            id,
+            content,
+            is_internal,
+            is_system,
+            metadata,
+            created_at,
+            author:profiles!ticket_comments_author_id_fkey(id, first_name, last_name, display_name, email, avatar_url)
+          `)
+          .eq('ticket_id', params.id)
+          .order('created_at', { ascending: true })
+      },
+      [`ticket-comments-${params.id}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.tickets],
+      }
+    )
+    
+    const { data: comments, error } = await fetchComments()
 
     if (error) {
       console.error('Error fetching comments:', error)
@@ -142,6 +155,9 @@ export async function POST(
         new_value: 'Comment added',
         change_reason: `Comment: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`
       })
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.tickets)
 
     return NextResponse.json({
       success: true,

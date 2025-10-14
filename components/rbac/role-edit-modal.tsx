@@ -119,7 +119,7 @@ export function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalPr
     return (
       <div className="flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
-          <div className="w-4 h-4 border border-gray-300 rounded" />
+          <div className="w-4 h-4 border border-border rounded" />
           <span className="text-sm font-medium">{MODULE_DISPLAY_NAMES[module]}</span>
         </div>
         
@@ -158,10 +158,10 @@ export function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalPr
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className="text-[11px] font-semibold">
               {role ? 'Edit User Role' : 'Create New Role'}
             </DialogTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {role 
                 ? `Update the permissions for ${role.name}`
                 : 'Create a new role with custom permissions'
@@ -223,7 +223,7 @@ export function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalPr
           </div>
 
           {/* Permission Level Legend */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-2">
               Permission Levels
               <ChevronDown className="h-4 w-4" />
@@ -236,7 +236,7 @@ export function RoleEditModal({ isOpen, onClose, role, onSave }: RoleEditModalPr
                     <div className="w-2 h-2 bg-blue-500 rounded-full" />
                     <span className="font-medium">{level.label}</span>
                   </div>
-                  <span className="text-gray-600">{level.description}</span>
+                  <span className="text-muted-foreground">{level.description}</span>
                 </div>
               ))}
             </div>

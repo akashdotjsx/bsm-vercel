@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 import { createClient } from '@/lib/supabase/server'
 
 // Get single service request
@@ -26,18 +28,29 @@ export async function GET(
       return NextResponse.json({ error: 'Organization not found' }, { status: 400 })
     }
 
-    // Get the service request (RLS will handle access control)
-    const { data: serviceRequest, error } = await supabase
-      .from('service_requests')
-      .select(`
-        *,
-        service:services(name, category_id, estimated_delivery_days),
-        requester:profiles!service_requests_requester_id_fkey(first_name, last_name, email, department),
-        assignee:profiles!service_requests_assignee_id_fkey(first_name, last_name, email),
-        approver:profiles!service_requests_approver_id_fkey(first_name, last_name, email)
-      `)
-      .eq('id', params.id)
-      .single()
+    // Get the service request (RLS will handle access control) - wrapped with cache
+    const fetchServiceRequest = unstable_cache(
+      async () => {
+        return await supabase
+          .from('service_requests')
+          .select(`
+            *,
+            service:services(name, category_id, estimated_delivery_days),
+            requester:profiles!service_requests_requester_id_fkey(first_name, last_name, email, department),
+            assignee:profiles!service_requests_assignee_id_fkey(first_name, last_name, email),
+            approver:profiles!service_requests_approver_id_fkey(first_name, last_name, email)
+          `)
+          .eq('id', params.id)
+          .single()
+      },
+      [`service-request-${params.id}`],
+      {
+        revalidate: 60,
+        tags: [CACHE_TAGS.serviceRequests],
+      }
+    )
+    
+    const { data: serviceRequest, error } = await fetchServiceRequest()
 
     if (error) {
       console.error('Error fetching service request:', error)

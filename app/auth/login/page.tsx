@@ -11,53 +11,75 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function Page() {
-  const [email, setEmail] = useState("bhive@kroolo.com")
-  const [password, setPassword] = useState("KrooloAdmin123!")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [mounted, setMounted] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
-  const { user, loading } = useAuth()
   
-  // Auto-redirect if user is already authenticated
+  // Force light mode on login page
   useEffect(() => {
-    if (!loading && user) {
-      console.log('User already authenticated, redirecting to dashboard')
-      router.push('/dashboard')
-      return
+    setMounted(true)
+    // Force light mode
+    document.documentElement.classList.remove('dark')
+    document.documentElement.setAttribute('data-theme', 'light')
+    
+    // Check if user is already authenticated (but don't show loading)
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          console.log('User already authenticated, redirecting to dashboard')
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        // Continue to show login page on error
+      }
     }
-    setCheckingAuth(false)
-  }, [user, loading, router])
-  
-  // Show loading while checking authentication status
-  if (loading || checkingAuth) {
-    return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
-        <div className="flex items-center gap-2">
-          <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-          <span className="text-sm text-muted-foreground">Checking authentication...</span>
-        </div>
-      </div>
-    )
-  }
+    
+    checkAuth()
+  }, [router, supabase])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
+    console.log('Login attempt with email:', email)
+    console.log('Password provided:', !!password)
+    console.log('Email length:', email.length)
+    console.log('Password length:', password.length)
+
+    if (!email || !password) {
+      setError('Please enter both email and password')
+      return
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
     try {
+      console.log('About to call supabase.auth.signInWithPassword')
       // Sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       })
 
+      console.log('Auth response:', { authData, authError })
+
       if (authError) {
+        console.error('Supabase auth error:', authError)
         setError(authError.message)
         return
       }
@@ -104,7 +126,9 @@ export default function Page() {
         .eq('id', authData.user.id)
 
       console.log("Login successful, redirecting to dashboard")
-      router.push("/dashboard")
+      
+      // Force a hard navigation to ensure the redirect works
+      window.location.href = "/dashboard"
 
     } catch (err) {
       console.error("Login error:", err)
@@ -136,109 +160,250 @@ export default function Page() {
     }
   }
 
-  // Demo bypass - keep for development but hide in production
-  const handleBypass = () => {
-    console.log("[DEV] Demo bypass - this should be removed in production")
-    router.push("/dashboard")
-  }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col items-center gap-4 mb-6">
-            <Image src="/images/kroolo-logo.png" alt="Kroolo Logo" width={120} height={40} className="h-10 w-auto" />
-            <div className="text-center">
-              <h1 className="text-2xl font-semibold text-foreground">Business Service Management</h1>
-              <p className="text-sm text-muted-foreground">AI-Native Enterprise Platform</p>
+    <div className="flex h-screen w-full 0 overflow-hidden">
+      {/* Main Container - 7/12 width like reference */}
+      <div className="flex lg:w-7/12 w-full overflow-hidden 0 justify-center items-center">
+        <div className="w-full max-w-[440px] mx-auto">
+          {/* Login Form Card */}
+          <div 
+            className="0 border border-[#EAECF0] rounded-xl p-6 flex flex-col gap-4 relative"
+            style={{ 
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08), 0px 0px 1px rgba(0, 0, 0, 0.1)',
+              width: '440px',
+              maxWidth: '100%'
+            }}
+          >
+            {/* Logo */}
+            <div className="flex justify-center h-12">
+              {mounted && (
+                <Link href="/" className="flex items-center">
+                  <Image 
+                    src="/images/kroolo-dark-logo2.svg"
+                    alt="Kroolo Logo" 
+                    width={200} 
+                    height={32} 
+                    className="h-8 w-auto" 
+                  />
+                </Link>
+              )}
+              {!mounted && (
+                <div className="h-8 w-48 bg-muted animate-pulse rounded mx-auto" />
+              )}
             </div>
-          </div>
 
-          <Card className="border border-border shadow-sm">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl font-semibold">Welcome Back</CardTitle>
-              <CardDescription>Sign in to access your service management platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin}>
-                <div className="flex flex-col gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password" className="text-sm font-medium">
-                      Password
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                  {error && (
-                    <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                      {error}
-                    </div>
-                  )}
-                  <Button type="submit" className="w-full h-10" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign In"}
-                  </Button>
+            {/* Header */}
+            <div className="text-center mb-2">
+              <h1 
+                className="text-[16px] font-semibold text-foreground" 
+                style={{ 
+                  fontSize: '16px', 
+                  fontWeight: 600,
+                  lineHeight: '24px',
+                  color: '#101828'
+                }}
+              >
+                Welcome to <span style={{ color: '#6366F1' }}>Kroolo AI Search</span>
+              </h1>
+              <p 
+                className="text-[#667085] mt-2" 
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 400,
+                  lineHeight: '18px'
+                }}
+              >
+                Unlock your team's knowledge base with Kroolo AI Search.
+              </p>
+            </div>
 
-                  <Button 
+            {/* Sign in heading */}
+            <div className="mt-4 mb-4">
+              <h2 
+                className="text-[16px] font-semibold" 
+                style={{ 
+                  fontSize: '16px', 
+                  fontWeight: 600,
+                  lineHeight: '24px',
+                  color: '#101828'
+                }}
+              >
+                Sign in
+              </h2>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <Label 
+                  htmlFor="email" 
+                  className="block text-sm font-medium text-[#344054] mb-1" 
+                  style={{ 
+                    fontWeight: 500,
+                    fontSize: '12px',
+                    color: '#344054',
+                    lineHeight: '18px'
+                  }}
+                >
+                  Email
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white text-[#101828] placeholder-[#667085] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent border border-[#D0D5DD] hover:border-[#D0D5DD] transition-all duration-200"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      height: '36px',
+                      color: '#101828',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <Label 
+                  htmlFor="password" 
+                  className="block text-sm font-medium text-[#344054] mb-1" 
+                  style={{ 
+                    fontWeight: 500,
+                    fontSize: '12px',
+                    color: '#344054',
+                    lineHeight: '18px'
+                  }}
+                >
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white text-[#101828] placeholder-[#667085] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent border border-[#D0D5DD] hover:border-[#D0D5DD] transition-all duration-200 pr-10"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      height: '36px',
+                      color: '#101828',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#667085] hover:text-[#344054]"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                
+                {/* Forgot Password Link */}
+                <div className="mt-2 text-right">
+                  <button 
                     type="button" 
-                    variant="ghost" 
-                    size="sm"
                     onClick={handleForgotPassword}
                     disabled={isLoading}
-                    className="text-xs text-muted-foreground"
+                    className="text-sm text-[#6366F1] hover:text-[#5558E3] inline-block"
+                    style={{ 
+                      fontSize: '11px',
+                      lineHeight: '16px',
+                      fontWeight: 400,
+                      textDecoration: 'none'
+                    }}
                   >
-                    Forgot your password?
-                  </Button>
+                    Forgot password?
+                  </button>
+                </div>
+              </div>
+              
+              {error && (
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                  {error}
+                </div>
+              )}
+              
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-[#6366F1] hover:bg-[#5558E3] text-white font-medium text-sm transition-colors duration-200"
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  lineHeight: '20px',
+                  textTransform: 'none',
+                  boxShadow: '0px 1px 2px rgba(16, 24, 40, 0.05)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  height: '36px',
+                  padding: '8px 16px'
+                }}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
 
-                  {/* Development only - remove in production */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <>
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t border-border" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">Dev Only</span>
-                        </div>
-                      </div>
-                      <Button type="button" variant="outline" className="w-full h-10 bg-transparent" onClick={handleBypass}>
-                        Continue as Demo User (Dev)
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <div className="mt-6 text-center text-sm">
-                  <span className="text-muted-foreground">
-                    Need an account?{" "}
-                  </span>
-                  <Link href="/auth/contact" className="text-primary hover:underline">
-                    Contact your administrator
-                  </Link>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+            </form>
+
+          </div>
+          
+          {/* Terms and Privacy - Outside the card */}
+          <div className="mt-4 text-center mx-auto">
+            <div 
+              className="text-xs text-[#667085] leading-relaxed" 
+              style={{ 
+                fontSize: '11px',
+                lineHeight: '16px',
+                fontWeight: 400
+              }}
+            >
+              By signing up, You agree to Kroolo's{" "}
+              <Link 
+                href="#" 
+                className="text-[#6366F1] hover:text-[#5558E3]"
+                style={{ fontWeight: 400, textDecoration: 'underline' }}
+              >
+                Terms of Use
+              </Link>
+              {" "}and{" "}
+              <Link 
+                href="#" 
+                className="text-[#6366F1] hover:text-[#5558E3]"
+                style={{ fontWeight: 400, textDecoration: 'underline' }}
+              >
+                Privacy Policy
+              </Link>.
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Right side - Image (5/12 width) */}
+      <div className="hidden lg:block lg:w-5/12 relative overflow-hidden" style={{ backgroundColor: '#ccdafa' }}>
+        <Image
+          src="/images/login_page_image.png"
+          alt="AI WorkOS for All"
+          fill
+          className="object-cover object-center"
+          style={{ transform: 'scale(0.8)' }}
+          priority
+        />
       </div>
     </div>
   )

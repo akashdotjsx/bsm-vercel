@@ -331,6 +331,21 @@ CREATE TABLE public.ticket_comments (
   CONSTRAINT ticket_comments_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
   CONSTRAINT ticket_comments_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.ticket_checklist (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  ticket_id uuid NOT NULL,
+  text text NOT NULL,
+  completed boolean DEFAULT false,
+  assignee_id uuid,
+  due_date timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ticket_checklist_pkey PRIMARY KEY (id),
+  CONSTRAINT ticket_checklist_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
+  CONSTRAINT ticket_checklist_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.profiles(id),
+  CONSTRAINT ticket_checklist_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.ticket_history (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   ticket_id uuid NOT NULL,
@@ -343,6 +358,20 @@ CREATE TABLE public.ticket_history (
   CONSTRAINT ticket_history_pkey PRIMARY KEY (id),
   CONSTRAINT ticket_history_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
   CONSTRAINT ticket_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.ticket_checklist (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  ticket_id uuid NOT NULL,
+  item_text character varying NOT NULL,
+  is_completed boolean DEFAULT false,
+  completed_by uuid,
+  completed_at timestamp with time zone,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ticket_checklist_pkey PRIMARY KEY (id),
+  CONSTRAINT ticket_checklist_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id),
+  CONSTRAINT ticket_checklist_completed_by_fkey FOREIGN KEY (completed_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.tickets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -359,6 +388,7 @@ CREATE TABLE public.tickets (
   status USER-DEFINED DEFAULT 'new'::ticket_status,
   requester_id uuid,
   assignee_id uuid,
+  assignee_ids uuid[] DEFAULT ARRAY[]::uuid[],
   team_id uuid,
   sla_policy_id uuid,
   due_date timestamp with time zone,
@@ -708,4 +738,23 @@ CREATE TABLE public.discovery_logs (
   CONSTRAINT discovery_logs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT discovery_logs_discovery_rule_id_fkey FOREIGN KEY (discovery_rule_id) REFERENCES public.discovery_rules(id),
   CONSTRAINT valid_discovery_status CHECK (status IN ('running', 'completed', 'failed', 'cancelled'))
+);
+
+CREATE TABLE public.search_suggestions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  query text NOT NULL,
+  search_type character varying DEFAULT 'all',
+  result_count integer DEFAULT 0,
+  clicked_result_id uuid,
+  clicked_result_type character varying,
+  ip_address inet,
+  user_agent text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT search_suggestions_pkey PRIMARY KEY (id),
+  CONSTRAINT search_suggestions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT search_suggestions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT valid_search_type CHECK (search_type IN ('all', 'tickets', 'users', 'knowledge', 'services', 'assets')),
+  CONSTRAINT valid_clicked_result_type CHECK (clicked_result_type IN ('ticket', 'user', 'knowledge', 'service', 'asset'))
 );

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { TrendingUp, TrendingDown, Clock, CheckCircle, Users, Download, Activity } from "lucide-react"
 import { addDays, format, subDays, startOfMonth, endOfMonth } from "date-fns"
 import type { DateRange } from "react-day-picker"
@@ -366,10 +367,10 @@ const AnalyticsDashboard = () => {
   const renderChart = (chartData: any[], title: string, category: string) => {
     if (!chartData || chartData.length === 0) {
       return (
-        <div className="h-[300px] flex items-center justify-center text-gray-500">
+        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No data available</p>
+            <p className="text-[10px]">No data available</p>
           </div>
         </div>
       )
@@ -497,21 +498,15 @@ const AnalyticsDashboard = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-sm text-gray-600">Loading analytics dashboard...</p>
-          </div>
-        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
               <CardHeader className="pb-2">
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                <Skeleton className="h-4 w-20" />
               </CardHeader>
               <CardContent>
-                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-2" />
-                <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
               </CardContent>
             </Card>
           ))}
@@ -520,11 +515,11 @@ const AnalyticsDashboard = () => {
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
               <CardHeader>
-                <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2" />
-                <div className="h-3 w-48 bg-gray-200 rounded animate-pulse" />
+                <Skeleton className="h-5 w-32 mb-2" />
+                <Skeleton className="h-3 w-48" />
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] bg-gray-100 rounded animate-pulse" />
+                <Skeleton className="h-[300px] w-full" />
               </CardContent>
             </Card>
           ))}
@@ -537,9 +532,9 @@ const AnalyticsDashboard = () => {
     return (
       <div className="text-center py-12">
         <div className="max-w-md mx-auto">
-          <Activity className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load analytics</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-[11px] font-medium text-foreground mb-2">Failed to load analytics</h3>
+          <p className="text-[10px] text-muted-foreground mb-4">{error}</p>
           <Button onClick={fetchAnalyticsData} variant="outline">
             <Activity className="h-4 w-4 mr-2" />
             Retry
@@ -552,8 +547,8 @@ const AnalyticsDashboard = () => {
   if (!analyticsData) {
     return (
       <div className="text-center py-12">
-        <Activity className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-        <p className="text-gray-600">No analytics data available</p>
+        <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-[10px] text-muted-foreground">No analytics data available</p>
       </div>
     )
   }
@@ -569,7 +564,7 @@ const AnalyticsDashboard = () => {
               <Activity className="h-5 w-5 text-yellow-400" />
             </div>
             <div className="ml-3">
-              <p className="text-xs sm:text-sm text-yellow-800">
+              <p className="text-[10px] text-yellow-800">
                 Using cached data due to connection issues. Some information may not be current.
               </p>
             </div>
@@ -620,72 +615,72 @@ const AnalyticsDashboard = () => {
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Tickets</CardTitle>
+            <CardTitle className="text-[10px] font-medium">Total Tickets</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{analyticsData.kpis.totalTickets.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className="text-[13px] font-bold">{analyticsData.kpis.totalTickets.value}</div>
+            <div className="flex items-center text-[10px] text-foreground">
               {analyticsData.kpis.totalTickets.trend === "up" ? (
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
               ) : (
                 <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
               )}
-              <span className="text-xs">{Math.abs(analyticsData.kpis.totalTickets.change)}% from last period</span>
+              <span className="text-[10px]">{Math.abs(analyticsData.kpis.totalTickets.change)}% from last period</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Avg Resolution Time</CardTitle>
+            <CardTitle className="text-[10px] font-medium">Avg Resolution Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{analyticsData.kpis.avgResolutionTime.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className="text-[13px] font-bold">{analyticsData.kpis.avgResolutionTime.value}</div>
+            <div className="flex items-center text-[10px] text-foreground">
               {analyticsData.kpis.avgResolutionTime.trend === "down" ? (
                 <TrendingDown className="h-3 w-3 mr-1 text-green-500" />
               ) : (
                 <TrendingUp className="h-3 w-3 mr-1 text-red-500" />
               )}
-              <span className="text-xs">{Math.abs(analyticsData.kpis.avgResolutionTime.change)}% from last period</span>
+              <span className="text-[10px]">{Math.abs(analyticsData.kpis.avgResolutionTime.change)}% from last period</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">SLA Compliance</CardTitle>
+            <CardTitle className="text-[10px] font-medium">SLA Compliance</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{analyticsData.kpis.slaCompliance.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className="text-[13px] font-bold">{analyticsData.kpis.slaCompliance.value}</div>
+            <div className="flex items-center text-[10px] text-foreground">
               {analyticsData.kpis.slaCompliance.trend === "up" ? (
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
               ) : (
                 <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
               )}
-              <span className="text-xs">{Math.abs(analyticsData.kpis.slaCompliance.change)}% from last period</span>
+              <span className="text-[10px]">{Math.abs(analyticsData.kpis.slaCompliance.change)}% from last period</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Customer Satisfaction</CardTitle>
+            <CardTitle className="text-[10px] font-medium">Customer Satisfaction</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{analyticsData.kpis.customerSatisfaction.value}</div>
-            <div className="flex items-center text-xs text-gray-700">
+            <div className="text-[13px] font-bold">{analyticsData.kpis.customerSatisfaction.value}</div>
+            <div className="flex items-center text-[10px] text-foreground">
               {analyticsData.kpis.customerSatisfaction.trend === "up" ? (
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
               ) : (
                 <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
               )}
-              <span className="text-xs">
+              <span className="text-[10px]">
                 {Math.abs(analyticsData.kpis.customerSatisfaction.change)} from last period
               </span>
             </div>
@@ -696,8 +691,8 @@ const AnalyticsDashboard = () => {
       <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Tickets by Department</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Distribution across departments</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Tickets by Department</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Distribution across departments</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             {renderChart(analyticsData.ticketsByDepartment, "Department", "department")}
@@ -706,24 +701,24 @@ const AnalyticsDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Tickets by Type</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Breakdown by ticket categories</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Tickets by Type</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Breakdown by ticket categories</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">{renderChart(analyticsData.ticketsByType, "Type", "type")}</CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Tickets by Status</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Current status distribution</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Tickets by Status</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Current status distribution</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">{renderChart(analyticsData.ticketsByStatus, "Status", "status")}</CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Tickets by Priority</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Priority level breakdown</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Tickets by Priority</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Priority level breakdown</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             {renderChart(analyticsData.ticketsByPriority, "Priority", "priority")}
@@ -732,8 +727,8 @@ const AnalyticsDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Tickets by Assignee</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Workload distribution</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Tickets by Assignee</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Workload distribution</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             {renderChart(analyticsData.ticketsByAssignee, "Assignee", "assignee")}
@@ -742,8 +737,8 @@ const AnalyticsDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Ticket Trends</CardTitle>
-            <CardDescription className="text-sm text-gray-600">Created vs resolved over time</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">Ticket Trends</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">Created vs resolved over time</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="h-[300px]">
@@ -823,22 +818,22 @@ const AnalyticsDashboard = () => {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">SLA Performance by Department</CardTitle>
-            <CardDescription className="text-sm text-gray-600">On-time vs breached SLAs</CardDescription>
+            <CardTitle className="text-[11px] font-semibold">SLA Performance by Department</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">On-time vs breached SLAs</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] flex items-center justify-center">
               <div className="space-y-3">
                 {analyticsData.slaPerformance.map((performance, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-24 text-sm font-medium truncate">{performance.department}</div>
-                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative">
+                    <div className="w-24 text-[10px] font-medium truncate">{performance.department}</div>
+                    <div className="flex-1 bg-muted rounded-full h-4 relative">
                       <div
                         className="h-4 bg-green-500 rounded-full"
                         style={{ width: `${(performance.onTime / 100) * 100}%` }}
                       />
                     </div>
-                    <div className="w-12 text-sm text-right font-medium">{performance.onTime}%</div>
+                    <div className="w-12 text-[10px] text-right font-medium">{performance.onTime}%</div>
                   </div>
                 ))}
               </div>
@@ -848,8 +843,8 @@ const AnalyticsDashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">AI Insights</CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardTitle className="text-[11px] font-semibold">AI Insights</CardTitle>
+            <CardDescription className="text-[10px] text-muted-foreground">
               Automated recommendations and predictions
             </CardDescription>
           </CardHeader>
@@ -857,29 +852,29 @@ const AnalyticsDashboard = () => {
             <div className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium">Bottleneck Detected</p>
-                <p className="text-xs text-gray-700">IT department showing 23% increase in resolution time</p>
+                <p className="text-[11px] font-medium">Bottleneck Detected</p>
+                <p className="text-[10px] text-foreground">IT department showing 23% increase in resolution time</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium">Automation Opportunity</p>
-                <p className="text-xs text-gray-700">67% of password reset requests can be automated</p>
+                <p className="text-[11px] font-medium">Automation Opportunity</p>
+                <p className="text-[10px] text-foreground">67% of password reset requests can be automated</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-red-500 mt-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium">SLA Risk Alert</p>
-                <p className="text-xs text-gray-700">12 tickets at risk of breaching SLA in next 24 hours</p>
+                <p className="text-[11px] font-medium">SLA Risk Alert</p>
+                <p className="text-[10px] text-foreground">12 tickets at risk of breaching SLA in next 24 hours</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium">Trend Prediction</p>
-                <p className="text-xs text-gray-700">Expected 15% increase in ticket volume next week</p>
+                <p className="text-[11px] font-medium">Trend Prediction</p>
+                <p className="text-[10px] text-foreground">Expected 15% increase in ticket volume next week</p>
               </div>
             </div>
           </CardContent>
@@ -888,8 +883,8 @@ const AnalyticsDashboard = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Real-time Activity</CardTitle>
-          <CardDescription className="text-sm text-gray-600">Live updates from across the platform</CardDescription>
+          <CardTitle className="text-[11px] font-semibold">Real-time Activity</CardTitle>
+          <CardDescription className="text-[10px] text-muted-foreground">Live updates from across the platform</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -900,14 +895,14 @@ const AnalyticsDashboard = () => {
               { time: "12 min ago", event: "Customer satisfaction survey completed", type: "info" },
               { time: "15 min ago", event: "Bulk ticket assignment completed", type: "success" },
             ].map((activity, index) => (
-              <div key={index} className="flex items-center gap-3 text-sm">
+              <div key={index} className="flex items-center gap-3 text-[11px]">
                 <Badge
                   variant={
                     activity.type === "alert" ? "destructive" : activity.type === "success" ? "default" : "secondary"
                   }
                   className="w-2 h-2 p-0 rounded-full"
                 />
-                <span className="text-gray-700 text-xs">{activity.time}</span>
+                <span className="text-foreground text-[10px]">{activity.time}</span>
                 <span>{activity.event}</span>
               </div>
             ))}

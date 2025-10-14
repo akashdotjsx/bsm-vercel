@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { assetAPI, Asset, AssetType, AssetsFilters, CreateAssetData, UpdateAssetData, BusinessService, DiscoveryRule } from '@/lib/api/assets'
+import { Asset, AssetType, AssetsFilters, CreateAssetData, UpdateAssetData, BusinessService, DiscoveryRule } from '@/lib/types/assets'
+// NOTE: This hook uses legacy REST API calls. Consider migrating to GraphQL hooks from use-services-assets-gql.ts
+// import { assetAPI } from '@/lib/api/assets' // DEPRECATED - API file deleted, use REST endpoints directly or GraphQL
 
 export function useAssets(organizationId: string, filters: AssetsFilters = {}) {
   const [assets, setAssets] = useState<Asset[]>([])
@@ -16,9 +18,20 @@ export function useAssets(organizationId: string, filters: AssetsFilters = {}) {
     try {
       setLoading(true)
       setError(null)
-      const data = await assetAPI.getAssets(organizationId, filters)
-      setAssets(data.assets)
-      setPagination(data.pagination)
+      // Direct REST API call (legacy - consider migrating to GraphQL)
+      const searchParams = new URLSearchParams()
+      if (filters.page) searchParams.set('page', filters.page.toString())
+      if (filters.limit) searchParams.set('limit', filters.limit.toString())
+      if (filters.search) searchParams.set('search', filters.search)
+      if (filters.asset_type_id) searchParams.set('asset_type_id', filters.asset_type_id)
+      if (filters.status) searchParams.set('status', filters.status)
+      
+      const response = await fetch(`/api/assets?${searchParams.toString()}`)
+      if (!response.ok) throw new Error('Failed to fetch assets')
+      const data = await response.json()
+      
+      setAssets(data.assets || [])
+      setPagination(data.pagination || { page: 1, limit: 50, total: 0, pages: 0 })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch assets')
     } finally {
@@ -32,7 +45,14 @@ export function useAssets(organizationId: string, filters: AssetsFilters = {}) {
 
   const createAsset = useCallback(async (data: CreateAssetData) => {
     try {
-      const newAsset = await assetAPI.createAsset(organizationId, data)
+      const response = await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) throw new Error('Failed to create asset')
+      const result = await response.json()
+      const newAsset = result.asset
       setAssets(prev => [newAsset, ...prev])
       return newAsset
     } catch (err) {
@@ -43,7 +63,14 @@ export function useAssets(organizationId: string, filters: AssetsFilters = {}) {
 
   const updateAsset = useCallback(async (id: string, data: UpdateAssetData) => {
     try {
-      const updatedAsset = await assetAPI.updateAsset(id, data)
+      const response = await fetch(`/api/assets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) throw new Error('Failed to update asset')
+      const result = await response.json()
+      const updatedAsset = result.asset
       setAssets(prev => prev.map(asset => 
         asset.id === id ? updatedAsset : asset
       ))
@@ -56,7 +83,10 @@ export function useAssets(organizationId: string, filters: AssetsFilters = {}) {
 
   const deleteAsset = useCallback(async (id: string) => {
     try {
-      await assetAPI.deleteAsset(id)
+      const response = await fetch(`/api/assets/${id}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) throw new Error('Failed to delete asset')
       setAssets(prev => prev.filter(asset => asset.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete asset')
@@ -87,8 +117,10 @@ export function useAsset(id: string) {
     try {
       setLoading(true)
       setError(null)
-      const data = await assetAPI.getAsset(id)
-      setAsset(data)
+      const response = await fetch(`/api/assets/${id}`)
+      if (!response.ok) throw new Error('Failed to fetch asset')
+      const result = await response.json()
+      setAsset(result.asset)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch asset')
     } finally {
@@ -102,7 +134,14 @@ export function useAsset(id: string) {
 
   const updateAsset = useCallback(async (data: UpdateAssetData) => {
     try {
-      const updatedAsset = await assetAPI.updateAsset(id, data)
+      const response = await fetch(`/api/assets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (!response.ok) throw new Error('Failed to update asset')
+      const result = await response.json()
+      const updatedAsset = result.asset
       setAsset(updatedAsset)
       return updatedAsset
     } catch (err) {
@@ -129,8 +168,10 @@ export function useAssetTypes(organizationId: string) {
     try {
       setLoading(true)
       setError(null)
-      const data = await assetAPI.getAssetTypes(organizationId)
-      setAssetTypes(data)
+      const response = await fetch('/api/asset-types')
+      if (!response.ok) throw new Error('Failed to fetch asset types')
+      const result = await response.json()
+      setAssetTypes(result.assetTypes || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch asset types')
     } finally {
@@ -164,7 +205,9 @@ export function useAssetRelationships(assetId: string) {
     try {
       setLoading(true)
       setError(null)
-      const data = await assetAPI.getAssetRelationships(assetId)
+      const response = await fetch(`/api/assets/${assetId}/relationships`)
+      if (!response.ok) throw new Error('Failed to fetch relationships')
+      const data = await response.json()
       setRelationships(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch relationships')
@@ -185,13 +228,18 @@ export function useAssetRelationships(assetId: string) {
     description?: string
   ) => {
     try {
-      await assetAPI.createAssetRelationship(
-        organizationId,
-        sourceAssetId,
-        targetAssetId,
-        relationshipType as any,
-        description
-      )
+      const response = await fetch('/api/asset-relationships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_id: organizationId,
+          source_asset_id: sourceAssetId,
+          target_asset_id: targetAssetId,
+          relationship_type: relationshipType,
+          description
+        })
+      })
+      if (!response.ok) throw new Error('Failed to create relationship')
       fetchRelationships()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create relationship')
@@ -201,7 +249,10 @@ export function useAssetRelationships(assetId: string) {
 
   const deleteRelationship = useCallback(async (relationshipId: string) => {
     try {
-      await assetAPI.deleteAssetRelationship(relationshipId)
+      const response = await fetch(`/api/asset-relationships/${relationshipId}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) throw new Error('Failed to delete relationship')
       fetchRelationships()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete relationship')

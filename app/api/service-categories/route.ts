@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
@@ -51,6 +53,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create service category' }, { status: 500 })
     }
 
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.services)
+
     return NextResponse.json({ category }, { status: 201 })
   } catch (error) {
     console.error('Error in service categories API:', error)
@@ -79,16 +84,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 400 })
     }
 
-    // Get all service categories for the organization
-    const { data: categories, error } = await supabase
-      .from('service_categories')
-      .select(`
-        *,
-        services:services(*)
-      `)
-      .eq('organization_id', profile.organization_id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
+    // Get all service categories for the organization - wrapped with cache
+    const fetchCategories = unstable_cache(
+      async () => {
+        return await supabase
+          .from('service_categories')
+          .select(`
+            *,
+            services:services(*)
+          `)
+          .eq('organization_id', profile.organization_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+      },
+      [`service-categories-${profile.organization_id}`],
+      {
+        revalidate: 3600,
+        tags: [CACHE_TAGS.services],
+      }
+    )
+    
+    const { data: categories, error } = await fetchCategories()
 
     if (error) {
       console.error('Error fetching service categories:', error)
@@ -161,6 +177,9 @@ export async function PUT(request: NextRequest) {
       console.error('Error updating service category:', error)
       return NextResponse.json({ error: 'Failed to update service category' }, { status: 500 })
     }
+
+    // Invalidate cache
+    revalidateTag(CACHE_TAGS.services)
 
     return NextResponse.json({ category }, { status: 200 })
   } catch (error) {

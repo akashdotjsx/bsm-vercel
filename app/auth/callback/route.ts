@@ -1,5 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -20,13 +21,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Create Supabase client
-    const supabase = createClient(
+    // Create Supabase server client with cookie bridging so session persists
+    const cookieStore = cookies()
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          },
+        },
+      }
     )
 
-    // Exchange code for session
+    // Exchange code for session (sets cookies via the cookie bridge above)
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     if (exchangeError) {
@@ -37,30 +49,24 @@ export async function GET(request: NextRequest) {
     if (data?.user) {
       console.log('User authenticated successfully:', data.user.email)
       
-      // Check if this is a new user who needs to set up their profile
+      // Confirm profile exists
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id')
         .eq('id', data.user.id)
         .single()
 
-      // Redirect based on user status
       if (!profile) {
-        // If no profile exists, something went wrong - redirect to error
         return NextResponse.redirect(`${requestUrl.origin}/auth/error?error=${encodeURIComponent('User profile not found')}`)
       }
 
-      // Check if user needs to set password (invited users)
       if (data.user.user_metadata?.invited) {
-        // Redirect to password setup page
         return NextResponse.redirect(`${requestUrl.origin}/auth/set-password`)
       }
 
-      // Regular login - redirect to dashboard
       return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
     }
 
-    // If we get here, something unexpected happened
     return NextResponse.redirect(`${requestUrl.origin}/auth/error?error=${encodeURIComponent('Authentication failed')}`)
 
   } catch (error) {

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
@@ -47,8 +49,19 @@ export async function GET(request: NextRequest) {
       query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
     }
 
-    // Execute query with ordering
-    const { data: services, error } = await query.order('name', { ascending: true })
+    // Execute query with ordering - wrapped with cache
+    const fetchServices = unstable_cache(
+      async () => {
+        return await query.order('name', { ascending: true })
+      },
+      [`services-requestable-${categoryId || 'all'}-${search || 'all'}`],
+      {
+        revalidate: 300,
+        tags: [CACHE_TAGS.services],
+      }
+    )
+    
+    const { data: services, error } = await fetchServices()
 
     if (error) {
       console.error('Error fetching requestable services:', error)
