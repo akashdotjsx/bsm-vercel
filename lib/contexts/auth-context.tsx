@@ -5,7 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { rbacApi } from '@/lib/api/rbac'
 import type { UserPermissionsResponse, UserRole } from '@/lib/types/rbac'
-import KrooloMainLoader from '@/components/common/kroolo-main-loader'
+import { useHydration } from '@/hooks/use-hydration'
+import dynamic from 'next/dynamic'
+
+// Dynamic import to prevent SSR hydration issues
+const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-loader'), {
+  ssr: false,
+  loading: () => <div className="min-h-screen bg-background" />
+})
 
 // Create a single instance of the client to be used throughout the auth context
 const supabase = createClient()
@@ -76,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
-  const [isHydrated, setIsHydrated] = useState(false)
   const [minLoadingComplete, setMinLoadingComplete] = useState(false)
+  const isHydrated = useHydration()
 
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -242,9 +249,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
     
-    // Mark as hydrated to prevent flash
-    setIsHydrated(true)
-    
     // Minimum loading time for smooth UX (prevent flash)
     setTimeout(() => {
       setMinLoadingComplete(true)
@@ -405,8 +409,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAgent,
   }
 
-  // Show loader until everything is ready AND minimum time has passed
-  // This prevents flash and ensures smooth loading experience
+  // Prevent hydration errors by only showing loader after hydration
+  // During SSR and initial hydration, show nothing to avoid mismatch
+  if (typeof window === 'undefined') {
+    return (
+      <AuthContext.Provider value={value}>
+        {children}
+      </AuthContext.Provider>
+    )
+  }
+
+  // Show loader only on client-side after hydration
   if (!isHydrated || loading || !initialized || (user && !profile) || !minLoadingComplete) {
     return <KrooloMainLoader />
   }

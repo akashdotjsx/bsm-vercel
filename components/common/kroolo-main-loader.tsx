@@ -15,8 +15,8 @@ const KrooloMainLoader = (props: Props) => {
         {resolvedTheme === "light" ? (
           <svg
             width="160"
-            height="40"
-            viewBox="0 0 27864 6301"
+            height="50"
+            viewBox="0 0 27864 7500"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -68,12 +68,16 @@ const KrooloMainLoader = (props: Props) => {
                 <stop offset="1" stopColor="#695CFF"/>
               </linearGradient>
             </defs>
+            {/* BSM Text on top of logo */}
+            <text x="13932" y="400" fontSize="1800" fontWeight="bold" fill="#2D2F34" textAnchor="middle" fontFamily="Inter, sans-serif" letterSpacing="100">
+              BSM
+            </text>
           </svg>
         ) : (
           <svg
             width="160"
-            height="40"
-            viewBox="0 0 27864 6301"
+            height="50"
+            viewBox="0 0 27864 7500"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -120,6 +124,10 @@ const KrooloMainLoader = (props: Props) => {
                 <rect width="27864" height="6301" fill="white" />
               </clipPath>
             </defs>
+            {/* BSM Text on top of logo */}
+            <text x="13932" y="400" fontSize="1800" fontWeight="bold" fill="white" textAnchor="middle" fontFamily="Inter, sans-serif" letterSpacing="100">
+              BSM
+            </text>
           </svg>
         )}
         <div className="loader-box">

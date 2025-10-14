@@ -12,7 +12,13 @@ import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { Eye, EyeOff } from "lucide-react"
-import KrooloMainLoader from "@/components/common/kroolo-main-loader"
+import dynamic from "next/dynamic"
+
+// Dynamic import to prevent hydration issues
+const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-loader'), {
+  ssr: false,
+  loading: () => <div className="min-h-screen bg-background" />
+})
 
 export default function Page() {
   const [email, setEmail] = useState("")

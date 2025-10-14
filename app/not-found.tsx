@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, Home, LogIn } from 'lucide-react'
-import KrooloMainLoader from '@/components/common/kroolo-main-loader'
+import dynamic from 'next/dynamic'
+
+// Dynamic import to prevent hydration issues
+const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-loader'), {
+  ssr: false,
+  loading: () => <div className="min-h-screen bg-background" />
+})
 
 export default function NotFound() {
   const router = useRouter()
