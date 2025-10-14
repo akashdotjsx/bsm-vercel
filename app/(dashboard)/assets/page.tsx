@@ -293,8 +293,8 @@ export default function AssetManagementPage() {
                 ← Back to Assets
               </Button>
               <div>
-                <h1 className="text-[13px] font-semibold text-foreground">{selectedTypeData?.name}</h1>
-                <p className="text-[10px] text-muted-foreground">
+                <h1 className="text-base font-semibold text-foreground">{selectedTypeData?.name}</h1>
+                <p className="text-xs text-muted-foreground">
                   Detailed listing of all {selectedTypeData?.name?.toLowerCase()}
                 </p>
               </div>
@@ -319,11 +319,11 @@ export default function AssetManagementPage() {
                 placeholder={`Search ${selectedTypeData?.name?.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-48 text-[11px]"
+                className="pl-10 w-48 text-sm"
               />
             </div>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-48 text-[11px]">
+              <SelectTrigger className="w-48 text-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -342,13 +342,13 @@ export default function AssetManagementPage() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Asset Name</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Hostname</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">IP Address</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Operating System</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Criticality</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Asset Name</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Hostname</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">IP Address</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Operating System</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Criticality</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -376,13 +376,13 @@ export default function AssetManagementPage() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Asset Name</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Hostname</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">IP Address</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Operating System</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Criticality</th>
-                    <th className="text-left p-3 text-[10px] font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Asset Name</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Hostname</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">IP Address</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Operating System</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Criticality</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -394,20 +394,20 @@ export default function AssetManagementPage() {
                     >
                       <td className="p-3">
                         <div>
-                          <p className="text-[11px] font-medium">{asset.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{asset.asset_tag}</p>
+                          <p className="text-sm font-medium">{asset.name}</p>
+                          <p className="text-xs text-muted-foreground">{asset.asset_tag}</p>
                         </div>
                       </td>
-                      <td className="p-3 text-[11px]">{asset.hostname || '-'}</td>
-                      <td className="p-3 text-[11px]">{asset.ip_address || '-'}</td>
-                      <td className="p-3 text-[11px]">{asset.operating_system || '-'}</td>
+                      <td className="p-3 text-sm">{asset.hostname || '-'}</td>
+                      <td className="p-3 text-sm">{asset.ip_address || '-'}</td>
+                      <td className="p-3 text-sm">{asset.operating_system || '-'}</td>
                       <td className="p-3">
-                        <Badge className={`${getStatusColor(asset.status)} text-[10px]`}>
+                        <Badge className={`${getStatusColor(asset.status)} text-xs`}>
                           {asset.status}
                         </Badge>
                       </td>
                       <td className="p-3">
-                        <Badge className={`${getCriticalityColor(asset.criticality)} text-[10px]`}>
+                        <Badge className={`${getCriticalityColor(asset.criticality)} text-xs`}>
                           {asset.criticality}
                         </Badge>
                       </td>
@@ -418,7 +418,7 @@ export default function AssetManagementPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="text-[11px]">
+                          <DropdownMenuContent align="end" className="text-sm">
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -466,8 +466,8 @@ export default function AssetManagementPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[13px] font-semibold text-foreground">Asset Management</h1>
-            <p className="text-[10px] text-muted-foreground">
+            <h1 className="text-base font-semibold text-foreground">Asset Management</h1>
+            <p className="text-xs text-muted-foreground">
               Configuration Management Database (CMDB) - Service & Asset Mapping
             </p>
           </div>

@@ -174,22 +174,22 @@ export default function LandingPage() {
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="secondary" className="mb-6 text-[12px]">
+            <Badge variant="secondary" className="mb-6 text-sm">
               AI-Powered Business Service Management
             </Badge>
-            <h1 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Transform Your Service Operations with <span className="text-primary">Intelligent Automation</span>
             </h1>
-            <p className="mt-6 text-[13px] leading-6 text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
               Transform Enterprise Business Service Management for IT, HR, Finance, Legal and others. Built for modern
               enterprises.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
                 Get Started
-                <ArrowRight className="ml-2 h-3 w-3" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" className="text-[12px]">
+              <Button variant="outline" size="lg">
                 View Demo
               </Button>
             </div>
@@ -204,12 +204,12 @@ export default function LandingPage() {
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mr-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mr-3">
                     {stat.icon}
                   </div>
-                <div className="text-[13px] font-bold text-foreground">{stat.value}</div>
+                <div className="text-3xl font-bold text-foreground">{stat.value}</div>
               </div>
-              <div className="text-[12px] text-muted-foreground">{stat.label}</div>
+              <div className="text-base text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -220,10 +220,10 @@ export default function LandingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Everything you need for modern service management
             </h2>
-            <p className="mt-4 text-[13px] text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground">
               Comprehensive platform with AI-powered features designed for enterprise-scale operations
             </p>
           </div>
@@ -235,10 +235,10 @@ export default function LandingPage() {
                   <div className={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${feature.color} mb-4`}>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-[13px]">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-[12px] leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="text-sm leading-relaxed">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -250,16 +250,16 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-[13px] font-bold tracking-tight text-foreground sm:text-[13px]">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Ready to transform your service operations?
             </h2>
-            <p className="mt-4 text-[13px] text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground">
               Join thousands of organizations already using Kroolo BSM to deliver exceptional service experiences.
             </p>
             <div className="mt-8">
-              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90 text-[12px]">
+              <Button size="lg" onClick={handleSignIn} className="bg-foreground text-background hover:bg-foreground/90">
                 Start Your Journey
-                <ArrowRight className="ml-2 h-3 w-3" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -17,7 +17,7 @@ export default function WorkflowsPage() {
             <p className="text-sm text-muted-foreground">Automate your service management processes</p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="bg-[#7c73fc] text-white hover:bg-[#5a5dfc]">
+            <Button variant="outline" size="sm" className="bg-[#7c73fc]/10 text-[#7c73fc] hover:bg-[#7c73fc] hover:text-white dark:bg-[#7c73fc] dark:text-white dark:hover:bg-[#5a5dfc] border-[#7c73fc]/20">
               <Zap className="h-4 w-4 mr-2" />
               AI Generate
             </Button>

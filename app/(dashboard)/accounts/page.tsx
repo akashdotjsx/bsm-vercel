@@ -86,7 +86,7 @@ const getStatusChip = (status: string) => {
   return (
     <Badge
       variant={isActive ? "default" : "secondary"}
-      className={`text-[10px] ${isActive ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-muted text-foreground hover:bg-muted"}`}
+      className={`text-xs ${isActive ? "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-900" : "bg-muted text-foreground hover:bg-muted"}`}
     >
       {status}
     </Badge>
@@ -201,22 +201,22 @@ export default function AccountsPage() {
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-[13px] font-bold text-foreground">Accounts</h1>
+          <h1 className="text-base font-bold text-foreground">Accounts</h1>
         </div>
 
         {/* Header Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-<Input placeholder="Search accounts..." className="pl-10 w-80 text-[11px]" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+<Input placeholder="Search accounts..." className="pl-10 w-80 text-sm" />
             </div>
-<Button variant="outline" size="sm" className="text-[11px] bg-transparent">
+<Button variant="outline" size="sm" className="text-sm bg-transparent">
               <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
           </div>
-<Button onClick={() => setShowCreateForm(true)} className="text-[11px]">
+<Button onClick={() => setShowCreateForm(true)} className="text-sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Account
           </Button>
@@ -229,8 +229,8 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <Building className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-[10px] font-medium text-muted-foreground">Total Accounts</p>
-                  <p className="text-[13px] font-bold">3</p>
+                  <p className="text-xs font-medium text-muted-foreground">Total Accounts</p>
+                  <p className="text-base font-bold">3</p>
                 </div>
               </div>
             </CardContent>
@@ -240,8 +240,8 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <Building className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-[10px] font-medium text-muted-foreground">Active Accounts</p>
-                  <p className="text-[13px] font-bold">2</p>
+                  <p className="text-xs font-medium text-muted-foreground">Active Accounts</p>
+                  <p className="text-base font-bold">2</p>
                 </div>
               </div>
             </CardContent>
@@ -251,8 +251,8 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <Mail className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-[10px] font-medium text-muted-foreground">Email Support</p>
-                  <p className="text-[13px] font-bold">1</p>
+                  <p className="text-xs font-medium text-muted-foreground">Email Support</p>
+                  <p className="text-base font-bold">1</p>
                 </div>
               </div>
             </CardContent>
@@ -262,8 +262,8 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <MessageSquare className="h-8 w-8 text-orange-600" />
                 <div className="ml-4">
-                  <p className="text-[10px] font-medium text-muted-foreground">Slack Support</p>
-                  <p className="text-[13px] font-bold">1</p>
+                  <p className="text-xs font-medium text-muted-foreground">Slack Support</p>
+                  <p className="text-base font-bold">1</p>
                 </div>
               </div>
             </CardContent>
@@ -273,22 +273,22 @@ export default function AccountsPage() {
         {/* Accounts Table */}
         <Card>
           <CardHeader>
-<CardTitle className="text-[12px]">Accounts</CardTitle>
-<CardDescription className="text-[10px]">Manage customer accounts and contact information</CardDescription>
+<CardTitle className="text-sm">Accounts</CardTitle>
+<CardDescription className="text-xs">Manage customer accounts and contact information</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse border border-border">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Name</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Country</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Support Channel</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Account Owner</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Created At</th>
-                    <th className="text-left py-3 px-4 font-medium text-[10px] border border-border">Actions</th>
-                    <th className="text-center py-3 px-4 font-medium text-[10px] border border-border w-12">
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Country</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Support Channel</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Account Owner</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Created At</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Actions</th>
+                    <th className="text-center py-3 px-4 font-medium text-xs border border-border w-12">
                       <DropdownMenu open={showCustomColumns} onOpenChange={setShowCustomColumns}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -297,45 +297,45 @@ export default function AccountsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-64">
                           <div className="p-2">
-<Input placeholder="Search field types" className="text-[11px] mb-2" />
+<Input placeholder="Search field types" className="text-sm mb-2" />
                           </div>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Search className="mr-2 h-4 w-4" />
                             Add existing field
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Type className="mr-2 h-4 w-4" />
                             Text
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Hash className="mr-2 h-4 w-4" />
                             Number
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <CheckSquare className="mr-2 h-4 w-4" />
                             Select
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <List className="mr-2 h-4 w-4" />
                             Multi-select
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Calendar className="mr-2 h-4 w-4" />
                             Date
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Clock className="mr-2 h-4 w-4" />
                             Datetime
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <ToggleLeft className="mr-2 h-4 w-4" />
                             True/False
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <User className="mr-2 h-4 w-4" />
                             User
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-[11px]">
+                          <DropdownMenuItem className="text-sm">
                             <Link className="mr-2 h-4 w-4" />
                             URL
                           </DropdownMenuItem>
@@ -351,19 +351,19 @@ export default function AccountsPage() {
                         <div>
                           <button
                             onClick={() => router.push(`/accounts/${account.id}`)}
-className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:underline text-left"
+ className="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline text-left dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             {account.name}
                           </button>
-<div className="text-[10px] text-muted-foreground flex items-center">
+<div className="text-xs text-muted-foreground flex items-center">
                             <Globe className="mr-1 h-3 w-3" />
                             {account.website}
                           </div>
                         </div>
                       </td>
-<td className="py-3 px-4 text-[11px] border border-border">{account.country}</td>
+<td className="py-3 px-4 text-sm border border-border">{account.country}</td>
                       <td className="py-3 px-4 border border-border">
-<div className="flex items-center text-[11px]">
+<div className="flex items-center text-sm">
                           {account.supportChannel === "Email" && <Mail className="mr-1 h-3 w-3" />}
                           {account.supportChannel === "Slack" && <MessageSquare className="mr-1 h-3 w-3" />}
                           {account.supportChannel === "Phone" && <Phone className="mr-1 h-3 w-3" />}
@@ -373,7 +373,7 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                       <td className="py-3 px-4 border border-border">
                         <div className="flex items-center">
                           <div
-                            className={`w-8 h-8 ${getChipColor(account.contactPerson)} rounded-full flex items-center justify-center text-white text-[9px] font-medium cursor-pointer`}
+                            className={`w-8 h-8 ${getChipColor(account.contactPerson)} rounded-full flex items-center justify-center text-white text-xs font-medium cursor-pointer`}
                             title={account.contactPerson}
                           >
                             {getInitials(account.contactPerson)}
@@ -381,7 +381,7 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                         </div>
                       </td>
                       <td className="py-3 px-4 border border-border">{getStatusChip(account.status)}</td>
-<td className="py-3 px-4 text-[11px] border border-border">{formatDate(account.createdAt)}</td>
+<td className="py-3 px-4 text-sm border border-border">{formatDate(account.createdAt)}</td>
                       <td className="py-3 px-4 border border-border">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -390,16 +390,16 @@ className="font-medium text-[11px] text-blue-600 hover:text-blue-800 hover:under
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-<DropdownMenuItem className="text-[11px]" onClick={() => handleViewAccount(account)}>
+<DropdownMenuItem className="text-sm" onClick={() => handleViewAccount(account)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
-<DropdownMenuItem className="text-[11px]" onClick={() => handleEditAccount(account)}>
+<DropdownMenuItem className="text-sm" onClick={() => handleEditAccount(account)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Account
                             </DropdownMenuItem>
                             <DropdownMenuItem
-className="text-[11px] text-red-600"
+ className="text-sm text-red-600 dark:text-red-400"
                               onClick={() => handleDeleteAccount(account)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -421,44 +421,44 @@ className="text-[11px] text-red-600"
         {showCreateForm && (
           <Card>
             <CardHeader>
-<CardTitle className="text-[12px]">Create New Account</CardTitle>
-<CardDescription className="text-[10px]">Add a new customer account to the system</CardDescription>
+<CardTitle className="text-sm">Create New Account</CardTitle>
+<CardDescription className="text-xs">Add a new customer account to the system</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Account Name</label>
+                  <label className="block text-sm font-medium mb-2">Account Name</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter account name"
-className="text-[11px]"
+ className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Country</label>
+                  <label className="block text-sm font-medium mb-2">Country</label>
                   <Input
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     placeholder="Enter country"
-                    className="text-[11px]"
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Website</label>
+                  <label className="block text-sm font-medium mb-2">Website</label>
                   <Input
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     placeholder="https://example.com"
-                    className="text-[11px]"
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Support Channel</label>
+                  <label className="block text-sm font-medium mb-2">Support Channel</label>
                   <select
                     value={formData.supportChannel}
                     onChange={(e) => setFormData({ ...formData, supportChannel: e.target.value })}
-className="w-full px-3 py-2 border border-input bg-background rounded-md text-[11px]"
+ className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                   >
                     <option value="Email">Email</option>
                     <option value="Slack">Slack</option>
@@ -466,39 +466,39 @@ className="w-full px-3 py-2 border border-input bg-background rounded-md text-[1
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Account Owner</label>
+                  <label className="block text-sm font-medium mb-2">Account Owner</label>
                   <Input
                     value={formData.contactPerson}
                     onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                     placeholder="Enter account owner name"
-                    className="text-[11px]"
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium mb-2">Email</label>
+                  <label className="block text-sm font-medium mb-2">Email</label>
                   <Input
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="contact@example.com"
                     type="email"
-                    className="text-[11px]"
+                    className="text-sm"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[12px] font-medium mb-2">Address</label>
+                  <label className="block text-sm font-medium mb-2">Address</label>
                   <Input
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Enter full address"
-                    className="text-[11px]"
+                    className="text-sm"
                   />
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-6">
-<Button variant="outline" onClick={() => setShowCreateForm(false)} className="text-[11px]">
+<Button variant="outline" onClick={() => setShowCreateForm(false)} className="text-sm">
                   Cancel
                 </Button>
-<Button onClick={handleCreateAccount} className="text-[11px]">
+<Button onClick={handleCreateAccount} className="text-sm">
                   Create Account
                 </Button>
               </div>

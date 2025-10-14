@@ -9,8 +9,8 @@ export default function AnalyticsPage() {
     <PageContent breadcrumb={[{ label: "Analytics" }]}>
       <div className="space-y-6">
         <div className="space-y-1">
-          <h1 className="text-[13px] font-semibold tracking-tight">Analytics & Reporting</h1>
-          <p className="text-[10px] text-muted-foreground">
+          <h1 className="text-base font-semibold tracking-tight">Analytics & Reporting</h1>
+          <p className="text-xs text-muted-foreground">
             Real-time insights and performance metrics for service management
           </p>
         </div>

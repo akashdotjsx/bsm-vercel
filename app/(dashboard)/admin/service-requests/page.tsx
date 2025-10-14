@@ -59,19 +59,19 @@ interface ServiceRequest {
 }
 
 const statusConfig = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  approved: { label: "Approved", color: "bg-blue-100 text-blue-800", icon: CheckCircle2 },
-  in_progress: { label: "In Progress", color: "bg-purple-100 text-purple-800", icon: RefreshCw },
-  completed: { label: "Completed", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
-  rejected: { label: "Rejected", color: "bg-red-100 text-red-800", icon: XCircle },
+  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300", icon: Clock },
+  approved: { label: "Approved", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300", icon: CheckCircle2 },
+  in_progress: { label: "In Progress", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300", icon: RefreshCw },
+  completed: { label: "Completed", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", icon: CheckCircle2 },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300", icon: XCircle },
   cancelled: { label: "Cancelled", color: "bg-muted text-muted-foreground", icon: XCircle }
 }
 
 const priorityConfig = {
   low: { label: "Low", color: "bg-muted text-muted-foreground" },
-  medium: { label: "Medium", color: "bg-blue-100 text-blue-800" },
-  high: { label: "High", color: "bg-orange-100 text-orange-800" },
-  critical: { label: "Critical", color: "bg-red-100 text-red-800" }
+  medium: { label: "Medium", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+  high: { label: "High", color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
+  critical: { label: "Critical", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" }
 }
 
 export default function AdminServiceRequestsPage() {

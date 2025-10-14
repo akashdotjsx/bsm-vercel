@@ -171,8 +171,8 @@ export default function ServicesPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-[13px] font-semibold">Services</h1>
-            <p className="text-[10px] text-muted-foreground mt-1">Browse and request available services</p>
+            <h1 className="text-base font-semibold">Services</h1>
+            <p className="text-xs text-muted-foreground mt-1">Browse and request available services</p>
           </div>
         </div>
 
@@ -184,11 +184,11 @@ export default function ServicesPage() {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-[11px]"
+              className="pl-10 text-sm"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-[200px] text-[11px]">
+            <SelectTrigger className="w-full md:w-[200px] text-sm">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
@@ -224,8 +224,8 @@ export default function ServicesPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Total Services</p>
-                      <p className="text-[13px] font-bold">{services.length}</p>
+                      <p className="text-xs text-muted-foreground">Total Services</p>
+                      <p className="text-base font-bold">{services.length}</p>
                     </div>
                     <Package className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                   </div>
@@ -235,8 +235,8 @@ export default function ServicesPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Categories</p>
-                      <p className="text-[13px] font-bold">{categories.length}</p>
+                      <p className="text-xs text-muted-foreground">Categories</p>
+                      <p className="text-base font-bold">{categories.length}</p>
                     </div>
                     <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                   </div>
@@ -246,8 +246,8 @@ export default function ServicesPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Approval Required</p>
-                      <p className="text-[13px] font-bold">{services.filter(s => s.requires_approval).length}</p>
+                      <p className="text-xs text-muted-foreground">Approval Required</p>
+                      <p className="text-base font-bold">{services.filter(s => s.requires_approval).length}</p>
                     </div>
                     <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                   </div>
@@ -257,8 +257,8 @@ export default function ServicesPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Total Requests</p>
-                      <p className="text-[13px] font-bold">{services.reduce((acc, s) => acc + (s.total_requests || 0), 0)}</p>
+                      <p className="text-xs text-muted-foreground">Total Requests</p>
+                      <p className="text-base font-bold">{services.reduce((acc, s) => acc + (s.total_requests || 0), 0)}</p>
                     </div>
                     <ShoppingCart className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                   </div>
@@ -301,8 +301,8 @@ export default function ServicesPage() {
           ) : filteredServices.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-2 text-[13px] font-semibold">No services found</h3>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <h3 className="mt-2 text-base font-semibold">No services found</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {searchTerm || selectedCategory !== "all" 
                   ? "Try adjusting your search or filter criteria" 
                   : "No services are available for request at this time"}
@@ -314,18 +314,18 @@ export default function ServicesPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-[13px]">{service.name}</CardTitle>
-                      <CardDescription className="mt-1 line-clamp-2 text-[11px]">
+                      <CardTitle className="text-base">{service.name}</CardTitle>
+                      <CardDescription className="mt-1 line-clamp-2 text-sm">
                         {service.description}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-xs">
                       {service.category_name}
                     </Badge>
                     {service.requires_approval && (
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-xs">
                         Approval Required
                       </Badge>
                     )}
@@ -333,7 +333,7 @@ export default function ServicesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
                         <span>SLA: {getSLAText(service.estimated_delivery_days)}</span>
@@ -347,7 +347,7 @@ export default function ServicesPage() {
                     </div>
                     <Button 
                       onClick={() => handleServiceRequest(service)}
-                      className="w-full text-[11px]"
+                      className="w-full text-sm"
                       disabled={submitting}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
