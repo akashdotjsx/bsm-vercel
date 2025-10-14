@@ -35,7 +35,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -192,7 +192,7 @@ export default function TicketsPage() {
   
   const deleteTicket = async (id: string) => {
     await deleteTicketMutation.mutateAsync(id)
-    toast.success('Ticket deleted successfully!')
+    toast.error('Ticket deleted', 'The ticket has been removed')
   }
 
   // Get dynamic ticket types from database
@@ -238,10 +238,10 @@ export default function TicketsPage() {
           const ticketInfo = JSON.parse(newTicketData)
           // Check if the ticket was created recently (within last 10 seconds)
           if (Date.now() - ticketInfo.timestamp < 10000) {
-            toast.success(`Ticket #${ticketInfo.ticketNumber} created successfully!`, {
-              description: `"${ticketInfo.title}"`,
-              duration: 5000,
-            })
+            toast.success(
+              `Ticket #${ticketInfo.ticketNumber} created successfully!`,
+              `"${ticketInfo.title}"`
+            )
           }
           // Clear the notification
           localStorage.removeItem('newTicketCreated')
@@ -909,15 +909,16 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       const newTicket = await createTicket(duplicateData)
       console.log('[DUPLICATE] Successfully created:', newTicket.ticket_number)
       
-      toast.success(`Ticket duplicated successfully!`, {
-        description: `"${newTicket.title}" has been created as #${newTicket.ticket_number}`,
-        duration: 5000,
-      })
+      toast.success(
+        'Ticket duplicated successfully!',
+        `"${newTicket.title}" has been created as #${newTicket.ticket_number}`
+      )
     } catch (error) {
       console.error('[DUPLICATE] Error duplicating ticket:', error)
-      toast.error('Failed to duplicate ticket', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred'
-      })
+      toast.error(
+        'Failed to duplicate ticket',
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      )
     }
   }
 
@@ -940,10 +941,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       console.log('🗑️ Calling deleteTicket with dbId:', ticketToDelete.dbId)
       await deleteTicket(ticketToDelete.dbId)
       console.log('✅ deleteTicket completed successfully')
-      toast.success('Ticket deleted successfully!', {
-        description: `Ticket #${ticketToDelete.id} has been removed.`,
-        duration: 5000,
-      })
+      toast.error('Ticket deleted', `Ticket #${ticketToDelete.id} has been removed`)
       setShowDeleteModal(false)
       setTicketToDelete(null)
     } catch (error) {
@@ -968,10 +966,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
       }
 
       await updateTicket(ticketToEdit.dbId, updateData)
-      toast.success('Ticket updated successfully!', {
-        description: `Ticket #${ticketToEdit.id} has been updated.`,
-        duration: 5000,
-      })
+      toast.success(
+        'Ticket updated successfully!',
+        `Ticket #${ticketToEdit.id} has been updated`
+      )
       setShowEditModal(false)
       setTicketToEdit(null)
     } catch (error) {

@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  // Fast path for static assets and API routes
+  if (request.nextUrl.pathname.startsWith('/_next/') || 
+      request.nextUrl.pathname.startsWith('/api/') ||
+      request.nextUrl.pathname.includes('.')) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -29,13 +36,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const publicPaths = ["/", "/auth", "/login", "/sign-up"]
+  // Public paths that don't require authentication
+  const publicPaths = ["/", "/auth/login", "/auth/sign-up", "/auth/callback", "/auth/confirm", "/auth/reset-password"]
   const isPublicPath = publicPaths.some(
     (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path),
   )
 
+  // Redirect all unauthenticated users to login (except public paths)
   if (!user && !isPublicPath) {
-    // Redirect unauthenticated users to login
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)

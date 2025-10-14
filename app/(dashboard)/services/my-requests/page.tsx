@@ -20,7 +20,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useServiceRequestsGQL } from "@/hooks/use-services-assets-gql"
 
 interface ServiceRequest {

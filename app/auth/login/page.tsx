@@ -12,6 +12,13 @@ import { createClient } from "@/lib/supabase/client"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { Eye, EyeOff } from "lucide-react"
+import dynamic from "next/dynamic"
+
+// Dynamic import to prevent hydration issues
+const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-loader'), {
+  ssr: false,
+  loading: () => <div className="min-h-screen bg-background" />
+})
 
 export default function Page() {
   const [email, setEmail] = useState("")
@@ -20,6 +27,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
@@ -31,13 +39,16 @@ export default function Page() {
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
     
-    // Check if user is already authenticated (but don't show loading)
+      // Check if user is already authenticated (but don't show loading)
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          console.log('User already authenticated, redirecting to dashboard')
-          router.push('/dashboard')
+          console.log('User already authenticated, redirecting to tickets')
+          setRedirecting(true)
+          setTimeout(() => {
+            router.push('/tickets')
+          }, 300)
         }
       } catch (error) {
         console.error('Error checking auth:', error)
@@ -47,6 +58,11 @@ export default function Page() {
     
     checkAuth()
   }, [router, supabase])
+
+  // Show loader when redirecting after successful login
+  if (redirecting) {
+    return <KrooloMainLoader />
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,10 +141,15 @@ export default function Page() {
         .update({ last_login: new Date().toISOString() })
         .eq('id', authData.user.id)
 
-      console.log("Login successful, redirecting to dashboard")
+      console.log("Login successful, redirecting to tickets")
       
-      // Force a hard navigation to ensure the redirect works
-      window.location.href = "/dashboard"
+      // Show loading screen and then redirect
+      setRedirecting(true)
+      
+      // Small delay to show the loading screen, then redirect
+      setTimeout(() => {
+        window.location.href = "/tickets"
+      }, 500)
 
     } catch (err) {
       console.error("Login error:", err)

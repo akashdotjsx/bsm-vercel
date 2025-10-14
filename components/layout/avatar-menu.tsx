@@ -77,21 +77,27 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
 
   if (loading) {
     return (
-      <div className="w-8 h-8 bg-muted animate-pulse rounded-full" />
+      <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/30 animate-pulse rounded-full flex items-center justify-center">
+        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     )
+  }
+
+  // If no user is authenticated, redirect to login
+  if (!user || !profile) {
+    router.push('/auth/login')
+    return null
   }
 
   // Format user data from profile
   const userData = {
-    name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : user?.email || 'User',
-    email: user?.email || '',
-    account: organization?.name || 'Personal Account',
-    id: profile?.id?.slice(-8) || 'N/A',
+    name: `${profile.first_name} ${profile.last_name}`.trim(),
+    email: user.email,
+    account: organization?.name || profile.department || 'Organization',
+    id: profile.id?.slice(-8),
     plan: organization?.subscription_tier || 'Free',
-    role: profile?.role === 'admin' ? 'System Admin' : profile?.role === 'manager' ? 'Org Admin' : profile?.role || 'User',
-    initials: profile ? 
-      `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() :
-      user?.email?.split('@')[0]?.slice(0, 2)?.toUpperCase() || 'U'
+    role: profile.role === 'admin' ? 'System Admin' : profile.role === 'manager' ? 'Org Admin' : profile.role || 'User',
+    initials: `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase()
   }
 
   // Determine if current status is custom (i.e., not one of the predefined labels)

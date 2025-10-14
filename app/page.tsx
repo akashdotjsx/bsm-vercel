@@ -36,6 +36,8 @@ export default function LandingPage() {
     setMounted(true)
   }, [])
 
+  // Don't auto-redirect - let users choose what to do
+
   const handleSignIn = () => {
     console.log("[v0] Sign in button clicked, navigating to login")
     router.push("/auth/login")
@@ -152,7 +154,7 @@ export default function LandingPage() {
                     Sign Out
                   </Button>
                   <Button 
-                    onClick={() => router.push('/dashboard')} 
+                    onClick={() => router.push('/tickets')} 
                     className="bg-foreground text-background hover:bg-foreground/90 text-[12px]"
                   >
                     Dashboard

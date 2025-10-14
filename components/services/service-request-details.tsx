@@ -25,7 +25,7 @@ import {
   Users
 } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { 
   useApproveServiceRequest, 
   useRejectServiceRequest, 

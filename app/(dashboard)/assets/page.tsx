@@ -45,7 +45,7 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteAssetGQL, useAssetStatsGQL, useBusinessServicesGQL, useDiscoveryRulesGQL } from "@/hooks/use-services-assets-gql"
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useDebounce } from "@/hooks/use-debounce"
 
 // Icon mapping for asset types
@@ -140,11 +140,9 @@ export default function AssetManagementPage() {
     try {
       await deleteAssetGQL(id)
       refetch()
-      toast.success('Asset deleted successfully!')
+      toast.error('Asset deleted', 'The asset has been removed from the inventory')
     } catch (error) {
-      toast.error('Failed to delete asset', {
-        description: error instanceof Error ? error.message : 'An error occurred'
-      })
+      toast.error('Failed to delete asset', error instanceof Error ? error.message : 'An error occurred')
       throw error
     }
   }

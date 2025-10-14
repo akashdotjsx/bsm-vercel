@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import ReactFlow, {
   Node,
   Edge,
@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Edit2,
   Trash2,
+  CloudDownload,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
@@ -208,32 +209,85 @@ const initialEdges: Edge[] = [
 // Draggable workflow components
 const workflowComponents = [
   {
+    id: 'start-node',
+    category: 'Basic',
+    icon: <Play className="h-4 w-4" />,
+    title: 'Start',
+    description: 'Beginning of the workflow',
+    bgColor: '#6366f1',
+  },
+  {
     id: 'trigger-new-ticket',
-    icon: <Zap className="h-5 w-5" />,
-    title: 'Triggers when new ticket is created',
+    category: 'Triggers',
+    icon: <Zap className="h-4 w-4" />,
+    title: 'New Ticket Created',
+    description: 'Triggers when new ticket is created',
     bgColor: '#6366f1',
   },
   {
     id: 'trigger-status-change',
-    icon: <Target className="h-5 w-5" />,
-    title: 'Triggers on ticket status change',
+    category: 'Triggers',
+    icon: <Target className="h-4 w-4" />,
+    title: 'Status Change',
+    description: 'Triggers on ticket status change',
     bgColor: '#9333ea',
   },
   {
     id: 'trigger-sla',
-    icon: <AlertTriangle className="h-5 w-5" />,
-    title: 'Triggers on SLA violation',
+    category: 'Triggers',
+    icon: <AlertTriangle className="h-4 w-4" />,
+    title: 'SLA Violation',
+    description: 'Triggers on SLA violation',
     bgColor: '#ef4444',
+  },
+  {
+    id: 'condition-node',
+    category: 'Logic',
+    icon: <GitBranch className="h-4 w-4" />,
+    title: 'Condition',
+    description: 'Decision point in workflow',
+    bgColor: '#f59e0b',
+  },
+  {
+    id: 'action-assign',
+    category: 'Actions',
+    icon: <Target className="h-4 w-4" />,
+    title: 'Assign Task',
+    description: 'Assign task to user or team',
+    bgColor: '#10b981',
+  },
+  {
+    id: 'action-notify',
+    category: 'Actions',
+    icon: <AlertTriangle className="h-4 w-4" />,
+    title: 'Send Notification',
+    description: 'Send email or system notification',
+    bgColor: '#3b82f6',
+  },
+  {
+    id: 'end-node',
+    category: 'Basic',
+    icon: <Target className="h-4 w-4" />,
+    title: 'End',
+    description: 'End of the workflow',
+    bgColor: '#6b7280',
   },
 ]
 
 export default function WorkflowBuilderPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { theme } = useTheme()
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [workflowName, setWorkflowName] = useState('New Approval Workflow')
-  const [workflowDescription, setWorkflowDescription] = useState('Workflow Description')
+  
+  // Check if this is editing an existing workflow or creating new
+  const workflowId = searchParams.get('id')
+  const isNewWorkflow = !workflowId
+  
+  // Start with empty nodes/edges for new workflows, or sample data for existing
+  const [nodes, setNodes, onNodesChange] = useNodesState(isNewWorkflow ? [] : initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(isNewWorkflow ? [] : initialEdges)
+  const [workflowName, setWorkflowName] = useState(isNewWorkflow ? 'New Workflow' : 'New Approval Workflow')
+  const [workflowDescription, setWorkflowDescription] = useState(isNewWorkflow ? 'Describe your workflow...' : 'Workflow Description')
   const [activeTab, setActiveTab] = useState('triggers')
   const [showTransitionLabels, setShowTransitionLabels] = useState(true)
   const [expandedSections, setExpandedSections] = useState({
@@ -287,12 +341,13 @@ export default function WorkflowBuilderPage() {
         style: {
           background: component.bgColor,
           color: 'white',
-          border: '2px solid rgba(255,255,255,0.3)',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          fontSize: '13px',
+          border: '2px solid rgba(255,255,255,0.2)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          fontSize: '12px',
           fontWeight: '500',
-          minWidth: '280px',
+          minWidth: '140px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         },
       }
 
@@ -359,19 +414,54 @@ export default function WorkflowBuilderPage() {
             />
             
             <div className="flex gap-2 mt-4">
-              <Button 
-                size="sm" 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                + Add Status
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                className={isDark ? 'border-gray-600 text-gray-300' : ''}
-              >
-                + Add Transition
-              </Button>
+              {isNewWorkflow ? (
+                <Button 
+                  size="sm" 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => {
+                    // Add a basic start node to get started
+                    const startComponent = workflowComponents.find(c => c.id === 'start-node')
+                    if (startComponent) {
+                      const newNode: Node = {
+                        id: `start-${Date.now()}`,
+                        type: 'default',
+                        position: { x: 250, y: 100 },
+                        data: { label: startComponent.title },
+                        style: {
+                          background: startComponent.bgColor,
+                          color: 'white',
+                          border: '2px solid rgba(255,255,255,0.2)',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          minWidth: '140px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        },
+                      }
+                      setNodes([newNode])
+                    }
+                  }}
+                >
+                  + Quick Start
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    size="sm" 
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    + Add Status
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className={isDark ? 'border-gray-600 text-gray-300' : ''}
+                  >
+                    + Add Transition
+                  </Button>
+                </>
+              )}
             </div>
             
             <div className="flex items-center gap-2 mt-3">
@@ -394,197 +484,73 @@ export default function WorkflowBuilderPage() {
             </div>
           </div>
 
-          {/* Transition Details / Components List */}
+          {/* Component Palette */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <div className="mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className={cn(
-                      'text-base font-semibold',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
-                    )}>
-                      Transition Name
-                    </h3>
-                    <ChevronDown className={cn(
-                      'h-4 w-4',
+              <h3 className={cn(
+                'text-sm font-medium mb-3',
+                isDark ? 'text-gray-400' : 'text-gray-600'
+              )}>
+                Drag components to canvas
+              </h3>
+              
+              {/* Group components by category */}
+              {['Basic', 'Triggers', 'Logic', 'Actions'].map(category => {
+                const categoryComponents = workflowComponents.filter(comp => comp.category === category)
+                if (categoryComponents.length === 0) return null
+                
+                return (
+                  <div key={category} className="mb-6">
+                    <h4 className={cn(
+                      'text-xs font-semibold uppercase tracking-wider mb-3',
                       isDark ? 'text-gray-500' : 'text-gray-400'
-                    )} />
-                  </div>
-                  
-                  <Card className={cn(
-                    'border',
-                    isDark 
-                      ? 'bg-yellow-900/20 border-yellow-700/50' 
-                      : 'bg-yellow-50 border-yellow-200'
-                  )}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1">
-                          <p className={cn(
-                            'text-sm',
-                            isDark ? 'text-yellow-200' : 'text-yellow-900'
-                          )}>
-                            This transition goes to a status which has no outgoing transitions. 
-                            Ensure all paths lead to a terminal status.
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className={cn(
-                  'h-px w-full',
-                  isDark ? 'bg-gray-700' : 'bg-gray-200'
-                )} />
-
-                <div>
-                  <h3 className={cn(
-                    'text-sm font-medium mb-3',
-                    isDark ? 'text-gray-400' : 'text-gray-600'
-                  )}>
-                    Options
-                  </h3>
-                  
-                  {/* Properties */}
-                  <button
-                    onClick={() => toggleSection('properties')}
-                    className={cn(
-                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors',
-                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
-                    )}
-                  >
-                    <span className={cn(
-                      'font-medium text-base',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
                     )}>
-                      Properties (0)
-                    </span>
-                    <ChevronDown className={cn(
-                      'h-4 w-4 transition-transform',
-                      expandedSections.properties && 'rotate-180',
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    )} />
-                  </button>
-                  
-                  {expandedSections.properties && (
-                    <div className={cn(
-                      'p-4 rounded-lg mt-2',
-                      isDark ? 'bg-gray-800/50' : 'bg-gray-50'
-                    )}>
-                      <p className={cn(
-                        'text-sm mb-2',
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      )}>
-                        No detailed configuration for Properties yet.
-                      </p>
-                      <Button 
-                        variant="link" 
-                        className="h-auto p-0 text-indigo-600 hover:text-indigo-700"
-                      >
-                        Configure Properties
-                      </Button>
+                      {category}
+                    </h4>
+                    <div className="space-y-2">
+                      {categoryComponents.map((component) => (
+                        <div
+                          key={component.id}
+                          draggable
+                          onDragStart={(e) => onDragStart(e, component.id)}
+                          className={cn(
+                            'p-3 rounded-lg border cursor-move transition-all hover:shadow-md',
+                            isDark 
+                              ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' 
+                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div 
+                              className="p-2 rounded-lg flex-shrink-0"
+                              style={{ backgroundColor: component.bgColor }}
+                            >
+                              <div className="text-white">
+                                {component.icon}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className={cn(
+                                'font-medium text-sm mb-1',
+                                isDark ? 'text-gray-200' : 'text-gray-900'
+                              )}>
+                                {component.title}
+                              </h5>
+                              <p className={cn(
+                                'text-xs',
+                                isDark ? 'text-gray-400' : 'text-gray-600'
+                              )}>
+                                {component.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {/* Triggers */}
-                  <button
-                    onClick={() => toggleSection('triggers')}
-                    className={cn(
-                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
-                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
-                    )}
-                  >
-                    <span className={cn(
-                      'font-medium text-base',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
-                    )}>
-                      Triggers (2)
-                    </span>
-                    {expandedSections.triggers ? (
-                      <ChevronDown className={cn(
-                        'h-4 w-4',
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      )} />
-                    ) : (
-                      <ChevronRight className={cn(
-                        'h-4 w-4',
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      )} />
-                    )}
-                  </button>
-
-                  {/* Conditions */}
-                  <button
-                    onClick={() => toggleSection('conditions')}
-                    className={cn(
-                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
-                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
-                    )}
-                  >
-                    <span className={cn(
-                      'font-medium text-base',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
-                    )}>
-                      Conditions (1)
-                    </span>
-                    <ChevronRight className={cn(
-                      'h-4 w-4',
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    )} />
-                  </button>
-
-                  {/* Validators */}
-                  <button
-                    onClick={() => toggleSection('validators')}
-                    className={cn(
-                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
-                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
-                    )}
-                  >
-                    <span className={cn(
-                      'font-medium text-base',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
-                    )}>
-                      Validators (3)
-                    </span>
-                    <ChevronRight className={cn(
-                      'h-4 w-4',
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    )} />
-                  </button>
-
-                  {/* Post Functions */}
-                  <button
-                    onClick={() => toggleSection('postFunctions')}
-                    className={cn(
-                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
-                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
-                    )}
-                  >
-                    <span className={cn(
-                      'font-medium text-base',
-                      isDark ? 'text-gray-200' : 'text-gray-900'
-                    )}>
-                      Post Functions (5)
-                    </span>
-                    <ChevronRight className={cn(
-                      'h-4 w-4',
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    )} />
-                  </button>
-                </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
 
@@ -620,6 +586,19 @@ export default function WorkflowBuilderPage() {
             />
             
             <Panel position="top-right" className="flex gap-2 mr-2 mt-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className={cn(
+                  isDark 
+                    ? 'bg-gray-700/50 text-gray-200 border-gray-600 hover:bg-gray-700' 
+                    : 'bg-white border-gray-300 hover:bg-gray-100'
+                )}
+                onClick={() => alert('Export workflow functionality')}
+              >
+                <CloudDownload className="h-4 w-4 mr-2" />
+                Export
+              </Button>
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -666,17 +645,20 @@ export default function WorkflowBuilderPage() {
                   'text-xl font-semibold mb-2',
                   isDark ? 'text-gray-400' : 'text-gray-600'
                 )}>
-                  Start Building Your Workflow
+                  {isNewWorkflow ? 'Start Building Your Workflow' : 'Your Workflow Canvas'}
                 </h3>
                 <p className={cn(
                   'max-w-md mx-auto mb-4',
                   isDark ? 'text-gray-500' : 'text-gray-500'
                 )}>
-                  Drag components from the left panel to create your approval workflow
+                  {isNewWorkflow 
+                    ? 'Drag components from the left panel to start creating your workflow' 
+                    : 'Add more components by dragging them from the left panel'
+                  }
                 </p>
                 <div className="inline-flex items-center gap-2 text-indigo-400 text-sm">
                   <span className="text-xl">💡</span>
-                  <span>Tip: Click the + button on nodes to connect them together</span>
+                  <span>Tip: Start with a "Start" node, then add triggers and actions</span>
                 </div>
               </div>
             </div>

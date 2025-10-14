@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useTheme } from "next-themes"
 import { 
   HelpCircle, 
   X, 
@@ -38,6 +40,7 @@ interface VideoGuide {
 }
 
 export function HelpCenterDropdown() {
+  const { theme } = useTheme()
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -86,8 +89,9 @@ export function HelpCenterDropdown() {
           variant="ghost" 
           size="sm" 
           className="h-7 w-7 p-0 relative"
+          title="Help Center"
         >
-          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+          <HelpCircle className="h-4 w-4" style={{ color: theme === 'dark' ? '#d1d5db' : '#000000' }} />
           <span className="sr-only">Help Center</span>
         </Button>
       </DropdownMenuTrigger>

@@ -10,7 +10,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { Label } from "@/components/ui/label"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { 
   X, 
   Save, 

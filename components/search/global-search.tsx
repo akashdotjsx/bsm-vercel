@@ -486,8 +486,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
-          placeholder="Search tickets, users... (try: 'dev-', 'fix', 'admin')"
-          className="pl-10 pr-16 h-8 text-[11px] bg-background border-border rounded-md hover:bg-muted transition-colors focus:ring-1 focus:ring-primary/20"
+          placeholder="Search items..."
+          className="pl-10 pr-16 h-9 text-xs bg-background border-border rounded-md hover:bg-muted transition-colors focus:ring-1 focus:ring-primary/20"
           value={searchTerm}
           onChange={(e) => {
             const value = e.target.value
@@ -504,9 +504,9 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             }
           }}
         />
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-70">
-            <span className="text-[9px]">⌘</span>K
+        <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 flex items-center">
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <span className="text-xs">⌘</span>K
           </kbd>
         </div>
       </div>
