@@ -64,7 +64,7 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
         <div className="flex items-center gap-3">
           {mounted && (
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/dashboard')}
               className="cursor-pointer hover:opacity-80 transition-opacity"
             >
               <Image
@@ -122,7 +122,7 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
       <div className="flex items-center gap-3">
         {mounted && (
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/dashboard')}
             className="cursor-pointer hover:opacity-80 transition-opacity"
           >
             <Image
