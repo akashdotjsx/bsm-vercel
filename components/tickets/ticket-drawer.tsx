@@ -25,7 +25,7 @@ import { useUsers } from "@/hooks/use-users"
 import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { createGraphQLClient } from "@/lib/graphql/client"
 import { gql } from "graphql-request"
@@ -379,7 +379,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     if (!checklistItemToDelete) return
     try {
       await deleteChecklistItemMutation.mutateAsync(checklistItemToDelete)
-      toast.success("Checklist item deleted!")
+      toast.error("Checklist item deleted", "The item has been removed")
       setShowDeleteChecklistDialog(false)
       setChecklistItemToDelete(null)
     } catch (error) {

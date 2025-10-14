@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Search, Eye, MoreHorizontal } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useServiceRequestsGQL } from "@/hooks/use-services-assets-gql"
 import { useAuth } from "@/lib/contexts/auth-context"
 

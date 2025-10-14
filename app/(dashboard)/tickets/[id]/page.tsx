@@ -47,7 +47,7 @@ import {
 import { UserSelector } from "@/components/users/user-selector"
 import { useUsers } from "@/hooks/use-users"
 import { format } from "date-fns"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 
 interface TicketDetailPageProps {
   params: {
@@ -164,7 +164,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       await deleteChecklistItemMutation.mutateAsync(itemId)
-      toast.success("Checklist item deleted!")
+      toast.error("Checklist item deleted", "The item has been removed")
     } catch (error) {
       console.error("Error deleting checklist item:", error)
       toast.error("Failed to delete checklist item")

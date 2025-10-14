@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { rbacApi } from '@/lib/api/rbac'
 import type { UserPermissionsResponse, UserRole } from '@/lib/types/rbac'
+import KrooloMainLoader from '@/components/common/kroolo-main-loader'
 
 // Create a single instance of the client to be used throughout the auth context
 const supabase = createClient()
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [minLoadingComplete, setMinLoadingComplete] = useState(false)
 
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -243,14 +245,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Mark as hydrated to prevent flash
     setIsHydrated(true)
     
-    // Emergency timeout - always set loading to false after 2 seconds
+    // Minimum loading time for smooth UX (prevent flash)
+    setTimeout(() => {
+      setMinLoadingComplete(true)
+    }, 600)
+    
+    // Emergency timeout - always set loading to false after 800ms for faster UX
     const emergencyTimeout = setTimeout(() => {
       if (isMounted) {
         console.warn('🚨 Auth emergency timeout - forcing loading to false')
         setLoading(false)
         setInitialized(true)
       }
-    }, 2000)
+    }, 800)
     
     // Get initial session
     const getSession = async () => {
@@ -396,6 +403,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isManager,
     isAgent,
+  }
+
+  // Show loader until everything is ready AND minimum time has passed
+  // This prevents flash and ensures smooth loading experience
+  if (!isHydrated || loading || !initialized || (user && !profile) || !minLoadingComplete) {
+    return <KrooloMainLoader />
   }
 
   return (

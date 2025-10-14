@@ -12,7 +12,6 @@ import { NavbarFixProvider } from "@/components/providers/navbar-fix-provider"
 import { ReactQueryProvider } from "@/components/providers/react-query-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
-import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,7 +50,6 @@ export default function RootLayout({
                 </AuthProvider>
               </NavbarFixProvider>
               <Toaster />
-              <SonnerToaster />
             </TooltipProvider>
           </ReactQueryProvider>
         </ThemeProvider>

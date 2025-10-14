@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Clock, Star, Search, ShoppingCart, CheckCircle, AlertCircle, Package } from "lucide-react"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
+import { toast } from "@/lib/toast"
 import { useServicesGQL, useServiceCategoriesGQL, createServiceRequestGQL } from "@/hooks/use-services-assets-gql"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useStore } from "@/lib/store"
