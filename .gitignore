@@ -1,7 +1,7 @@
 # Node
 node_modules/
 
-# Build outputss
+# Build outputs
 .next/
 .nuxt/
 dist/
