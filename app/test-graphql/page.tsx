@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useTickets } from '@/hooks/use-tickets'
 import { useTicketsGQL } from '@/hooks/use-tickets-gql'
 import { useProfilesGQL } from '@/hooks/use-users-gql'
 import { userAPI } from '@/lib/api/users'
@@ -251,7 +250,22 @@ export default function TestGraphQLPage() {
 }
 
 function RESTExample() {
-  const { tickets, loading, error } = useTickets({ limit: 5 })
+  const [tickets, setTickets] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetch('/api/tickets?limit=5')
+      .then(res => res.json())
+      .then(data => {
+        setTickets(data.tickets || [])
+        setLoading(false)
+      })
+      .catch(err => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
   
   if (loading) return <div className="text-sm text-muted-foreground">Loading REST data...</div>
   if (error) return <div className="text-sm text-red-500">Error: {error}</div>

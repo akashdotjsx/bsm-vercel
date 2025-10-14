@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +46,7 @@ import { useAssetsGQL, useAssetTypesGQL, createAssetGQL, updateAssetGQL, deleteA
 import { Asset, CreateAssetData, AssetType } from "@/lib/api/assets"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "sonner"
+import { useDebounce } from "@/hooks/use-debounce"
 
 // Icon mapping for asset types
 const iconMap: Record<string, any> = {
@@ -68,6 +69,9 @@ export default function AssetManagementPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [selectedAssetType, setSelectedAssetType] = useState<string | null>(null)
+
+  // ✅ FIX: Debounce search to prevent API spam on every keystroke
+  const debouncedSearch = useDebounce(searchTerm, 500)
 
   // Modal states
   const [showAutoDiscoveryModal, setShowAutoDiscoveryModal] = useState(false)
@@ -98,7 +102,7 @@ export default function AssetManagementPage() {
   // API hooks - GraphQL for reads and writes
   const { assets, loading: assetsLoading, error: assetsError, refetch } = useAssetsGQL({ 
     organization_id: organizationId,
-    search: searchTerm,
+    search: debouncedSearch, // ✅ Use debounced search to prevent API spam
     asset_type_id: selectedType !== "all" ? selectedType : undefined,
     status: selectedStatus !== "all" ? selectedStatus : undefined,
   })
@@ -265,19 +269,21 @@ export default function AssetManagementPage() {
     return `${prefix}-${timestamp}`
   }
 
-  // Generate asset type cards from real data
-  const assetTypeCards = assetTypes.map((type: AssetType) => {
-    const count = stats.assetsByType[type.name] || 0
-    const Icon = iconMap[type.name] || Server
-    
-    return {
-      id: type.id,
-      name: type.name,
-      count,
-      icon: Icon,
-      color: type.color || "#6366f1"
-    }
-  })
+  // ✅ FIX: Memoize asset type cards to prevent recreation on every render
+  const assetTypeCards = useMemo(() => {
+    return assetTypes.map((type: AssetType) => {
+      const count = stats.assetsByType[type.name] || 0
+      const Icon = iconMap[type.name] || Server
+      
+      return {
+        id: type.id,
+        name: type.name,
+        count,
+        icon: Icon,
+        color: type.color || "#6366f1"
+      }
+    })
+  }, [assetTypes, stats.assetsByType])
 
   if (selectedAssetType) {
     const selectedTypeData = assetTypes.find(t => t.id === selectedAssetType)

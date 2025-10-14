@@ -1,3 +1,5 @@
+"use client"
+
 import { Suspense } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus, Play, Pause, Settings, Zap, Bot, Sparkles, TrendingUp, AlertTriangle } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
+import { useWorkflowsGQL } from "@/hooks/use-workflows-organizations-gql"
 
 export default function WorkflowsPage() {
   return (
@@ -65,69 +68,45 @@ export default function WorkflowsPage() {
 }
 
 function WorkflowsList() {
-  const workflows = [
-    {
-      id: "WF001",
-      name: "Employee Onboarding",
-      description:
-        "Automated workflow for new employee setup including account creation, asset assignment, and access provisioning",
-      status: "active",
-      triggers: 12,
-      completions: 8,
-      avgTime: "2.5 hours",
-      lastRun: "2 hours ago",
-      category: "HR",
-      aiInsights: "AI suggests adding IT security training step for 15% faster completion",
-    },
-    {
-      id: "WF002",
-      name: "IT Asset Request Approval",
-      description: "Multi-level approval process for IT equipment requests with budget validation",
-      status: "active",
-      triggers: 45,
-      completions: 42,
-      avgTime: "1.2 days",
-      lastRun: "30 minutes ago",
-      category: "IT",
-      aiInsights: "Predicted bottleneck: Finance approval step (avg 18h delay)",
-    },
-    {
-      id: "WF003",
-      name: "Incident Escalation",
-      description: "Automatic escalation of high-priority incidents to management after SLA breach",
-      status: "paused",
-      triggers: 3,
-      completions: 3,
-      avgTime: "15 minutes",
-      lastRun: "1 day ago",
-      category: "Support",
-      aiInsights: "Low usage detected. Consider merging with general escalation workflow",
-    },
-    {
-      id: "WF004",
-      name: "Software License Renewal",
-      description: "Automated reminder and approval workflow for software license renewals",
-      status: "active",
-      triggers: 8,
-      completions: 6,
-      avgTime: "3 days",
-      lastRun: "4 hours ago",
-      category: "Procurement",
-      aiInsights: "AI recommends 30-day advance notification for better compliance",
-    },
-    {
-      id: "WF005",
-      name: "Customer Feedback Collection",
-      description: "Automated survey deployment after ticket resolution with follow-up actions",
-      status: "draft",
-      triggers: 0,
-      completions: 0,
-      avgTime: "N/A",
-      lastRun: "Never",
-      category: "Customer Success",
-      aiInsights: "Ready for deployment. Predicted 78% response rate based on similar workflows",
-    },
-  ]
+  const { workflows, loading, error } = useWorkflowsGQL()
+  
+  if (loading) {
+    return <WorkflowsSkeleton />
+  }
+  
+  if (error) {
+    return (
+      <Card className="border-red-200 dark:border-red-800">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Failed to load workflows</h3>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+  
+  if (workflows.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-12">
+          <div className="text-center">
+            <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+            <p className="text-sm text-muted-foreground mb-4">Get started by creating your first automated workflow</p>
+            <Button asChild>
+              <Link href="/workflow-builder">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Workflow
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -200,39 +179,32 @@ function WorkflowsList() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <CardDescription className="text-sm">{workflow.description}</CardDescription>
-
-            <div className="p-3 rounded-lg bg-[#7c73fc]/5 border border-[#7c73fc]/10">
-              <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-[#7c73fc] mt-0.5 shrink-0" />
-                <p className="text-xs text-muted-foreground leading-relaxed">{workflow.aiInsights}</p>
-              </div>
-            </div>
+            <CardDescription className="text-sm">{workflow.description || 'No description'}</CardDescription>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Triggers</p>
-                <p className="font-semibold">{workflow.triggers}</p>
+                <p className="text-muted-foreground">Total Executions</p>
+                <p className="font-semibold">{workflow.total_executions || 0}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Completions</p>
-                <p className="font-semibold">{workflow.completions}</p>
+                <p className="text-muted-foreground">Successful</p>
+                <p className="font-semibold">{workflow.successful_executions || 0}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Avg Time</p>
-                <p className="font-semibold">{workflow.avgTime}</p>
+                <p className="text-muted-foreground">Failed</p>
+                <p className="font-semibold">{workflow.failed_executions || 0}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Last Run</p>
-                <p className="font-semibold">{workflow.lastRun}</p>
+                <p className="text-muted-foreground">Version</p>
+                <p className="font-semibold">v{workflow.version || 1}</p>
               </div>
             </div>
 
-            {workflow.status === "active" && (
+            {workflow.total_executions > 0 && (
               <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className="bg-primary h-2 rounded-full"
-                  style={{ width: `${(workflow.completions / workflow.triggers) * 100}%` }}
+                  style={{ width: `${(workflow.successful_executions / workflow.total_executions) * 100}%` }}
                 ></div>
               </div>
             )}

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useCallback } from "react"
+import { useDebounce } from "@/hooks/use-debounce"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +56,9 @@ export default function UsersTeamsPage() {
   const [showAddTeamModal, setShowAddTeamModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
+  
+  // ✅ FIX: Debounce search to prevent filtering on every keystroke
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const [users, setUsers] = useState<User[]>([
     {
@@ -162,18 +166,23 @@ export default function UsersTeamsPage() {
     "Operations Manager",
   ]
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
-    const matchesDepartment = departmentFilter === "all" || user.department === departmentFilter
+  // ✅ FIX: Memoize filtered users to prevent recalculation on every render
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const searchLower = debouncedSearchQuery.toLowerCase()
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        user.role.toLowerCase().includes(searchLower)
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter
+      const matchesDepartment = departmentFilter === "all" || user.department === departmentFilter
 
-    return matchesSearch && matchesStatus && matchesDepartment
-  })
+      return matchesSearch && matchesStatus && matchesDepartment
+    })
+  }, [users, debouncedSearchQuery, statusFilter, departmentFilter])
 
-  const handleAddUser = () => {
+  // ✅ FIX: Wrap in useCallback to prevent recreation on every render
+  const handleAddUser = useCallback(() => {
     const user: User = {
       id: Date.now().toString(),
       name: newUser.name,
@@ -183,10 +192,10 @@ export default function UsersTeamsPage() {
       status: newUser.status as "Active" | "Inactive",
       lastLogin: new Date().toISOString().split("T")[0],
     }
-    setUsers([...users, user])
+    setUsers(prevUsers => [...prevUsers, user])
     setNewUser({ name: "", email: "", role: "", department: "", phone: "", status: "Active" })
     setShowAddUserModal(false)
-  }
+  }, [newUser])
 
   const handleEditUser = (user: User) => {
     setEditingUser(user)
@@ -200,10 +209,11 @@ export default function UsersTeamsPage() {
     })
   }
 
-  const handleUpdateUser = () => {
+  // ✅ FIX: Wrap in useCallback and use functional update
+  const handleUpdateUser = useCallback(() => {
     if (editingUser) {
-      setUsers(
-        users.map((user) =>
+      setUsers(prevUsers =>
+        prevUsers.map((user) =>
           user.id === editingUser.id
             ? {
                 ...user,
@@ -219,11 +229,12 @@ export default function UsersTeamsPage() {
       setEditingUser(null)
       setNewUser({ name: "", email: "", role: "", department: "", phone: "", status: "Active" })
     }
-  }
+  }, [editingUser, newUser])
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter((user) => user.id !== userId))
-  }
+  // ✅ FIX: Wrap in useCallback and use functional update
+  const handleDeleteUser = useCallback((userId: string) => {
+    setUsers(prevUsers => prevUsers.filter((user) => user.id !== userId))
+  }, [])
 
   const handleAddTeam = () => {
     const team: Team = {

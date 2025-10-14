@@ -55,6 +55,7 @@ import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table"
 import { AIChatPanel } from "@/components/ai/ai-chat-panel"
+import { useDebounce } from "@/hooks/use-debounce"
 
 const AIAssistantPanel = dynamic(
   () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
@@ -126,6 +127,9 @@ export default function TicketsPage() {
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
   
+  // ✅ FIX: Debounce search to prevent excessive re-renders
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+  
   // Use real data from API
   // Memoize the params to prevent unnecessary re-renders
   const ticketsParams = useMemo(() => {
@@ -135,7 +139,7 @@ export default function TicketsPage() {
       status: selectedStatus === "all" ? undefined : selectedStatus,
       priority: selectedPriority === "all" ? undefined : selectedPriority,
       type: selectedType === "all" ? undefined : selectedType,
-      search: searchTerm || undefined
+      search: debouncedSearchTerm || undefined // ✅ Use debounced search
     }
     
     // Add filtering based on ticket view
@@ -148,7 +152,7 @@ export default function TicketsPage() {
     }
     
     return params
-  }, [selectedStatus, selectedPriority, selectedType, searchTerm, ticketView, user?.id])
+  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, ticketView, user?.id])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -380,9 +384,19 @@ export default function TicketsPage() {
     }
   }, [transformedTickets])
 
+  // ✅ FIX: Memoize filter conditions separately to reduce dependencies
+  const filterConditions = useMemo(() => ({
+    search: debouncedSearchTerm,
+    type: selectedType,
+    priority: selectedPriority,
+    status: selectedStatus,
+    activeFilters
+  }), [debouncedSearchTerm, selectedType, selectedPriority, selectedStatus, activeFilters])
+  
+  // ✅ FIX: Optimize filtering with reduced dependencies
   const filteredTickets = useMemo(() => {
     // Use local tickets for Kanban view, transformed tickets for list view
-    let baseTickets = currentView === "kanban" ? localTickets : (transformedTickets || [])
+    const baseTickets = currentView === "kanban" ? localTickets : transformedTickets
     
     // Note: Server-side filtering is now applied via GraphQL query for My Tickets and Assigned to Me
     // No need to filter client-side for these views
@@ -391,8 +405,8 @@ export default function TicketsPage() {
     if (currentView === "list") {
       return baseTickets.filter(ticket => {
         // Search filter
-        if (searchTerm) {
-          const searchLower = searchTerm.toLowerCase()
+        if (filterConditions.search) {
+          const searchLower = filterConditions.search.toLowerCase()
           const matchesSearch = 
             ticket.title.toLowerCase().includes(searchLower) ||
             ticket.description.toLowerCase().includes(searchLower) ||
@@ -404,40 +418,40 @@ export default function TicketsPage() {
         }
         
         // Type filter (from active filters)
-        if (activeFilters.type.length > 0) {
+        if (filterConditions.activeFilters.type.length > 0) {
           const ticketType = ticket.type?.toLowerCase() || ''
-          if (!activeFilters.type.some(type => type.toLowerCase() === ticketType)) return false
-        } else if (selectedType !== "all") {
+          if (!filterConditions.activeFilters.type.some(type => type.toLowerCase() === ticketType)) return false
+        } else if (filterConditions.type !== "all") {
           const ticketType = ticket.type?.toLowerCase() || ''
-          const selectedTypeLower = selectedType.toLowerCase()
+          const selectedTypeLower = filterConditions.type.toLowerCase()
           if (ticketType !== selectedTypeLower) return false
         }
         
         // Priority filter (from active filters)
-        if (activeFilters.priority.length > 0) {
+        if (filterConditions.activeFilters.priority.length > 0) {
           const ticketPriority = ticket.priority?.toLowerCase() || ''
-          if (!activeFilters.priority.some(priority => priority.toLowerCase() === ticketPriority)) return false
-        } else if (selectedPriority !== "all") {
+          if (!filterConditions.activeFilters.priority.some(priority => priority.toLowerCase() === ticketPriority)) return false
+        } else if (filterConditions.priority !== "all") {
           const ticketPriority = ticket.priority?.toLowerCase() || ''
-          const selectedPriorityLower = selectedPriority.toLowerCase()
+          const selectedPriorityLower = filterConditions.priority.toLowerCase()
           if (ticketPriority !== selectedPriorityLower) return false
         }
         
         // Status filter (from active filters)
-        if (activeFilters.status.length > 0) {
+        if (filterConditions.activeFilters.status.length > 0) {
           const ticketStatus = ticket.status?.toLowerCase() || ''
-          if (!activeFilters.status.some(status => status.toLowerCase() === ticketStatus)) return false
-        } else if (selectedStatus !== "all") {
+          if (!filterConditions.activeFilters.status.some(status => status.toLowerCase() === ticketStatus)) return false
+        } else if (filterConditions.status !== "all") {
           const ticketStatus = ticket.status?.toLowerCase() || ''
-          const selectedStatusLower = selectedStatus.toLowerCase()
+          const selectedStatusLower = filterConditions.status.toLowerCase()
           if (ticketStatus !== selectedStatusLower) return false
         }
         
         // Date range filter
-        if (activeFilters.dateRange.from || activeFilters.dateRange.to) {
+        if (filterConditions.activeFilters.dateRange.from || filterConditions.activeFilters.dateRange.to) {
           const ticketDate = new Date(ticket.created_at || ticket.date)
-          const fromDate = activeFilters.dateRange.from ? new Date(activeFilters.dateRange.from) : null
-          const toDate = activeFilters.dateRange.to ? new Date(activeFilters.dateRange.to) : null
+          const fromDate = filterConditions.activeFilters.dateRange.from ? new Date(filterConditions.activeFilters.dateRange.from) : null
+          const toDate = filterConditions.activeFilters.dateRange.to ? new Date(filterConditions.activeFilters.dateRange.to) : null
           
           if (fromDate && ticketDate < fromDate) return false
           if (toDate && ticketDate > toDate) return false
@@ -448,7 +462,7 @@ export default function TicketsPage() {
     }
     
     return baseTickets
-  }, [localTickets, transformedTickets, currentView, searchTerm, selectedType, selectedPriority, selectedStatus, activeFilters, ticketView, user])
+  }, [localTickets, transformedTickets, currentView, filterConditions])
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
