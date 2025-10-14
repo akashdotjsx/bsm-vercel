@@ -704,3 +704,171 @@ export const GET_DASHBOARD_STATS_QUERY = gql`
     }
   }
 `
+
+// ============================================
+// WORKFLOW QUERIES
+// ============================================
+
+export const GET_WORKFLOWS_QUERY = gql`
+  query GetWorkflows(
+    $filter: workflowsFilter
+    $orderBy: [workflowsOrderBy!]
+    $first: Int
+    $offset: Int
+  ) {
+    workflowsCollection(
+      filter: $filter
+      orderBy: $orderBy
+      first: $first
+      offset: $offset
+    ) {
+      edges {
+        node {
+          id
+          organization_id
+          name
+          description
+          entity_type
+          status
+          version
+          workflow_config
+          initial_status
+          trigger_conditions
+          tags
+          created_by
+          created_at
+          updated_at
+          creator: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`
+
+export const GET_WORKFLOW_BY_ID_QUERY = gql`
+  query GetWorkflowById($id: UUID!) {
+    workflowsCollection(filter: { id: { eq: $id } }) {
+      edges {
+        node {
+          id
+          organization_id
+          name
+          description
+          entity_type
+          status
+          version
+          workflow_config
+          initial_status
+          trigger_conditions
+          tags
+          created_by
+          created_at
+          updated_at
+          creator: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+            avatar_url
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_WORKFLOW_EXECUTIONS_QUERY = gql`
+  query GetWorkflowExecutions(
+    $filter: workflow_executionsFilter
+    $orderBy: [workflow_executionsOrderBy!]
+    $first: Int
+    $offset: Int
+  ) {
+    workflow_executionsCollection(
+      filter: $filter
+      orderBy: $orderBy
+      first: $first
+      offset: $offset
+    ) {
+      edges {
+        node {
+          id
+          workflow_id
+          entity_id
+          entity_type
+          current_status
+          status
+          started_at
+          completed_at
+          error_message
+          execution_log
+          triggered_by
+          workflow: workflows {
+            id
+            name
+            entity_type
+          }
+          trigger_user: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`
+
+export const GET_WORKFLOW_EXECUTION_BY_ID_QUERY = gql`
+  query GetWorkflowExecutionById($id: UUID!) {
+    workflow_executionsCollection(filter: { id: { eq: $id } }) {
+      edges {
+        node {
+          id
+          workflow_id
+          entity_id
+          entity_type
+          current_status
+          status
+          started_at
+          completed_at
+          error_message
+          execution_log
+          triggered_by
+          workflow: workflows {
+            id
+            name
+            description
+            entity_type
+            workflow_config
+          }
+          trigger_user: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+            avatar_url
+          }
+        }
+      }
+    }
+  }
+`
