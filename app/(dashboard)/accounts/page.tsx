@@ -28,49 +28,13 @@ import {
   Clock,
   ToggleLeft,
   Link,
+  AlertTriangle,
 } from "lucide-react"
 import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useOrganizationsGQL } from "@/hooks/use-workflows-organizations-gql"
 
-const accounts = [
-  {
-    id: 1,
-    name: "Acme Corporation",
-    country: "United States",
-    website: "https://acme.com",
-    supportChannel: "Email",
-    contactPerson: "John Smith",
-    email: "john.smith@acme.com",
-    address: "123 Business Ave, New York, NY 10001",
-    status: "Active",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: 2,
-    name: "TechFlow Solutions",
-    country: "Canada",
-    website: "https://techflow.ca",
-    supportChannel: "Slack",
-    contactPerson: "Sarah Johnson",
-    email: "sarah@techflow.ca",
-    address: "456 Tech Street, Toronto, ON M5V 3A8",
-    status: "Active",
-    createdAt: "2024-01-10",
-  },
-  {
-    id: 3,
-    name: "Global Dynamics",
-    country: "United Kingdom",
-    website: "https://globaldynamics.co.uk",
-    supportChannel: "Phone",
-    contactPerson: "Michael Brown",
-    email: "m.brown@globaldynamics.co.uk",
-    address: "789 Corporate Blvd, London, EC1A 1BB",
-    status: "Inactive",
-    createdAt: "2024-01-05",
-  },
-]
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -118,7 +82,7 @@ const getChipColor = (name: string) => {
 }
 
 export default function AccountsPage() {
-  const [loading, setLoading] = useState(true)
+  const { organizations, loading, error } = useOrganizationsGQL()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -126,32 +90,31 @@ export default function AccountsPage() {
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<any>(null)
   
-  // Simulate data loading
-  useState(() => {
-    setTimeout(() => setLoading(false), 500)
-  })
   const [formData, setFormData] = useState({
     name: "",
-    country: "",
-    website: "",
-    supportChannel: "Email",
-    contactPerson: "",
-    email: "",
-    address: "",
+    domain: "",
+    tier: "basic",
+    status: "active",
   })
   const router = useRouter()
+  
+  // Calculate stats from real data
+  const stats = {
+    total: organizations.length,
+    active: organizations.filter((org: any) => org.status === 'active').length,
+    enterprise: organizations.filter((org: any) => org.tier === 'enterprise').length,
+    premium: organizations.filter((org: any) => org.tier === 'premium').length,
+  }
 
   const handleCreateAccount = () => {
     console.log("Creating account:", formData)
+    // TODO: Call createOrganizationGQL mutation
     setShowCreateForm(false)
     setFormData({
       name: "",
-      country: "",
-      website: "",
-      supportChannel: "Email",
-      contactPerson: "",
-      email: "",
-      address: "",
+      domain: "",
+      tier: "basic",
+      status: "active",
     })
   }
 
@@ -163,12 +126,9 @@ export default function AccountsPage() {
     setSelectedAccount(account)
     setFormData({
       name: account.name,
-      country: account.country,
-      website: account.website,
-      supportChannel: account.supportChannel,
-      contactPerson: account.contactPerson,
-      email: account.email,
-      address: account.address,
+      domain: account.domain,
+      tier: account.tier,
+      status: account.status,
     })
     setShowEditModal(true)
   }
@@ -186,6 +146,7 @@ export default function AccountsPage() {
 
   const handleUpdateAccount = () => {
     console.log("Updating account:", selectedAccount?.id, formData)
+    // TODO: Call updateOrganizationGQL mutation
     setShowEditModal(false)
     setSelectedAccount(null)
   }
@@ -230,7 +191,7 @@ export default function AccountsPage() {
                 <Building className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
                   <p className="text-xs font-medium text-muted-foreground">Total Accounts</p>
-                  <p className="text-base font-bold">3</p>
+                  <p className="text-base font-bold">{stats.total}</p>
                 </div>
               </div>
             </CardContent>
@@ -241,7 +202,7 @@ export default function AccountsPage() {
                 <Building className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
                   <p className="text-xs font-medium text-muted-foreground">Active Accounts</p>
-                  <p className="text-base font-bold">2</p>
+                  <p className="text-base font-bold">{stats.active}</p>
                 </div>
               </div>
             </CardContent>
@@ -251,8 +212,8 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <Mail className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-xs font-medium text-muted-foreground">Email Support</p>
-                  <p className="text-base font-bold">1</p>
+                  <p className="text-xs font-medium text-muted-foreground">Enterprise Tier</p>
+                  <p className="text-base font-bold">{stats.enterprise}</p>
                 </div>
               </div>
             </CardContent>
@@ -262,29 +223,60 @@ export default function AccountsPage() {
               <div className="flex items-center">
                 <MessageSquare className="h-8 w-8 text-orange-600" />
                 <div className="ml-4">
-                  <p className="text-xs font-medium text-muted-foreground">Slack Support</p>
-                  <p className="text-base font-bold">1</p>
+                  <p className="text-xs font-medium text-muted-foreground">Premium Tier</p>
+                  <p className="text-base font-bold">{stats.premium}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Error State */}
+        {error && (
+          <Card className="border-red-200 dark:border-red-800">
+            <CardContent className="p-6">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Failed to load accounts</h3>
+                <p className="text-sm text-muted-foreground">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Accounts Table */}
+        {!error && (
         <Card>
           <CardHeader>
 <CardTitle className="text-sm">Accounts</CardTitle>
 <CardDescription className="text-xs">Manage customer accounts and contact information</CardDescription>
           </CardHeader>
           <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : organizations.length === 0 ? (
+              <div className="text-center py-12">
+                <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No accounts yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">Create your first account to get started</p>
+                <Button onClick={() => setShowCreateForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Account
+                </Button>
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse border border-border">
                 <thead>
                   <tr className="bg-muted/50">
                     <th className="text-left py-3 px-4 font-medium text-xs border border-border">Name</th>
-                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Country</th>
-                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Support Channel</th>
-                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Account Owner</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Domain</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Tier</th>
+                    <th className="text-left py-3 px-4 font-medium text-xs border border-border">Health Score</th>
                     <th className="text-left py-3 px-4 font-medium text-xs border border-border">Status</th>
                     <th className="text-left py-3 px-4 font-medium text-xs border border-border">Created At</th>
                     <th className="text-left py-3 px-4 font-medium text-xs border border-border">Actions</th>
@@ -345,43 +337,59 @@ export default function AccountsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {accounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-muted/50">
+                  {organizations.map((org: any) => (
+                    <tr key={org.id} className="hover:bg-muted/50">
                       <td className="py-3 px-4 border border-border">
                         <div>
                           <button
-                            onClick={() => router.push(`/accounts/${account.id}`)}
+                            onClick={() => router.push(`/accounts/${org.id}`)}
  className="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline text-left dark:text-blue-400 dark:hover:text-blue-300"
                           >
-                            {account.name}
+                            {org.name}
                           </button>
-<div className="text-xs text-muted-foreground flex items-center">
+                        </div>
+                      </td>
+<td className="py-3 px-4 text-sm border border-border">
+                        {org.domain ? (
+                          <div className="flex items-center text-xs text-muted-foreground">
                             <Globe className="mr-1 h-3 w-3" />
-                            {account.website}
+                            {org.domain}
                           </div>
-                        </div>
-                      </td>
-<td className="py-3 px-4 text-sm border border-border">{account.country}</td>
-                      <td className="py-3 px-4 border border-border">
-<div className="flex items-center text-sm">
-                          {account.supportChannel === "Email" && <Mail className="mr-1 h-3 w-3" />}
-                          {account.supportChannel === "Slack" && <MessageSquare className="mr-1 h-3 w-3" />}
-                          {account.supportChannel === "Phone" && <Phone className="mr-1 h-3 w-3" />}
-                          {account.supportChannel}
-                        </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 border border-border">
-                        <div className="flex items-center">
-                          <div
-                            className={`w-8 h-8 ${getChipColor(account.contactPerson)} rounded-full flex items-center justify-center text-white text-xs font-medium cursor-pointer`}
-                            title={account.contactPerson}
-                          >
-                            {getInitials(account.contactPerson)}
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${
+                            org.tier === 'enterprise' 
+                              ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                              : org.tier === 'premium'
+                              ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                              : 'bg-gray-100 dark:bg-gray-950 text-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800'
+                          }`}
+                        >
+                          {org.tier}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 border border-border">
+                        <div className="flex items-center gap-2">
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                org.health_score >= 90 ? 'bg-green-500' :
+                                org.health_score >= 70 ? 'bg-yellow-500' :
+                                'bg-red-500'
+                              }`}
+                              style={{ width: `${org.health_score}%` }}
+                            ></div>
                           </div>
+                          <span className="text-xs font-medium">{org.health_score}%</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 border border-border">{getStatusChip(account.status)}</td>
-<td className="py-3 px-4 text-sm border border-border">{formatDate(account.createdAt)}</td>
+                      <td className="py-3 px-4 border border-border">{getStatusChip(org.status)}</td>
+<td className="py-3 px-4 text-sm border border-border">{formatDate(org.created_at)}</td>
                       <td className="py-3 px-4 border border-border">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -390,17 +398,17 @@ export default function AccountsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-<DropdownMenuItem className="text-sm" onClick={() => handleViewAccount(account)}>
+<DropdownMenuItem className="text-sm" onClick={() => handleViewAccount(org)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
-<DropdownMenuItem className="text-sm" onClick={() => handleEditAccount(account)}>
+<DropdownMenuItem className="text-sm" onClick={() => handleEditAccount(org)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Account
                             </DropdownMenuItem>
                             <DropdownMenuItem
  className="text-sm text-red-600 dark:text-red-400"
-                              onClick={() => handleDeleteAccount(account)}
+                              onClick={() => handleDeleteAccount(org)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Account
@@ -414,8 +422,10 @@ export default function AccountsPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </CardContent>
         </Card>
+        )}
 
         {/* Create Account Form */}
         {showCreateForm && (
@@ -427,71 +437,46 @@ export default function AccountsPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Account Name</label>
+                  <label className="block text-sm font-medium mb-2">Organization Name</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter account name"
+                    placeholder="Enter organization name"
  className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Country</label>
+                  <label className="block text-sm font-medium mb-2">Domain</label>
                   <Input
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    placeholder="Enter country"
+                    value={formData.domain}
+                    onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                    placeholder="example.com"
                     className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Website</label>
-                  <Input
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://example.com"
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Support Channel</label>
+                  <label className="block text-sm font-medium mb-2">Tier</label>
                   <select
-                    value={formData.supportChannel}
-                    onChange={(e) => setFormData({ ...formData, supportChannel: e.target.value })}
+                    value={formData.tier}
+                    onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                   >
-                    <option value="Email">Email</option>
-                    <option value="Slack">Slack</option>
-                    <option value="Phone">Phone</option>
+                    <option value="basic">Basic</option>
+                    <option value="premium">Premium</option>
+                    <option value="enterprise">Enterprise</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Account Owner</label>
-                  <Input
-                    value={formData.contactPerson}
-                    onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                    placeholder="Enter account owner name"
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <Input
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="contact@example.com"
-                    type="email"
-                    className="text-sm"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">Address</label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Enter full address"
-                    className="text-sm"
-                  />
+                  <label className="block text-sm font-medium mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+ className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-6">
