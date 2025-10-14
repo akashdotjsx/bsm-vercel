@@ -206,9 +206,11 @@ export function useDeleteServiceMutation() {
     mutationFn: async (id: string) => {
       const client = await createGraphQLClient()
       
-      // First, check if there are any service requests for this service
-      const checkRequestsQuery = gql`
-        query CheckServiceRequests($serviceId: UUID!) {
+      console.log('🗑️ Starting DELETE SERVICE for ID:', id)
+      
+      // First, get all service requests for this service
+      const getRequestsQuery = gql`
+        query GetServiceRequests($serviceId: UUID!) {
           service_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
             edges {
               node {
@@ -219,22 +221,77 @@ export function useDeleteServiceMutation() {
         }
       `
       
-      const requestsResponse = await client.request(checkRequestsQuery, { serviceId: id })
-      const hasRequests = requestsResponse.service_requestsCollection?.edges?.length > 0
+      const requestsResponse: any = await client.request(getRequestsQuery, { serviceId: id })
+      const serviceRequests = requestsResponse?.service_requestsCollection?.edges || []
       
-      if (hasRequests) {
-        // If there are service requests, first delete them
-        const deleteRequestsMutation = gql`
-          mutation DeleteServiceRequests($serviceId: UUID!) {
-            deleteFromservice_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+      console.log(`📋 Found ${serviceRequests.length} service requests to delete`)
+      
+      // STEP 1: Delete service request approvals FIRST
+      for (const requestEdge of serviceRequests) {
+        const requestId = requestEdge.node.id
+        
+        console.log(`  🔄 Deleting approvals for request: ${requestId}`)
+        
+        const deleteApprovalsMutation = gql`
+          mutation DeleteServiceRequestApprovals($requestId: UUID!) {
+            deleteFromservice_request_approvalsCollection(filter: { service_request_id: { eq: $requestId } }) {
               affectedCount
             }
           }
         `
-        await client.request(deleteRequestsMutation, { serviceId: id })
+        try {
+          const approvalsResult: any = await client.request(deleteApprovalsMutation, { requestId })
+          console.log(`  ✅ Deleted ${approvalsResult.deleteFromservice_request_approvalsCollection.affectedCount} approvals`)
+        } catch (error) {
+          console.log(`  ⚠️ No approvals to delete for request: ${requestId}`)
+        }
       }
       
-      // Then delete the service
+      // STEP 2: Delete service requests ONE BY ONE (more reliable than batch delete)
+      if (serviceRequests.length > 0) {
+        console.log(`  🔄 Deleting ${serviceRequests.length} service requests ONE BY ONE`)
+        
+        let deletedCount = 0
+        for (const requestEdge of serviceRequests) {
+          const requestId = requestEdge.node.id
+          
+          console.log(`    🔄 Deleting service request: ${requestId}`)
+          
+          const deleteRequestMutation = gql`
+            mutation DeleteServiceRequest($requestId: UUID!) {
+              deleteFromservice_requestsCollection(filter: { id: { eq: $requestId } }) {
+                affectedCount
+              }
+            }
+          `
+          try {
+            const result: any = await client.request(deleteRequestMutation, { requestId })
+            const affected = result.deleteFromservice_requestsCollection.affectedCount
+            console.log(`    ✅ Deleted service request (affected: ${affected})`)
+            deletedCount += affected
+          } catch (error: any) {
+            console.error(`    ❌ Error deleting service request ${requestId}:`, error.message || error)
+            throw new Error(`Failed to delete service request ${requestId}: ${error.message || 'Unknown error'}`)
+          }
+        }
+        
+        console.log(`  ✅ Deleted ${deletedCount} service requests total`)
+        
+        // VERIFY deletion
+        console.log(`  🔍 Verifying all service requests are deleted...`)
+        const verifyResult: any = await client.request(getRequestsQuery, { serviceId: id })
+        const remainingRequests = verifyResult.service_requestsCollection?.edges || []
+        
+        if (remainingRequests.length > 0) {
+          console.error(`  ❌ CRITICAL: ${remainingRequests.length} service requests still exist!`)
+          console.error(`  Remaining request IDs:`, remainingRequests.map((e: any) => e.node.id))
+          throw new Error(`Failed to delete all service requests for service ${id}. ${remainingRequests.length} requests still remain.`)
+        }
+        console.log(`  ✅ Verified: All service requests deleted`)
+      }
+      
+      // STEP 3: Delete the service
+      console.log(`  🔄 Deleting service ${id}...`)
       const deleteServiceMutation = gql`
         mutation DeleteService($id: UUID!) {
           deleteFromservicesCollection(filter: { id: { eq: $id } }) {
@@ -242,7 +299,13 @@ export function useDeleteServiceMutation() {
           }
         }
       `
-      await client.request(deleteServiceMutation, { id })
+      try {
+        await client.request(deleteServiceMutation, { id })
+        console.log(`  ✅ Service deleted successfully!`)
+      } catch (error: any) {
+        console.error(`  ❌ Error deleting service:`, error)
+        throw error
+      }
     },
     onMutate: async (deletedId) => {
       // Cancel any outgoing refetches
@@ -338,11 +401,15 @@ export function useDeleteServiceCategoryMutation() {
       const servicesResponse = await client.request(getServicesQuery, { categoryId: id })
       const services = servicesResponse.servicesCollection?.edges?.map((edge: any) => edge.node) || []
       
+      console.log(`🗑️ Deleting category with ${services.length} services...`)
+      
       // Delete all services in this category first (which will also delete their service requests)
       for (const service of services) {
-        // Check if there are any service requests for this service
-        const checkRequestsQuery = gql`
-          query CheckServiceRequests($serviceId: UUID!) {
+        console.log(`  🔄 Processing service: ${service.id}`)
+        
+        // Get all service requests for this service
+        const getRequestsQuery = gql`
+          query GetServiceRequests($serviceId: UUID!) {
             service_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
               edges {
                 node {
@@ -353,22 +420,91 @@ export function useDeleteServiceCategoryMutation() {
           }
         `
         
-        const requestsResponse = await client.request(checkRequestsQuery, { serviceId: service.id })
-        const hasRequests = requestsResponse.service_requestsCollection?.edges?.length > 0
+        const requestsResponse: any = await client.request(getRequestsQuery, { serviceId: service.id })
+        const serviceRequests = requestsResponse?.service_requestsCollection?.edges || []
         
-        if (hasRequests) {
-          // If there are service requests, first delete them
-          const deleteRequestsMutation = gql`
-            mutation DeleteServiceRequests($serviceId: UUID!) {
-              deleteFromservice_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+        console.log(`    📋 Found ${serviceRequests.length} service requests`)
+        
+        // Delete service request approvals FIRST
+        for (const requestEdge of serviceRequests) {
+          const requestId = requestEdge.node.id
+          
+          console.log(`    🔄 Deleting approvals for request: ${requestId}`)
+          
+          const deleteApprovalsMutation = gql`
+            mutation DeleteServiceRequestApprovals($requestId: UUID!) {
+              deleteFromservice_request_approvalsCollection(filter: { service_request_id: { eq: $requestId } }) {
                 affectedCount
               }
             }
           `
-          await client.request(deleteRequestsMutation, { serviceId: service.id })
+          try {
+            await client.request(deleteApprovalsMutation, { requestId })
+            console.log(`    ✅ Deleted approvals`)
+          } catch (error) {
+            console.log(`    ⚠️ No approvals to delete`)
+          }
         }
         
-        // Then delete the service
+        // Then delete service requests ONE BY ONE
+        if (serviceRequests.length > 0) {
+          console.log(`    🔄 Deleting ${serviceRequests.length} service requests ONE BY ONE`)
+          
+          let deletedCount = 0
+          for (const requestEdge of serviceRequests) {
+            const requestId = requestEdge.node.id
+            
+            console.log(`      🔄 Deleting service request: ${requestId}`)
+            
+            const deleteRequestMutation = gql`
+              mutation DeleteServiceRequest($requestId: UUID!) {
+                deleteFromservice_requestsCollection(filter: { id: { eq: $requestId } }) {
+                  affectedCount
+                }
+              }
+            `
+            try {
+              const result: any = await client.request(deleteRequestMutation, { requestId })
+              const affected = result.deleteFromservice_requestsCollection.affectedCount
+              console.log(`      ✅ Deleted service request (affected: ${affected})`)
+              deletedCount += affected
+            } catch (error: any) {
+              console.error(`      ❌ Error deleting service request ${requestId}:`, error.message || error)
+              throw new Error(`Failed to delete service request ${requestId}: ${error.message || 'Unknown error'}`)
+            }
+          }
+          
+          console.log(`    ✅ Deleted ${deletedCount} service requests total`)
+          
+          // Verify deletion
+          const verifyRequestsQuery = gql`
+            query VerifyServiceRequests($serviceId: UUID!) {
+              service_requestsCollection(filter: { service_id: { eq: $serviceId } }) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+          `
+          const verifyResult: any = await client.request(verifyRequestsQuery, { serviceId: service.id })
+          const remainingRequests = verifyResult.service_requestsCollection?.edges || []
+          
+          if (remainingRequests.length > 0) {
+            console.error(`    ⚠️ CRITICAL: ${remainingRequests.length} service requests still exist after deletion!`)
+            console.error(`    Remaining request IDs:`, remainingRequests.map((e: any) => e.node.id))
+            throw new Error(`Failed to delete all service requests for service ${service.id}. ${remainingRequests.length} requests still remain.`)
+          } else {
+            console.log(`    ✅ Verified: All service requests deleted`)
+          }
+        } else {
+          console.log(`    ℹ️ No service requests to delete`)
+        }
+        
+        // Finally delete the service
+        console.log(`    🔄 Deleting service...`)
+        
         const deleteServiceMutation = gql`
           mutation DeleteService($serviceId: UUID!) {
             deleteFromservicesCollection(filter: { id: { eq: $serviceId } }) {
@@ -376,8 +512,16 @@ export function useDeleteServiceCategoryMutation() {
             }
           }
         `
-        await client.request(deleteServiceMutation, { serviceId: service.id })
+        try {
+          await client.request(deleteServiceMutation, { serviceId: service.id })
+          console.log(`    ✅ Service deleted`)
+        } catch (error) {
+          console.error(`    ❌ Error deleting service:`, error)
+          throw error
+        }
       }
+      
+      console.log(`  ✅ All ${services.length} services deleted`)
       
       // Finally, delete the category
       const deleteCategoryMutation = gql`

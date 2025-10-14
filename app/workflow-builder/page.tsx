@@ -1,1124 +1,688 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useState, useCallback, useRef, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { PlatformLayout } from "@/components/layout/platform-layout"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Save,
-  Play,
-  Settings,
-  Trash2,
-  Zap,
-  Users,
-  Mail,
-  MessageSquare,
+import React, { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import ReactFlow, {
+  Node,
+  Edge,
+  addEdge,
+  Background,
+  Controls,
+  Connection,
+  useNodesState,
+  useEdgesState,
+  BackgroundVariant,
+  Panel,
+} from 'reactflow'
+import 'reactflow/dist/style.css'
+import { PlatformLayout } from '@/components/layout/platform-layout'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
+import { 
+  Zap, 
+  Target, 
   AlertTriangle,
-  CheckCircle,
-  Target,
+  Play,
+  Save,
   GitBranch,
-  DollarSign,
-  Diamond,
-  Split,
-  Merge,
-  Plus,
-  Circle,
-} from "lucide-react"
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  Trash2,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useTheme } from 'next-themes'
 
-interface WorkflowNode {
-  id: string
-  type: "trigger" | "condition" | "action" | "approval" | "decision" | "parallel" | "merge"
-  title: string
-  description: string
-  config: Record<string, any>
-  position: { x: number; y: number }
-  connections: string[]
-  inputConnections: string[]
-  outputConnections: string[]
-}
+// Sample workflow data matching the second screenshot
+const initialNodes: Node[] = [
+  {
+    id: 'start',
+    type: 'default',
+    data: { label: 'Start' },
+    position: { x: 250, y: 50 },
+    style: {
+      background: '#6366f1',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50%',
+      width: 90,
+      height: 90,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '14px',
+      fontWeight: '600',
+      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+    },
+  },
+  {
+    id: 'open',
+    data: { label: 'Open' },
+    position: { x: 380, y: 150 },
+    style: {
+      background: 'white',
+      border: '2px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: '500',
+    },
+  },
+  {
+    id: 'assign',
+    data: { label: 'Assign Task' },
+    position: { x: 550, y: 150 },
+    style: {
+      background: 'white',
+      border: '2px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: '500',
+    },
+  },
+  {
+    id: 'in-progress',
+    data: { label: 'In Progress' },
+    position: { x: 740, y: 150 },
+    style: {
+      background: '#EEF2FF',
+      border: '2px solid #6366f1',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      color: '#6366f1',
+      fontWeight: '500',
+    },
+  },
+  {
+    id: 'problem',
+    data: { label: 'Problem' },
+    position: { x: 1000, y: 50 },
+    style: {
+      background: '#FEF2F2',
+      border: '2px solid #ef4444',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      color: '#ef4444',
+      fontWeight: '500',
+    },
+  },
+  {
+    id: 'resolved',
+    data: { label: 'Resolved' },
+    position: { x: 850, y: 350 },
+    style: {
+      background: '#F0FDF4',
+      border: '2px solid #22c55e',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      color: '#22c55e',
+      fontWeight: '500',
+    },
+  },
+  {
+    id: 'closed',
+    data: { label: 'Closed' },
+    position: { x: 1000, y: 350 },
+    style: {
+      background: '#6366f1',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: '500',
+      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+    },
+  },
+]
 
-interface Connection {
-  id: string
-  from: string
-  to: string
-  fromPort?: string
-  toPort?: string
-}
+const initialEdges: Edge[] = [
+  {
+    id: 'e-start-open',
+    source: 'start',
+    target: 'open',
+    label: 'Initiate Workflow',
+    type: 'smoothstep',
+    style: { stroke: '#9ca3af', strokeWidth: 2 },
+    labelStyle: { fill: '#6b7280', fontSize: 11, fontWeight: 500 },
+  },
+  {
+    id: 'e-open-assign',
+    source: 'open',
+    target: 'assign',
+    label: 'Assign Task',
+    type: 'smoothstep',
+    style: { stroke: '#9ca3af', strokeWidth: 2 },
+    labelStyle: { fill: '#6b7280', fontSize: 11 },
+  },
+  {
+    id: 'e-assign-progress',
+    source: 'assign',
+    target: 'in-progress',
+    type: 'smoothstep',
+    style: { stroke: '#9ca3af', strokeWidth: 2 },
+  },
+  {
+    id: 'e-progress-problem',
+    source: 'in-progress',
+    target: 'problem',
+    label: 'Escalate to Problem',
+    type: 'smoothstep',
+    style: { stroke: '#ef4444', strokeWidth: 2, strokeDasharray: '5 5' },
+    labelStyle: { fill: '#ef4444', fontSize: 11 },
+  },
+  {
+    id: 'e-progress-resolved',
+    source: 'in-progress',
+    target: 'resolved',
+    label: 'Resolve Issue',
+    type: 'smoothstep',
+    style: { stroke: '#22c55e', strokeWidth: 2 },
+    labelStyle: { fill: '#22c55e', fontSize: 11 },
+  },
+  {
+    id: 'e-problem-progress',
+    source: 'problem',
+    target: 'in-progress',
+    label: 'Re-open',
+    type: 'smoothstep',
+    style: { stroke: '#9ca3af', strokeWidth: 2 },
+    labelStyle: { fill: '#6b7280', fontSize: 11 },
+  },
+  {
+    id: 'e-resolved-closed',
+    source: 'resolved',
+    target: 'closed',
+    label: 'Close Ticket',
+    type: 'smoothstep',
+    style: { stroke: '#6366f1', strokeWidth: 2 },
+    labelStyle: { fill: '#6366f1', fontSize: 11 },
+  },
+]
+
+// Draggable workflow components
+const workflowComponents = [
+  {
+    id: 'trigger-new-ticket',
+    icon: <Zap className="h-5 w-5" />,
+    title: 'Triggers when new ticket is created',
+    bgColor: '#6366f1',
+  },
+  {
+    id: 'trigger-status-change',
+    icon: <Target className="h-5 w-5" />,
+    title: 'Triggers on ticket status change',
+    bgColor: '#9333ea',
+  },
+  {
+    id: 'trigger-sla',
+    icon: <AlertTriangle className="h-5 w-5" />,
+    title: 'Triggers on SLA violation',
+    bgColor: '#ef4444',
+  },
+]
 
 export default function WorkflowBuilderPage() {
-  const searchParams = useSearchParams()
-  const workflowId = searchParams.get("id")
+  const router = useRouter()
+  const { theme } = useTheme()
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [workflowName, setWorkflowName] = useState('New Approval Workflow')
+  const [workflowDescription, setWorkflowDescription] = useState('Workflow Description')
+  const [activeTab, setActiveTab] = useState('triggers')
+  const [showTransitionLabels, setShowTransitionLabels] = useState(true)
+  const [expandedSections, setExpandedSections] = useState({
+    properties: true,
+    triggers: false,
+    conditions: false,
+    validators: false,
+    postFunctions: false,
+  })
 
-  const [workflowName, setWorkflowName] = useState("New Approval Workflow")
-  const [workflowDescription, setWorkflowDescription] = useState("")
-  const [nodes, setNodes] = useState<WorkflowNode[]>([])
-  const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null)
-  const [draggedComponent, setDraggedComponent] = useState<string | null>(null)
-  const [connections, setConnections] = useState<Connection[]>([])
-  const [connectingFrom, setConnectingFrom] = useState<string | null>(null)
-  const [dragConnection, setDragConnection] = useState<{ from: string; x: number; y: number } | null>(null)
-  const canvasRef = useRef<HTMLDivElement>(null)
+  const isDark = theme === 'dark'
 
-  useEffect(() => {
-    if (workflowId) {
-      loadExistingWorkflow(workflowId)
-    }
-  }, [workflowId])
+  const onConnect = useCallback(
+    (params: Connection) => {
+      setEdges((eds) => addEdge({
+        ...params,
+        type: 'smoothstep',
+        animated: false,
+        style: { stroke: '#9ca3af', strokeWidth: 2 },
+      }, eds))
+    },
+    [setEdges]
+  )
 
-  const loadExistingWorkflow = (id: string) => {
-    // Sample workflow configurations
-    const workflowTemplates = {
-      WF001: {
-        name: "Employee Onboarding",
-        description:
-          "Automated workflow for new employee setup including account creation, asset assignment, and access provisioning",
-        nodes: [
-          {
-            id: "node-1",
-            type: "trigger" as const,
-            title: "New Employee Request",
-            description: "Triggers when HR submits new employee onboarding request",
-            config: { departments: ["HR"], requestTypes: ["onboarding"] },
-            position: { x: 100, y: 50 },
-            connections: ["node-2"],
-            inputConnections: [],
-            outputConnections: ["node-2"],
-          },
-          {
-            id: "node-2",
-            type: "condition" as const,
-            title: "Department Check",
-            description: "Route based on employee department",
-            config: { condition: "department IN ['IT', 'Finance', 'Sales']" },
-            position: { x: 100, y: 200 },
-            connections: ["node-3", "node-4"],
-            inputConnections: ["node-1"],
-            outputConnections: ["node-3", "node-4"],
-          },
-          {
-            id: "node-3",
-            type: "approval" as const,
-            title: "Manager Approval",
-            description: "Direct manager approval for onboarding",
-            config: { approverRole: "manager", timeout: 24, escalation: true },
-            position: { x: 50, y: 350 },
-            connections: ["node-5"],
-            inputConnections: ["node-2"],
-            outputConnections: ["node-5"],
-          },
-          {
-            id: "node-4",
-            type: "approval" as const,
-            title: "HR Approval",
-            description: "HR team approval for compliance",
-            config: { approverRole: "hr", timeout: 48, escalation: true },
-            position: { x: 300, y: 350 },
-            connections: ["node-5"],
-            inputConnections: ["node-2"],
-            outputConnections: ["node-5"],
-          },
-          {
-            id: "node-5",
-            type: "action" as const,
-            title: "Account Creation",
-            description: "Create user accounts and assign access",
-            config: { recipients: ["it-admin@company.com"], template: "account_creation" },
-            position: { x: 175, y: 500 },
-            connections: [],
-            inputConnections: ["node-3", "node-4"],
-            outputConnections: [],
-          },
-        ],
-        connections: [
-          { id: "conn-1", from: "node-1", to: "node-2" },
-          { id: "conn-2", from: "node-2", to: "node-3" },
-          { id: "conn-3", from: "node-2", to: "node-4" },
-          { id: "conn-4", from: "node-3", to: "node-5" },
-          { id: "conn-5", from: "node-4", to: "node-5" },
-        ],
-      },
-      WF002: {
-        name: "IT Asset Request Approval",
-        description: "Multi-level approval process for IT equipment requests with budget validation",
-        nodes: [
-          {
-            id: "node-1",
-            type: "trigger" as const,
-            title: "Asset Request Submitted",
-            description: "Triggers when employee submits IT asset request",
-            config: { requestTypes: ["hardware", "software"] },
-            position: { x: 100, y: 50 },
-            connections: ["node-2"],
-            inputConnections: [],
-            outputConnections: ["node-2"],
-          },
-          {
-            id: "node-2",
-            type: "decision" as const,
-            title: "Cost Threshold Check",
-            description: "Check if request exceeds budget threshold",
-            config: { condition: "cost > 1000", operator: "IF" },
-            position: { x: 100, y: 200 },
-            connections: ["node-3", "node-4"],
-            inputConnections: ["node-1"],
-            outputConnections: ["node-3", "node-4"],
-          },
-          {
-            id: "node-3",
-            type: "approval" as const,
-            title: "Manager Approval",
-            description: "Manager approval for low-cost items",
-            config: { approverRole: "manager", timeout: 24, escalation: true },
-            position: { x: 50, y: 350 },
-            connections: ["node-6"],
-            inputConnections: ["node-2"],
-            outputConnections: ["node-6"],
-          },
-          {
-            id: "node-4",
-            type: "approval" as const,
-            title: "Finance Approval",
-            description: "Finance approval for high-cost items",
-            config: { approverRole: "finance", timeout: 48, escalation: true },
-            position: { x: 300, y: 350 },
-            connections: ["node-5"],
-            inputConnections: ["node-2"],
-            outputConnections: ["node-5"],
-          },
-          {
-            id: "node-5",
-            type: "approval" as const,
-            title: "Procurement Approval",
-            description: "Final procurement team approval",
-            config: { approverRole: "procurement", timeout: 72, escalation: true },
-            position: { x: 300, y: 500 },
-            connections: ["node-6"],
-            inputConnections: ["node-4"],
-            outputConnections: ["node-6"],
-          },
-          {
-            id: "node-6",
-            type: "action" as const,
-            title: "Asset Provisioning",
-            description: "Provision approved IT assets",
-            config: { recipients: ["it-procurement@company.com"], template: "asset_approved" },
-            position: { x: 175, y: 650 },
-            connections: [],
-            inputConnections: ["node-3", "node-5"],
-            outputConnections: [],
-          },
-        ],
-        connections: [
-          { id: "conn-1", from: "node-1", to: "node-2" },
-          { id: "conn-2", from: "node-2", to: "node-3" },
-          { id: "conn-3", from: "node-2", to: "node-4" },
-          { id: "conn-4", from: "node-4", to: "node-5" },
-          { id: "conn-5", from: "node-3", to: "node-6" },
-          { id: "conn-6", from: "node-5", to: "node-6" },
-        ],
-      },
-    }
-
-    const template = workflowTemplates[id as keyof typeof workflowTemplates]
-    if (template) {
-      setWorkflowName(template.name)
-      setWorkflowDescription(template.description)
-      setNodes(template.nodes)
-      setConnections(template.connections)
-      console.log("[v0] Loaded existing workflow:", id, template.name)
-    }
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType)
+    event.dataTransfer.effectAllowed = 'move'
   }
 
-  const addNode = useCallback((type: string, position: { x: number; y: number }) => {
-    const nodeTemplates = {
-      "ticket-created": {
-        type: "trigger" as const,
-        title: "Ticket Created",
-        description: "Triggers when a new ticket is created",
-        config: { ticketTypes: [], priorities: [], departments: [] },
-      },
-      "cost-threshold": {
-        type: "condition" as const,
-        title: "Cost Threshold",
-        description: "Check if request amount exceeds threshold",
-        config: { amount: 1000, operator: "greater_than" },
-      },
-      "if-condition": {
-        type: "decision" as const,
-        title: "If Condition",
-        description: "Conditional branching based on criteria",
-        config: { condition: "cost > 1000", trueAction: "", falseAction: "" },
-      },
-      "and-condition": {
-        type: "decision" as const,
-        title: "AND Logic",
-        description: "All conditions must be true",
-        config: { conditions: [], operator: "AND" },
-      },
-      "or-condition": {
-        type: "decision" as const,
-        title: "OR Logic",
-        description: "Any condition can be true",
-        config: { conditions: [], operator: "OR" },
-      },
-      "parallel-split": {
-        type: "parallel" as const,
-        title: "Parallel Split",
-        description: "Execute multiple paths simultaneously",
-        config: { branches: [] },
-      },
-      "merge-join": {
-        type: "merge" as const,
-        title: "Merge Join",
-        description: "Wait for all parallel paths to complete",
-        config: { waitForAll: true },
-      },
-      "manager-approval": {
-        type: "approval" as const,
-        title: "Manager Approval",
-        description: "Requires manager approval",
-        config: { approverRole: "manager", timeout: 24, escalation: true },
-      },
-      "email-notification": {
-        type: "action" as const,
-        title: "Email Notification",
-        description: "Send email notification",
-        config: { recipients: [], template: "default", timing: "immediate" },
-      },
-    }
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+      
+      const type = event.dataTransfer.getData('application/reactflow')
+      if (!type) return
 
-    const template = nodeTemplates[type as keyof typeof nodeTemplates]
-    if (!template) return
+      const component = workflowComponents.find(c => c.id === type)
+      if (!component) return
 
-    const newNode: WorkflowNode = {
-      id: `node-${Date.now()}`,
-      ...template,
-      position,
-      connections: [],
-      inputConnections: [],
-      outputConnections: [],
-    }
-
-    setNodes((prev) => [...prev, newNode])
-  }, [])
-
-  const handleNodeConnect = useCallback(
-    (nodeId: string, event?: React.MouseEvent) => {
-      if (connectingFrom && connectingFrom !== nodeId) {
-        // Create connection
-        const newConnection: Connection = {
-          id: `conn-${Date.now()}`,
-          from: connectingFrom,
-          to: nodeId,
-        }
-
-        setConnections((prev) => [...prev, newConnection])
-
-        // Update node connections
-        setNodes((prev) =>
-          prev.map((node) => {
-            if (node.id === connectingFrom) {
-              return { ...node, outputConnections: [...node.outputConnections, nodeId] }
-            }
-            if (node.id === nodeId) {
-              return { ...node, inputConnections: [...node.inputConnections, connectingFrom] }
-            }
-            return node
-          }),
-        )
-
-        setConnectingFrom(null)
-        setDragConnection(null)
-        console.log("[v0] Connected nodes:", connectingFrom, "->", nodeId)
-      } else {
-        // Start connection
-        setConnectingFrom(nodeId)
-        console.log("[v0] Starting connection from:", nodeId)
-      }
-    },
-    [connectingFrom],
-  )
-
-  const handleCanvasMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (connectingFrom && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect()
-        setDragConnection({
-          from: connectingFrom,
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        })
-      }
-    },
-    [connectingFrom],
-  )
-
-  const handleCanvasClick = useCallback(() => {
-    if (connectingFrom) {
-      setConnectingFrom(null)
-      setDragConnection(null)
-      console.log("[v0] Cancelled connection")
-    }
-  }, [connectingFrom])
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      if (!draggedComponent) return
-
-      const rect = e.currentTarget.getBoundingClientRect()
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect()
       const position = {
-        x: e.clientX - rect.left - 128, // Center the node
-        y: e.clientY - rect.top - 60,
+        x: event.clientX - reactFlowBounds.left - 140,
+        y: event.clientY - reactFlowBounds.top - 40,
       }
 
-      addNode(draggedComponent, position)
-      setDraggedComponent(null)
+      const newNode: Node = {
+        id: `${type}-${Date.now()}`,
+        type: 'default',
+        position,
+        data: { label: component.title },
+        style: {
+          background: component.bgColor,
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.3)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          fontSize: '13px',
+          fontWeight: '500',
+          minWidth: '280px',
+        },
+      }
+
+      setNodes((nds) => nds.concat(newNode))
     },
-    [draggedComponent, addNode],
+    [setNodes]
   )
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const renderConnections = () => {
-    const allConnections = [...connections]
-
-    // Add drag connection if active
-    if (dragConnection) {
-      const fromNode = nodes.find((n) => n.id === dragConnection.from)
-      if (fromNode) {
-        allConnections.push({
-          id: "drag-connection",
-          from: dragConnection.from,
-          to: "drag-target",
-        })
-      }
-    }
-
-    return allConnections.map((connection) => {
-      const fromNode = nodes.find((n) => n.id === connection.from)
-
-      let toX, toY
-      if (connection.to === "drag-target" && dragConnection) {
-        toX = dragConnection.x
-        toY = dragConnection.y
-      } else {
-        const toNode = nodes.find((n) => n.id === connection.to)
-        if (!toNode) return null
-        toX = toNode.position.x + 128 // Node width / 2
-        toY = toNode.position.y + 20 // Top connection point
-      }
-
-      if (!fromNode) return null
-
-      const fromX = fromNode.position.x + 128 // Node width / 2
-      const fromY = fromNode.position.y + 120 // Bottom connection point
-
-      // Calculate control points for smooth curve
-      const controlY1 = fromY + Math.abs(toY - fromY) * 0.3
-      const controlY2 = toY - Math.abs(toY - fromY) * 0.3
-
-      const isDragConnection = connection.id === "drag-connection"
-
-      return (
-        <g key={connection.id}>
-          <defs>
-            <marker
-              id={`arrowhead-${connection.id}`}
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
-              orient="auto"
-            >
-              <polygon points="0 0, 10 3.5, 0 7" fill={isDragConnection ? "#3b82f6" : "#6b7280"} />
-            </marker>
-          </defs>
-          <path
-            d={`M ${fromX} ${fromY} C ${fromX} ${controlY1} ${toX} ${controlY2} ${toX} ${toY}`}
-            stroke={isDragConnection ? "#3b82f6" : "#6b7280"}
-            strokeWidth={isDragConnection ? "3" : "2"}
-            fill="none"
-            markerEnd={`url(#arrowhead-${connection.id})`}
-            strokeDasharray={isDragConnection ? "5,5" : "none"}
-          />
-        </g>
-      )
-    })
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }))
   }
 
-  const saveWorkflow = () => {
-    console.log("[v0] Saving workflow:", { workflowName, workflowDescription, nodes, connections })
-    alert("Workflow saved successfully!")
-  }
-
-  const testWorkflow = () => {
-    console.log("[v0] Testing workflow:", nodes, connections)
-    alert("Workflow test initiated!")
-  }
+  const tabs = [
+    { id: 'triggers', label: 'Triggers' },
+    { id: 'logic', label: 'Logic' },
+    { id: 'approvals', label: 'Approvals' },
+    { id: 'actions', label: 'Actions' },
+    { id: 'flow', label: 'Flow' },
+  ]
 
   return (
     <PlatformLayout
-      breadcrumb={[{ label: "Workflows", href: "/workflows" }, { label: workflowId ? "Edit Workflow" : "Builder" }]}
+      breadcrumb={[
+        { label: 'Workflows', href: '/workflows' },
+        { label: 'Builder' }
+      ]}
     >
-      <div className="h-[calc(100vh-8rem)] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b 0 dark:bg-gray-900">
-          <div className="flex-1">
+      <div className={cn(
+        'flex h-[calc(100vh-12rem)] -m-4 md:-m-6',
+        isDark ? 'bg-[#1e1e2e]' : 'bg-white'
+      )}>
+        {/* Left Sidebar - Component Palette */}
+        <div className={cn(
+          'w-[400px] border-r flex flex-col',
+          isDark ? 'bg-[#252535] border-gray-700/50' : 'bg-white border-gray-200'
+        )}>
+          {/* Header */}
+          <div className={cn(
+            'p-6 border-b',
+            isDark ? 'border-gray-700/50' : 'border-gray-200'
+          )}>
             <Input
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
-              className="text-[11px] font-semibold border-none p-0 h-auto bg-transparent"
+              className={cn(
+                'border-none text-base font-semibold mb-2 px-3',
+                isDark ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-900'
+              )}
               placeholder="Workflow Name"
             />
             <Input
               value={workflowDescription}
               onChange={(e) => setWorkflowDescription(e.target.value)}
-              className="text-sm text-muted-foreground border-none p-0 h-auto bg-transparent mt-1"
+              className={cn(
+                'border-none text-sm px-3',
+                isDark ? 'bg-transparent text-gray-400' : 'bg-transparent text-gray-600'
+              )}
               placeholder="Workflow Description"
             />
+            
+            <div className="flex gap-2 mt-4">
+              <Button 
+                size="sm" 
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                + Add Status
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className={isDark ? 'border-gray-600 text-gray-300' : ''}
+              >
+                + Add Transition
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-3">
+              <input 
+                type="checkbox" 
+                id="show-labels" 
+                className="rounded"
+                checked={showTransitionLabels}
+                onChange={(e) => setShowTransitionLabels(e.target.checked)}
+              />
+              <label 
+                htmlFor="show-labels" 
+                className={cn(
+                  'text-sm',
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                )}
+              >
+                Show transition labels
+              </label>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {workflowId && (
-              <Badge variant="outline" className="text-xs">
-                Editing: {workflowId}
-              </Badge>
-            )}
-            <Button variant="outline" size="sm" onClick={testWorkflow}>
-              <Play className="h-4 w-4 mr-2" />
-              Test
-            </Button>
-            <Button size="sm" onClick={saveWorkflow}>
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
+
+          {/* Transition Details / Components List */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className={cn(
+                      'text-base font-semibold',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Transition Name
+                    </h3>
+                    <ChevronDown className={cn(
+                      'h-4 w-4',
+                      isDark ? 'text-gray-500' : 'text-gray-400'
+                    )} />
+                  </div>
+                  
+                  <Card className={cn(
+                    'border',
+                    isDark 
+                      ? 'bg-yellow-900/20 border-yellow-700/50' 
+                      : 'bg-yellow-50 border-yellow-200'
+                  )}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <p className={cn(
+                            'text-sm',
+                            isDark ? 'text-yellow-200' : 'text-yellow-900'
+                          )}>
+                            This transition goes to a status which has no outgoing transitions. 
+                            Ensure all paths lead to a terminal status.
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className={cn(
+                  'h-px w-full',
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                )} />
+
+                <div>
+                  <h3 className={cn(
+                    'text-sm font-medium mb-3',
+                    isDark ? 'text-gray-400' : 'text-gray-600'
+                  )}>
+                    Options
+                  </h3>
+                  
+                  {/* Properties */}
+                  <button
+                    onClick={() => toggleSection('properties')}
+                    className={cn(
+                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors',
+                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <span className={cn(
+                      'font-medium text-base',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Properties (0)
+                    </span>
+                    <ChevronDown className={cn(
+                      'h-4 w-4 transition-transform',
+                      expandedSections.properties && 'rotate-180',
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    )} />
+                  </button>
+                  
+                  {expandedSections.properties && (
+                    <div className={cn(
+                      'p-4 rounded-lg mt-2',
+                      isDark ? 'bg-gray-800/50' : 'bg-gray-50'
+                    )}>
+                      <p className={cn(
+                        'text-sm mb-2',
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      )}>
+                        No detailed configuration for Properties yet.
+                      </p>
+                      <Button 
+                        variant="link" 
+                        className="h-auto p-0 text-indigo-600 hover:text-indigo-700"
+                      >
+                        Configure Properties
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Triggers */}
+                  <button
+                    onClick={() => toggleSection('triggers')}
+                    className={cn(
+                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
+                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <span className={cn(
+                      'font-medium text-base',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Triggers (2)
+                    </span>
+                    {expandedSections.triggers ? (
+                      <ChevronDown className={cn(
+                        'h-4 w-4',
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      )} />
+                    ) : (
+                      <ChevronRight className={cn(
+                        'h-4 w-4',
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      )} />
+                    )}
+                  </button>
+
+                  {/* Conditions */}
+                  <button
+                    onClick={() => toggleSection('conditions')}
+                    className={cn(
+                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
+                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <span className={cn(
+                      'font-medium text-base',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Conditions (1)
+                    </span>
+                    <ChevronRight className={cn(
+                      'h-4 w-4',
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    )} />
+                  </button>
+
+                  {/* Validators */}
+                  <button
+                    onClick={() => toggleSection('validators')}
+                    className={cn(
+                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
+                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <span className={cn(
+                      'font-medium text-base',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Validators (3)
+                    </span>
+                    <ChevronRight className={cn(
+                      'h-4 w-4',
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    )} />
+                  </button>
+
+                  {/* Post Functions */}
+                  <button
+                    onClick={() => toggleSection('postFunctions')}
+                    className={cn(
+                      'w-full flex items-center justify-between py-3 px-4 rounded-lg transition-colors mt-2',
+                      isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <span className={cn(
+                      'font-medium text-base',
+                      isDark ? 'text-gray-200' : 'text-gray-900'
+                    )}>
+                      Post Functions (5)
+                    </span>
+                    <ChevronRight className={cn(
+                      'h-4 w-4',
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    )} />
+                  </button>
+                </div>
           </div>
         </div>
 
-        <div className="flex-1 flex">
-          {/* Component Palette */}
-          <div className="w-80 border-r bg-muted/50 dark:bg-gray-900 p-4 overflow-y-auto">
-            <Tabs defaultValue="triggers" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 text-xs">
-                <TabsTrigger value="triggers">Triggers</TabsTrigger>
-                <TabsTrigger value="conditions">Logic</TabsTrigger>
-                <TabsTrigger value="approvals">Approvals</TabsTrigger>
-                <TabsTrigger value="actions">Actions</TabsTrigger>
-                <TabsTrigger value="flow">Flow</TabsTrigger>
-              </TabsList>
+        {/* Main Canvas - React Flow */}
+        <div className="flex-1 relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges.map(edge => ({
+              ...edge,
+              label: showTransitionLabels ? edge.label : undefined,
+            }))}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            fitView
+            className={isDark ? 'bg-[#1e1e2e]' : 'bg-gray-50'}
+          >
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={20} 
+              size={1} 
+              color={isDark ? '#374151' : '#d1d5db'} 
+            />
+            <Controls 
+              className={cn(
+                'border',
+                isDark 
+                  ? 'bg-[#2a2a3e] border-gray-700/50 [&>button]:bg-[#2a2a3e] [&>button]:text-gray-300 [&>button:hover]:bg-gray-700/50'
+                  : 'bg-white border-gray-200 [&>button]:bg-white [&>button]:text-gray-700 [&>button:hover]:bg-gray-100'
+              )} 
+            />
+            
+            <Panel position="top-right" className="flex gap-2 mr-2 mt-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className={cn(
+                  isDark 
+                    ? 'bg-gray-700/50 text-gray-200 border-gray-600 hover:bg-gray-700' 
+                    : 'bg-white border-gray-300 hover:bg-gray-100'
+                )}
+                onClick={() => alert('Test workflow functionality')}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Test
+              </Button>
+              <Button 
+                size="sm" 
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                onClick={() => alert('Save workflow functionality')}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+            </Panel>
 
-              {/* ... existing TabsContent sections ... */}
-              <TabsContent value="triggers" className="space-y-2 mt-4">
-                <ComponentCard
-                  id="ticket-created"
-                  icon={<Zap className="h-4 w-4" />}
-                  title="Ticket Created"
-                  description="Triggers when new ticket is created"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="status-changed"
-                  icon={<Target className="h-4 w-4" />}
-                  title="Status Changed"
-                  description="Triggers on ticket status change"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="sla-breach"
-                  icon={<AlertTriangle className="h-4 w-4" />}
-                  title="SLA Breach"
-                  description="Triggers on SLA violation"
-                  onDragStart={setDraggedComponent}
-                />
-              </TabsContent>
+            {/* Bottom right - Workflow Overview */}
+            <Panel position="bottom-right" className="mr-2 mb-2">
+              <Button 
+                variant="link" 
+                className="text-indigo-600 hover:text-indigo-700"
+              >
+                Workflow Overview
+              </Button>
+            </Panel>
+          </ReactFlow>
 
-              <TabsContent value="conditions" className="space-y-2 mt-4">
-                <ComponentCard
-                  id="if-condition"
-                  icon={<Diamond className="h-4 w-4" />}
-                  title="If Condition"
-                  description="Conditional branching"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="and-condition"
-                  icon={<Split className="h-4 w-4" />}
-                  title="AND Logic"
-                  description="All conditions must be true"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="or-condition"
-                  icon={<Merge className="h-4 w-4" />}
-                  title="OR Logic"
-                  description="Any condition can be true"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="cost-threshold"
-                  icon={<DollarSign className="h-4 w-4" />}
-                  title="Cost Threshold"
-                  description="Check request amount"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="department-check"
-                  icon={<Users className="h-4 w-4" />}
-                  title="Department Check"
-                  description="Filter by department"
-                  onDragStart={setDraggedComponent}
-                />
-              </TabsContent>
-
-              <TabsContent value="approvals" className="space-y-2 mt-4">
-                <ComponentCard
-                  id="manager-approval"
-                  icon={<Users className="h-4 w-4" />}
-                  title="Manager Approval"
-                  description="Direct manager approval"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="hr-approval"
-                  icon={<Users className="h-4 w-4" />}
-                  title="HR Approval"
-                  description="HR department approval"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="finance-approval"
-                  icon={<DollarSign className="h-4 w-4" />}
-                  title="Finance Approval"
-                  description="Finance team approval"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="it-approval"
-                  icon={<Settings className="h-4 w-4" />}
-                  title="IT Approval"
-                  description="IT department approval"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="procurement-approval"
-                  icon={<CheckCircle className="h-4 w-4" />}
-                  title="Procurement Approval"
-                  description="Procurement team approval"
-                  onDragStart={setDraggedComponent}
-                />
-              </TabsContent>
-
-              <TabsContent value="actions" className="space-y-2 mt-4">
-                <ComponentCard
-                  id="email-notification"
-                  icon={<Mail className="h-4 w-4" />}
-                  title="Email Notification"
-                  description="Send email notification"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="slack-notification"
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  title="Slack Notification"
-                  description="Send Slack message"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="teams-notification"
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  title="Teams Notification"
-                  description="Send Teams message"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="escalation"
-                  icon={<AlertTriangle className="h-4 w-4" />}
-                  title="Escalation"
-                  description="Escalate to next level"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="delegation"
-                  icon={<GitBranch className="h-4 w-4" />}
-                  title="Delegation"
-                  description="Delegate to another user"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="reassign"
-                  icon={<Users className="h-4 w-4" />}
-                  title="Reassign"
-                  description="Reassign ticket"
-                  onDragStart={setDraggedComponent}
-                />
-              </TabsContent>
-
-              <TabsContent value="flow" className="space-y-2 mt-4">
-                <ComponentCard
-                  id="parallel-split"
-                  icon={<Split className="h-4 w-4" />}
-                  title="Parallel Split"
-                  description="Execute multiple paths"
-                  onDragStart={setDraggedComponent}
-                />
-                <ComponentCard
-                  id="merge-join"
-                  icon={<Merge className="h-4 w-4" />}
-                  title="Merge Join"
-                  description="Wait for all paths"
-                  onDragStart={setDraggedComponent}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 flex">
-            <div
-              ref={canvasRef}
-              className="flex-1 bg-muted dark:bg-gray-800 relative overflow-auto"
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onMouseMove={handleCanvasMouseMove}
-              onClick={handleCanvasClick}
-            >
-              {nodes.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-[11px] font-medium">Start Building Your Workflow</p>
-                    <p className="text-sm">Drag components from the left panel to create your approval workflow</p>
-                    <p className="text-xs mt-2 text-blue-600">
-                      💡 Tip: Click the + button on nodes to connect them together
-                    </p>
-                  </div>
+          {/* Empty State */}
+          {nodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <GitBranch className={cn(
+                  'h-16 w-16 mx-auto mb-4',
+                  isDark ? 'text-gray-600' : 'text-gray-300'
+                )} />
+                <h3 className={cn(
+                  'text-xl font-semibold mb-2',
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                )}>
+                  Start Building Your Workflow
+                </h3>
+                <p className={cn(
+                  'max-w-md mx-auto mb-4',
+                  isDark ? 'text-gray-500' : 'text-gray-500'
+                )}>
+                  Drag components from the left panel to create your approval workflow
+                </p>
+                <div className="inline-flex items-center gap-2 text-indigo-400 text-sm">
+                  <span className="text-xl">💡</span>
+                  <span>Tip: Click the + button on nodes to connect them together</span>
                 </div>
-              ) : (
-                <div className="relative w-full h-full">
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-                    {renderConnections()}
-                  </svg>
-
-                  <div className="p-8 relative" style={{ zIndex: 2 }}>
-                    {nodes.map((node) => (
-                      <WorkflowNodeComponent
-                        key={node.id}
-                        node={node}
-                        isSelected={selectedNode?.id === node.id}
-                        isConnecting={connectingFrom === node.id}
-                        onClick={() => setSelectedNode(node)}
-                        onConnect={(e) => {
-                          e?.stopPropagation()
-                          handleNodeConnect(node.id, e)
-                        }}
-                        onDelete={() => {
-                          // Remove node and its connections
-                          setNodes((prev) => prev.filter((n) => n.id !== node.id))
-                          setConnections((prev) => prev.filter((c) => c.from !== node.id && c.to !== node.id))
-                          if (selectedNode?.id === node.id) setSelectedNode(null)
-                          if (connectingFrom === node.id) {
-                            setConnectingFrom(null)
-                            setDragConnection(null)
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Properties Panel */}
-            {selectedNode && (
-              <div className="w-80 border-l 0 dark:bg-gray-900 p-4 overflow-y-auto">
-                <NodePropertiesPanel
-                  node={selectedNode}
-                  onUpdate={(updatedNode) => {
-                    setNodes((prev) => prev.map((n) => (n.id === updatedNode.id ? updatedNode : n)))
-                    setSelectedNode(updatedNode)
-                  }}
-                />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </PlatformLayout>
-  )
-}
-
-// ... existing code for ComponentCard, WorkflowNodeComponent, and NodePropertiesPanel ...
-
-function ComponentCard({
-  id,
-  icon,
-  title,
-  description,
-  onDragStart,
-}: {
-  id: string
-  icon: React.ReactNode
-  title: string
-  description: string
-  onDragStart: (id: string) => void
-}) {
-  return (
-    <Card
-      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
-      draggable
-      onDragStart={() => onDragStart(id)}
-    >
-      <CardContent className="p-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg text-primary">{icon}</div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm">{title}</h4>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function WorkflowNodeComponent({
-  node,
-  isSelected,
-  isConnecting,
-  onClick,
-  onConnect,
-  onDelete,
-}: {
-  node: WorkflowNode
-  isSelected: boolean
-  isConnecting: boolean
-  onClick: () => void
-  onConnect: (e?: React.MouseEvent) => void
-  onDelete: () => void
-}) {
-  const getNodeColor = (type: string) => {
-    switch (type) {
-      case "trigger":
-        return "border-green-500 bg-green-50 dark:bg-green-900/20"
-      case "condition":
-      case "decision":
-        return "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-      case "approval":
-        return "border-orange-500 bg-orange-50 dark:bg-orange-900/20"
-      case "action":
-        return "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-      case "parallel":
-      case "merge":
-        return "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
-      default:
-        return "border-gray-500 bg-muted/50 dark:bg-gray-900/20"
-    }
-  }
-
-  return (
-    <div
-      className="absolute"
-      style={{
-        left: node.position.x,
-        top: node.position.y,
-      }}
-    >
-      <div
-        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-pointer hover:bg-blue-600 transition-colors z-10"
-        onClick={(e) => {
-          e.stopPropagation()
-          onConnect(e)
-        }}
-        title="Input connection point"
-      >
-        <Circle className="h-2 w-2 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-      </div>
-
-      <Card
-        className={`w-64 cursor-pointer transition-all border-2 ${getNodeColor(node.type)} ${
-          isSelected ? "ring-2 ring-primary shadow-lg" : ""
-        } ${isConnecting ? "ring-2 ring-blue-400 shadow-lg" : ""} hover:shadow-md`}
-        onClick={onClick}
-      >
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-xs">
-              {node.type}
-            </Badge>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 hover:bg-blue-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onConnect(e)
-                }}
-                title="Connect to another node"
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 hover:bg-red-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete()
-                }}
-                title="Delete node"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-          <CardTitle className="text-sm">{node.title}</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-xs text-muted-foreground">{node.description}</p>
-        </CardContent>
-      </Card>
-
-      <div
-        className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-green-500 rounded-full border-2 border-white cursor-pointer hover:bg-green-600 transition-colors z-10"
-        onClick={(e) => {
-          e.stopPropagation()
-          onConnect(e)
-        }}
-        title="Output connection point"
-      >
-        <Plus className="h-2 w-2 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-      </div>
-    </div>
-  )
-}
-
-function NodePropertiesPanel({
-  node,
-  onUpdate,
-}: {
-  node: WorkflowNode
-  onUpdate: (node: WorkflowNode) => void
-}) {
-  const updateConfig = (key: string, value: any) => {
-    onUpdate({
-      ...node,
-      config: { ...node.config, [key]: value },
-    })
-  }
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="font-medium text-sm mb-2">Node Properties</h3>
-        <Badge variant="outline">{node.type}</Badge>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <Label className="text-xs">Title</Label>
-          <Input
-            value={node.title}
-            onChange={(e) => onUpdate({ ...node, title: e.target.value })}
-            className="text-sm"
-          />
-        </div>
-
-        <div>
-          <Label className="text-xs">Description</Label>
-          <Textarea
-            value={node.description}
-            onChange={(e) => onUpdate({ ...node, description: e.target.value })}
-            className="text-sm min-h-[60px]"
-          />
-        </div>
-
-        {node.type === "decision" && (
-          <>
-            <div>
-              <Label className="text-xs">Condition Type</Label>
-              <Select value={node.config.operator || "IF"} onValueChange={(value) => updateConfig("operator", value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="IF">If Condition</SelectItem>
-                  <SelectItem value="AND">AND Logic</SelectItem>
-                  <SelectItem value="OR">OR Logic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Condition Expression</Label>
-              <Textarea
-                value={node.config.condition || ""}
-                onChange={(e) => updateConfig("condition", e.target.value)}
-                placeholder="e.g., cost > 1000 OR department == 'IT'"
-                className="text-sm min-h-[60px]"
-              />
-            </div>
-          </>
-        )}
-
-        {node.type === "approval" && (
-          <>
-            <div>
-              <Label className="text-xs">Approver Role</Label>
-              <Select value={node.config.approverRole} onValueChange={(value) => updateConfig("approverRole", value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manager">Direct Manager</SelectItem>
-                  <SelectItem value="hr">HR Team</SelectItem>
-                  <SelectItem value="finance">Finance Team</SelectItem>
-                  <SelectItem value="it">IT Team</SelectItem>
-                  <SelectItem value="procurement">Procurement Team</SelectItem>
-                  <SelectItem value="security">Security Team</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Timeout (hours)</Label>
-              <Input
-                type="number"
-                value={node.config.timeout || 24}
-                onChange={(e) => updateConfig("timeout", Number.parseInt(e.target.value))}
-                className="text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Escalation Policy</Label>
-              <Select
-                value={node.config.escalation ? "enabled" : "disabled"}
-                onValueChange={(value) => updateConfig("escalation", value === "enabled")}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enabled">Auto-escalate on timeout</SelectItem>
-                  <SelectItem value="disabled">No escalation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
-
-        {node.type === "condition" && node.title.includes("Cost") && (
-          <>
-            <div>
-              <Label className="text-xs">Threshold Amount</Label>
-              <Input
-                type="number"
-                value={node.config.amount || 1000}
-                onChange={(e) => updateConfig("amount", Number.parseFloat(e.target.value))}
-                className="text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Operator</Label>
-              <Select value={node.config.operator} onValueChange={(value) => updateConfig("operator", value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="greater_than">Greater than</SelectItem>
-                  <SelectItem value="less_than">Less than</SelectItem>
-                  <SelectItem value="equal_to">Equal to</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
-
-        {node.type === "action" && node.title.includes("Notification") && (
-          <>
-            <div>
-              <Label className="text-xs">Recipients</Label>
-              <Textarea
-                value={node.config.recipients?.join(", ") || ""}
-                onChange={(e) => updateConfig("recipients", e.target.value.split(", ").filter(Boolean))}
-                placeholder="Enter email addresses separated by commas"
-                className="text-sm min-h-[60px]"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Template</Label>
-              <Select value={node.config.template} onValueChange={(value) => updateConfig("template", value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="approval_request">Approval Request</SelectItem>
-                  <SelectItem value="approval_granted">Approval Granted</SelectItem>
-                  <SelectItem value="approval_denied">Approval Denied</SelectItem>
-                  <SelectItem value="escalation">Escalation Notice</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Timing</Label>
-              <Select value={node.config.timing} onValueChange={(value) => updateConfig("timing", value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">Immediate</SelectItem>
-                  <SelectItem value="delayed">Delayed (1 hour)</SelectItem>
-                  <SelectItem value="daily">Daily digest</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
-
-        {(node.type === "parallel" || node.type === "merge") && (
-          <div>
-            <Label className="text-xs">{node.type === "parallel" ? "Number of Branches" : "Wait Strategy"}</Label>
-            {node.type === "parallel" ? (
-              <Input
-                type="number"
-                value={node.config.branches?.length || 2}
-                onChange={(e) => updateConfig("branches", Array(Number.parseInt(e.target.value)).fill(""))}
-                className="text-sm"
-                min="2"
-                max="5"
-              />
-            ) : (
-              <Select
-                value={node.config.waitForAll ? "all" : "any"}
-                onValueChange={(value) => updateConfig("waitForAll", value === "all")}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Wait for all branches</SelectItem>
-                  <SelectItem value="any">Wait for any branch</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
   )
 }

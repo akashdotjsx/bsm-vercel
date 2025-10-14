@@ -1,9 +1,9 @@
 "use client"
 
-import { Bell, X, CheckCircle, AlertTriangle, Info, Clock, User, Ticket, Workflow } from "lucide-react"
+import { Bell, X, CheckCircle, AlertTriangle, Info, Clock, User, Ticket, Workflow, MoreHorizontal, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useNotifications } from "@/lib/contexts/notification-context"
 import Link from "next/link"
@@ -22,6 +22,7 @@ export function NotificationBell() {
   const { notifications, unreadCount, getUnreadCountByType, markAsRead, markAllAsRead, clearNotification } =
     useNotifications()
   const [activeTab, setActiveTab] = useState("All")
+  const [isOpen, setIsOpen] = useState(false)
 
   // Filter notifications based on active tab
   const getFilteredNotifications = () => {
@@ -84,7 +85,7 @@ export function NotificationBell() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <DropdownMenu>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 relative">
               <Bell className="h-4 w-4 text-muted-foreground" />
@@ -98,35 +99,57 @@ export function NotificationBell() {
       <DropdownMenuContent 
         align="end" 
         alignOffset={-20}
-        className="w-[32rem] p-0 border border-border bg-popover shadow-lg rounded-lg"
+        className="w-[420px] p-0 border border-border bg-popover shadow-lg rounded-lg"
       >
         {/* Header with tabs */}
-        <div className="p-4 pb-0">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[11px] font-semibold text-foreground">Notifications</h3>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="1"/>
-                  <circle cx="19" cy="12" r="1"/>
-                  <circle cx="5" cy="12" r="1"/>
-                </svg>
-              </Button>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+        <div className="p-3 pb-0">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+            <div className="flex items-center gap-1">
+              {/* Meatball menu with actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-accent">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => {
+                    markAllAsRead()
+                  }} className="cursor-pointer">
+                    <Check className="h-4 w-4 mr-2" />
+                    Mark all as read
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    // Clear all unread notifications
+                    unreadNotifications.forEach(n => clearNotification(n.id))
+                  }} className="cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear all
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/* Close button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0 hover:bg-accent"
+                onClick={() => setIsOpen(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
           
           {/* Tab navigation */}
-          <div className="flex items-center gap-4 border-b border-border overflow-x-auto pb-0">
+          <div className="flex items-center gap-3 border-b border-border overflow-x-auto pb-0">
             {["All", "Tasks", "Mentioned", "Channels", "DM", "Others"].map((tab) => {
               const count = getTabCount(tab)
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-2 px-1 text-sm font-medium transition-colors flex items-center gap-1 whitespace-nowrap ${
+                  className={`pb-2 px-1 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === tab
                       ? "text-primary border-b-2 border-primary"
                       : "text-muted-foreground hover:text-foreground"
@@ -134,7 +157,7 @@ export function NotificationBell() {
                 >
                   {tab}
                   {count > 0 && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                       activeTab === tab
                         ? "bg-primary/10 text-primary"
                         : "bg-muted text-muted-foreground"
@@ -149,19 +172,19 @@ export function NotificationBell() {
         </div>
 
         {/* Content area */}
-        <div className="flex-1 flex flex-col items-center justify-center py-12 px-6">
+        <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
           {unreadNotifications.length === 0 ? (
             <>
               {/* Notification icon */}
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <Bell className="h-8 w-8 text-primary" />
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Bell className="h-6 w-6 text-primary" />
               </div>
               
               {/* Empty state text */}
-              <h4 className="text-[11px] font-semibold text-foreground mb-2">
+              <h4 className="text-sm font-semibold text-foreground mb-1">
                 {activeTab === "All" ? "You're All Caught Up" : `No ${activeTab} Notifications`}
               </h4>
-              <p className="text-sm text-muted-foreground text-center max-w-xs">
+              <p className="text-xs text-muted-foreground text-center max-w-xs">
                 {activeTab === "All" 
                   ? "We'll let you know when something needs your attention."
                   : `No ${activeTab.toLowerCase()} notifications at the moment.`
@@ -169,21 +192,21 @@ export function NotificationBell() {
               </p>
             </>
           ) : (
-            <div className="w-full space-y-2 max-h-80 overflow-y-auto">
+            <div className="w-full space-y-1 max-h-[380px] overflow-y-auto">
               {unreadNotifications.map((notification) => {
                 const IconComponent = iconMap[notification.type]
                 return (
                   <div
                     key={notification.id}
-                    className="p-3 hover:bg-accent transition-colors cursor-pointer rounded-md mx-2"
+                    className="group p-2.5 hover:bg-accent transition-colors cursor-pointer rounded-md mx-1"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="p-1.5 rounded-full bg-primary/10">
-                        <IconComponent className="h-3 w-3 text-primary" />
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-1.5 rounded-full bg-primary/10 mt-0.5">
+                        <IconComponent className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-1">
-                          <h4 className="text-sm font-medium text-foreground line-clamp-1">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="text-xs font-medium text-foreground line-clamp-1 flex-1">
                             {notification.title}
                           </h4>
                           <Button
@@ -193,15 +216,15 @@ export function NotificationBell() {
                               e.stopPropagation()
                               clearNotification(notification.id)
                             }}
-                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100"
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
                           >
                             <X className="h-3 w-3" />
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mb-1.5 line-clamp-2">
                           {notification.message}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {notification.time}
                         </div>

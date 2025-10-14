@@ -204,7 +204,7 @@ export default function Page() {
                   color: '#101828'
                 }}
               >
-                Welcome to <span style={{ color: '#6366F1' }}>Kroolo AI Search</span>
+                Welcome to <span style={{ color: '#6366F1' }}>Kroolo BSM</span>
               </h1>
               <p 
                 className="text-[#667085] mt-2" 
@@ -214,7 +214,7 @@ export default function Page() {
                   lineHeight: '18px'
                 }}
               >
-                Unlock your team's knowledge base with Kroolo AI Search.
+                Unlock your team's knowledge base with Kroolo BSM.
               </p>
             </div>
 
