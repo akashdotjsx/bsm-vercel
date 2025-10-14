@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerGraphQLClient } from '@/lib/graphql/server-client'
+import { createServerGraphQLClient } from '@/lib/graphql/client'
 import { createClient as createSupabaseServer } from '@/lib/supabase/server'
 
 // GraphQL Queries

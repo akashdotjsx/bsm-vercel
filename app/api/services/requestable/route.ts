@@ -3,6 +3,9 @@ import { unstable_cache, revalidateTag } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/cache'
 import { createClient } from '@/lib/supabase/server'
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
