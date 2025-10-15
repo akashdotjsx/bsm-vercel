@@ -73,26 +73,32 @@ export function TicketsTable({
   
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
+    console.log('Select all:', checked)
     if (checked) {
       const allTicketIds = tickets.map(ticket => ticket.dbId || ticket.id)
       setSelectedTickets(allTicketIds)
       setIsAllSelected(true)
+      console.log('Selected all tickets:', allTicketIds)
     } else {
       setSelectedTickets([])
       setIsAllSelected(false)
+      console.log('Deselected all tickets')
     }
   }
   
   // Handle individual ticket selection
   const handleSelectTicket = (ticketId: string, checked: boolean) => {
+    console.log('Selecting ticket:', ticketId, 'checked:', checked)
     if (checked) {
       const newSelected = [...selectedTickets, ticketId]
       setSelectedTickets(newSelected)
       setIsAllSelected(newSelected.length === tickets.length)
+      console.log('Selected tickets:', newSelected)
     } else {
       const newSelected = selectedTickets.filter(id => id !== ticketId)
       setSelectedTickets(newSelected)
       setIsAllSelected(false)
+      console.log('Selected tickets:', newSelected)
     }
   }
   
@@ -184,53 +190,57 @@ export function TicketsTable({
     return "bg-amber-100 text-amber-800"
   }
 
-  // Loading skeleton
-  if (loading) {
-    return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="px-3 py-2 text-center border-r border-border w-12">
-                  <div className="h-4 w-4 bg-muted animate-pulse rounded mx-auto" />
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+         // Loading skeleton
+         if (loading) {
+           return (
+             <div className="h-full flex flex-col w-full max-w-full overflow-hidden">
+               <div className="bg-background border border-border rounded-lg overflow-hidden flex-1 flex flex-col w-full max-w-full">
+                 <div className="overflow-auto flex-1 w-full max-w-full">
+                   <table className="w-full border-collapse min-w-[1200px]">
+             <thead>
+               <tr className="bg-muted/50 border-b border-border">
+                         <th className="px-6 py-4 text-center w-12">
+                           <div className="h-4 w-4 bg-muted animate-pulse rounded mx-auto border border-[#C4C4C4]" />
+                         </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
                   Ticket
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48">
+                  Title
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
                   Status
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28">
                   Reported By
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24">
                   Assignee
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
                   Reported Date
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
                   Due Date
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
                   Type
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
                   Priority
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
                   Notes
                 </th>
                 {customColumns.map((column) => (
                   <th
                     key={column.id}
-                    className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border"
+                    className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32"
                   >
                     {column.title}
                   </th>
                 ))}
-                <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-6 py-4 text-center">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -243,131 +253,139 @@ export function TicketsTable({
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {Array.from({ length: 8 }).map((_, index) => (
-                <tr key={`skeleton-${index}`} className="border-b border-border">
-                  <td className="px-3 py-2.5 border-r border-border text-center">
-                    <div className="h-4 w-4 bg-muted animate-pulse rounded mx-auto" />
+             <tbody className="divide-y divide-border">
+               {Array.from({ length: 8 }).map((_, index) => (
+                 <tr key={`skeleton-${index}`} className="hover:bg-muted/50">
+                           <td className="px-6 py-4 text-center">
+                             <div className="h-4 w-4 bg-muted animate-pulse rounded mx-auto border border-[#C4C4C4]" />
+                           </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 bg-muted dark:bg-muted animate-pulse rounded w-16" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
-                    <div className="space-y-2">
-                      <div className="h-4 bg-muted dark:bg-muted animate-pulse rounded w-3/4" />
-                      <div className="h-3 bg-muted dark:bg-muted animate-pulse rounded w-1/2" />
-                    </div>
+                  <td className="px-6 py-4">
+                    <div className="h-4 bg-muted dark:bg-muted animate-pulse rounded w-3/4" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-5 bg-muted dark:bg-muted animate-pulse rounded-full w-16" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-6 w-6 bg-muted dark:bg-muted animate-pulse rounded-full" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-6 w-6 bg-muted dark:bg-muted animate-pulse rounded-full" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-3 bg-muted dark:bg-muted animate-pulse rounded w-20" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-3 bg-muted dark:bg-muted animate-pulse rounded w-20" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-5 bg-muted dark:bg-muted animate-pulse rounded-full w-14" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-5 bg-muted dark:bg-muted animate-pulse rounded-full w-12" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4">
                     <div className="h-4 bg-muted dark:bg-muted animate-pulse rounded w-24" />
                   </td>
-                  <td className="px-3 py-2.5 border-r border-border"></td>
-                  <td className="px-3 py-2.5 border-r border-border">
+                  <td className="px-6 py-4"></td>
+                  <td className="px-6 py-4">
                     <div className="h-6 w-6 bg-muted dark:bg-muted animate-pulse rounded" />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-    )
-  }
+                </div>
+              </div>
+            </div>
+          )
+        }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="p-8 text-center">
-          <div className="text-red-600">Error loading tickets: {error}</div>
-        </div>
-      </div>
-    )
-  }
+   // Error state
+   if (error) {
+     return (
+       <div className="h-full flex flex-col w-full max-w-full overflow-hidden">
+         <div className="bg-background border border-border rounded-lg overflow-hidden flex-1 flex flex-col w-full max-w-full">
+           <div className="flex-1 flex items-center justify-center">
+             <div className="text-destructive">Error loading tickets: {error}</div>
+           </div>
+         </div>
+       </div>
+     )
+   }
 
-  // Empty state
-  if (!tickets || tickets.length === 0) {
-    return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="p-8 text-center">
-          <div className="text-muted-foreground">No tickets found.</div>
-        </div>
-      </div>
-    )
-  }
+   // Empty state
+   if (!tickets || tickets.length === 0) {
+     return (
+       <div className="h-full flex flex-col w-full max-w-full overflow-hidden">
+         <div className="bg-background border border-border rounded-lg overflow-hidden flex-1 flex flex-col w-full max-w-full">
+           <div className="flex-1 flex items-center justify-center">
+             <div className="text-muted-foreground">No tickets found.</div>
+           </div>
+         </div>
+       </div>
+     )
+   }
 
-  // Main table
-  return (
-    <div className="relative">
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                {/* Checkbox column */}
-                <th className="px-3 py-2 text-center border-r border-border w-12">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Select all tickets"
-                  />
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Ticket
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Status
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Reported By
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Assignee
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Reported Date
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Due Date
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Type
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Priority
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
-                  Notes
-                </th>
+   // Main table
+   return (
+     <div className="relative h-full flex flex-col w-full max-w-full overflow-hidden">
+       <div className="bg-background border border-border rounded-lg overflow-hidden flex-1 flex flex-col w-full max-w-full">
+         <div className="overflow-auto flex-1 w-full max-w-full">
+           <table className="w-full border-collapse min-w-[1200px]">
+             <thead>
+               <tr className="bg-muted/50 border-b border-border">
+                       {/* Checkbox column */}
+                       <th className="px-6 py-4 text-center w-12">
+                         <Checkbox
+                           checked={isAllSelected}
+                           onCheckedChange={handleSelectAll}
+                           className="w-4 h-4 border-[#C4C4C4] data-[state=checked]:bg-[#6E72FF] data-[state=checked]:border-[#6E72FF]"
+                         />
+                       </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                   Ticket
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48">
+                   Title
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                   Status
+                 </th>
+                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28">
+                   Reported By
+                 </th>
+                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                   Assignee
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                   Reported Date
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                   Due Date
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                   Type
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                   Priority
+                 </th>
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                   Notes
+                 </th>
                 {/* Custom columns headers */}
                 {customColumns.map((column) => (
                   <th
                     key={column.id}
-                    className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border"
+                    className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32"
                   >
                     {column.title}
                   </th>
                 ))}
                 {/* Add column button */}
-                <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
+                <th className="px-6 py-4 text-center">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -379,18 +397,18 @@ export function TicketsTable({
                   </Button>
                 </th>
                 {/* Actions column - RIGHTMOST - Just icon, no text */}
-                <th className="px-3 py-2 text-center border-r border-border w-12">
-                  <MoreHorizontal className="h-4 w-4 mx-auto text-muted-foreground" />
-                </th>
+                 <th className="px-6 py-4 text-center w-12">
+                   <MoreHorizontal className="h-4 w-4 mx-auto text-foreground" />
+                 </th>
               </tr>
             </thead>
-            <tbody>
+             <tbody className="divide-y divide-border">
               {groupBy !== "none" ? (
                 // Grouped view
                 Object.entries(groupedTickets).map(([groupName, groupTickets]) => (
                   <>
-                    <tr key={`group-${groupName}`} className="bg-muted/30 border-b border-border">
-                      <td colSpan={10 + customColumns.length + 2} className="px-4 py-3">
+                    <tr key={`group-${groupName}`} className="bg-muted/50 border-b border-border">
+                      <td colSpan={10 + customColumns.length + 2} className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{groupName}</span>
                           <span className="text-sm text-muted-foreground">
@@ -445,13 +463,13 @@ export function TicketsTable({
         </div>
       </div>
       
-      {/* Bulk Action Toolbar - Fixed at bottom */}
-      {selectedTickets.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-background border border-border rounded-lg shadow-lg px-4 py-3 flex items-center gap-4">
-            <span className="text-sm font-medium text-foreground">
-              {selectedTickets.length} Task selected
-            </span>
+       {/* Bulk Action Toolbar - Fixed at bottom */}
+       {selectedTickets.length > 0 && (
+         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+           <div className="bg-background border border-border rounded-lg shadow-lg px-4 py-3 flex items-center gap-4">
+             <span className="text-sm font-medium text-foreground">
+               {selectedTickets.length} Task{selectedTickets.length > 1 ? 's' : ''} selected
+             </span>
             
             <div className="flex items-center gap-1 border-l border-border pl-4">
               <Button
@@ -574,190 +592,128 @@ function TicketRow({
   getPriorityColor,
   getTypeColor,
 }: any) {
-  return (
-    <tr className={`border-b border-border hover:bg-muted/50 last:border-b-0 ${
-      isSelected ? 'bg-[#6E72FF]/5' : ''
-    }`}>
-      {/* Checkbox column */}
-      <td className="px-3 py-2.5 text-center border-r border-border">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelectTicket}
-          aria-label={`Select ticket ${ticket.id}`}
-        />
-      </td>
+   return (
+     <tr className={`hover:bg-muted/50 last:border-b-0 ${
+       isSelected ? 'bg-[#6E72FF]/5' : ''
+     }`}>
+             {/* Checkbox column */}
+             <td className="px-6 py-4 text-center">
+               <Checkbox
+                 checked={isSelected}
+                 onCheckedChange={onSelectTicket}
+                 className="w-4 h-4 border-[#C4C4C4] data-[state=checked]:bg-[#6E72FF] data-[state=checked]:border-[#6E72FF]"
+               />
+             </td>
       
-      {/* Ticket title and ID */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <div>
-          <button
-            onClick={() => onTicketClick && onTicketClick(ticket)}
-            className="text-sm font-medium text-foreground hover:text-[#6E72FF] hover:underline cursor-pointer"
-          >
-            {ticket.title}
-          </button>
-          <div className="text-xs text-muted-foreground">
-            {ticket.ticket_number || ticket.id}
-          </div>
-        </div>
-      </td>
+       {/* Ticket column */}
+       <td className="px-6 py-4 text-foreground whitespace-nowrap">
+         {ticket.ticket_number || ticket.id}
+       </td>
+
+       {/* Title column */}
+       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.title}>
+         {ticket.title}
+       </td>
 
       {/* Status */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          ticket.status === 'new' ? 'bg-[#DDDEFF] text-[#6E72FF]' :
+          ticket.status === 'waiting_on_you' ? 'bg-[#FFF8CB] text-[#BF6D0A]' :
+          ticket.status === 'waiting_on_customer' ? 'bg-[#F6E3FF] text-[#8913BB]' :
+          'bg-gray-100 text-gray-600'
+        }`}>
           {getStatusText(ticket.status)}
         </span>
       </td>
 
       {/* Reported By */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <div className="flex items-center">
-          {ticket.requester ? (
-            <div
-              className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center text-white text-[9px] font-medium"
-              title={ticket.requester.display_name || ticket.requester.email}
-            >
-              {(ticket.requester.first_name?.[0] || "") +
-                (ticket.requester.last_name?.[0] || "")}
-            </div>
-          ) : ticket.reportedByAvatar ? (
-            <div
-              className={`h-6 w-6 rounded-full ${ticket.companyColor || "bg-gray-500"} flex items-center justify-center text-white text-[9px] font-medium`}
-              title={ticket.reportedBy}
-            >
-              {ticket.reportedByAvatar}
-            </div>
-          ) : (
-            <div className="h-6 w-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[9px] font-medium">
-              ?
-            </div>
-          )}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center justify-center w-full">
+          <div className="w-6 h-6 rounded-full bg-[#6E72FF] border border-[#6E72FF] flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-medium">
+              {ticket.requester ? 
+                ((ticket.requester.first_name?.[0] || "") + (ticket.requester.last_name?.[0] || "")) :
+                ticket.reportedBy?.charAt(0) || '?'
+              }
+            </span>
+          </div>
         </div>
       </td>
 
       {/* Assignee */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <div className="flex items-center">
-          <MultiAssigneeAvatars
-            assignees={ticket.assignees || []}
-            maxDisplay={3}
-            size="sm"
-          />
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center justify-center w-full">
+          <div className="w-6 h-6 rounded-full bg-[#47AF47] border border-[#47AF47] flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-medium">
+              {ticket.assignee?.name?.charAt(0) || '?'}
+            </span>
+          </div>
         </div>
       </td>
 
-      {/* Reported Date */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <span className="text-sm text-foreground">
-          {ticket.created_at
-            ? format(new Date(ticket.created_at), "MMM dd, yyyy")
-            : ticket.reportedDate || "-"}
-        </span>
-      </td>
+       {/* Reported Date */}
+       <td className="px-6 py-4 text-foreground whitespace-nowrap">
+         {ticket.created_at
+           ? format(new Date(ticket.created_at), "MMM dd, yyyy")
+           : ticket.reportedDate || "-"}
+       </td>
 
-      {/* Due Date */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <span className="text-sm text-foreground">
-          {ticket.due_date
-            ? format(new Date(ticket.due_date), "MMM dd, yyyy")
-            : ticket.dueDate || "-"}
-        </span>
-      </td>
+       {/* Due Date */}
+       <td className="px-6 py-4 text-foreground whitespace-nowrap">
+         {ticket.due_date
+           ? format(new Date(ticket.due_date), "MMM dd, yyyy")
+           : ticket.dueDate || "-"}
+       </td>
 
       {/* Type */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(ticket.type)}`}>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#FFF9E7] text-[#CEA500]">
           {ticket.displayType || ticket.type}
         </span>
       </td>
 
       {/* Priority */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(ticket.priority)}`}>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          ticket.priority === 'urgent' ? 'bg-[#FFEDE8] text-[#E67926]' :
+          ticket.priority === 'high' ? 'bg-[#FFEDE8] text-[#E67926]' :
+          ticket.priority === 'medium' ? 'bg-[#FFEDE8] text-[#E67926]' :
+          'bg-[#FFEDE8] text-[#E67926]'
+        }`}>
           {ticket.priority
             ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)
             : "Unknown"}
         </span>
       </td>
 
-      {/* Notes */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <Input
-          placeholder="Add notes..."
-          className="h-6 text-xs border-0 bg-transparent focus:bg-background text-muted-foreground"
-          defaultValue={ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || ""}
-          onBlur={async (e) => {
-            const newNotes = e.target.value
-            const currentNotes =
-              ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || ""
-            if (newNotes !== currentNotes && onUpdateTicket) {
-              try {
-                await onUpdateTicket(ticket.dbId || ticket.id, {
-                  custom_fields: {
-                    ...ticket.custom_fields,
-                    notes: newNotes,
-                  },
-                })
-              } catch (error) {
-                console.error("Failed to save notes:", error)
-              }
-            }
-          }}
-        />
-      </td>
+       {/* Notes */}
+       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || "Customer reported via email"}>
+         {ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || "Customer reported via email"}
+       </td>
 
       {/* Custom column cells */}
       {customColumns.map((column: any) => (
-        <td key={column.id} className="px-3 py-2.5 whitespace-nowrap border-r border-border">
+        <td key={column.id} className="px-6 py-4 whitespace-nowrap">
           <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
         </td>
       ))}
 
       {/* Empty cell for the + button column */}
-      <td className="px-3 py-2.5 whitespace-nowrap border-r border-border"></td>
+      <td className="px-6 py-4 whitespace-nowrap"></td>
 
       {/* Actions column - RIGHTMOST */}
-      <td className="px-3 py-2.5 border-r border-border text-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                if (onEditTicket) {
-                  onEditTicket(ticket)
-                }
-              }}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Ticket
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                if (onDuplicateTicket) {
-                  onDuplicateTicket(ticket)
-                }
-              }}
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Duplicate Ticket
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => {
-                if (onDeleteTicket) {
-                  onDeleteTicket(ticket)
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Ticket
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <td className="px-6 py-4 text-center whitespace-nowrap">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => {
+            // Handle more actions
+          }}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
       </td>
     </tr>
   )
