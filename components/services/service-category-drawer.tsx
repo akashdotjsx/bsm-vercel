@@ -96,7 +96,7 @@ export default function ServiceCategoryDrawer({ isOpen, onClose, onSubmit, initi
 
         <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
           <Button variant="outline" onClick={onClose} className="text-[11px] h-8 px-3" disabled={saving}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90">
+          <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="text-[11px] h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground">
             {saving ? (<><LoadingSpinner className="h-3 w-3 mr-2" />Saving...</>) : (<><Save className="h-3 w-3 mr-2" />Save</>)}
           </Button>
         </div>
