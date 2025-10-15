@@ -540,7 +540,7 @@ export function ServiceCatalog() {
         <div>
           {/* Removed duplicate header - title and description are now handled by PlatformLayout */}
         </div>
-          <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setSelectedCategoryForEdit(null); setShowCategoryDrawer(true) }}>
+          <Button className="bg-[#6E72FF] text-white hover:bg-[#6E72FF]/90" onClick={() => { setSelectedCategoryForEdit(null); setShowCategoryDrawer(true) }}>
             <Plus className="h-4 w-4 mr-2" />
             Add Category
           </Button>

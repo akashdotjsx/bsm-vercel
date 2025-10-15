@@ -238,8 +238,8 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
                 avoidCollisions={false}
                 className="w-56 p-0 rounded-lg"
                 sideOffset={8}
-                onFocusOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.preventDefault()}
+                onFocusOutside={(e: Event) => e.preventDefault()}
+                onEscapeKeyDown={(e: KeyboardEvent) => e.preventDefault()}
                 onPointerDownOutside={() => setStatusMenuOpen(false)}
               >
                 <div className="py-1">

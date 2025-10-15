@@ -984,7 +984,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   }
 
   // Bulk operation handlers
-  const handleBulkDeleteRequest = (ticketIds: string[]) => {
+  const handleBulkDeleteRequest = async (ticketIds: string[]): Promise<void> => {
     console.log('🗑️ Bulk delete requested for tickets:', ticketIds)
     setBulkDeleteTicketIds(ticketIds)
     setShowBulkDeleteDialog(true)
@@ -1051,10 +1051,11 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   const renderListView = useCallback(
     () => (
-      <div className="space-y-4 font-sans">
-        <div className="flex items-center gap-4 py-2">
+      <div className="flex flex-col h-full font-sans w-full max-w-full overflow-hidden">
+        {/* Fixed Filter Bar */}
+        <div className="flex-shrink-0 flex items-center gap-4 py-2 mb-4 w-full max-w-full overflow-hidden">
           <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-48 h-8 text-sm bg-transparent">
+            <SelectTrigger className="w-48 h-8 text-sm bg-background">
               <List className="h-3 w-3 mr-2" />
               <SelectValue placeholder="Group By: None" />
             </SelectTrigger>
@@ -1071,7 +1072,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-8 text-sm bg-transparent"
+            className="h-8 text-sm bg-background"
             onClick={() => setShowFilterDialog(true)}
           >
             <Filter className="h-3 w-3 mr-2" />
@@ -1086,36 +1087,38 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-10 h-8 w-48 text-sm"
+              className="pl-10 h-8 w-48 text-sm bg-background"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Shared TicketsTable Component */}
-        <TicketsTable
-          tickets={filteredTickets}
-          loading={loading}
-          error={error}
-          groupBy={groupBy}
-          groupedTickets={groupedTickets}
-          onTicketClick={handleTicketClick}
-          onEditTicket={(ticket) => {
-            const ticketWithDbId = {
-              ...ticket,
-              dbId: ticket.dbId || ticket.id
-            }
-            setSelectedTicket(ticketWithDbId)
-            setShowTicketTray(true)
-          }}
-          onDuplicateTicket={handleDuplicateTicket}
-          onDeleteTicket={handleDeleteTicket}
-          onUpdateTicket={updateTicket}
-          onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
-          onBulkDelete={handleBulkDeleteRequest}
-          onBulkUpdate={handleBulkUpdate}
-        />
+        {/* Scrollable Table Container */}
+        <div className="flex-1 overflow-hidden w-full max-w-full">
+          <TicketsTable
+            tickets={filteredTickets}
+            loading={loading}
+            error={error}
+            groupBy={groupBy}
+            groupedTickets={groupedTickets}
+            onTicketClick={handleTicketClick}
+            onEditTicket={(ticket) => {
+              const ticketWithDbId = {
+                ...ticket,
+                dbId: ticket.dbId || ticket.id
+              }
+              setSelectedTicket(ticketWithDbId)
+              setShowTicketTray(true)
+            }}
+            onDuplicateTicket={handleDuplicateTicket}
+            onDeleteTicket={handleDeleteTicket}
+            onUpdateTicket={updateTicket}
+            onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
+            onBulkDelete={handleBulkDeleteRequest}
+            onBulkUpdate={handleBulkUpdate}
+          />
+        </div>
       </div>
     ),
     [groupedTickets, groupBy, filteredTickets, loading, error, handleTicketClick, handleDuplicateTicket, handleDeleteTicket, updateTicket],
@@ -1523,110 +1526,115 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   return (
     <PageContent>
-      <div className="flex gap-6 font-sans text-sm">
-        <div className="flex-1 space-y-6">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-               <div className="flex items-center gap-2">
-                 <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
-                   {ticketView === "all" ? "All Tickets" : 
-                    ticketView === "my" ? "My Tickets" : 
-                    "Assigned to Me"}
-                 </h1>
+      <div className="flex gap-6 font-sans text-sm h-full w-full max-w-full overflow-hidden">
+        <div className="flex-1 flex flex-col h-full min-w-0">
+          {/* Fixed Header Section */}
+          <div className="flex-shrink-0 space-y-6 w-full max-w-full overflow-hidden">
+            <div className="flex items-start justify-between w-full max-w-full">
+              <div className="space-y-1">
+                 <div className="flex items-center gap-2">
+                   <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
+                     {ticketView === "all" ? "All Tickets" : 
+                      ticketView === "my" ? "My Tickets" : 
+                      "Assigned to Me"}
+                   </h1>
 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
-                  {loading ? (
-                    <Skeleton className="h-3 w-10 inline-block align-middle" />
-                  ) : (
-                    <>
-                      {filteredTickets?.length || 0}
-                      {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
-                        <span className="text-muted-foreground"> of {tickets.length}</span>
-                      )}
-                    </>
-                  )}
-                </span>
-               </div>
-               <p className="text-muted-foreground text-xs font-sans">
-                 Manage all support tickets and track customer issues effortlessly.
-               </p>
-            </div>
+                    {loading ? (
+                      <Skeleton className="h-3 w-10 inline-block align-middle" />
+                    ) : (
+                      <>
+                        {filteredTickets?.length || 0}
+                        {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
+                          <span className="text-muted-foreground"> of {tickets.length}</span>
+                        )}
+                      </>
+                    )}
+                  </span>
+                 </div>
+                 <p className="text-muted-foreground text-xs font-sans">
+                   Manage all support tickets and track customer issues effortlessly.
+                 </p>
+              </div>
 
-            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
 <Button
 className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/90 hover:to-[var(--primary-pink)] text-white text-sm h-8 px-4 rounded-lg shadow-xs"
-                onClick={() => setShowAIPanel(true)}
-              >
-                <Sparkles className="h-3 w-3 mr-2" />
-                Ask AI
-              </Button>
+                  onClick={() => setShowAIPanel(true)}
+                >
+                  <Sparkles className="h-3 w-3 mr-2" />
+                  Ask AI
+                </Button>
 <Button
-                variant="outline"
+                  variant="outline"
 className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5 text-sm h-8 px-4 rounded-lg"
-                onClick={() => setShowImportDialog(true)}
-              >
-                <Download className="h-3 w-3 mr-2" />
-                Import
-              </Button>
+                  onClick={() => setShowImportDialog(true)}
+                >
+                  <Download className="h-3 w-3 mr-2" />
+                  Import
+                </Button>
 <Button 
 className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
-                onClick={() => {
-                  console.log("[CREATE] Opening drawer for new ticket")
-                  setSelectedTicket(null) // No ticket = CREATE mode
-                  setShowTicketTray(true)
-                }} 
-              >
-                + Create Ticket
-              </Button>
+                  onClick={() => {
+                    console.log("[CREATE] Opening drawer for new ticket")
+                    setSelectedTicket(null) // No ticket = CREATE mode
+                    setShowTicketTray(true)
+                  }} 
+                >
+                  + Create Ticket
+                </Button>
+              </div>
             </div>
-          </div>
 
-           <div className="space-y-4">
-             <div className="flex items-center justify-between border-b border-border">
-               <div className="flex items-center gap-0">
-                 <button
-                   onClick={() => setCurrentView("list")}
-                   className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
-                     currentView === "list"
-                       ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
-                       : "text-muted-foreground border-transparent hover:text-foreground"
-                   }`}
-                 >
-                   List
-                 </button>
-                 <button
-                   onClick={() => setCurrentView("kanban")}
-                   className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
-                     currentView === "kanban"
-                       ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
-                       : "text-muted-foreground border-transparent hover:text-foreground"
-                   }`}
-                 >
-                   Kanban
-                 </button>
-               </div>
-               
-               <div className="flex items-center gap-3">
-                 <Select value={ticketView} onValueChange={setTicketView}>
-                   <SelectTrigger className="w-28 h-7 text-sm font-inter text-[#717171] border-border">
-                     <SelectValue>
-                       {ticketView === "all" ? "All Tickets" : 
-                        ticketView === "my" ? "My Tickets" : 
-                        "Assigned to Me"}
-                     </SelectValue>
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="all">All Tickets</SelectItem>
-                     <SelectItem value="my">My Tickets</SelectItem>
-                     <SelectItem value="assigned">Assigned to Me</SelectItem>
-                   </SelectContent>
-                 </Select>
+             <div className="space-y-4 w-full max-w-full overflow-hidden">
+               <div className="flex items-center justify-between border-b border-border w-full max-w-full">
+                 <div className="flex items-center gap-0">
+                   <button
+                     onClick={() => setCurrentView("list")}
+                     className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+                       currentView === "list"
+                         ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
+                         : "text-muted-foreground border-transparent hover:text-foreground"
+                     }`}
+                   >
+                     List
+                   </button>
+                   <button
+                     onClick={() => setCurrentView("kanban")}
+                     className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+                       currentView === "kanban"
+                         ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
+                         : "text-muted-foreground border-transparent hover:text-foreground"
+                     }`}
+                   >
+                     Kanban
+                   </button>
+                 </div>
+                 
+                 <div className="flex items-center gap-3">
+                   <Select value={ticketView} onValueChange={setTicketView}>
+                     <SelectTrigger className="w-28 h-7 text-sm font-inter text-[#717171] border-border">
+                       <SelectValue>
+                         {ticketView === "all" ? "All Tickets" : 
+                          ticketView === "my" ? "My Tickets" : 
+                          "Assigned to Me"}
+                       </SelectValue>
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="all">All Tickets</SelectItem>
+                       <SelectItem value="my">My Tickets</SelectItem>
+                       <SelectItem value="assigned">Assigned to Me</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
                </div>
              </div>
-           </div>
+          </div>
 
-
-          {currentView === "list" && renderListView()}
-          {currentView === "kanban" && renderKanbanView()}
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-hidden w-full max-w-full">
+            {currentView === "list" && renderListView()}
+            {currentView === "kanban" && renderKanbanView()}
+          </div>
         </div>
 
         {showAIPanel && (
