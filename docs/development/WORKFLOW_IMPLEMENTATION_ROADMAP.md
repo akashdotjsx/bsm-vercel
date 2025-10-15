@@ -15,8 +15,6 @@
   - Execution context and logging
   - React Flow UI types
 
-----
-
 ### 3. Workflow Engine Created
 - ✅ `/lib/workflow/engine.ts` - Execution engine (670 lines)
   - `executeTransition()` - Main transition logic
