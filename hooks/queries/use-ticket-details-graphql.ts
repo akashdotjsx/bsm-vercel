@@ -256,6 +256,123 @@ export function useAddCommentGraphQL(ticketId: string) {
   })
 }
 
+/**
+ * Update comment using GraphQL
+ */
+async function updateCommentGraphQL(commentId: string, content: string) {
+  const client = await createGraphQLClient()
+
+  const mutation = gql`
+    mutation UpdateComment($id: UUID!, $input: ticket_commentsUpdateInput!) {
+      updateticket_commentsCollection(filter: { id: { eq: $id } }, set: $input) {
+        records {
+          id
+          ticket_id
+          author_id
+          content
+          is_internal
+          is_system
+          created_at
+          author: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+            avatar_url
+          }
+        }
+      }
+    }
+  `
+
+  const input = {
+    content: content.trim()
+  }
+
+  const data: any = await client.request(mutation, { id: commentId, input })
+  return data.updateticket_commentsCollection.records[0]
+}
+
+/**
+ * Delete comment using GraphQL
+ */
+async function deleteCommentGraphQL(commentId: string) {
+  const client = await createGraphQLClient()
+
+  const mutation = gql`
+    mutation DeleteComment($id: UUID!) {
+      deleteFromticket_commentsCollection(filter: { id: { eq: $id } }) {
+        records {
+          id
+          ticket_id
+        }
+      }
+    }
+  `
+
+  const data: any = await client.request(mutation, { id: commentId })
+  return data.deleteFromticket_commentsCollection.records[0]
+}
+
+/**
+ * Hook to update comment with automatic cache update
+ */
+export function useUpdateCommentGraphQL(ticketId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      updateCommentGraphQL(commentId, content),
+    onSuccess: (updatedComment) => {
+      // Update comment in cache
+      queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          comments: old.comments?.map((comment: any) => 
+            comment.id === updatedComment.id ? updatedComment : comment
+          ) || []
+        }
+      })
+      console.log("✅ Comment updated in cache")
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ticketDetailKeys.ticket(ticketId) })
+    },
+  })
+}
+
+/**
+ * Hook to delete comment with automatic cache update
+ */
+export function useDeleteCommentGraphQL(ticketId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ commentId }: { commentId: string }) =>
+      deleteCommentGraphQL(commentId),
+    onSuccess: (deletedComment) => {
+      // Remove comment from cache
+      queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          comments: old.comments?.filter((comment: any) => 
+            comment.id !== deletedComment.id
+          ) || []
+        }
+      })
+      console.log("✅ Comment deleted from cache")
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ticketDetailKeys.ticket(ticketId) })
+    },
+  })
+}
+
 // ============================================================================
 // ATTACHMENTS
 // ============================================================================

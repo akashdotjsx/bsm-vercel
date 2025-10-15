@@ -14,6 +14,8 @@ import {
   useTicketDetailsGraphQL,
   useUpdateTicketDetailsGraphQL,
   useAddCommentGraphQL,
+  useUpdateCommentGraphQL,
+  useDeleteCommentGraphQL,
   useAddChecklistItemGraphQL,
   useUpdateChecklistItemGraphQL,
   useDeleteChecklistItemGraphQL
@@ -66,6 +68,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   const createTicketMutation = useCreateTicketGraphQL()
   const updateTicketMutation = useUpdateTicketDetailsGraphQL()
   const addCommentMutation = useAddCommentGraphQL(ticketId)
+  const updateCommentMutation = useUpdateCommentGraphQL(ticketId)
+  const deleteCommentMutation = useDeleteCommentGraphQL(ticketId)
   const addChecklistItemMutation = useAddChecklistItemGraphQL(ticketId)
   const updateChecklistItemMutation = useUpdateChecklistItemGraphQL(ticketId)
   const deleteChecklistItemMutation = useDeleteChecklistItemGraphQL(ticketId)
@@ -95,6 +99,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
   // State for comments
   const [newComment, setNewComment] = useState("")
   const [isInternalComment, setIsInternalComment] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editCommentContent, setEditCommentContent] = useState("")
   
   // State for checklist
   const [newChecklistItem, setNewChecklistItem] = useState("")
@@ -338,6 +344,45 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     }
   }
 
+  const handleEditComment = (comment: any) => {
+    setEditingCommentId(comment.id)
+    setEditCommentContent(comment.content)
+  }
+
+  const handleSaveEditComment = async () => {
+    if (!editingCommentId || !editCommentContent.trim()) return
+    
+    try {
+      await updateCommentMutation.mutateAsync({
+        commentId: editingCommentId,
+        content: editCommentContent.trim()
+      })
+      setEditingCommentId(null)
+      setEditCommentContent("")
+      toast.success("Comment updated successfully!")
+    } catch (error) {
+      console.error("Error updating comment:", error)
+      toast.error("Failed to update comment")
+    }
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditCommentContent("")
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Are you sure you want to delete this comment?")) return
+    
+    try {
+      await deleteCommentMutation.mutateAsync({ commentId })
+      toast.success("Comment deleted successfully!")
+    } catch (error) {
+      console.error("Error deleting comment:", error)
+      toast.error("Failed to delete comment")
+    }
+  }
+
   const handleAddChecklistItem = async () => {
     if (!newChecklistItem.trim()) return
     if (isCreateMode) {
@@ -379,7 +424,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
     if (!checklistItemToDelete) return
     try {
       await deleteChecklistItemMutation.mutateAsync(checklistItemToDelete)
-      toast.error("Checklist item deleted", "The item has been removed")
+      toast.success("Checklist item deleted", "The item has been removed")
       setShowDeleteChecklistDialog(false)
       setChecklistItemToDelete(null)
     } catch (error) {
@@ -955,30 +1000,86 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                       <p className="text-[10px]">Start the conversation below</p>
                     </div>
                   ) : (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="border rounded-lg p-4">
+                    comments.map((comment: any) => (
+                      <div key={comment.id} className="border rounded-lg p-4 group">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[10px] font-medium shrink-0">
                             {comment.author?.first_name?.[0] || 'U'}{comment.author?.last_name?.[0] || ''}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-[11px] text-foreground">{comment.author?.display_name || 'Unknown User'}</span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {format(new Date(comment.created_at), "MMM d, h:mm a")}
-                              </span>
-                              {comment.is_internal && (
-                                <Badge variant="outline" className="text-[10px] h-4 px-1.5">
-                                  Internal Note
-                                </Badge>
-                              )}
-                              {comment.is_system && (
-                                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                                  System
-                                </Badge>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-[11px] text-foreground">{comment.author?.display_name || 'Unknown User'}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                                </span>
+                                {comment.is_internal && (
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                    Internal Note
+                                  </Badge>
+                                )}
+                                {comment.is_system && (
+                                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                                    System
+                                  </Badge>
+                                )}
+                              </div>
+                              {/* Edit and Delete buttons - only show for comments authored by current user */}
+                              {user && (comment.author_id === user.id || comment.author?.id === user.id) && !comment.is_system && (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditComment(comment)}
+                                    className="h-6 w-6 p-0 opacity-100 transition-opacity hover:bg-muted"
+                                    title="Edit comment"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="h-6 w-6 p-0 opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    title="Delete comment"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
-                            <div className="text-[11px] text-foreground whitespace-pre-wrap">{comment.content}</div>
+                            {editingCommentId === comment.id ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editCommentContent}
+                                  onChange={(e) => setEditCommentContent(e.target.value)}
+                                  className="min-h-20 resize-none text-[11px]"
+                                  placeholder="Edit your comment..."
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={handleSaveEditComment}
+                                    disabled={!editCommentContent.trim()}
+                                    className="text-[10px] h-6"
+                                  >
+                                    <Save className="h-3 w-3 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelEditComment}
+                                    className="text-[10px] h-6"
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-[11px] text-foreground whitespace-pre-wrap">{comment.content}</div>
+                            )}
                           </div>
                         </div>
                       </div>
