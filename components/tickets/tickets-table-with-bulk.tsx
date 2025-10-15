@@ -605,10 +605,19 @@ function TicketRow({
                />
              </td>
       
-       {/* Ticket column */}
-       <td className="px-6 py-4 text-foreground whitespace-nowrap">
-         {ticket.ticket_number || ticket.id}
-       </td>
+      {/* Ticket column */}
+      <td className="px-6 py-4 text-foreground whitespace-nowrap">
+        <button 
+          className="text-left hover:text-[#6E72FF] hover:underline cursor-pointer transition-colors"
+          onClick={() => {
+            if (onTicketClick) {
+              onTicketClick(ticket)
+            }
+          }}
+        >
+          {ticket.ticket_number || ticket.id}
+        </button>
+      </td>
 
        {/* Title column */}
        <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.title}>
@@ -704,16 +713,46 @@ function TicketRow({
 
       {/* Actions column - RIGHTMOST */}
       <td className="px-6 py-4 text-center whitespace-nowrap">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0"
-          onClick={() => {
-            // Handle more actions
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                if (onEditTicket) {
+                  onEditTicket(ticket)
+                }
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Ticket
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                if (onDuplicateTicket) {
+                  onDuplicateTicket(ticket)
+                }
+              }}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicate Ticket
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => {
+                if (onDeleteTicket) {
+                  onDeleteTicket(ticket)
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Ticket
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </td>
     </tr>
   )

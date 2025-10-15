@@ -2068,7 +2068,6 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         <TicketDrawer
           isOpen={showTicketTray}
           onClose={() => {
-            console.log("[v0] Closing ticket drawer")
             setShowTicketTray(false)
             setSelectedTicket(null)
           }}
