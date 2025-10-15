@@ -182,7 +182,7 @@ export function GlobalHeader() {
         </Tooltip>
 
 
-        <NotificationBell notifications={notifications} />
+        <NotificationBell />
 
         <Tooltip>
           <TooltipTrigger asChild>

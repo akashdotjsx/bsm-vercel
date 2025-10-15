@@ -298,6 +298,8 @@ export default function SettingsPage() {
     logLevel: "info",
     maxFileSize: "10MB",
     cleanupSchedule: "weekly",
+    userInvites: true,
+    teamManagement: true,
   })
 
   const [knowledgeSettings, setKnowledgeSettings] = useState({
@@ -1425,9 +1427,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <PageContent>
-      <div className="flex h-full bg-background">
-        <div className="w-64 0 border-r border-border flex flex-col">
+    <div className="flex h-screen bg-background">
+      <div className="w-64 border-r border-border flex flex-col">
           {/* Header */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -1527,7 +1528,6 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </div>
-    </PageContent>
+    </div>
   )
 }

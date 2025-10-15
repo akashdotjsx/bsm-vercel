@@ -88,7 +88,7 @@ export function NotificationBell() {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0 relative" title="Notifications">
-          <Bell className="h-4 w-4" style={{ color: theme === 'dark' ? '#d1d5db' : '#000000' }} />
+          <Bell className="h-4 w-4 text-foreground" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -99,7 +99,7 @@ export function NotificationBell() {
       <DropdownMenuContent 
         align="end" 
         alignOffset={-20}
-        className="w-[420px] p-0 border border-border bg-popover shadow-lg rounded-lg"
+        className="w-[420px] p-0 border border-border bg-popover text-popover-foreground shadow-lg rounded-lg"
       >
         {/* Header with tabs */}
         <div className="p-3 pb-0">
@@ -116,14 +116,14 @@ export function NotificationBell() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => {
                     markAllAsRead()
-                  }} className="cursor-pointer">
+                  }} className="cursor-pointer text-foreground">
                     <Check className="h-4 w-4 mr-2" />
                     Mark all as read
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => {
                     // Clear all unread notifications
                     unreadNotifications.forEach(n => clearNotification(n.id))
-                  }} className="cursor-pointer text-destructive focus:text-destructive">
+                  }} className="cursor-pointer text-destructive focus:text-destructive dark:text-red-400">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Clear all
                   </DropdownMenuItem>
@@ -151,16 +151,16 @@ export function NotificationBell() {
                   onClick={() => setActiveTab(tab)}
                   className={`pb-2 px-1 text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === tab
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-primary dark:text-primary border-b-2 border-primary dark:border-primary"
+                      : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
                   }`}
                 >
                   {tab}
                   {count > 0 && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                       activeTab === tab
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary"
+                        : "bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground"
                     }`}>
                       {count}
                     </span>
@@ -176,12 +176,12 @@ export function NotificationBell() {
           {unreadNotifications.length === 0 ? (
             <>
               {/* Notification icon */}
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Bell className="h-6 w-6 text-primary" />
+              <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <Bell className="h-6 w-6 text-primary dark:text-primary" />
               </div>
               
               {/* Empty state text */}
-              <h4 className="text-sm font-semibold text-foreground mb-1">
+              <h4 className="text-sm font-semibold text-foreground dark:text-foreground mb-1">
                 {activeTab === "All" ? "You're All Caught Up" : `No ${activeTab} Notifications`}
               </h4>
               <p className="text-xs text-muted-foreground text-center max-w-xs">
@@ -198,15 +198,15 @@ export function NotificationBell() {
                 return (
                   <div
                     key={notification.id}
-                    className="group p-2.5 hover:bg-accent transition-colors cursor-pointer rounded-md mx-1"
+                    className="group p-2.5 hover:bg-accent dark:hover:bg-accent transition-colors cursor-pointer rounded-md mx-1"
                   >
                     <div className="flex items-start gap-2.5">
-                      <div className="p-1.5 rounded-full bg-primary/10 mt-0.5">
-                        <IconComponent className="h-3.5 w-3.5 text-primary" />
+                      <div className="p-1.5 rounded-full bg-primary/10 dark:bg-primary/20 mt-0.5">
+                        <IconComponent className="h-3.5 w-3.5 text-primary dark:text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-xs font-medium text-foreground line-clamp-1 flex-1">
+                          <h4 className="text-xs font-medium text-foreground dark:text-foreground line-clamp-1 flex-1">
                             {notification.title}
                           </h4>
                           <Button
@@ -221,10 +221,10 @@ export function NotificationBell() {
                             <X className="h-3 w-3" />
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1.5 line-clamp-2">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 line-clamp-2">
                           {notification.message}
                         </p>
-                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {notification.time}
                         </div>

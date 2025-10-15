@@ -408,17 +408,17 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
         
         {/* Drawer panel */}
         <div 
-          className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden border-l"
+          className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background text-foreground shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-border"
           style={{ height: 'calc(100vh - var(--header-height, 56px))' }}
         >
           {/* Header */}
-          <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b">
+          <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
             <div className="flex-1 min-w-0 mr-4">
-              <h2 className="text-sm md:text-[13px] font-semibold text-foreground mb-1 truncate">
+              <h2 className="text-sm md:text-[13px] font-semibold text-foreground dark:text-foreground mb-1 truncate">
                 {isCreateMode ? "Create New Ticket" : (dbTicket?.title || ticket?.title || "Loading...")}
               </h2>
               {!isCreateMode && (dbTicket?.ticket_number || ticket?.id) && (
-                <p className="text-[10px] md:text-[11px] text-muted-foreground">
+                <p className="text-[10px] md:text-[11px] text-muted-foreground dark:text-muted-foreground">
                   #{dbTicket?.ticket_number || ticket?.id}
                   {dbTicket?.created_at && (
                     <>
@@ -429,7 +429,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </p>
               )}
               {isCreateMode && (
-                <p className="text-[10px] md:text-[11px] text-muted-foreground">
+                <p className="text-[10px] md:text-[11px] text-muted-foreground dark:text-muted-foreground">
                   Fill in the details below to create a new ticket
                 </p>
               )}
@@ -516,23 +516,23 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
             <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
               {/* Hide tabs in CREATE mode - only show Details */}
               {!isCreateMode && (
-              <div className="px-4 md:px-6 bg-muted/30 flex-shrink-0">
+              <div className="px-4 md:px-6 bg-muted/30 dark:bg-muted/30 flex-shrink-0">
               <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
                   value="details"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger
                   value="accounts"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Accounts
                 </TabsTrigger>
                 <TabsTrigger
                   value="checklist"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Checklist
                   {checklist.length > 0 && (
@@ -543,7 +543,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Comments
                   {comments.length > 0 && (
@@ -554,7 +554,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="files"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   Files
                   {attachments.length > 0 && (
@@ -565,7 +565,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                 </TabsTrigger>
                 <TabsTrigger
                   value="history"
-                  className="data-[state=active]:bg-background data-[state=active]:text-[#6E72FF] data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
+                  className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
                   History
                   <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
@@ -580,7 +580,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
                 {/* Edit/View mode based on isEditMode state */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Title</label>
+                      <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Title</label>
                       {isEditMode ? (
                         <Input 
                           value={form.title} 
@@ -588,11 +588,11 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           className="text-[11px] h-8"
                         />
                       ) : (
-                        <div className="text-[11px] p-2 border rounded bg-muted/30">{form.title || "—"}</div>
+                        <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">{form.title || "—"}</div>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Description</label>
+                      <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Description</label>
                       {isEditMode ? (
                         <Textarea 
                           rows={4} 
@@ -602,14 +602,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           placeholder="Describe the issue or request in detail..."
                         />
                       ) : (
-                        <div className="text-[11px] p-2 border rounded bg-muted/30 whitespace-pre-wrap min-h-[100px]">{form.description || "—"}</div>
+                        <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground min-h-[80px]">{form.description || "—"}</div>
                       )}
                     </div>
 
-                    {/* Row 1: Type and Priority */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Row 1: Type, Priority and Status */}
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Type</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Type</label>
                         {isEditMode ? (
                           <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                             <SelectTrigger className="h-8">
@@ -624,11 +624,11 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.type || "—"}</div>
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground capitalize">{form.type || "—"}</div>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Priority</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Priority</label>
                         {isEditMode ? (
                           <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
                             <SelectTrigger className="h-8">
@@ -643,7 +643,27 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.priority || "—"}</div>
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground capitalize">{form.priority || "—"}</div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Status</label>
+                        {isEditMode ? (
+                          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue className="text-[11px]" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new" className="text-[11px]">New</SelectItem>
+                              <SelectItem value="open" className="text-[11px]">Open</SelectItem>
+                              <SelectItem value="in_progress" className="text-[11px]">In Progress</SelectItem>
+                              <SelectItem value="pending" className="text-[11px]">Pending</SelectItem>
+                              <SelectItem value="resolved" className="text-[11px]">Resolved</SelectItem>
+                              <SelectItem value="closed" className="text-[11px]">Closed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.status?.replace('_', ' ') || "—"}</div>
                         )}
                       </div>
                     </div>
@@ -651,7 +671,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                     {/* Row 2: Category and Services (renamed from Subcategory) */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Category</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Category</label>
                         {isEditMode ? (
                           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
                             <SelectTrigger className="h-8">
@@ -664,11 +684,11 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30">{selectedCategory?.name || "—"}</div>
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">{selectedCategory?.name || "—"}</div>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Services</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Service</label>
                         {isEditMode ? (
                           <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })} disabled={!form.category}>
                             <SelectTrigger className="h-8">
@@ -681,14 +701,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30">{form.subcategory || "—"}</div>
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">{form.subcategory || "—"}</div>
                         )}
                       </div>
                     </div>
 
                     {/* Assignee - full width for better UX */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Assignee</label>
+                      <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Assignee</label>
                       {isEditMode ? (
                         <TeamSelector
                           teams={teams}
@@ -699,7 +719,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           className="h-9 text-[11px]"
                         />
                       ) : (
-                        <div className="text-[11px] p-2 border rounded bg-muted/30">
+                        <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">
                           {form.assignee_ids.length > 0 ? (
                             form.assignee_ids.map((id) => {
                               const user = users.find((u) => u.id === id)
@@ -713,20 +733,20 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                     {/* Row 3: Due date and Urgency (Impact removed) */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Due date</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Due date</label>
                         {isEditMode ? (
                           <DateTimePicker
                             value={form.due_date ? new Date(form.due_date) : undefined}
                             onChange={(d) => setForm({ ...form, due_date: d ? d.toISOString() : "" })}
                           />
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30">
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">
                             {form.due_date ? format(new Date(form.due_date), "MMM d, y h:mm a") : "—"}
                           </div>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Urgency</label>
+                        <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Urgency</label>
                         {isEditMode ? (
                           <Select value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })}>
                             <SelectTrigger className="h-8">
@@ -740,7 +760,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="text-[11px] p-2 border rounded bg-muted/30 capitalize">{form.urgency || "—"}</div>
+                          <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground capitalize">{form.urgency || "—"}</div>
                         )}
                       </div>
                     </div>
@@ -751,7 +771,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                         {/* Checklist */}
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-[11px] font-semibold text-foreground">Checklist</h3>
+                            <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Checklist</h3>
                           </div>
                           <div className="flex gap-2">
                             <Input
@@ -777,8 +797,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                           {draftChecklist.length > 0 && (
                             <div className="space-y-2">
                               {draftChecklist.map((text, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-2 border rounded">
-                                  <span className="text-[11px]">{text}</span>
+                                <div key={idx} className="flex items-center justify-between p-2 border border-border rounded bg-background">
+                                  <span className="text-[11px] text-foreground dark:text-foreground">{text}</span>
                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setDraftChecklist((prev) => prev.filter((_, i) => i !== idx))}>
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -790,7 +810,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
                         {/* Initial Comment */}
                         <div className="space-y-3">
-                          <h3 className="text-[11px] font-semibold text-foreground">Initial Comment</h3>
+                          <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Initial Comment</h3>
                           <div className="flex items-center gap-2">
                             <Switch id="internal-comment-create" checked={isInternalComment} onCheckedChange={setIsInternalComment} />
                             <Label htmlFor="internal-comment-create" className="text-[11px]">Internal Note</Label>
@@ -810,8 +830,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
                         {/* Attachments */}
                         <div className="space-y-3">
-                          <h3 className="text-[11px] font-semibold text-foreground">Attachments</h3>
-                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                          <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Attachments</h3>
+                          <div className="border-2 border-dashed border-muted-foreground/25 dark:border-muted-foreground/25 rounded-lg p-4 text-center bg-muted/10 dark:bg-muted/10">
                             <p className="text-[10px] text-muted-foreground mb-2">Upload files after the ticket is created</p>
                             <Button variant="outline" size="sm" className="text-[10px] h-8 px-3">
                               <Upload className="h-3 w-3 mr-2" />
@@ -1126,7 +1146,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
                       RJ
                     </div>
                     <div className="flex-1">
-                      <div className="bg-green-50 rounded-lg p-3">
+                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[11px] font-medium text-foreground">Richard Jeffries</span>
                           <span className="text-[10px] text-muted-foreground">2 hours ago</span>
@@ -1143,7 +1163,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
 
           {/* Footer - show save button only in edit mode or create mode */}
           {(isCreateMode || isEditMode) && (
-            <div className="border-t p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
+            <div className="border-t border-border p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -1161,7 +1181,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
               <Button 
                 onClick={handleSave} 
                 disabled={saving || (!isCreateMode && loading)} 
-                className="text-[11px] h-8 px-3 bg-[#6E72FF] hover:bg-[#6E72FF]/90"
+                className="text-[11px] h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {saving ? (
                   <>
