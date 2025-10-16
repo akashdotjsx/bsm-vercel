@@ -54,16 +54,9 @@ import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
-import { AIChatPanel } from "@/components/ai/ai-chat-panel"
+import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import { useDebounce } from "@/hooks/use-debounce"
 
-const AIAssistantPanel = dynamic(
-  () => import("@/components/ai/ai-assistant-panel").then((mod) => ({ default: mod.AIAssistantPanel })),
-  {
-    loading: () => <LoadingSpinner size="md" />,
-    ssr: false,
-  },
-)
 
 const TicketDrawer = dynamic(
   () => import("@/components/tickets/ticket-drawer"),
@@ -1526,7 +1519,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   return (
     <PageContent>
-      <div className="flex gap-6 font-sans text-sm h-full w-full max-w-full overflow-hidden">
+      <div className="font-sans text-sm h-full w-full max-w-full overflow-hidden" style={{ width: '100%', maxWidth: '100%', position: 'relative' }}>
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Fixed Header Section */}
           <div className="flex-shrink-0 space-y-6 w-full max-w-full overflow-hidden">
@@ -1637,14 +1630,13 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
           </div>
         </div>
 
-        {showAIPanel && (
-          <div className="w-80 shrink-0">
-            <Suspense fallback={<LoadingSpinner size="md" />}>
-              <AIAssistantPanel />
-            </Suspense>
-          </div>
-        )}
       </div>
+
+      {/* AI Assistant Modal - Outside main content to prevent layout shifts */}
+      <AIAssistantModal
+        isOpen={showAIPanel}
+        onClose={() => setShowAIPanel(false)}
+      />
 
       <Dialog open={showAIChat} onOpenChange={setShowAIChat}>
         <DialogContent className="max-w-4xl h-[600px] flex flex-col p-0">
@@ -2197,14 +2189,6 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         onOpenChange={setShowCustomColumnsDialog}
       />
 
-      {/* AI Chat Panel */}
-      {organization?.id && (
-        <AIChatPanel
-          isOpen={showAIPanel}
-          onClose={() => setShowAIPanel(false)}
-          organizationId={organization.id}
-        />
-      )}
     </PageContent>
   )
 }
