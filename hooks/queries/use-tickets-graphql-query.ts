@@ -23,6 +23,7 @@ interface TicketsParams {
   requester_id?: string
   search?: string
   organization_id?: string
+  created_at_gte?: string
 }
 
 /**
@@ -88,6 +89,10 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   
   if (params.type) {
     filter.type = { eq: params.type }
+  }
+  
+  if (params.created_at_gte) {
+    filter.created_at = { gte: params.created_at_gte }
   }
   
   const variables: any = {

@@ -1526,18 +1526,29 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                    <h1 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
                      My Tickets
                    </h1>
-<span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
-                    {loading ? (
-                      <Skeleton className="h-3 w-10 inline-block align-middle" />
-                    ) : (
-                      <>
-                        {filteredTickets?.length || 0}
-                        {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
-                          <span className="text-muted-foreground"> of {tickets.length}</span>
-                        )}
-                      </>
-                    )}
-                  </span>
+                   <span 
+                     className="inline-flex items-center justify-center px-2 py-0.5 rounded-full font-medium"
+                     style={{ 
+                       fontSize: '12px', 
+                       fontWeight: 500, 
+                       color: '#030202',
+                       backgroundColor: '#F3F4F6',
+                       borderRadius: '12px',
+                       minWidth: '24px',
+                       height: '20px'
+                     }}
+                   >
+                     {loading ? (
+                       <Skeleton className="h-3 w-10 inline-block align-middle" />
+                     ) : (
+                       <>
+                         {filteredTickets?.length || 0}
+                         {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
+                           <span className="text-muted-foreground"> of {tickets.length}</span>
+                         )}
+                       </>
+                     )}
+                   </span>
                  </div>
                  <p className="text-xs font-sans" style={{ fontSize: '12px', fontWeight: 400, color: '#6A707C' }}>
                    Manage your support tickets and track customer issues effortlessly.

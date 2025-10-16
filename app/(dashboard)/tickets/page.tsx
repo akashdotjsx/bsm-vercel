@@ -118,6 +118,7 @@ export default function TicketsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
+  const [selectedTicketView, setSelectedTicketView] = useState("all-tickets")
   
   // ✅ FIX: Debounce search to prevent excessive re-renders
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -132,12 +133,23 @@ export default function TicketsPage() {
       priority: selectedPriority === "all" ? undefined : selectedPriority,
       type: selectedType === "all" ? undefined : selectedType,
       search: debouncedSearchTerm || undefined, // ✅ Use debounced search
-      // Only filter by requester_id if user is NOT an admin
-      ...(isAdmin ? {} : { requester_id: user?.id })
     }
+
+    // Apply filters based on selectedTicketView dropdown
+    if (selectedTicketView === "my-tickets") {
+      params.requester_id = user?.id
+    } else if (selectedTicketView === "assigned-to-me") {
+      params.assignee_id = user?.id
+    } else if (selectedTicketView === "recent") {
+      // Filter for tickets created in the last 7 days
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      params.created_at_gte = sevenDaysAgo.toISOString()
+    }
+    // If "all-tickets" is selected, no specific filter is applied (shows all tickets)
     
     return params
-  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, isAdmin])
+  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, selectedTicketView])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -1527,18 +1539,29 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                    <h1 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
                      {isAdmin ? "All Tickets" : "My Tickets"}
                    </h1>
-<span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
-                    {loading ? (
-                      <Skeleton className="h-3 w-10 inline-block align-middle" />
-                    ) : (
-                      <>
-                        {filteredTickets?.length || 0}
-                        {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
-                          <span className="text-muted-foreground"> of {tickets.length}</span>
-                        )}
-                      </>
-                    )}
-                  </span>
+                   <span 
+                     className="inline-flex items-center justify-center px-2 py-0.5 rounded-full font-medium"
+                     style={{ 
+                       fontSize: '12px', 
+                       fontWeight: 500, 
+                       color: '#030202',
+                       backgroundColor: '#F3F4F6',
+                       borderRadius: '12px',
+                       minWidth: '24px',
+                       height: '20px'
+                     }}
+                   >
+                     {loading ? (
+                       <Skeleton className="h-3 w-10 inline-block align-middle" />
+                     ) : (
+                       <>
+                         {filteredTickets?.length || 0}
+                         {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
+                           <span className="text-muted-foreground"> of {tickets.length}</span>
+                         )}
+                       </>
+                     )}
+                   </span>
                  </div>
                  <p className="text-xs font-sans" style={{ fontSize: '12px', fontWeight: 400, color: '#6A707C' }}>
                    {isAdmin 
@@ -1604,7 +1627,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
                  
                  {/* All Tickets Dropdown - Rightmost position */}
                  <div className="flex items-center">
-                   <Select value="all-tickets" onValueChange={(value) => console.log('Selected:', value)}>
+                   <Select value={selectedTicketView} onValueChange={setSelectedTicketView}>
                      <SelectTrigger className="w-[120px] h-8 border-0 bg-transparent text-sm font-medium text-foreground hover:bg-muted/50">
                        <SelectValue placeholder="All Tickets" />
                      </SelectTrigger>
