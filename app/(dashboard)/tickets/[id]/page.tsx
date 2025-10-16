@@ -40,12 +40,15 @@ import {
   useTicketDetailsGraphQL,
   useUpdateTicketDetailsGraphQL,
   useAddCommentGraphQL,
+  useUpdateCommentGraphQL,
+  useDeleteCommentGraphQL,
   useAddChecklistItemGraphQL,
   useUpdateChecklistItemGraphQL,
   useDeleteChecklistItemGraphQL
 } from "@/hooks/queries/use-ticket-details-graphql"
 import { UserSelector } from "@/components/users/user-selector"
 import { useUsers } from "@/hooks/use-users"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { toast } from "@/lib/toast"
 
@@ -67,6 +70,8 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   // State for comments
   const [newComment, setNewComment] = useState("")
   const [isInternalComment, setIsInternalComment] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editCommentContent, setEditCommentContent] = useState("")
   
   // State for checklist
   const [newChecklistItem, setNewChecklistItem] = useState("")
@@ -75,10 +80,13 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const { data: ticket, isLoading: ticketLoading, error } = useTicketDetailsGraphQL(params.id)
   const updateTicketMutation = useUpdateTicketDetailsGraphQL()
   const addCommentMutation = useAddCommentGraphQL(params.id)
+  const updateCommentMutation = useUpdateCommentGraphQL(params.id)
+  const deleteCommentMutation = useDeleteCommentGraphQL(params.id)
   const addChecklistItemMutation = useAddChecklistItemGraphQL(params.id)
   const updateChecklistItemMutation = useUpdateChecklistItemGraphQL(params.id)
   const deleteChecklistItemMutation = useDeleteChecklistItemGraphQL(params.id)
   const { users, loading: usersLoading } = useUsers()
+  const { user: currentUser } = useAuth()
   
   // Extract nested data from ticket
   const comments = ticket?.comments || []
@@ -131,6 +139,45 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
     } catch (error) {
       console.error("Error adding comment:", error)
       toast.error("Failed to add comment")
+    }
+  }
+
+  const handleEditComment = (comment: any) => {
+    setEditingCommentId(comment.id)
+    setEditCommentContent(comment.content)
+  }
+
+  const handleSaveEditComment = async () => {
+    if (!editingCommentId || !editCommentContent.trim()) return
+    
+    try {
+      await updateCommentMutation.mutateAsync({
+        commentId: editingCommentId,
+        content: editCommentContent.trim()
+      })
+      setEditingCommentId(null)
+      setEditCommentContent("")
+      toast.success("Comment updated successfully!")
+    } catch (error) {
+      console.error("Error updating comment:", error)
+      toast.error("Failed to update comment")
+    }
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditCommentContent("")
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Are you sure you want to delete this comment?")) return
+    
+    try {
+      await deleteCommentMutation.mutateAsync({ commentId })
+      toast.success("Comment deleted successfully!")
+    } catch (error) {
+      console.error("Error deleting comment:", error)
+      toast.error("Failed to delete comment")
     }
   }
 
@@ -661,29 +708,81 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                     </div>
                   ) : (
                     comments.map((comment) => (
-                      <div key={comment.id} className="border rounded-lg p-4">
+                      <div key={comment.id} className="border rounded-lg p-4 group">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
                             {comment.author?.first_name?.[0] || 'U'}{comment.author?.last_name?.[0] || ''}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">{comment.author?.display_name || 'Unknown User'}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(comment.created_at), "MMM d, h:mm a")}
-                              </span>
-                              {comment.is_internal && (
-                                <Badge variant="outline" className="text-xs">
-                                  Internal Note
-                                </Badge>
-                              )}
-                              {comment.is_system && (
-                                <Badge variant="secondary" className="text-xs">
-                                  System
-                                </Badge>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm">{comment.author?.display_name || 'Unknown User'}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(comment.created_at), "MMM d, h:mm a")}
+                                </span>
+                                {comment.is_internal && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Internal Note
+                                  </Badge>
+                                )}
+                                {comment.is_system && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    System
+                                  </Badge>
+                                )}
+                              </div>
+                              {/* Edit and Delete buttons - only show for comments authored by current user */}
+                              {currentUser && comment.author_id === currentUser.id && !comment.is_system && (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditComment(comment)}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
-                            <div className="text-sm whitespace-pre-wrap">{comment.content}</div>
+                            {editingCommentId === comment.id ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editCommentContent}
+                                  onChange={(e) => setEditCommentContent(e.target.value)}
+                                  className="min-h-20 resize-none"
+                                  placeholder="Edit your comment..."
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={handleSaveEditComment}
+                                    disabled={!editCommentContent.trim()}
+                                  >
+                                    <Save className="h-3 w-3 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelEditComment}
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm whitespace-pre-wrap">{comment.content}</div>
+                            )}
                           </div>
                         </div>
                       </div>

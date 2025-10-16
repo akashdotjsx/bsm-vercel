@@ -20,7 +20,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
-import { AIAssistantPanel } from "@/components/ai/ai-assistant-panel"
+import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import TicketDrawer from "@/components/tickets/ticket-drawer"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTicketsGQL } from "@/hooks/use-tickets-gql"
@@ -31,7 +31,6 @@ import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
 import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table"
-import { AIChatPanel } from "@/components/ai/ai-chat-panel"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const mockTickets_UNUSED = [
@@ -394,7 +393,7 @@ export default function MyTicketsPage() {
 
   return (
     <PageContent breadcrumb={[{ label: "My Tickets" }]}>
-      <div className="flex gap-6">
+      <div className="space-y-6">
         <div className="flex-1 space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -493,13 +492,13 @@ export default function MyTicketsPage() {
           {currentView === "list" && renderListView()}
           {currentView === "kanban" && renderKanbanView()}
         </div>
-
-        {showAIPanel && (
-          <div className="w-80 shrink-0">
-            <AIAssistantPanel />
-          </div>
-        )}
       </div>
+
+      {/* AI Assistant Modal - Outside main content to prevent layout shifts */}
+      <AIAssistantModal
+        isOpen={showAIPanel}
+        onClose={() => setShowAIPanel(false)}
+      />
 
       <TicketDrawer
         isOpen={showTicketTray}
@@ -517,14 +516,6 @@ export default function MyTicketsPage() {
         onOpenChange={setShowCustomColumnsDialog}
       />
 
-      {/* AI Chat Panel */}
-      {organization?.id && (
-        <AIChatPanel
-          isOpen={showAIPanel}
-          onClose={() => setShowAIPanel(false)}
-          organizationId={organization.id}
-        />
-      )}
     </PageContent>
   )
 }
