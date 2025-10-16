@@ -109,7 +109,7 @@ const formatDate = (dateString: string) => {
 
 export default function TicketsPage() {
   const { user } = useStore()
-  const { organization } = useAuth()
+  const { organization, isAdmin } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -118,7 +118,6 @@ export default function TicketsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
   
   // ✅ FIX: Debounce search to prevent excessive re-renders
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -132,20 +131,13 @@ export default function TicketsPage() {
       status: selectedStatus === "all" ? undefined : selectedStatus,
       priority: selectedPriority === "all" ? undefined : selectedPriority,
       type: selectedType === "all" ? undefined : selectedType,
-      search: debouncedSearchTerm || undefined // ✅ Use debounced search
-    }
-    
-    // Add filtering based on ticket view
-    if (ticketView === "my" && user?.id) {
-      // My Tickets - filter by requester_id
-      params.requester_id = user.id
-    } else if (ticketView === "assigned" && user?.id) {
-      // Assigned to Me - filter by assignee_id
-      params.assignee_id = user.id
+      search: debouncedSearchTerm || undefined, // ✅ Use debounced search
+      // Only filter by requester_id if user is NOT an admin
+      ...(isAdmin ? {} : { requester_id: user?.id })
     }
     
     return params
-  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, ticketView, user?.id])
+  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, isAdmin])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -213,7 +205,7 @@ export default function TicketsPage() {
   useEffect(() => {
     const viewTicketId = searchParams?.get('view')
     if (viewTicketId && tickets && tickets.length > 0) {
-      const ticketToView = tickets.find(ticket => ticket.id === viewTicketId)
+      const ticketToView = tickets.find((ticket: any) => ticket.id === viewTicketId)
       if (ticketToView) {
         setSelectedTicket(ticketToView)
         setShowTicketTray(true)
@@ -323,7 +315,7 @@ export default function TicketsPage() {
   const transformedTickets = useMemo(() => {
     if (!tickets || tickets.length === 0) return []
     
-    return tickets.map((ticket) => {
+    return tickets.map((ticket: any) => {
       // Multi-assignees from GraphQL assignees array
       const assigneesList = (ticket.assignees || []).map((assignee: any) => ({
         id: assignee.id,
@@ -400,7 +392,7 @@ export default function TicketsPage() {
     
     // Apply client-side filtering for list view (API already handles some filtering)
     if (currentView === "list") {
-      return baseTickets.filter(ticket => {
+      return baseTickets.filter((ticket: any) => {
         // Search filter
         if (filterConditions.search) {
           const searchLower = filterConditions.search.toLowerCase()
@@ -463,14 +455,14 @@ export default function TicketsPage() {
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
-      return filteredTickets.filter((ticket) => ticket.status === status)
+      return filteredTickets.filter((ticket: any) => ticket.status === status)
     },
     [filteredTickets],
   )
 
   const getTicketsByType = useCallback(
     (type: string) => {
-      return filteredTickets.filter((ticket) => ticket.type === type)
+      return filteredTickets.filter((ticket: any) => ticket.type === type)
     },
     [filteredTickets],
   )
@@ -483,7 +475,7 @@ export default function TicketsPage() {
 
     const groups: { [key: string]: any[] } = {}
     
-    filteredTickets.forEach(ticket => {
+    filteredTickets.forEach((ticket: any) => {
       let groupKey = "Unassigned"
       
       switch (groupBy) {
@@ -587,7 +579,6 @@ export default function TicketsPage() {
       dateRange: { from: '', to: '' }
     })
     setSearchTerm("")
-    setTicketView("all")
   }, [])
 
   const handleSendAIMessage = useCallback(async () => {
@@ -615,8 +606,8 @@ export default function TicketsPage() {
 
 Current ticket statistics:
 • Total tickets: ${tickets?.length || 0}
-• Open tickets: ${tickets?.filter((t) => t.status === "new").length || 0}
-• High priority: ${tickets?.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
+• Open tickets: ${tickets?.filter((t: any) => t.status === "new").length || 0}
+• High priority: ${tickets?.filter((t: any) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
 
 I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
         timestamp: new Date(),
@@ -1252,7 +1243,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   const getTicketsByGroup = useCallback(
     (groupValue: string) => {
       console.log('🎯 getTicketsByGroup called with groupValue:', groupValue, 'kanbanGroupBy:', kanbanGroupBy)
-      return filteredTickets.filter((ticket) => {
+      return filteredTickets.filter((ticket: any) => {
         switch (kanbanGroupBy) {
           case "status":
             return ticket.status === groupValue
@@ -1422,9 +1413,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 ) : (
                   (() => {
                     const ticketsInGroup = getTicketsByGroup(column.id)
-                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map(t => ({ id: t.id, title: t.title, type: t.type })))
+                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map((t: any) => ({ id: t.id, title: t.title, type: t.type })))
                     return ticketsInGroup
-                  })().map((ticket) => (
+                  })().map((ticket: any) => (
                   <Card
                     key={ticket.id}
                     className={`hover:shadow-md transition-all cursor-move border border-border 0 ${
@@ -1534,9 +1525,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <div className="space-y-1">
                  <div className="flex items-center gap-2">
                    <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
-                     {ticketView === "all" ? "All Tickets" : 
-                      ticketView === "my" ? "My Tickets" : 
-                      "Assigned to Me"}
+                     {isAdmin ? "All Tickets" : "My Tickets"}
                    </h1>
 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                     {loading ? (
@@ -1552,7 +1541,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   </span>
                  </div>
                  <p className="text-muted-foreground text-xs font-sans">
-                   Manage all support tickets and track customer issues effortlessly.
+                   {isAdmin 
+                     ? "Manage all support tickets across the organization and track customer issues effortlessly."
+                     : "Manage your support tickets and track customer issues effortlessly."
+                   }
                  </p>
               </div>
 
@@ -1610,22 +1602,6 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
                    </button>
                  </div>
                  
-                 <div className="flex items-center gap-3">
-                   <Select value={ticketView} onValueChange={setTicketView}>
-                     <SelectTrigger className="w-28 h-7 text-sm font-inter text-[#717171] border-border">
-                       <SelectValue>
-                         {ticketView === "all" ? "All Tickets" : 
-                          ticketView === "my" ? "My Tickets" : 
-                          "Assigned to Me"}
-                       </SelectValue>
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="all">All Tickets</SelectItem>
-                       <SelectItem value="my">My Tickets</SelectItem>
-                       <SelectItem value="assigned">Assigned to Me</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
                </div>
              </div>
           </div>
@@ -1651,7 +1627,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-[#6E72FF]" />
-<span className="font-sans text-sm">Ask AI about Tickets</span>
+<span className="font-sans text-sm">Ask AI about My Tickets</span>
               </div>
               <Button
                 variant="ghost"
@@ -1928,7 +1904,7 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Filter Tickets</DialogTitle>
+            <DialogTitle>Filter My Tickets</DialogTitle>
           </DialogHeader>
            <div className="space-y-6">
              {/* Type Filter */}
