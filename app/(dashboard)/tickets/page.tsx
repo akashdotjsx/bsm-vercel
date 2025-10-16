@@ -1524,7 +1524,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <div className="flex items-start justify-between w-full max-w-full">
               <div className="space-y-1">
                  <div className="flex items-center gap-2">
-                   <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
+                   <h1 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
                      {isAdmin ? "All Tickets" : "My Tickets"}
                    </h1>
 <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
@@ -1540,7 +1540,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                     )}
                   </span>
                  </div>
-                 <p className="text-muted-foreground text-xs font-sans">
+                 <p className="text-xs font-sans" style={{ fontSize: '12px', fontWeight: 400, color: '#6A707C' }}>
                    {isAdmin 
                      ? "Manage all support tickets across the organization and track customer issues effortlessly."
                      : "Manage your support tickets and track customer issues effortlessly."
@@ -1602,6 +1602,20 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
                    </button>
                  </div>
                  
+                 {/* All Tickets Dropdown - Rightmost position */}
+                 <div className="flex items-center">
+                   <Select value="all-tickets" onValueChange={(value) => console.log('Selected:', value)}>
+                     <SelectTrigger className="w-[120px] h-8 border-0 bg-transparent text-sm font-medium text-foreground hover:bg-muted/50">
+                       <SelectValue placeholder="All Tickets" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="all-tickets">All Tickets</SelectItem>
+                       <SelectItem value="my-tickets">My Tickets</SelectItem>
+                       <SelectItem value="assigned-to-me">Assigned to Me</SelectItem>
+                       <SelectItem value="recent">Recent</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
                </div>
              </div>
           </div>
