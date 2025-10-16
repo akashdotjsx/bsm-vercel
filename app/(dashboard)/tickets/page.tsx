@@ -287,6 +287,7 @@ export default function TicketsPage() {
   const [draggedTicket, setDraggedTicket] = useState<any>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [localTickets, setLocalTickets] = useState<any[]>([])
+  const [preSelectedTicketType, setPreSelectedTicketType] = useState<string | null>(null)
   
   // Use real tickets data from API instead of mock data
 
@@ -1484,7 +1485,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   variant="ghost"
                   size="sm"
                   className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => router.push('/tickets/create')}
+                  onClick={() => {
+                    console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", column.id)
+                    // Pre-select the ticket type based on the column
+                    setPreSelectedTicketType(column.id)
+                    setSelectedTicket(null) // No ticket = CREATE mode
+                    setShowTicketTray(true)
+                  }}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Add Ticket
@@ -2062,8 +2069,10 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
           onClose={() => {
             setShowTicketTray(false)
             setSelectedTicket(null)
+            setPreSelectedTicketType(null)
           }}
           ticket={selectedTicket}
+          preSelectedType={preSelectedTicketType}
         />
       </Suspense>
 
