@@ -52,6 +52,7 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   organization: Organization | null
+  organizationId: string | null
   permissions: UserPermissionsResponse[]
   userRoles: UserRole[]
   loading: boolean
@@ -389,6 +390,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     profile,
     organization,
+    organizationId: profile?.organization_id || null,
     permissions,
     userRoles,
     loading,
