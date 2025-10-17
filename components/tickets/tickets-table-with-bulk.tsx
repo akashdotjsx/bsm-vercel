@@ -202,34 +202,34 @@ export function TicketsTable({
                          <th className="px-6 py-4 text-center w-12">
                            <div className="h-4 w-4 bg-muted animate-pulse rounded mx-auto border border-[#C4C4C4]" />
                          </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Ticket
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Title
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Status
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28">
+                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Reported By
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Assignee
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Reported Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Due Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Type
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Priority
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Notes
                 </th>
                 {customColumns.map((column) => (
@@ -345,34 +345,34 @@ export function TicketsTable({
                            className="w-4 h-4 border-[#C4C4C4] data-[state=checked]:bg-[#6E72FF] data-[state=checked]:border-[#6E72FF]"
                          />
                        </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Ticket
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-48" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Title
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Status
                  </th>
-                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28">
+                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-28" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Reported By
                  </th>
-                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                 <th className="px-6 py-4 text-center text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Assignee
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Reported Date
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-24" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Due Date
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Type
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-20" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Priority
                  </th>
-                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32">
+                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32" style={{ fontSize: '12px', fontWeight: 600 }}>
                    Notes
                  </th>
                 {/* Custom columns headers */}
@@ -380,6 +380,7 @@ export function TicketsTable({
                   <th
                     key={column.id}
                     className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32"
+                    style={{ fontSize: '12px', fontWeight: 600 }}
                   >
                     {column.title}
                   </th>
@@ -423,7 +424,7 @@ export function TicketsTable({
                         ticket={ticket}
                         customColumns={customColumns}
                         isSelected={isTicketSelected(ticket.dbId || ticket.id)}
-                        onSelectTicket={(checked) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
+                        onSelectTicket={(checked: boolean) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
                         onTicketClick={onTicketClick}
                         onEditTicket={onEditTicket}
                         onDuplicateTicket={onDuplicateTicket}
@@ -445,7 +446,7 @@ export function TicketsTable({
                     ticket={ticket}
                     customColumns={customColumns}
                     isSelected={isTicketSelected(ticket.dbId || ticket.id)}
-                    onSelectTicket={(checked) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
+                    onSelectTicket={(checked: boolean) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
                     onTicketClick={onTicketClick}
                     onEditTicket={onEditTicket}
                     onDuplicateTicket={onDuplicateTicket}
@@ -606,7 +607,7 @@ function TicketRow({
              </td>
       
       {/* Ticket column */}
-      <td className="px-6 py-4 text-foreground whitespace-nowrap">
+      <td className="px-6 py-4 text-foreground whitespace-nowrap" style={{ fontSize: '12px', fontWeight: 400 }}>
         <button 
           className="text-left hover:text-[#6E72FF] hover:underline cursor-pointer transition-colors"
           onClick={() => {
@@ -620,7 +621,7 @@ function TicketRow({
       </td>
 
        {/* Title column */}
-       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.title}>
+       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.title} style={{ fontSize: '12px', fontWeight: 400 }}>
          {ticket.title}
        </td>
 
@@ -662,14 +663,14 @@ function TicketRow({
       </td>
 
        {/* Reported Date */}
-       <td className="px-6 py-4 text-foreground whitespace-nowrap">
+       <td className="px-6 py-4 text-foreground whitespace-nowrap" style={{ fontSize: '12px', fontWeight: 400 }}>
          {ticket.created_at
            ? format(new Date(ticket.created_at), "MMM dd, yyyy")
            : ticket.reportedDate || "-"}
        </td>
 
        {/* Due Date */}
-       <td className="px-6 py-4 text-foreground whitespace-nowrap">
+       <td className="px-6 py-4 text-foreground whitespace-nowrap" style={{ fontSize: '12px', fontWeight: 400 }}>
          {ticket.due_date
            ? format(new Date(ticket.due_date), "MMM dd, yyyy")
            : ticket.dueDate || "-"}
@@ -697,13 +698,13 @@ function TicketRow({
       </td>
 
        {/* Notes */}
-       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || "Customer reported via email"}>
+       <td className="px-6 py-4 text-foreground whitespace-nowrap max-w-xs truncate" title={ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || "Customer reported via email"} style={{ fontSize: '12px', fontWeight: 400 }}>
          {ticket.custom_fields?.notes || ticket.notes || ticket.metadata?.notes || "Customer reported via email"}
        </td>
 
       {/* Custom column cells */}
       {customColumns.map((column: any) => (
-        <td key={column.id} className="px-6 py-4 whitespace-nowrap">
+        <td key={column.id} className="px-6 py-4 whitespace-nowrap" style={{ fontSize: '12px', fontWeight: 400 }}>
           <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
         </td>
       ))}

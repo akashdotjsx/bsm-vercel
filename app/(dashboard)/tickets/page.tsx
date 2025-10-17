@@ -109,7 +109,7 @@ const formatDate = (dateString: string) => {
 
 export default function TicketsPage() {
   const { user } = useStore()
-  const { organization } = useAuth()
+  const { organization, isAdmin } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -118,7 +118,7 @@ export default function TicketsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedPriority, setSelectedPriority] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [ticketView, setTicketView] = useState<"all" | "my" | "assigned">("all")
+  const [selectedTicketView, setSelectedTicketView] = useState("all-tickets")
   
   // ✅ FIX: Debounce search to prevent excessive re-renders
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -132,20 +132,24 @@ export default function TicketsPage() {
       status: selectedStatus === "all" ? undefined : selectedStatus,
       priority: selectedPriority === "all" ? undefined : selectedPriority,
       type: selectedType === "all" ? undefined : selectedType,
-      search: debouncedSearchTerm || undefined // ✅ Use debounced search
+      search: debouncedSearchTerm || undefined, // ✅ Use debounced search
     }
-    
-    // Add filtering based on ticket view
-    if (ticketView === "my" && user?.id) {
-      // My Tickets - filter by requester_id
-      params.requester_id = user.id
-    } else if (ticketView === "assigned" && user?.id) {
-      // Assigned to Me - filter by assignee_id
-      params.assignee_id = user.id
+
+    // Apply filters based on selectedTicketView dropdown
+    if (selectedTicketView === "my-tickets") {
+      params.requester_id = user?.id
+    } else if (selectedTicketView === "assigned-to-me") {
+      params.assignee_id = user?.id
+    } else if (selectedTicketView === "recent") {
+      // Filter for tickets created in the last 7 days
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      params.created_at_gte = sevenDaysAgo.toISOString()
     }
+    // If "all-tickets" is selected, no specific filter is applied (shows all tickets)
     
     return params
-  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, ticketView, user?.id])
+  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, selectedTicketView])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -213,7 +217,7 @@ export default function TicketsPage() {
   useEffect(() => {
     const viewTicketId = searchParams?.get('view')
     if (viewTicketId && tickets && tickets.length > 0) {
-      const ticketToView = tickets.find(ticket => ticket.id === viewTicketId)
+      const ticketToView = tickets.find((ticket: any) => ticket.id === viewTicketId)
       if (ticketToView) {
         setSelectedTicket(ticketToView)
         setShowTicketTray(true)
@@ -287,6 +291,7 @@ export default function TicketsPage() {
   const [draggedTicket, setDraggedTicket] = useState<any>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [localTickets, setLocalTickets] = useState<any[]>([])
+  const [preSelectedTicketType, setPreSelectedTicketType] = useState<string | null>(null)
   
   // Use real tickets data from API instead of mock data
 
@@ -322,7 +327,7 @@ export default function TicketsPage() {
   const transformedTickets = useMemo(() => {
     if (!tickets || tickets.length === 0) return []
     
-    return tickets.map((ticket) => {
+    return tickets.map((ticket: any) => {
       // Multi-assignees from GraphQL assignees array
       const assigneesList = (ticket.assignees || []).map((assignee: any) => ({
         id: assignee.id,
@@ -399,7 +404,7 @@ export default function TicketsPage() {
     
     // Apply client-side filtering for list view (API already handles some filtering)
     if (currentView === "list") {
-      return baseTickets.filter(ticket => {
+      return baseTickets.filter((ticket: any) => {
         // Search filter
         if (filterConditions.search) {
           const searchLower = filterConditions.search.toLowerCase()
@@ -462,14 +467,14 @@ export default function TicketsPage() {
 
   const getTicketsByStatus = useCallback(
     (status: string) => {
-      return filteredTickets.filter((ticket) => ticket.status === status)
+      return filteredTickets.filter((ticket: any) => ticket.status === status)
     },
     [filteredTickets],
   )
 
   const getTicketsByType = useCallback(
     (type: string) => {
-      return filteredTickets.filter((ticket) => ticket.type === type)
+      return filteredTickets.filter((ticket: any) => ticket.type === type)
     },
     [filteredTickets],
   )
@@ -482,7 +487,7 @@ export default function TicketsPage() {
 
     const groups: { [key: string]: any[] } = {}
     
-    filteredTickets.forEach(ticket => {
+    filteredTickets.forEach((ticket: any) => {
       let groupKey = "Unassigned"
       
       switch (groupBy) {
@@ -586,7 +591,6 @@ export default function TicketsPage() {
       dateRange: { from: '', to: '' }
     })
     setSearchTerm("")
-    setTicketView("all")
   }, [])
 
   const handleSendAIMessage = useCallback(async () => {
@@ -614,8 +618,8 @@ export default function TicketsPage() {
 
 Current ticket statistics:
 • Total tickets: ${tickets?.length || 0}
-• Open tickets: ${tickets?.filter((t) => t.status === "new").length || 0}
-• High priority: ${tickets?.filter((t) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
+• Open tickets: ${tickets?.filter((t: any) => t.status === "new").length || 0}
+• High priority: ${tickets?.filter((t: any) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
 
 I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
         timestamp: new Date(),
@@ -1048,24 +1052,24 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         {/* Fixed Filter Bar */}
         <div className="flex-shrink-0 flex items-center gap-4 py-2 mb-4 w-full max-w-full overflow-hidden">
           <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-48 h-8 text-sm bg-background">
+            <SelectTrigger className="w-48 h-8 text-sm bg-background border border-border">
               <List className="h-3 w-3 mr-2" />
-              <SelectValue placeholder="Group By: None" />
+              <SelectValue placeholder="Group by: None" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Group By: None</SelectItem>
-              <SelectItem value="status">Group By: Status</SelectItem>
-              <SelectItem value="priority">Group By: Priority</SelectItem>
-              <SelectItem value="type">Group By: Type</SelectItem>
-              <SelectItem value="dueDate">Group By: Due Date</SelectItem>
-              <SelectItem value="reportedBy">Group By: Reported By</SelectItem>
-              <SelectItem value="assignee">Group By: Assignee</SelectItem>
+              <SelectItem value="none">Group by: None</SelectItem>
+              <SelectItem value="status">Group by: Status</SelectItem>
+              <SelectItem value="priority">Group by: Priority</SelectItem>
+              <SelectItem value="type">Group by: Type</SelectItem>
+              <SelectItem value="dueDate">Group by: Due Date</SelectItem>
+              <SelectItem value="reportedBy">Group by: Reported By</SelectItem>
+              <SelectItem value="assignee">Group by: Assignee</SelectItem>
             </SelectContent>
           </Select>
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-8 text-sm bg-background"
+            className="h-8 text-sm bg-background border border-border"
             onClick={() => setShowFilterDialog(true)}
           >
             <Filter className="h-3 w-3 mr-2" />
@@ -1080,7 +1084,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-10 h-8 w-48 text-sm bg-background"
+              className="pl-10 h-8 w-48 text-sm bg-background border border-border"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -1251,7 +1255,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   const getTicketsByGroup = useCallback(
     (groupValue: string) => {
       console.log('🎯 getTicketsByGroup called with groupValue:', groupValue, 'kanbanGroupBy:', kanbanGroupBy)
-      return filteredTickets.filter((ticket) => {
+      return filteredTickets.filter((ticket: any) => {
         switch (kanbanGroupBy) {
           case "status":
             return ticket.status === groupValue
@@ -1421,9 +1425,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                 ) : (
                   (() => {
                     const ticketsInGroup = getTicketsByGroup(column.id)
-                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map(t => ({ id: t.id, title: t.title, type: t.type })))
+                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map((t: any) => ({ id: t.id, title: t.title, type: t.type })))
                     return ticketsInGroup
-                  })().map((ticket) => (
+                  })().map((ticket: any) => (
                   <Card
                     key={ticket.id}
                     className={`hover:shadow-md transition-all cursor-move border border-border 0 ${
@@ -1484,7 +1488,13 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                   variant="ghost"
                   size="sm"
                   className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => router.push('/tickets/create')}
+                  onClick={() => {
+                    console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", column.id)
+                    // Pre-select the ticket type based on the column
+                    setPreSelectedTicketType(column.id)
+                    setSelectedTicket(null) // No ticket = CREATE mode
+                    setShowTicketTray(true)
+                  }}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Add Ticket
@@ -1526,26 +1536,36 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <div className="flex items-start justify-between w-full max-w-full">
               <div className="space-y-1">
                  <div className="flex items-center gap-2">
-                   <h1 className="text-sm font-semibold tracking-tight font-sans text-foreground">
-                     {ticketView === "all" ? "All Tickets" : 
-                      ticketView === "my" ? "My Tickets" : 
-                      "Assigned to Me"}
+                   <h1 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
+                     {isAdmin ? "All Tickets" : "My Tickets"}
                    </h1>
-<span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
-                    {loading ? (
-                      <Skeleton className="h-3 w-10 inline-block align-middle" />
-                    ) : (
-                      <>
-                        {filteredTickets?.length || 0}
-                        {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
-                          <span className="text-muted-foreground"> of {tickets.length}</span>
-                        )}
-                      </>
-                    )}
-                  </span>
+                   <span 
+                     className="inline-flex items-center justify-center px-2 py-0.5 rounded-full font-medium text-foreground bg-muted"
+                     style={{ 
+                       fontSize: '12px', 
+                       fontWeight: 500, 
+                       borderRadius: '12px',
+                       minWidth: '24px',
+                       height: '20px'
+                     }}
+                   >
+                     {loading ? (
+                       <Skeleton className="h-3 w-10 inline-block align-middle" />
+                     ) : (
+                       <>
+                         {filteredTickets?.length || 0}
+                         {tickets && filteredTickets && tickets.length !== filteredTickets.length && (
+                           <span className="text-muted-foreground"> of {tickets.length}</span>
+                         )}
+                       </>
+                     )}
+                   </span>
                  </div>
-                 <p className="text-muted-foreground text-xs font-sans">
-                   Manage all support tickets and track customer issues effortlessly.
+                 <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400 }}>
+                   {isAdmin 
+                     ? "Manage all support tickets across the organization and track customer issues effortlessly."
+                     : "Manage your support tickets and track customer issues effortlessly."
+                   }
                  </p>
               </div>
 
@@ -1603,19 +1623,17 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
                    </button>
                  </div>
                  
-                 <div className="flex items-center gap-3">
-                   <Select value={ticketView} onValueChange={setTicketView}>
-                     <SelectTrigger className="w-28 h-7 text-sm font-inter text-[#717171] border-border">
-                       <SelectValue>
-                         {ticketView === "all" ? "All Tickets" : 
-                          ticketView === "my" ? "My Tickets" : 
-                          "Assigned to Me"}
-                       </SelectValue>
+                 {/* All Tickets Dropdown - Rightmost position */}
+                 <div className="flex items-center">
+                   <Select value={selectedTicketView} onValueChange={setSelectedTicketView}>
+                     <SelectTrigger className="w-[120px] h-8 border-0 bg-transparent text-sm font-medium text-foreground hover:bg-muted/50">
+                       <SelectValue placeholder="All Tickets" />
                      </SelectTrigger>
                      <SelectContent>
-                       <SelectItem value="all">All Tickets</SelectItem>
-                       <SelectItem value="my">My Tickets</SelectItem>
-                       <SelectItem value="assigned">Assigned to Me</SelectItem>
+                       <SelectItem value="all-tickets">All Tickets</SelectItem>
+                       <SelectItem value="my-tickets">My Tickets</SelectItem>
+                       <SelectItem value="assigned-to-me">Assigned to Me</SelectItem>
+                       <SelectItem value="recent">Recent</SelectItem>
                      </SelectContent>
                    </Select>
                  </div>
@@ -1644,7 +1662,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-[#6E72FF]" />
-<span className="font-sans text-sm">Ask AI about Tickets</span>
+<span className="font-sans text-sm">Ask AI about My Tickets</span>
               </div>
               <Button
                 variant="ghost"
@@ -1741,90 +1759,134 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showImportDialog} onOpenChange={(open) => {
-        if (!open) {
-          resetImportState()
-        }
-        setShowImportDialog(open)
-      }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-<Cloud className="h-5 w-5 text-[var(--primary)]" />
-              Import Tickets
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* File Selection */}
-            {!importProgress && !importResult && (
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select file to import</label>
-              <Input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                className="cursor-pointer"
-                    disabled={isImporting}
-              />
-              <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
-            </div>
+       <Dialog open={showImportDialog} onOpenChange={(open) => {
+         if (!open) {
+           resetImportState()
+         }
+         setShowImportDialog(open)
+       }}>
+         <DialogContent className="max-w-[675px] w-[675px] h-[600px] p-0 bg-white rounded-[20px] border-0 shadow-[0px_0px_15px_0px_rgba(19,43,76,0.1)]">
+           {/* Header with Cloud Icon and Close Button */}
+           <div className="flex items-center justify-between p-6 pb-0">
+             <div className="flex items-center gap-3">
+               <Cloud className="h-6 w-6 text-[#2D2F34]" />
+               <h2 className="text-[16px] font-semibold text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}>
+                 Import Tickets
+               </h2>
+             </div>
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={() => setShowImportDialog(false)}
+               className="h-6 w-6 p-0 hover:bg-transparent"
+             >
+               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                 <line x1="18" y1="6" x2="6" y2="18"></line>
+                 <line x1="6" y1="6" x2="18" y2="18"></line>
+               </svg>
+             </Button>
+           </div>
 
-                <div className="bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• <strong>Required columns:</strong> Title, Priority, Type</li>
-                    <li>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</li>
-                    <li>• <strong>Priority values:</strong> low, medium, high, urgent, critical</li>
-                    <li>• <strong>Type values:</strong> incident, request, problem, change, general_query</li>
-                    <li>• <strong>Status values:</strong> new, open, in_progress, pending, resolved, closed</li>
-                    <li>• <strong>Maximum file size:</strong> 10MB</li>
-                    <li>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</li>
-              </ul>
-            </div>
+           <div className="px-6 pb-6 flex-1">
+             {/* File Selection */}
+             {!importProgress && !importResult && (
+               <div className="space-y-4">
+                 <div>
+                   <label className="text-[16px] font-semibold text-[#202020] mb-4 block" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}>
+                     Select file to import
+                   </label>
+                   <div className="border-2 border-dashed border-[#A0A8C2] rounded-[10px] p-6 text-center" style={{ borderStyle: 'dashed' }}>
+                     <div className="flex flex-col items-center gap-4">
+                       <Cloud className="h-6 w-6 text-[#2D2F34]" />
+                       <div className="space-y-2">
+                         <Button 
+                           className="bg-[#3B43D6] hover:bg-[#3B43D6]/90 text-white border-0 rounded-[5px] px-4 py-2 h-9"
+                           style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                           onClick={() => document.getElementById('file-input')?.click()}
+                         >
+                           Choose File
+                         </Button>
+                         <Input
+                           id="file-input"
+                           type="file"
+                           accept=".csv,.xlsx,.xls"
+                           onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                           className="hidden"
+                           disabled={isImporting}
+                         />
+                       </div>
+                       <p className="text-[12px] text-[#595959]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                         Supported formats: CSV, Excel (.xlsx, .xls)
+                       </p>
+                     </div>
+                   </div>
+                 </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                Cancel
-              </Button>
-                  <Button 
-                    onClick={handleImportTickets} 
-                    disabled={!importFile || isImporting}
-                    className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
-                  >
-                Import Tickets
-              </Button>
-            </div>
-              </div>
-            )}
+                 <div className="bg-[#F3F4FF] p-4 rounded-[5px]">
+                   <h4 className="text-[12px] font-medium text-[#717171] mb-2" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                     Import Requirements:
+                   </h4>
+                   <div className="text-[12px] text-[#2D2F34] leading-8" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '2em' }}>
+                     <div>• <strong>Required columns:</strong> Title, Priority, Type</div>
+                     <div>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</div>
+                     <div>• <strong>Priority values:</strong> low, medium, high, urgent, critical</div>
+                     <div>• <strong>Type values:</strong> incident, request, problem, change, general-query</div>
+                     <div>• <strong>Status values:</strong> new, open, in-progress, pending, resolved, closed</div>
+                     <div>• <strong>Maximum file size:</strong> 10MB</div>
+                     <div>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</div>
+                   </div>
+                 </div>
+
+                 <div className="flex justify-end gap-4 pt-4">
+                   <Button 
+                     variant="outline" 
+                     onClick={() => setShowImportDialog(false)} 
+                     className="border border-black rounded-[5px] px-4 py-2 h-9"
+                     style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
+                   >
+                     Cancel
+                   </Button>
+                   <Button 
+                     onClick={handleImportTickets} 
+                     disabled={!importFile || isImporting}
+                     className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
+                     style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                   >
+                     Import Tickets
+                   </Button>
+                 </div>
+               </div>
+             )}
 
             {/* Progress */}
             {importProgress && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{importProgress.message}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[14px] font-medium text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                    {importProgress.message}
+                  </span>
+                  <span className="text-[14px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
                     {importProgress.current}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-[#E6E6E6] rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
                       importProgress.status === 'error' ? 'bg-red-500' : 
-                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6a5cff]'
+                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6E72FF]'
                     }`}
                     style={{ width: `${importProgress.current}%` }}
                   />
                 </div>
                 {importProgress.status === 'parsing' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
+                  <div className="flex items-center gap-2 text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                    <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Parsing file...
                   </div>
                 )}
                 {importProgress.status === 'importing' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
+                  <div className="flex items-center gap-2 text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                    <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Creating tickets...
                   </div>
                 )}
@@ -1834,68 +1896,70 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
             {/* Results */}
             {importResult && (
               <div className="space-y-4">
-                <div className={`p-4 rounded-lg ${
-                  importResult.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'
+                <div className={`p-4 rounded-[5px] ${
+                  importResult.success ? 'bg-green-50' : 'bg-red-50'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`h-2 w-2 rounded-full ${
                       importResult.success ? 'bg-green-500' : 'bg-red-500'
                     }`} />
-                    <h4 className={`font-medium text-sm ${
-                      importResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
-                    }`}>
+                    <h4 className={`text-[14px] font-medium ${
+                      importResult.success ? 'text-green-800' : 'text-red-800'
+                    }`} style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
                       {importResult.success ? 'Import Successful!' : 'Import Completed with Errors'}
                     </h4>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>• Total rows processed: {importResult.totalRows}</p>
-                    <p>• Valid tickets found: {importResult.validRows}</p>
-                    <p>• Successfully imported: {importResult.successfullyImportedCount}</p>
-                    <p>• Failed to import: {importResult.failedImportCount}</p>
+                  <div className="text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                    <div>• Total rows processed: {importResult.totalRows}</div>
+                    <div>• Valid tickets found: {importResult.validRows}</div>
+                    <div>• Successfully imported: {importResult.successfullyImportedCount}</div>
+                    <div>• Failed to import: {importResult.failedImportCount}</div>
                   </div>
                 </div>
 
                 {importResult.errors.length > 0 && (
                   <div className="space-y-2">
-                    <h5 className="text-sm font-medium text-red-800 dark:text-red-200">Errors:</h5>
-                    <div className="max-h-32 overflow-y-auto bg-red-50 dark:bg-red-950/20 p-3 rounded-lg">
-                      <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
+                    <h5 className="text-[12px] font-medium text-red-800" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>Errors:</h5>
+                    <div className="max-h-32 overflow-y-auto bg-red-50 p-3 rounded-[5px]">
+                      <div className="text-[11px] text-red-700 space-y-1" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
                         {importResult.parsingErrors.length > 0 && (
-                          <li className="font-medium">Parsing Errors:</li>
+                          <div className="font-medium">Parsing Errors:</div>
                         )}
                         {importResult.parsingErrors.slice(0, 5).map((error, index) => (
-                          <li key={`parse-${index}`}>• {error}</li>
+                          <div key={`parse-${index}`}>• {error}</div>
                         ))}
                         
                         {importResult.validationErrors.length > 0 && (
-                          <li className="font-medium mt-2">Validation Errors:</li>
+                          <div className="font-medium mt-2">Validation Errors:</div>
                         )}
                         {importResult.validationErrors.slice(0, 5).map((error, index) => (
-                          <li key={`validation-${index}`}>• {error}</li>
+                          <div key={`validation-${index}`}>• {error}</div>
                         ))}
                         
                         {importResult.importErrors.length > 0 && (
-                          <li className="font-medium mt-2">Import Errors:</li>
+                          <div className="font-medium mt-2">Import Errors:</div>
                         )}
                         {importResult.importErrors.slice(0, 5).map((error, index) => (
-                          <li key={`import-${index}`}>• {error}</li>
+                          <div key={`import-${index}`}>• {error}</div>
                         ))}
                         
                         {importResult.errors.length > 15 && (
-                          <li className="mt-2">• ... and {importResult.errors.length - 15} more errors</li>
+                          <div className="mt-2">• ... and {importResult.errors.length - 15} more errors</div>
                         )}
-                      </ul>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-4 pt-4">
                   <Button 
                     variant="outline" 
                     onClick={() => {
                       resetImportState()
                       setShowImportDialog(false)
                     }}
+                    className="border border-black rounded-[5px] px-4 py-2 h-9"
+                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
                   >
                     Close
                   </Button>
@@ -1905,7 +1969,8 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                         resetImportState()
                         setShowImportDialog(false)
                       }}
-                      className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+                      className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
+                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
                     >
                       View Tickets
                     </Button>
@@ -1921,7 +1986,7 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Filter Tickets</DialogTitle>
+            <DialogTitle>Filter My Tickets</DialogTitle>
           </DialogHeader>
            <div className="space-y-6">
              {/* Type Filter */}
@@ -2062,8 +2127,10 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
           onClose={() => {
             setShowTicketTray(false)
             setSelectedTicket(null)
+            setPreSelectedTicketType(null)
           }}
           ticket={selectedTicket}
+          preSelectedType={preSelectedTicketType}
         />
       </Suspense>
 

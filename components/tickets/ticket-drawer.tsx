@@ -54,9 +54,10 @@ interface TicketDrawerProps {
   isOpen: boolean
   onClose: () => void
   ticket?: any // expects at least { dbId: string }
+  preSelectedType?: string | null // Pre-selected ticket type from Kanban column
 }
 
-export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerProps) {
+export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType }: TicketDrawerProps) {
   const ticketId = ticket?.dbId || ""
   const isCreateMode = !ticketId // CREATE mode when no ticket ID
   
@@ -137,7 +138,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       setForm({
         title: "",
         description: "",
-        type: "request",
+        type: preSelectedType || "request", // Use pre-selected type if available
         priority: "medium",
         status: "new",
         impact: "medium",
@@ -176,7 +177,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket }: TicketDrawerPr
       setDraftChecklist([])
       setIsInternalComment(false)
     }
-  }, [dbTicket, isCreateMode, ticketId])
+  }, [dbTicket, isCreateMode, ticketId, preSelectedType])
 
   const requesterName = useMemo(() => {
     if (!dbTicket?.requester) return ""
