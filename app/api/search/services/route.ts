@@ -34,22 +34,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     
     console.log('🔍 Search Services API - Searching for:', { query, limit })
-    
-    if (query.length < 1) {
-      return NextResponse.json({
-        services: [],
-        suggestions: [
-          'IT Services',
-          'HR Services',
-          'Hardware Request',
-          'Software Installation',
-          'Access Request'
-        ]
-      })
-    }
 
     // Search services
-    const { data: services, error } = await supabase
+    let serviceQuery = supabase
       .from('services')
       .select(`
         id,
@@ -65,8 +52,14 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('organization_id', profile.organization_id)
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%,short_description.ilike.%${query}%`)
       .neq('status', 'draft')
+    
+    // Only apply search filter if query is provided
+    if (query) {
+      serviceQuery = serviceQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,short_description.ilike.%${query}%`)
+    }
+    
+    const { data: services, error } = await serviceQuery
       .order('name', { ascending: true })
       .limit(limit)
 

@@ -211,7 +211,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   }
 
   const debouncedSearch = useDebounce(async (term: string, typeFilter?: string) => {
-    if (!term.trim()) {
+    // Allow empty term if type filter is specified (to show all of that type)
+    if (!term.trim() && !typeFilter) {
       setResults([])
       setIsSearching(false)
       return

@@ -146,7 +146,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
   }
 
   const handleSearch = async (term?: string) => {
-    const searchQuery = term || searchTerm
+    const searchQuery = term !== undefined ? term : searchTerm
+    // Allow search with empty query if a type filter is active
     if (searchQuery.trim() || activeType !== 'all') {
       setHasSearched(true)
       setSuggestions([]) // Clear suggestions when searching
@@ -160,7 +161,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
       }
       
       // Build search term with keywords only (filters handled separately)
-      const finalSearchTerm = keywords || searchQuery
+      // If empty query, pass empty string to get ALL items of that type
+      const finalSearchTerm = keywords || searchQuery || ''
       
       // Perform search with parsed query and type filter
       await performSearch(finalSearchTerm, activeType !== 'all' ? activeType : undefined)
@@ -340,6 +342,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
                   const newFilters = { ...filters }
                   delete newFilters.type
                   setFilters(newFilters)
+                  // Auto-search when clicking filter
+                  handleSearch(searchTerm || '')
                 }}
               >
                 All
@@ -348,7 +352,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
                 variant={activeType === 'ticket' ? 'default' : 'ghost'}
                 size="sm"
                 className="h-8 text-xs"
-                onClick={() => setActiveType('ticket')}
+                onClick={() => {
+                  setActiveType('ticket')
+                  // Auto-search when clicking filter
+                  handleSearch(searchTerm || '')
+                }}
               >
                 <Ticket className="h-3 w-3 mr-1" />
                 Tickets
@@ -357,7 +365,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
                 variant={activeType === 'user' ? 'default' : 'ghost'}
                 size="sm"
                 className="h-8 text-xs"
-                onClick={() => setActiveType('user')}
+                onClick={() => {
+                  setActiveType('user')
+                  // Auto-search when clicking filter
+                  handleSearch(searchTerm || '')
+                }}
               >
                 <User className="h-3 w-3 mr-1" />
                 Users
@@ -366,7 +378,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
                 variant={activeType === 'service' ? 'default' : 'ghost'}
                 size="sm"
                 className="h-8 text-xs"
-                onClick={() => setActiveType('service')}
+                onClick={() => {
+                  setActiveType('service')
+                  // Auto-search when clicking filter
+                  handleSearch(searchTerm || '')
+                }}
               >
                 <SettingsIcon className="h-3 w-3 mr-1" />
                 Services
@@ -375,7 +391,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
                 variant={activeType === 'asset' ? 'default' : 'ghost'}
                 size="sm"
                 className="h-8 text-xs"
-                onClick={() => setActiveType('asset')}
+                onClick={() => {
+                  setActiveType('asset')
+                  // Auto-search when clicking filter
+                  handleSearch(searchTerm || '')
+                }}
               >
                 <HardDrive className="h-3 w-3 mr-1" />
                 Assets

@@ -34,22 +34,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     
     console.log('🔍 Search Assets API - Searching for:', { query, limit })
-    
-    if (query.length < 1) {
-      return NextResponse.json({
-        assets: [],
-        suggestions: [
-          'Laptops',
-          'Servers',
-          'Printers',
-          'Software Licenses',
-          'Network Equipment'
-        ]
-      })
-    }
 
     // Search assets with asset type information
-    const { data: assets, error } = await supabase
+    let assetQuery = supabase
       .from('assets')
       .select(`
         id,
@@ -74,7 +61,13 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('organization_id', profile.organization_id)
-      .or(`name.ilike.%${query}%,asset_tag.ilike.%${query}%,model.ilike.%${query}%,serial_number.ilike.%${query}%`)
+    
+    // Only apply search filter if query is provided
+    if (query) {
+      assetQuery = assetQuery.or(`name.ilike.%${query}%,asset_tag.ilike.%${query}%,model.ilike.%${query}%,serial_number.ilike.%${query}%`)
+    }
+    
+    const { data: assets, error } = await assetQuery
       .order('name', { ascending: true })
       .limit(limit)
 
