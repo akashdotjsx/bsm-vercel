@@ -35,18 +35,7 @@ export async function GET(request: NextRequest) {
     
     console.log('🔍 Search Tickets API - Searching for:', { query, limit })
     
-    if (query.length < 2) {
-      return NextResponse.json({
-        tickets: [],
-        suggestions: [
-          'laptop request',
-          'password reset',
-          'VPN access',
-          'software install',
-          'hardware issue'
-        ]
-      })
-    }
+    // Allow empty query to return all tickets (for filter-only searches)
 
     // supabase already created above
     
@@ -88,14 +77,14 @@ export async function GET(request: NextRequest) {
       `)
       .eq('organization_id', profile.organization_id)
     
-    // Build OR conditions array
-    const orConditions = [
+    // Build OR conditions array (only if query is provided)
+    const orConditions = query ? [
       `title.ilike.%${query}%`,
       `description.ilike.%${query}%`,
       `ticket_number.ilike.%${query}%`,
       `subcategory.ilike.%${query}%`,
       `category.ilike.%${query}%`
-    ]
+    ] : []
     
     // Add enum matches if found
     if (priorityMatch) orConditions.push(`priority.eq.${priorityMatch}`)
@@ -104,8 +93,13 @@ export async function GET(request: NextRequest) {
     if (urgencyMatch) orConditions.push(`urgency.eq.${urgencyMatch}`)
     if (impactMatch) orConditions.push(`impact.eq.${impactMatch}`)
     
-    const { data: tickets, error } = await ticketQuery
-      .or(orConditions.join(','))
+    // Apply OR conditions only if query exists, otherwise return all
+    let finalQuery = ticketQuery
+    if (orConditions.length > 0) {
+      finalQuery = finalQuery.or(orConditions.join(','))
+    }
+    
+    const { data: tickets, error } = await finalQuery
       .order('created_at', { ascending: false })
       .limit(limit)
 

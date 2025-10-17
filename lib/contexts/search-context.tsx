@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { useDebounce } from "@/lib/utils/performance"
+import { createClient } from "@/lib/supabase/client"
 
 interface SearchResult {
   id: string
@@ -22,7 +23,7 @@ interface SearchContextType {
   isSearching: boolean
   recentSearches: string[]
   suggestions: string[]
-  performSearch: (term: string) => Promise<void>
+  performSearch: (term: string, typeFilter?: string) => Promise<void>
   clearSearch: () => void
   addToRecent: (term: string) => void
 }
@@ -209,8 +210,9 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     return Math.min(score, 1.0) // Cap at 1.0
   }
 
-  const debouncedSearch = useDebounce(async (term: string) => {
-    if (!term.trim()) {
+  const debouncedSearch = useDebounce(async (term: string, typeFilter?: string) => {
+    // Allow empty term if type filter is specified (to show all of that type)
+    if (!term.trim() && !typeFilter) {
       setResults([])
       setIsSearching(false)
       return
@@ -219,35 +221,70 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     setIsSearching(true)
 
     try {
-      // Search both tickets and users in parallel
-      const responses = await Promise.allSettled([
-        fetch(`/api/search/tickets?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json()),
-        fetch(`/api/search/users?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json())
-      ])
-
-      const [ticketsResponse, usersResponse] = responses
       const allResults: SearchResult[] = []
-
-      // Add ticket results
-      if (ticketsResponse.status === 'fulfilled' && ticketsResponse.value?.tickets) {
-        allResults.push(...ticketsResponse.value.tickets)
-      }
-
-      // Add user results
-      if (usersResponse.status === 'fulfilled' && usersResponse.value?.users) {
-        allResults.push(...usersResponse.value.users)
-      }
-
-      // Sort by relevance and type priority
-      allResults.sort((a, b) => {
-        // Primary sort by relevance
-        if (Math.abs(a.relevance - b.relevance) > 0.1) {
-          return b.relevance - a.relevance
+      
+      // Use REST API endpoints instead of GraphQL for reliability
+      if (typeFilter && typeFilter !== 'all') {
+        // Search specific type
+        if (typeFilter === 'ticket') {
+          const response = await fetch(`/api/search/tickets?q=${encodeURIComponent(term)}&limit=50`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.tickets) {
+              allResults.push(...data.tickets)
+            }
+          }
+        } else if (typeFilter === 'user') {
+          const response = await fetch(`/api/search/users?q=${encodeURIComponent(term)}&limit=50`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.users) {
+              allResults.push(...data.users)
+            }
+          }
+        } else if (typeFilter === 'service') {
+          const response = await fetch(`/api/search/services?q=${encodeURIComponent(term)}&limit=50`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.services) {
+              allResults.push(...data.services)
+            }
+          }
+        } else if (typeFilter === 'asset') {
+          const response = await fetch(`/api/search/assets?q=${encodeURIComponent(term)}&limit=50`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.assets) {
+              allResults.push(...data.assets)
+            }
+          }
         }
-        // Secondary sort by type priority
-        const typePriority = { ticket: 1, user: 2, knowledge: 3, service: 4, asset: 5, workflow: 6, account: 7 }
-        return (typePriority[a.type] || 8) - (typePriority[b.type] || 8)
-      })
+      } else {
+        // Search all types in parallel using REST APIs
+        const [ticketRes, userRes, serviceRes, assetRes] = await Promise.allSettled([
+          fetch(`/api/search/tickets?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json()),
+          fetch(`/api/search/users?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json()),
+          fetch(`/api/search/services?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json()),
+          fetch(`/api/search/assets?q=${encodeURIComponent(term)}&limit=25`).then(r => r.json())
+        ])
+        
+        // Collect all results
+        if (ticketRes.status === 'fulfilled' && ticketRes.value?.tickets) {
+          allResults.push(...ticketRes.value.tickets)
+        }
+        if (userRes.status === 'fulfilled' && userRes.value?.users) {
+          allResults.push(...userRes.value.users)
+        }
+        if (serviceRes.status === 'fulfilled' && serviceRes.value?.services) {
+          allResults.push(...serviceRes.value.services)
+        }
+        if (assetRes.status === 'fulfilled' && assetRes.value?.assets) {
+          allResults.push(...assetRes.value.assets)
+        }
+      }
+
+      // Sort by relevance
+      allResults.sort((a, b) => b.relevance - a.relevance)
 
       setResults(allResults.slice(0, 50))
     } catch (error) {
@@ -256,12 +293,39 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsSearching(false)
     }
-  }, 200) // Reduced debounce for faster response
+  }, 300)
+  
+  // Calculate match relevance (prioritize exact > starts with > contains)
+  const calculateMatchRelevance = (searchTerm: string, title: string, description: string): number => {
+    const term = searchTerm.toLowerCase()
+    const titleLower = (title || '').toLowerCase()
+    const descLower = (description || '').toLowerCase()
+    
+    let score = 0
+    
+    // Exact match (highest priority)
+    if (titleLower === term) score += 1.0
+    else if (descLower === term) score += 0.8
+    
+    // Starts with match
+    else if (titleLower.startsWith(term)) score += 0.7
+    else if (descLower.startsWith(term)) score += 0.5
+    
+    // Contains match (substring)
+    else if (titleLower.includes(term)) score += 0.5
+    else if (descLower.includes(term)) score += 0.3
+    
+    // Word boundary match bonus
+    const words = titleLower.split(/\s+/)
+    if (words.some(w => w.startsWith(term))) score += 0.2
+    
+    return Math.min(score, 1.0)
+  }
 
   const performSearch = useCallback(
-    async (term: string) => {
+    async (term: string, typeFilter?: string) => {
       setSearchTerm(term)
-      await debouncedSearch(term)
+      await debouncedSearch(term, typeFilter)
     },
     [debouncedSearch],
   )
@@ -272,33 +336,53 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     setIsSearching(false)
   }, [])
 
-  const addToRecent = useCallback((term: string) => {
+  const addToRecent = useCallback(async (term: string) => {
     if (!term.trim()) return
 
     setRecentSearches((prev) => {
       const filtered = prev.filter((item) => item !== term)
       return [term, ...filtered].slice(0, 10) // Keep last 10 searches
     })
-  }, [])
+    
+    // Save to database
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // Get organization_id from user profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .single()
+        
+        if (profile?.organization_id) {
+          await supabase.from('search_suggestions').insert({
+            organization_id: profile.organization_id,
+            user_id: user.id,
+            query: term,
+            search_type: 'all',
+            result_count: results.length
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save search to database:', error)
+    }
+  }, [results.length])
 
-  // Generate suggestions based on search term
+  // Generate suggestions based on search term (top 3 only)
   useEffect(() => {
     if (searchTerm.length > 0) {
       const termLower = searchTerm.toLowerCase()
-      const newSuggestions = [
-        ...new Set([
-          ...mockSearchData
-            .filter(
-              (item) =>
-                item.title.toLowerCase().includes(termLower) || item.category?.toLowerCase().includes(termLower),
-            )
-            .map((item) => item.title)
-            .slice(0, 5),
-          `Search for "${searchTerm}" in tickets`,
-          `Search for "${searchTerm}" in knowledge base`,
-          `Search for "${searchTerm}" in users`,
-        ]),
-      ].slice(0, 8)
+      const newSuggestions = mockSearchData
+        .filter(
+          (item) =>
+            item.title.toLowerCase().includes(termLower) || item.category?.toLowerCase().includes(termLower),
+        )
+        .map((item) => item.title)
+        .slice(0, 3) // Only top 3 suggestions
 
       setSuggestions(newSuggestions)
     } else {
@@ -306,22 +390,35 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     }
   }, [searchTerm])
 
-  // Load recent searches from localStorage
+  // Load recent searches from database
   useEffect(() => {
-    const saved = localStorage.getItem("kroolo-recent-searches")
-    if (saved) {
+    const loadRecentSearches = async () => {
       try {
-        setRecentSearches(JSON.parse(saved))
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          const { data, error } = await supabase
+            .from('search_suggestions')
+            .select('query')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(10)
+          
+          if (data && !error) {
+            // Get unique search queries
+            const uniqueQueries = [...new Set(data.map(item => item.query))]
+            setRecentSearches(uniqueQueries.slice(0, 10))
+          }
+        }
       } catch (e) {
         console.error("Failed to load recent searches:", e)
       }
     }
+    
+    loadRecentSearches()
   }, [])
 
-  // Save recent searches to localStorage
-  useEffect(() => {
-    localStorage.setItem("kroolo-recent-searches", JSON.stringify(recentSearches))
-  }, [recentSearches])
 
   return (
     <SearchContext.Provider

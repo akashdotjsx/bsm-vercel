@@ -34,24 +34,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     
     console.log('🔍 Search Users API - Searching for:', { query, limit })
-    
-    if (query.length < 2) {
-      return NextResponse.json({
-        users: [],
-        suggestions: [
-          'John Doe',
-          'Admin',
-          'Manager',
-          'Developer',
-          'Support'
-        ]
-      })
-    }
 
     // supabase already created above
     
     // Search in profiles/users
-    const { data: users, error } = await supabase
+    let userQuery = supabase
       .from('profiles')
       .select(`
         id,
@@ -71,7 +58,13 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('organization_id', profile.organization_id)
-      .or(`display_name.ilike.%${query}%,email.ilike.%${query}%,department.ilike.%${query}%`)
+    
+    // Only apply search filter if query is provided
+    if (query) {
+      userQuery = userQuery.or(`display_name.ilike.%${query}%,email.ilike.%${query}%,department.ilike.%${query}%`)
+    }
+    
+    const { data: users, error } = await userQuery
       .order('display_name', { ascending: true })
       .limit(limit)
 
