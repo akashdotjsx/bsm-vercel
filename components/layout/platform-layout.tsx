@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { useState } from "react"
+import { SidebarProvider, useSidebar } from "@/lib/contexts/sidebar-context"
+import { cn } from "@/lib/utils"
 
 interface PlatformLayoutProps {
   children: React.ReactNode
@@ -20,10 +22,10 @@ interface PlatformLayoutProps {
   description?: string
 }
 
-export function PlatformLayout({ children, breadcrumb, title, description }: PlatformLayoutProps) {
+function PlatformContent({ children, breadcrumb, title, description }: PlatformLayoutProps) {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
+  const { isCollapsed } = useSidebar()
 
   return (
     <div className="h-full bg-background flex flex-col">
@@ -32,7 +34,10 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
       <div className="flex flex-1 pt-12">
         {!isMobile && (
           <div 
-            className="w-64 border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar overflow-hidden"
+            className={cn(
+              "border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar overflow-hidden transition-all duration-300",
+              isCollapsed ? "w-16" : "w-64"
+            )}
           >
             <SidebarNavigation />
           </div>
@@ -51,7 +56,10 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
           </Sheet>
         )}
 
-        <div className={`flex-1 flex flex-col ${!isMobile ? "ml-64" : ""}`} style={{ marginLeft: !isMobile ? '16rem' : '0' }}>
+        <div className={cn(
+          "flex-1 flex flex-col transition-all duration-300",
+          !isMobile && (isCollapsed ? "ml-16" : "ml-64")
+        )}>
           {breadcrumb && (
             <div className="bg-muted border-b border-border px-4 md:px-6 py-2">
               <div className="flex items-center space-x-2 text-xs md:text-sm text-muted-foreground">
@@ -83,5 +91,13 @@ export function PlatformLayout({ children, breadcrumb, title, description }: Pla
         </div>
       </div>
     </div>
+  )
+}
+
+export function PlatformLayout(props: PlatformLayoutProps) {
+  return (
+    <SidebarProvider>
+      <PlatformContent {...props} />
+    </SidebarProvider>
   )
 }
