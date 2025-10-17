@@ -109,8 +109,7 @@ const formatDate = (dateString: string) => {
 
 
 export default function TicketsPage() {
-  const { user } = useStore()
-  const { organization, isAdmin } = useAuth()
+  const { user, organization, isAdmin } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
   
