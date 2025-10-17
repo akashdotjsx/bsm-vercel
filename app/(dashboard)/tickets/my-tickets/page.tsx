@@ -1527,12 +1527,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                      My Tickets
                    </h1>
                    <span 
-                     className="inline-flex items-center justify-center px-2 py-0.5 rounded-full font-medium"
+                     className="inline-flex items-center justify-center px-2 py-0.5 rounded-full font-medium text-foreground bg-muted"
                      style={{ 
                        fontSize: '12px', 
                        fontWeight: 500, 
-                       color: '#030202',
-                       backgroundColor: '#F3F4F6',
                        borderRadius: '12px',
                        minWidth: '24px',
                        height: '20px'
@@ -1550,7 +1548,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                      )}
                    </span>
                  </div>
-                 <p className="text-xs font-sans" style={{ fontSize: '12px', fontWeight: 400, color: '#6A707C' }}>
+                 <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400 }}>
                    Manage your support tickets and track customer issues effortlessly.
                  </p>
               </div>
