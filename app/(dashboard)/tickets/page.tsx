@@ -56,6 +56,7 @@ import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
 import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import { useDebounce } from "@/hooks/use-debounce"
+import { createClient } from "@/lib/supabase/client"
 
 
 const TicketDrawer = dynamic(
@@ -751,32 +752,158 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
       let successCount = 0
       const importErrors: string[] = []
+      
+      // Initialize Supabase client for profile lookup
+      const supabase = createClient()
+      
+      // Pre-fetch all profiles for assignee lookup
+      let profilesMap: Record<string, string> = {}
+      try {
+        const profilesResult = await supabase
+          .from('profiles')
+          .select('id, display_name, first_name, last_name, email')
+        
+        if (profilesResult.data) {
+          profilesMap = profilesResult.data.reduce((map, profile) => {
+            // Map by display_name (primary)
+            if (profile.display_name) {
+              map[profile.display_name.toLowerCase().trim()] = profile.id
+            }
+            // Also map by "first_name last_name" format
+            if (profile.first_name && profile.last_name) {
+              map[`${profile.first_name} ${profile.last_name}`.toLowerCase().trim()] = profile.id
+            }
+            // Also map by email
+            if (profile.email) {
+              map[profile.email.toLowerCase().trim()] = profile.id
+            }
+            return map
+          }, {} as Record<string, string>)
+        }
+        
+        console.log('👥 Loaded assignee profiles:', Object.keys(profilesMap).length)
+      } catch (profileError) {
+        console.warn('⚠️ Could not load profiles for assignee lookup:', profileError)
+      }
 
       for (let i = 0; i < parseResult.tickets.length; i++) {
         const ticket = parseResult.tickets[i]
         
         try {
           // Map the ticket data to match the API expectations
-          const ticketData = {
+          const customFields: any = {}
+          
+          // Store estimated_hours in custom_fields if available
+          if (ticket.estimated_hours) {
+            customFields.estimated_hours = ticket.estimated_hours
+          }
+          
+          // Store reporter information in custom_fields if available
+          if (ticket.reporter) {
+            customFields.reporter = ticket.reporter
+          }
+          
+          // Initialize meta tags for storing extra data
+          const metaTags: string[] = []
+          
+          // Look up assignee ID if assignee name is provided
+          let assigneeId = null
+          let assigneeIds: string[] = []
+          
+          if (ticket.assignee && profilesMap) {
+            const assigneeName = ticket.assignee.toLowerCase().trim()
+            const foundAssigneeId = profilesMap[assigneeName]
+            
+            if (foundAssigneeId) {
+              assigneeId = foundAssigneeId
+              assigneeIds = [foundAssigneeId]
+              console.log(`🎯 Assignee "${ticket.assignee}" mapped to ${foundAssigneeId}`)
+            } else {
+              console.log(`⚠️ Assignee "${ticket.assignee}" not found in profiles`)
+              // Add as metadata tag for reference
+              metaTags.push(`assignee-name:${ticket.assignee}`)
+            }
+          }
+
+          const ticketData: any = {
             title: ticket.title,
             description: ticket.description || '',
             priority: ticket.priority,
             type: ticket.type,
-            // Don't include assignee_id since we only have names, not UUIDs
-            // The system will auto-assign or leave unassigned
-            due_date: ticket.due_date || undefined,
-            tags: [], // Provide empty array for tags
+            status: ticket.status || 'new',
+            impact: 'medium', // Default value
+            urgency: 'medium', // Default value
+            tags: ticket.tags || [],
+            // Required fields
+            requester_id: user?.id,
+            organization_id: organization?.id,
+            // Assignee fields - now with actual UUID lookup
+            assignee_id: assigneeId,
+            assignee_ids: assigneeIds,
           }
           
-          // Remove undefined values to avoid API issues
+          // Add optional fields if they exist
+          if (ticket.category) {
+            ticketData.category = ticket.category
+          }
+          if (ticket.due_date) {
+            // Format due_date as ISO timestamp like the drawer does
+            ticketData.due_date = new Date(ticket.due_date).toISOString()
+          }
+          
+          // Add additional standard database fields
+          if (ticket.subcategory) {
+            ticketData.subcategory = ticket.subcategory
+          }
+          
+          // Add additional metadata to tags
+          if (ticket.estimated_hours) {
+            metaTags.push(`hours:${ticket.estimated_hours}`)
+          }
+          if (ticket.reporter) {
+            metaTags.push(`reporter:${ticket.reporter}`)
+          }
+          
+          // Merge meta tags with regular tags
+          if (metaTags.length > 0) {
+            ticketData.tags = [...(ticketData.tags || []), ...metaTags]
+          }
+          
+          // TEMPORARILY DISABLED: custom_fields causing GraphQL JSON serialization issues
+          // The GraphQL schema might not be properly configured for JSONB
+          // TODO: Investigate GraphQL JSONB scalar type configuration
+          console.log('⚠️ Skipping custom_fields due to GraphQL JSONB issues:', customFields)
+          
+          // Clean up data similar to how the drawer does it
+          const cleanedData: any = {}
           Object.keys(ticketData).forEach(key => {
-            if (ticketData[key as keyof typeof ticketData] === undefined) {
-              delete ticketData[key as keyof typeof ticketData]
+            const value = ticketData[key]
+            // Only include non-empty values (skip empty strings, null, undefined)
+            if (value !== '' && value !== null && value !== undefined) {
+              cleanedData[key] = value
+            } else if (key === 'assignee_id' && value === null) {
+              // Allow null for assignee_id (no assignee)
+              cleanedData[key] = null
+            } else if (key === 'tags' && Array.isArray(value)) {
+              // Include tags array (empty arrays are OK for tags)
+              cleanedData[key] = value.length > 0 ? value : null
+            } else if (key === 'assignee_ids' && Array.isArray(value)) {
+              // Re-enabled: Include assignee_ids array (empty arrays should work like tags)
+              cleanedData[key] = value
             }
           })
           
-          console.log(`📝 Creating ticket ${i + 1}/${parseResult.tickets.length}:`, ticketData.title)
-          await createTicket(ticketData)
+          console.log(`📝 Creating ticket ${i + 1}/${parseResult.tickets.length}:`, {
+            title: cleanedData.title,
+            type: cleanedData.type,
+            priority: cleanedData.priority,
+            status: cleanedData.status,
+            tags: cleanedData.tags,
+            custom_fields: cleanedData.custom_fields,
+            due_date: cleanedData.due_date
+          })
+          
+          await createTicket(cleanedData)
           successCount++
           console.log(`✅ Ticket ${i + 1} created successfully`)
           
