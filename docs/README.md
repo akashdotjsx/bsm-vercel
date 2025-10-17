@@ -1,5 +1,75 @@
 # Kroolo BSM Documentation
 
+Welcome to the Kroolo Business Service Management documentation.
+
+## 📚 Documentation Structure
+
+### Knowledge Base
+- **[Article Interactions Enhancement](./knowledge-base/ARTICLE_INTERACTIONS_ENHANCEMENT.md)** - Complete guide to article bookmarks, comments, voting, and revision history
+
+### Database
+- **[Article Interactions Migration](./database/README_ARTICLE_INTERACTIONS.md)** - Database migration guide for article interaction tables
+
+### Features  
+- **[Toast System](./TOAST_SYSTEM.md)** - Centralized toast notification system
+- **[Workflow System](./WORKFLOW_SYSTEM.md)** - Workflow automation documentation
+- **[Navbar Tooltips](./NAVBAR_TOOLTIPS.md)** - Navigation tooltip implementation
+
+### Fixes
+- **[Team Members Loading Fix](./fixes/TEAM_MEMBERS_LOADING_FIX.md)** - Resolution for team member loading issues
+
+### Testing
+- **[Tickets CRUD Test Report](./TICKETS_CRUD_TEST_REPORT.md)** - Comprehensive ticket testing report
+- **[Toast Testing Checklist](./TOAST_TESTING_CHECKLIST.md)** - Toast notification testing guide
+
+### Development
+- Located in `docs/development/` - Contains migration scripts and development utilities
+
+### Archived
+- Located in `docs/archived/` - Old documentation for reference
+
+## 🚀 Quick Start
+
+1. **Database Setup**: See database migration guides
+2. **Feature Documentation**: Check feature-specific docs
+3. **Testing**: Use testing checklists before deployments
+
+## 📖 Key Documents
+
+### For Developers
+- [WARP.md](../WARP.md) - Development commands and architecture overview
+- Article Interactions Enhancement - Latest feature implementation
+
+### For Testing
+- Toast Testing Checklist
+- Tickets CRUD Test Report
+
+### For Operations
+- Database migration guides
+- System configuration docs
+
+## 🔗 External Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Radix UI Components](https://www.radix-ui.com/)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+
+## 📝 Contributing
+
+When adding new documentation:
+1. Place in appropriate folder (features, database, testing, etc.)
+2. Update this index
+3. Follow markdown formatting standards
+4. Include date and version information
+
+---
+
+**Last Updated**: October 17, 2025  
+**Project Version**: 1.0.0
+
+# Kroolo BSM Documentation
+
 Welcome to the Kroolo Business Success Management documentation. This directory contains all project documentation organized by topic.
 
 > 📌 **Quick Links**: [Quick Reference Card](./QUICK_REFERENCE.md) | [Organization Summary](./ORGANIZATION.md) | [Caching Guide](./CACHING_GUIDE.md)

@@ -46,12 +46,32 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
+import { useArticleCategories, useKnowledgeArticles, useCreateArticle } from "@/hooks/use-knowledge-articles"
+import { useArticleBookmarks } from "@/hooks/use-article-interactions"
+import { useAuth } from "@/lib/contexts/auth-context"
+import { toast } from "sonner"
 
 interface ChatMessage {
   id: string
   role: "user" | "assistant"
   content: string
   timestamp: Date
+}
+
+// Icon mapping for categories
+const categoryIcons: Record<string, any> = {
+  "IT Support": Server,
+  "Billing": CreditCard,
+  "Operations": Wrench,
+  "Incident": AlertTriangle,
+  "Change": RefreshCw,
+  "Asset": Package,
+  "Security": Shield,
+  "Users": Users,
+  "System": Settings,
+  "Analytics": BarChart3,
+  "Support": Headphones,
+  default: BookOpen,
 }
 
 const knowledgeCategories = [
@@ -146,7 +166,6 @@ const knowledgeCategories = [
 ]
 
 export default function KnowledgeBasePage() {
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [showEditCategory, setShowEditCategory] = useState(false)
   const [showDeleteCategory, setShowDeleteCategory] = useState(false)
@@ -154,9 +173,40 @@ export default function KnowledgeBasePage() {
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
   const [editForm, setEditForm] = useState({ name: "", description: "" })
   
-  // Simulate data loading
-  useState(() => {
-    setTimeout(() => setLoading(false), 500)
+  // Debug auth state
+  const { organizationId, user } = useAuth()
+  console.log('🔍 AUTH DEBUG - organizationId:', organizationId)
+  console.log('🔍 AUTH DEBUG - user:', user ? 'EXISTS' : 'NULL')
+  
+  // Fetch real data from database
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useArticleCategories()
+  const { data: articles, isLoading: articlesLoading } = useKnowledgeArticles({
+    status: 'published',
+    query: searchQuery,
+    limit: 100,
+  })
+  const { data: bookmarkedArticles, isLoading: bookmarksLoading } = useArticleBookmarks()
+  
+  console.log('🔍 HOOK DEBUG - categoriesError:', categoriesError)
+  
+  const loading = categoriesLoading || articlesLoading
+  
+  // Map real categories to UI format
+  const realKnowledgeCategories = (categoriesData || []).map(cat => {
+    // Get icon based on category name
+    const iconKey = Object.keys(categoryIcons).find(key => 
+      cat.name.toLowerCase().includes(key.toLowerCase())
+    )
+    const Icon = iconKey ? categoryIcons[iconKey] : categoryIcons.default
+    
+    return {
+      name: cat.name,
+      icon: Icon,
+      articles: cat.count,
+      description: `${cat.count} articles in ${cat.name}`,
+      aiInsights: cat.trending ? `Trending: ${cat.count} articles` : `${cat.count} articles available`,
+      trending: cat.trending || false,
+    }
   })
 
   const [showAIChat, setShowAIChat] = useState(false)
@@ -181,7 +231,12 @@ export default function KnowledgeBasePage() {
 
   const router = useRouter()
 
-  const filteredCategories = knowledgeCategories.filter(
+  // Debug: Log what we're getting from hooks
+  console.log('🔍 DEBUG - categoriesData:', categoriesData)
+  console.log('🔍 DEBUG - realKnowledgeCategories:', realKnowledgeCategories)
+  console.log('🔍 DEBUG - loading:', loading)
+  
+  const filteredCategories = realKnowledgeCategories.filter(
     (category) =>
       category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       category.description.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -203,20 +258,23 @@ export default function KnowledgeBasePage() {
   }
 
   const handleSaveCategory = () => {
-    console.log("[v0] Saving category:", editForm)
-    alert(`Category "${editForm.name}" updated successfully!`)
+    toast.info('Category management', {
+      description: 'Category management will be implemented soon.'
+    })
     setShowEditCategory(false)
   }
 
   const handleConfirmDelete = () => {
-    console.log("[v0] Deleting category:", selectedCategory?.name)
-    alert(`Category "${selectedCategory?.name}" deleted successfully!`)
+    toast.info('Category management', {
+      description: 'Category management will be implemented soon.'
+    })
     setShowDeleteCategory(false)
   }
 
   const handleAddCategory = () => {
-    console.log("[v0] Adding new category:", editForm)
-    alert(`Category "${editForm.name}" created successfully!`)
+    toast.info('Category management', {
+      description: 'Category management will be implemented soon.'
+    })
     setShowAddCategory(false)
     setEditForm({ name: "", description: "" })
   }
@@ -341,8 +399,9 @@ Effective ITSM implementation requires commitment, proper planning, and continuo
   }
 
   const handleSaveGeneratedArticle = () => {
-    console.log("[v0] Saving generated article:", articleForm)
-    alert(`Article "${articleForm.title}" has been saved to the ${articleForm.category} category!`)
+    toast.success('Article saved', {
+      description: `"${articleForm.title}" has been saved to the ${articleForm.category} category!`
+    })
     setShowSaveArticle(false)
     setShowAIChat(false)
     setChatMessages([
@@ -435,6 +494,57 @@ className="pl-10 h-10 text-13"
             />
           </div>
         </div>
+
+        {/* Bookmarked Articles Section */}
+        {bookmarkedArticles && bookmarkedArticles.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[13px] flex items-center gap-2">
+                <Bookmark className="h-5 w-5" />
+                Your Bookmarks
+              </h2>
+              <Badge variant="secondary" className="text-[11px]">
+                {bookmarkedArticles.length} saved
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {bookmarkedArticles.slice(0, 6).map((bookmark: any) => (
+                <Card
+                  key={bookmark.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => router.push(`/knowledge-base/article/${bookmark.article?.id}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-[13px] font-medium line-clamp-2">
+                          {bookmark.article?.title}
+                        </h3>
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {bookmark.article?.category}
+                        </Badge>
+                      </div>
+                      {bookmark.article?.summary && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {bookmark.article.summary}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                        <Bookmark className="h-3 w-3" />
+                        <span>Saved for later</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {bookmarkedArticles.length > 6 && (
+              <Button variant="outline" size="sm" className="w-full text-[13px]">
+                View All Bookmarks ({bookmarkedArticles.length})
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
