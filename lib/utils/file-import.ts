@@ -1,14 +1,20 @@
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
+import { preprocessCSVFile } from './csv-cleaner'
 
 export interface ImportTicketData {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high' | 'urgent' | 'critical'
-  type: 'incident' | 'request' | 'problem' | 'change' | 'task'
+  type: 'incident' | 'request' | 'problem' | 'change' | 'task' | 'general_query'
   assignee?: string
   due_date?: string
   status?: 'new' | 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed'
+  reporter?: string
+  tags?: string[]
+  category?: string
+  subcategory?: string
+  estimated_hours?: number // Will be stored as tags
 }
 
 export interface ImportResult {
@@ -35,10 +41,10 @@ export interface ImportProgress {
 const CONFIG = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
   requiredColumns: ['title', 'priority', 'type'],
-  optionalColumns: ['description', 'assignee', 'due_date', 'status'],
+  optionalColumns: ['description', 'assignee', 'due_date', 'status', 'reporter', 'tags', 'category', 'subcategory', 'estimated_hours'],
   validPriorities: ['low', 'medium', 'high', 'urgent', 'critical'],
-  validTypes: ['incident', 'request', 'problem', 'change', 'general_query'],
-  validStatuses: ['new', 'open', 'in_progress', 'pending', 'resolved', 'closed'],
+  validTypes: ['incident', 'request', 'problem', 'change', 'general_query', 'task'],
+  validStatuses: ['new', 'open', 'in_progress', 'pending', 'resolved', 'closed', 'cancelled'],
   supportedExtensions: ['csv', 'xlsx', 'xls']
 }
 
@@ -47,10 +53,15 @@ const COLUMN_MAPPING = {
   title: ['title', 'ticket_title', 'subject', 'summary', 'name'],
   description: ['description', 'desc', 'details', 'content', 'notes'],
   priority: ['priority', 'pri', 'urgency', 'level'],
-  type: ['type', 'category', 'ticket_type', 'kind'],
+  type: ['type', 'ticket_type', 'kind'], // Removed 'category' to prevent conflicts
   assignee: ['assignee', 'assigned_to', 'owner', 'agent', 'assigned'],
-  due_date: ['due_date', 'due', 'deadline', 'due_date_time', 'due_time'],
-  status: ['status', 'state', 'ticket_status', 'current_status']
+  due_date: ['due_date', 'due', 'deadline', 'due_date_time', 'due_time', 'reported_date'],
+  status: ['status', 'state', 'ticket_status', 'current_status'],
+  reporter: ['reporter', 'requester', 'created_by', 'reported_by'],
+  tags: ['tags', 'labels', 'keywords'],
+  category: ['category', 'service_category', 'service'], // Keep category separate
+  subcategory: ['subcategory', 'sub_category', 'service'],
+  estimated_hours: ['estimated_hours', 'estimated_time', 'hours', 'time_estimate']
 }
 
 /**
@@ -61,12 +72,19 @@ function normalizeColumnName(columnName: string): string | null {
   
   const normalized = columnName.toLowerCase().trim().replace(/[_\s-]/g, '_')
   
+  // First, try exact matches
   for (const [standardName, variations] of Object.entries(COLUMN_MAPPING)) {
-    if (variations.some(variation => 
-      normalized.includes(variation) || 
-      variation.includes(normalized) ||
-      normalized === variation
-    )) {
+    if (variations.some(variation => normalized === variation)) {
+      return standardName
+    }
+  }
+  
+  // Then try partial matches (but be more restrictive)
+  for (const [standardName, variations] of Object.entries(COLUMN_MAPPING)) {
+    if (variations.some(variation => {
+      // Only match if the variation is contained in normalized and they are similar length
+      return normalized.includes(variation) && Math.abs(normalized.length - variation.length) <= 2
+    })) {
       return standardName
     }
   }
@@ -112,11 +130,13 @@ function validateTicketRow(row: any, rowIndex: number): {
   if (!row.type || typeof row.type !== 'string') {
     errors.push(`Row ${rowIndex + 1}: Type is required`)
   } else {
-    const type = row.type.toLowerCase().trim()
-    // Map general_query to task for API compatibility
-    const mappedType = type === 'general_query' ? 'task' : type
+    let type = row.type.toLowerCase().trim()
+    // Map "General Query" to "general_query" for consistency
+    if (type === 'general query') {
+      type = 'general_query'
+    }
     if (CONFIG.validTypes.includes(type)) {
-      ticket.type = mappedType as ImportTicketData['type']
+      ticket.type = type as ImportTicketData['type']
     } else {
       errors.push(`Row ${rowIndex + 1}: Invalid type "${row.type}". Must be one of: ${CONFIG.validTypes.join(', ')}`)
     }
@@ -127,24 +147,70 @@ function validateTicketRow(row: any, rowIndex: number): {
     ticket.assignee = row.assignee.trim()
   }
 
-  // Optional due date
+  // Optional due date - format as ISO timestamp for GraphQL
   if (row.due_date && typeof row.due_date === 'string' && row.due_date.trim().length > 0) {
     const dateStr = row.due_date.trim()
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) {
       errors.push(`Row ${rowIndex + 1}: Invalid due date format "${dateStr}". Use YYYY-MM-DD or MM/DD/YYYY`)
     } else {
-      ticket.due_date = date.toISOString().split('T')[0] // Format as YYYY-MM-DD
+      // Format as ISO timestamp for PostgreSQL timestamp with time zone
+      ticket.due_date = date.toISOString()
     }
   }
 
-  // Optional status
+  // Optional status with mapping
   if (row.status && typeof row.status === 'string' && row.status.trim().length > 0) {
-    const status = row.status.toLowerCase().trim()
-    if (CONFIG.validStatuses.includes(status)) {
-      ticket.status = status as ImportTicketData['status']
+    let status = row.status.toLowerCase().trim()
+    
+    // Map common status values to API format
+    const statusMapping: { [key: string]: string } = {
+      'new': 'new',
+      'open': 'open', 
+      'in progress': 'in_progress',
+      'in_progress': 'in_progress',
+      'pending': 'pending',
+      'resolved': 'resolved',
+      'closed': 'closed',
+      'cancelled': 'cancelled',
+      'review': 'pending', // Map 'review' to 'pending' for API compatibility
+      'done': 'resolved'
+    }
+    
+    const mappedStatus = statusMapping[status] || status
+    if (CONFIG.validStatuses.includes(mappedStatus)) {
+      ticket.status = mappedStatus as ImportTicketData['status']
     } else {
       errors.push(`Row ${rowIndex + 1}: Invalid status "${row.status}". Must be one of: ${CONFIG.validStatuses.join(', ')}`)
+    }
+  }
+
+  // Optional reporter
+  if (row.reporter && typeof row.reporter === 'string' && row.reporter.trim().length > 0) {
+    ticket.reporter = row.reporter.trim()
+  }
+
+  // Optional tags
+  if (row.tags && typeof row.tags === 'string' && row.tags.trim().length > 0) {
+    // Split by comma and clean up
+    ticket.tags = row.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+  }
+
+  // Optional category
+  if (row.category && typeof row.category === 'string' && row.category.trim().length > 0) {
+    ticket.category = row.category.trim()
+  }
+  
+  // Optional subcategory
+  if (row.subcategory && typeof row.subcategory === 'string' && row.subcategory.trim().length > 0) {
+    ticket.subcategory = row.subcategory.trim()
+  }
+
+  // Optional estimated hours
+  if (row.estimated_hours && (typeof row.estimated_hours === 'number' || typeof row.estimated_hours === 'string')) {
+    const hours = typeof row.estimated_hours === 'number' ? row.estimated_hours : parseFloat(row.estimated_hours)
+    if (!isNaN(hours) && hours > 0) {
+      ticket.estimated_hours = hours
     }
   }
 
@@ -159,15 +225,27 @@ function validateTicketRow(row: any, rowIndex: number): {
  * Parse CSV file
  */
 export async function parseCSVFile(file: File): Promise<ImportResult> {
+  console.log('📄 Starting CSV parsing for file:', file.name, 'Size:', file.size)
+  
+  // First, try to clean the CSV file to handle malformed data
+  let fileToProcess = file
+  try {
+    fileToProcess = await preprocessCSVFile(file)
+    console.log('📄 CSV preprocessing completed successfully')
+  } catch (error) {
+    console.log('📄 CSV preprocessing failed, using original file:', error)
+    // Continue with original file if preprocessing fails
+  }
+  
   return new Promise((resolve) => {
     const errors: string[] = []
     const tickets: ImportTicketData[] = []
     const parsingErrors: string[] = []
     const validationErrors: string[] = []
 
-    console.log('📄 Parsing CSV file:', file.name, 'Size:', file.size)
+    console.log('📄 Parsing CSV file:', fileToProcess.name, 'Size:', fileToProcess.size)
 
-    Papa.parse(file, {
+    Papa.parse(fileToProcess, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -192,6 +270,17 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
           return
         }
 
+        // Debug: Check the raw headers first
+        const sampleRow = rows[0] as any
+        const headers = Object.keys(sampleRow)
+        console.log('📄 Raw CSV headers:', headers)
+        
+        // Show column mappings
+        headers.forEach(header => {
+          const mapped = normalizeColumnName(header)
+          console.log(`📄 Column mapping: "${header}" -> "${mapped}"`)
+        })
+
         // Normalize column names
         const normalizedRows = rows.map(row => {
           const normalizedRow: any = {}
@@ -199,12 +288,14 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
             const normalizedKey = normalizeColumnName(key)
             if (normalizedKey) {
               normalizedRow[normalizedKey] = value
+            } else {
+              console.log(`📄 Unmapped column: "${key}" with value: "${value}"`)
             }
           }
           return normalizedRow
         })
 
-        console.log('📄 Normalized rows:', normalizedRows)
+        console.log('📄 Normalized rows sample:', normalizedRows[0])
 
         // Validate each row
         normalizedRows.forEach((row, index) => {
