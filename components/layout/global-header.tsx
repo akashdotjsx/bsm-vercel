@@ -224,7 +224,6 @@ export function GlobalHeader() {
                   <div className="text-[10px] text-muted-foreground truncate">
                     {userData.email}
                   </div>
-                  <div className="text-[9px] text-muted-foreground mt-0.5">{userData.role}</div>
                 </div>
               </div>
             </div>
@@ -247,26 +246,10 @@ export function GlobalHeader() {
               </div>
             </div>
 
-            <div className="p-3 space-y-2 border-b border-border bg-muted/30">
+            <div className="p-3 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2 text-[10px]">
                 <Clock className="h-3 w-3 text-muted-foreground" />
                 <span className="text-muted-foreground">{userData.localTime} local time</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-[10px]">
-                <div>
-                  <span className="text-muted-foreground">Account</span>
-                  <div className="font-medium text-foreground">{userData.account}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">ID</span>
-                  <div className="font-medium text-foreground">{userData.id}</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">Current Plan</span>
-                <span className="text-[9px] font-semibold px-2 py-1 bg-primary/10 text-primary rounded-full">
-                  {userData.plan}
-                </span>
               </div>
             </div>
 

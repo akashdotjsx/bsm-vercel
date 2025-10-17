@@ -210,12 +210,26 @@ CREATE TABLE public.profiles (
   is_active boolean DEFAULT true,
   last_login timestamp with time zone,
   preferences jsonb DEFAULT '{}'::jsonb,
+  status character varying DEFAULT 'Online'::character varying,
+  status_color character varying DEFAULT '#16a34a'::character varying,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.user_custom_statuses (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  status_label character varying NOT NULL,
+  status_color character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  last_used_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_custom_statuses_pkey PRIMARY KEY (id),
+  CONSTRAINT user_custom_statuses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT unique_user_status UNIQUE (user_id, status_label)
 );
 CREATE TABLE public.service_categories (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
