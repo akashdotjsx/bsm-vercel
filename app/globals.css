@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Smooth transitions for sidebar */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent text wrapping during sidebar transitions */
+.sidebar-header-text {
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
 /* Line clamp utilities */
 .line-clamp-1 {
   overflow: hidden;
