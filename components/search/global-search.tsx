@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 // Fuzzy matching utility functions
 function calculateLevenshteinDistance(str1: string, str2: string): number {
@@ -147,14 +147,17 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const [previewResults, setPreviewResults] = useState<SearchResult[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [searchType, setSearchType] = useState<'all' | 'tickets' | 'users' | 'services' | 'assets'>('all')
-  const [isTyping, setIsTyping] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
-  const [debouncedSearchTerm] = useDebounce(searchTerm, 300)
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 400)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   // Track search function
   const trackSearch = useCallback(async (query: string, resultCount: number = 0, clickedId?: string, clickedType?: string) => {
@@ -265,7 +268,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 
   // Debounced search function
   const performSearch = useCallback(async (query: string) => {
-    if (query.length < 2) {
+    if (query.length < 1) {
       setResults([])
       setIsSearching(false)
       return
@@ -349,8 +352,12 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             handleResultClick(result)
           }
         } else if (searchTerm) {
-          // Go to search results page
-          router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+          // Go to search results page if not already there
+          if (pathname !== '/search' && !pathname.startsWith('/search')) {
+            const params = new URLSearchParams()
+            params.set('q', searchTerm)
+            router.push(`/search?${params.toString()}`)
+          }
           setIsOpen(false)
         }
         break
@@ -384,32 +391,40 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       document.removeEventListener("keydown", handleGlobalKeyDown)
       document.removeEventListener("keydown", handleKeyDown)
       document.removeEventListener("mousedown", handleClickOutside)
+      // Cleanup timeouts
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (urlUpdateTimeoutRef.current) {
+        clearTimeout(urlUpdateTimeoutRef.current)
+      }
     }
   }, [handleKeyDown])
 
   // Debounce search input for results
   useEffect(() => {
-    if (debouncedSearchTerm) {
+    if (debouncedSearchTerm && debouncedSearchTerm.length >= 1) {
       performSearch(debouncedSearchTerm)
-    } else {
+    } else if (!debouncedSearchTerm) {
       setResults([])
       setIsSearching(false)
     }
   }, [debouncedSearchTerm, performSearch])
 
-  // Fetch suggestions when search term changes (faster debounce)
+  // Fetch suggestions when search term changes (debounced)
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      if (searchTerm) {
+      if (searchTerm && searchTerm.length >= 1) {
         fetchSuggestions(searchTerm)
-      } else {
+      } else if (!searchTerm) {
         setSuggestions([])
+        setSpellingSuggestions([])
       }
-    }, 150) // Faster for suggestions
+    }, 300) // Increased debounce to reduce flashing
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -425,13 +440,27 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       setSelectedIndex(-1)
     }
   }, [isOpen])
+  
+  // Initialize search term from URL on mount
+  useEffect(() => {
+    const queryFromUrl = searchParams.get('q')
+    // Only set initial value, don't override while typing
+    if (queryFromUrl && !searchTerm) {
+      setSearchTerm(queryFromUrl)
+    }
+  }, []) // Only on mount
 
   const handleSuggestionClick = async (suggestion: string) => {
     setSearchTerm(suggestion)
     setIsOpen(false)
     // Track suggestion click
     await trackSearch(suggestion, 0)
-    router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+    // Navigate to /search page if not already there
+    if (pathname !== '/search' && !pathname.startsWith('/search')) {
+      const params = new URLSearchParams()
+      params.set('q', suggestion)
+      router.push(`/search?${params.toString()}`)
+    }
   }
 
   const handleResultClick = async (result: SearchResult) => {
@@ -483,7 +512,15 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     <div className={cn("relative flex-1 max-w-lg mx-auto", className)} ref={dropdownRef}>
       {/* Search Input in Header */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search 
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+          onClick={() => {
+            // Navigate to search page without query parameter
+            if (pathname !== '/search') {
+              router.push('/search')
+            }
+          }}
+        />
         <Input
           ref={inputRef}
           placeholder="Search items..."
@@ -491,10 +528,25 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           value={searchTerm}
           onChange={(e) => {
             const value = e.target.value
+            
+            // Clear existing URL update timeout
+            if (urlUpdateTimeoutRef.current) {
+              clearTimeout(urlUpdateTimeoutRef.current)
+            }
+            
+            // Update search term immediately in state
             setSearchTerm(value)
-            setIsTyping(true)
-            // Stop typing indicator after 1 second of no input
-            setTimeout(() => setIsTyping(false), 1000)
+            
+            // Debounce URL update more aggressively (don't update on every keystroke)
+            urlUpdateTimeoutRef.current = setTimeout(() => {
+              const params = new URLSearchParams(searchParams.toString())
+              if (value) {
+                params.set('q', value)
+              } else {
+                params.delete('q')
+              }
+              router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+            }, 800) // Longer delay to prevent conflicts
           }}
           onFocus={() => {
             setIsOpen(true)
@@ -502,6 +554,11 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             if (!searchTerm) {
               fetchSuggestions('')
             }
+          }}
+          onClick={(e) => {
+            // Keep dropdown open when clicking inside search box
+            e.stopPropagation()
+            setIsOpen(true)
           }}
         />
         <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 flex items-center">
@@ -513,7 +570,10 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
 
       {/* Google-like Search Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div 
+          className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Search Type Filters */}
           {searchTerm && (
             <div className="p-2 border-b border-border">
@@ -566,21 +626,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             </div>
           )}
 
-          {/* Loading States */}
-          {(isSearching || isFetchingSuggestions) && (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-2 py-2">
-                  <Skeleton className="h-4 w-4 rounded" />
-                  <div className="flex-1 space-y-1">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-3 w-3/4" />
-                  </div>
-                  {i === 0 && <Skeleton className="h-5 w-16 rounded-full" />}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* No loading indicators - just show results instantly */}
 
           {/* Enhanced Suggestions with categorization */}
           {!isSearching && suggestions.length > 0 && (
@@ -588,7 +634,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               <div className="p-2">
                 <div className="flex items-center gap-2 mb-2 px-2">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] font-medium text-foreground">Smart Suggestions</span>
+                  <span className="text-xs font-medium text-foreground">Smart Suggestions</span>
                   <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">
                     {suggestions.length}
                   </Badge>
@@ -605,7 +651,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                       key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
                       className={cn(
-                        "flex items-center gap-3 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors text-[11px] group",
+                        "flex items-center gap-3 w-full p-2 text-left hover:bg-muted rounded-sm transition-colors text-xs group",
                         selectedIndex === index && "bg-muted ring-1 ring-primary/20"
                       )}
                     >
@@ -668,7 +714,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           {!isSearching && results.length > 0 && (
             <div className="">
               <div className="p-2">
-                <div className="text-[10px] font-medium text-muted-foreground mb-1 px-2">Results</div>
+                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Results</div>
                 {results.map((result, index) => (
                   <button
                     key={result.id}
@@ -683,20 +729,20 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[12px] font-semibold truncate text-foreground">{result.title}</span>
+                        <span className="text-xs font-semibold truncate text-foreground">{result.title}</span>
                         <Badge variant="secondary" className={cn("text-[9px] px-2 py-0.5 font-medium", getResultTypeColor(result.type))}>
                           {result.type}
                         </Badge>
                       </div>
                       
                       {/* Enhanced description with context */}
-                      <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
                         {result.description}
                       </p>
                       
                       {/* Rich metadata display */}
                       {result.metadata && (
-                        <div className="flex items-center gap-3 mt-2 text-[9px] text-muted-foreground">
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           {/* Status badge */}
                           {result.metadata.status && (
                             <Badge variant="outline" className="text-[8px] px-1.5 py-0.5 h-5 font-medium">
@@ -760,9 +806,14 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start h-8 text-[10px] mt-1"
+                    className="w-full justify-start h-8 text-xs mt-1"
                     onClick={() => {
-                      router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+                      // Navigate to /search page if not already there
+                      if (pathname !== '/search' && !pathname.startsWith('/search')) {
+                        const params = new URLSearchParams()
+                        params.set('q', searchTerm)
+                        router.push(`/search?${params.toString()}`)
+                      }
                       setIsOpen(false)
                     }}
                   >
@@ -777,7 +828,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           {/* Spell correction suggestions */}
           {!isSearching && searchTerm && spellingSuggestions.length > 0 && suggestions.length === 0 && (
             <div className="p-3 border-b border-border">
-              <div className="text-[9px] text-muted-foreground mb-2">Did you mean:</div>
+              <div className="text-xs text-muted-foreground mb-2">Did you mean:</div>
               <div className="space-y-1">
                 {spellingSuggestions.map((suggestion, index) => {
                   const correctionPreview = generateCorrectionPreview(searchTerm, suggestion)
@@ -796,11 +847,11 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           {correctionPreview && (
-                            <span className="text-[10px] text-muted-foreground line-through opacity-60">
+                            <span className="text-xs text-muted-foreground line-through opacity-60">
                               {searchTerm}
                             </span>
                           )}
-                          <span className="text-[10px] text-foreground font-medium">
+                          <span className="text-xs text-foreground font-medium">
                             {suggestion}
                           </span>
                         </div>
@@ -819,8 +870,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           {!isSearching && searchTerm && results.length === 0 && suggestions.length === 0 && spellingSuggestions.length === 0 && (
             <div className="p-4 text-center">
               <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-[11px] text-muted-foreground">No results found for "{searchTerm}"</p>
-              <p className="text-[9px] text-muted-foreground mt-1 opacity-60">Try a different search term</p>
+              <p className="text-xs text-muted-foreground">No results found for "{searchTerm}"</p>
+              <p className="text-xs text-muted-foreground mt-1 opacity-60">Try a different search term</p>
             </div>
           )}
 
@@ -830,7 +881,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               {/* Top 3 recent searches */}
               {recentSearches.length > 0 && (
                 <div className="p-3 border-b border-border">
-                  <div className="text-[8px] font-medium text-muted-foreground mb-2 px-1">Recent searches:</div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2 px-1">Recent searches:</div>
                   <div className="space-y-1">
                     {recentSearches
                       .filter(search => {
@@ -847,7 +898,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                           className="flex items-center gap-2 w-full px-2 py-2 text-left hover:bg-muted rounded-sm transition-colors group"
                         >
                           <Clock className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
-                          <span className="text-[10px] text-foreground font-medium group-hover:text-primary truncate">{search}</span>
+                          <span className="text-xs text-foreground font-medium group-hover:text-primary truncate">{search}</span>
                         </button>
                       ))
                     }
@@ -858,7 +909,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               {/* Preview cards from recent searches */}
               {previewResults.length > 0 && (
                 <div className="p-2">
-                  <div className="text-[8px] font-medium text-muted-foreground mb-2 px-1">Recent results:</div>
+                  <div className="text-xs font-medium text-muted-foreground mb-2 px-1">Recent results:</div>
                   <div className="space-y-1">
                     {previewResults.map((result, index) => (
                       <button
@@ -871,12 +922,12 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-medium truncate text-foreground group-hover:text-primary">{result.title}</span>
+                            <span className="text-xs font-medium truncate text-foreground group-hover:text-primary">{result.title}</span>
                             <Badge variant="secondary" className={cn("text-[7px] px-1 py-0.5 h-3", getResultTypeColor(result.type))}>
                               {result.type}
                             </Badge>
                           </div>
-                          <p className="text-[8px] text-muted-foreground line-clamp-1 group-hover:text-muted-foreground/80">
+                          <p className="text-xs text-muted-foreground line-clamp-1 group-hover:text-muted-foreground/80">
                             {result.description}
                           </p>
                           {result.metadata && (
@@ -905,8 +956,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               {recentSearches.length === 0 && previewResults.length === 0 && (
                 <div className="text-center py-8">
                   <Search className="h-6 w-6 mx-auto text-muted-foreground mb-2 opacity-30" />
-                  <p className="text-[9px] text-muted-foreground opacity-50">Start typing to search</p>
-                  <p className="text-[8px] text-muted-foreground opacity-30 mt-1">tickets • users • services • assets</p>
+                  <p className="text-xs text-muted-foreground opacity-50">Start typing to search</p>
+                  <p className="text-xs text-muted-foreground opacity-30 mt-1">tickets • users • services • assets</p>
                 </div>
               )}
             </div>

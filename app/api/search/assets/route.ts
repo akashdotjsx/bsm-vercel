@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     
     console.log('🔍 Search Assets API - Searching for:', { query, limit })
     
-    if (query.length < 2) {
+    if (query.length < 1) {
       return NextResponse.json({
         assets: [],
         suggestions: [
@@ -57,7 +57,6 @@ export async function GET(request: NextRequest) {
         asset_tag,
         serial_number,
         model,
-        vendor,
         status,
         location,
         owner_id,
@@ -75,7 +74,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('organization_id', profile.organization_id)
-      .or(`name.ilike.%${query}%,asset_tag.ilike.%${query}%,model.ilike.%${query}%,vendor.ilike.%${query}%,serial_number.ilike.%${query}%`)
+      .or(`name.ilike.%${query}%,asset_tag.ilike.%${query}%,model.ilike.%${query}%,serial_number.ilike.%${query}%`)
       .order('name', { ascending: true })
       .limit(limit)
 
@@ -87,7 +86,7 @@ export async function GET(request: NextRequest) {
     const searchResults = assets.map(asset => ({
       id: asset.id,
       title: asset.name,
-      description: `${asset.vendor || ''} ${asset.model || ''} - ${asset.asset_types?.name || 'Asset'}`,
+      description: `${asset.model || ''} - ${asset.asset_types?.name || 'Asset'}`,
       type: 'asset' as const,
       category: asset.asset_types?.name || 'General',
       url: `/assets/${asset.id}`,
@@ -95,7 +94,6 @@ export async function GET(request: NextRequest) {
       metadata: {
         asset_tag: asset.asset_tag,
         serial_number: asset.serial_number,
-        vendor: asset.vendor,
         model: asset.model,
         status: asset.status,
         location: asset.location,
@@ -135,12 +133,9 @@ function calculateAssetRelevance(asset: any, query: string): number {
     score += 0.9
   }
 
-  // Model/Vendor matching
+  // Model matching
   if (asset.model && asset.model.toLowerCase().includes(queryLower)) {
     score += 0.7
-  }
-  if (asset.vendor && asset.vendor.toLowerCase().includes(queryLower)) {
-    score += 0.6
   }
 
   // Serial number matching (high priority)

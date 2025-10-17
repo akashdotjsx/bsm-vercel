@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     
     console.log('🔍 Search Tickets API - Searching for:', { query, limit })
     
-    if (query.length < 2) {
+    if (query.length < 1) {
       return NextResponse.json({
         tickets: [],
         suggestions: [
