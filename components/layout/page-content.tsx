@@ -12,6 +12,8 @@ interface PageContentProps {
   title?: string
   description?: string
   className?: string
+  titleClassName?: string
+  descriptionClassName?: string
 }
 
 /**
@@ -24,7 +26,9 @@ export function PageContent({
   breadcrumb, 
   title, 
   description,
-  className = ""
+  className = "",
+  titleClassName = "",
+  descriptionClassName = ""
 }: PageContentProps) {
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -51,8 +55,8 @@ export function PageContent({
       {/* Page Header */}
       {(title || description) && (
         <div className="px-4 md:px-6 py-4 border-b border-border flex-shrink-0">
-          {title && <h1 className="text-[13px] font-bold mb-1">{title}</h1>}
-          {description && <p className="text-muted-foreground text-xs">{description}</p>}
+          {title && <h1 className={`text-[13px] font-bold mb-1 ${titleClassName}`}>{title}</h1>}
+          {description && <p className={`text-muted-foreground text-xs ${descriptionClassName}`}>{description}</p>}
         </div>
       )}
 

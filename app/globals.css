@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Smooth transitions for sidebar */
 * {
@@ -10,6 +11,11 @@
 .sidebar-header-text {
   white-space: nowrap !important;
   overflow: visible !important;
+}
+
+/* Inter font family */
+.font-inter {
+  font-family: 'Inter', sans-serif;
 }
 
 /* Line clamp utilities */
