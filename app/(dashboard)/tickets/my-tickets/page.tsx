@@ -1734,32 +1734,80 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         }
         setShowImportDialog(open)
       }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-<Cloud className="h-5 w-5 text-[var(--primary)]" />
-              Import Tickets
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
+        <DialogContent className="max-w-[675px] w-[675px] h-[600px] p-0 bg-white rounded-[20px] border-0 shadow-[0px_0px_15px_0px_rgba(19,43,76,0.1)]">
+          {/* Header with Cloud Icon and Close Button */}
+          <div className="flex items-center justify-between p-6 pb-0">
+            <div className="flex items-center gap-3">
+              <Cloud className="h-6 w-6 text-[#2D2F34]" />
+              <h2 className="text-[16px] font-semibold text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}>
+                Import Tickets
+              </h2>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowImportDialog(false)}
+              className="h-6 w-6 p-0 hover:bg-transparent"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </Button>
+          </div>
+
+          <div className="px-6 pb-6 flex-1 overflow-y-auto">
             {/* File Selection */}
             {!importProgress && !importResult && (
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select file to import</label>
-              <Input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                className="cursor-pointer"
-                    disabled={isImporting}
-              />
-              <p className="text-xs text-muted-foreground mt-1">Supported formats: CSV, Excel (.xlsx, .xls)</p>
-            </div>
+              <div className="space-y-6">
+                <div>
+                  <label 
+                    className="text-[16px] font-semibold text-[#202020] mb-4 block" 
+                    style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}
+                  >
+                    Select file to import
+                  </label>
+                  <div 
+                    className="border-2 border-dashed border-[#A0A8C2] rounded-[10px] p-6 text-center"
+                    style={{ borderStyle: 'dashed' }}
+                  >
+                    <Cloud className="h-6 w-6 text-[#2D2F34] mx-auto mb-4" />
+                    <Button
+                      onClick={() => document.getElementById('file-input')?.click()}
+                      className="bg-[#3B43D6] hover:bg-[#3B43D6]/90 text-white border-0 rounded-[5px] px-4 py-2 h-9"
+                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                    >
+                      Choose File
+                    </Button>
+                    <input
+                      id="file-input"
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      disabled={isImporting}
+                    />
+                    <p 
+                      className="text-[12px] text-[#595959] mt-2" 
+                      style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
+                    >
+                      Supported formats: CSV, Excel (.xlsx, .xls)
+                    </p>
+                  </div>
+                </div>
 
-                <div className="bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Import Requirements:</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
+                {/* Import Requirements */}
+                <div className="bg-[#F3F4FF] p-4 rounded-[5px]">
+                  <h4 
+                    className="text-[12px] font-medium text-[#717171] mb-2" 
+                    style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
+                  >
+                    Import Requirements:
+                  </h4>
+                  <ul 
+                    className="text-[12px] text-[#2D2F34] leading-8" 
+                    style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '2em' }}
+                  >
                     <li>• <strong>Required columns:</strong> Title, Priority, Type</li>
                     <li>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</li>
                     <li>• <strong>Priority values:</strong> low, medium, high, urgent, critical</li>
@@ -1767,21 +1815,28 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                     <li>• <strong>Status values:</strong> new, open, in_progress, pending, resolved, closed</li>
                     <li>• <strong>Maximum file size:</strong> 10MB</li>
                     <li>• <strong>Supported formats:</strong> CSV, Excel (.xlsx, .xls)</li>
-              </ul>
-            </div>
+                  </ul>
+                </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                Cancel
-              </Button>
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-[15px]">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowImportDialog(false)}
+                    className="border border-black rounded-[5px] px-4 py-2 h-9"
+                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
+                  >
+                    Cancel
+                  </Button>
                   <Button 
                     onClick={handleImportTickets} 
                     disabled={!importFile || isImporting}
-                    className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+                    className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
+                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
                   >
-                Import Tickets
-              </Button>
-            </div>
+                    Import Tickets
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -1789,29 +1844,43 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
             {importProgress && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{importProgress.message}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span 
+                    className="text-[14px] font-medium text-[#2D2F34]" 
+                    style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
+                  >
+                    {importProgress.message}
+                  </span>
+                  <span 
+                    className="text-[14px] text-[#6A707C]" 
+                    style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}
+                  >
                     {importProgress.current}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-[#E6E6E6] rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
                       importProgress.status === 'error' ? 'bg-red-500' : 
-                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6a5cff]'
+                      importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6E72FF]'
                     }`}
                     style={{ width: `${importProgress.current}%` }}
                   />
                 </div>
                 {importProgress.status === 'parsing' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
+                  <div 
+                    className="flex items-center gap-2 text-[12px] text-[#6A707C]" 
+                    style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}
+                  >
+                    <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Parsing file...
                   </div>
                 )}
                 {importProgress.status === 'importing' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 bg-[#6a5cff]/20 animate-pulse rounded" />
+                  <div 
+                    className="flex items-center gap-2 text-[12px] text-[#6A707C]" 
+                    style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}
+                  >
+                    <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Creating tickets...
                   </div>
                 )}
@@ -1821,20 +1890,26 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
             {/* Results */}
             {importResult && (
               <div className="space-y-4">
-                <div className={`p-4 rounded-lg ${
-                  importResult.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'
+                <div className={`p-4 rounded-[5px] ${
+                  importResult.success ? 'bg-green-50' : 'bg-red-50'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`h-2 w-2 rounded-full ${
                       importResult.success ? 'bg-green-500' : 'bg-red-500'
                     }`} />
-                    <h4 className={`font-medium text-sm ${
-                      importResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
-                    }`}>
+                    <h4 
+                      className={`text-[14px] font-medium ${
+                        importResult.success ? 'text-green-800' : 'text-red-800'
+                      }`}
+                      style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
+                    >
                       {importResult.success ? 'Import Successful!' : 'Import Completed with Errors'}
                     </h4>
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div 
+                    className="text-[12px] text-[#6A707C]" 
+                    style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}
+                  >
                     <p>• Total rows processed: {importResult.totalRows}</p>
                     <p>• Valid tickets found: {importResult.validRows}</p>
                     <p>• Successfully imported: {importResult.successfullyImportedCount}</p>
@@ -1844,9 +1919,17 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
 
                 {importResult.errors.length > 0 && (
                   <div className="space-y-2">
-                    <h5 className="text-sm font-medium text-red-800 dark:text-red-200">Errors:</h5>
-                    <div className="max-h-32 overflow-y-auto bg-red-50 dark:bg-red-950/20 p-3 rounded-lg">
-                      <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
+                    <h5 
+                      className="text-[12px] font-medium text-red-800" 
+                      style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
+                    >
+                      Errors:
+                    </h5>
+                    <div className="max-h-32 overflow-y-auto bg-red-50 p-3 rounded-[5px]">
+                      <ul 
+                        className="text-[11px] text-red-700 space-y-1" 
+                        style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}
+                      >
                         {importResult.parsingErrors.length > 0 && (
                           <li className="font-medium">Parsing Errors:</li>
                         )}
@@ -1876,23 +1959,26 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                   </div>
                 )}
 
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-[15px]">
                   <Button 
                     variant="outline" 
                     onClick={() => {
                       resetImportState()
                       setShowImportDialog(false)
                     }}
+                    className="border border-black rounded-[5px] px-4 py-2 h-9"
+                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
                   >
                     Close
                   </Button>
-                  {importResult.validRows > 0 && (
+                  {importResult.successfullyImportedCount > 0 && (
                     <Button 
                       onClick={() => {
                         resetImportState()
                         setShowImportDialog(false)
                       }}
-                      className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
+                      className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
+                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
                     >
                       View Tickets
                     </Button>
