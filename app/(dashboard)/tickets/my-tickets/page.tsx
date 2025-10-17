@@ -1039,24 +1039,24 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         {/* Fixed Filter Bar */}
         <div className="flex-shrink-0 flex items-center gap-4 py-2 mb-4 w-full max-w-full overflow-hidden">
           <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-48 h-8 text-sm bg-background">
+            <SelectTrigger className="w-48 h-8 text-sm bg-background border border-border">
               <List className="h-3 w-3 mr-2" />
-              <SelectValue placeholder="Group By: None" />
+              <SelectValue placeholder="Group by: None" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Group By: None</SelectItem>
-              <SelectItem value="status">Group By: Status</SelectItem>
-              <SelectItem value="priority">Group By: Priority</SelectItem>
-              <SelectItem value="type">Group By: Type</SelectItem>
-              <SelectItem value="dueDate">Group By: Due Date</SelectItem>
-              <SelectItem value="reportedBy">Group By: Reported By</SelectItem>
-              <SelectItem value="assignee">Group By: Assignee</SelectItem>
+              <SelectItem value="none">Group by: None</SelectItem>
+              <SelectItem value="status">Group by: Status</SelectItem>
+              <SelectItem value="priority">Group by: Priority</SelectItem>
+              <SelectItem value="type">Group by: Type</SelectItem>
+              <SelectItem value="dueDate">Group by: Due Date</SelectItem>
+              <SelectItem value="reportedBy">Group by: Reported By</SelectItem>
+              <SelectItem value="assignee">Group by: Assignee</SelectItem>
             </SelectContent>
           </Select>
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-8 text-sm bg-background"
+            className="h-8 text-sm bg-background border border-border"
             onClick={() => setShowFilterDialog(true)}
           >
             <Filter className="h-3 w-3 mr-2" />
@@ -1071,7 +1071,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search items"
-              className="pl-10 h-8 w-48 text-sm bg-background"
+              className="pl-10 h-8 w-48 text-sm bg-background border border-border"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
