@@ -160,8 +160,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string } =
         filters.type = activeType
       }
       
-      // Build search term with keywords only (filters handled separately)
-      // If empty query, pass empty string to get ALL items of that type
+      // When clicking type filter without search term, use empty string
+      // This tells backend to return ALL items of that type
       const finalSearchTerm = keywords || searchQuery || ''
       
       // Perform search with parsed query and type filter
