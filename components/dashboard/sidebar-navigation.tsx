@@ -36,6 +36,7 @@ import { useState } from "react"
 import { useSidebar } from "@/lib/contexts/sidebar-context"
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation"
 
 const customerViewItems = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3, permission: null },
@@ -88,9 +89,10 @@ const administrationItems = [
 
 export function SidebarNavigation() {
   const pathname = usePathname()
+  const router = useRouter()
   const { mode } = useMode()
   const { profile, organization, canView, loading, permissionsLoading, isAdmin } = useAuth()
-  const { isCollapsed, toggleSidebar } = useSidebar()
+  const { isCollapsed, toggleSidebar, setCollapsed } = useSidebar()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   
   // Prefetch hooks for instant navigation
@@ -100,10 +102,28 @@ export function SidebarNavigation() {
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
   const sectionTitle = mode === "customer" ? "Customer Support" : "SERVICE MANAGEMENT"
 
-  const toggleSubmenu = (itemName: string) => {
-    setExpandedMenus((prev) =>
-      prev.includes(itemName) ? prev.filter((name) => name !== itemName) : [...prev, itemName],
-    )
+  const handleMenuClick = (item: any) => {
+    if (item.hasSubmenu) {
+      // If collapsed, expand the sidebar and open the submenu
+      if (isCollapsed) {
+        setCollapsed(false)
+        setExpandedMenus([item.name])
+        
+        // Navigate to first submenu item
+        const submenuItems = item.name === 'Tickets' 
+          ? ticketSubmenuItems 
+          : (isAdmin || profile?.role === 'manager' ? servicesSubmenuItemsManager : servicesSubmenuItems)
+        
+        if (submenuItems.length > 0) {
+          router.push(submenuItems[0].href)
+        }
+      } else {
+        // Toggle submenu if already expanded
+        setExpandedMenus((prev) =>
+          prev.includes(item.name) ? prev.filter((name) => name !== item.name) : [...prev, item.name],
+        )
+      }
+    }
   }
 
   // Show skeleton during loading to prevent flash
@@ -208,7 +228,7 @@ export function SidebarNavigation() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                              <button
-                               onClick={() => toggleSubmenu(item.name)}
+                               onClick={() => handleMenuClick(item)}
                                className={cn(
                                  "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                                  isTicketsPath
@@ -232,7 +252,7 @@ export function SidebarNavigation() {
                         </Tooltip>
                       ) : (
                         <button
-                          onClick={() => toggleSubmenu(item.name)}
+                          onClick={() => handleMenuClick(item)}
                           className={cn(
                             "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                             isTicketsPath
