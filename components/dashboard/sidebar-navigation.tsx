@@ -204,33 +204,52 @@ export function SidebarNavigation() {
                 <div key={item.name}>
                   {item.hasSubmenu ? (
                     <div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <button
-                             onClick={() => toggleSubmenu(item.name)}
-                             className={cn(
-                               "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                               isTicketsPath
-                                 ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                                 : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
-                               isCollapsed 
-                                 ? "justify-center px-2" 
-                                 : "justify-between px-3"
-                             )}
-                           >
-                             <div className="flex items-center">
-                               <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
-                               {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
-                             </div>
-                             {!isCollapsed && (isExpanded ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" />)}
-                          </button>
-                        </TooltipTrigger>
-                        {isCollapsed && (
+                      {isCollapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                             <button
+                               onClick={() => toggleSubmenu(item.name)}
+                               className={cn(
+                                 "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
+                                 isTicketsPath
+                                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                   : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                                 isCollapsed 
+                                   ? "justify-center px-2" 
+                                   : "justify-between px-3"
+                               )}
+                             >
+                               <div className="flex items-center">
+                                 <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
+                                 {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
+                               </div>
+                               {!isCollapsed && (isExpanded ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" />)}
+                            </button>
+                          </TooltipTrigger>
                           <TooltipContent side="right" className="ml-2">
                             <p>{item.name}</p>
                           </TooltipContent>
-                        )}
-                      </Tooltip>
+                        </Tooltip>
+                      ) : (
+                        <button
+                          onClick={() => toggleSubmenu(item.name)}
+                          className={cn(
+                            "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
+                            isTicketsPath
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                            isCollapsed 
+                              ? "justify-center px-2" 
+                              : "justify-between px-3"
+                          )}
+                        >
+                          <div className="flex items-center">
+                            <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
+                            {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
+                          </div>
+                          {!isCollapsed && (isExpanded ? <ChevronDown className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out" />)}
+                        </button>
+                      )}
               {isExpanded && !isCollapsed && (
                         <div className="ml-6 mt-1 space-y-1">
                           {(item.name === 'Tickets' ? ticketSubmenuItems : (isAdmin || profile?.role === 'manager' ? servicesSubmenuItemsManager : servicesSubmenuItems)).map((subItem) => {
@@ -261,15 +280,88 @@ export function SidebarNavigation() {
                       )}
                     </div>
                   ) : (
-                    <Tooltip>
+                    isCollapsed ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Link
+                             href={item.href}
+                             onMouseEnter={() => {
+                               // Prefetch data on hover for instant navigation
+                               if (item.href === "/tickets" || item.href.startsWith("/tickets")) {
+                                 prefetchTickets()
+                               } else if (item.href === "/users") {
+                                 prefetchUsers()
+                               }
+                             }}
+                             className={cn(
+                               "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
+                               pathname === item.href
+                                 ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                 : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                               isCollapsed 
+                                 ? "justify-center px-2" 
+                                 : "px-3"
+                             )}
+                           >
+                            <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
+                            {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="ml-2">
+                          <p>{item.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onMouseEnter={() => {
+                          // Prefetch data on hover for instant navigation
+                          if (item.href === "/tickets" || item.href.startsWith("/tickets")) {
+                            prefetchTickets()
+                          } else if (item.href === "/users") {
+                            prefetchUsers()
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
+                          pathname === item.href
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                          isCollapsed 
+                            ? "justify-center px-2" 
+                            : "px-3"
+                        )}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
+                      </Link>
+                    )
+                  )}
+                </div>
+              )
+            })}
+          </nav>
+        </div>
+
+         {mode === "employee" && (
+           <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
+             {!isCollapsed && (
+               <h3 className="text-[10px] font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-2 px-3">
+                 Administration
+               </h3>
+             )}
+             <nav className="space-y-1">
+              {administrationItems.filter(shouldShowItem).map((item) => {
+                const Icon = item.icon
+                return (
+                  isCollapsed ? (
+                    <Tooltip key={item.name}>
                       <TooltipTrigger asChild>
                          <Link
                            href={item.href}
                            onMouseEnter={() => {
-                             // Prefetch data on hover for instant navigation
-                             if (item.href === "/tickets" || item.href.startsWith("/tickets")) {
-                               prefetchTickets()
-                             } else if (item.href === "/users") {
+                             // Prefetch data on hover
+                             if (item.href === "/users" || item.href === "/admin/users-teams") {
                                prefetchUsers()
                              }
                            }}
@@ -287,55 +379,34 @@ export function SidebarNavigation() {
                           {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
                         </Link>
                       </TooltipTrigger>
-                      {isCollapsed && (
-                        <TooltipContent side="right" className="ml-2">
-                          <p>{item.name}</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  )}
-                </div>
-              )
-            })}
-          </nav>
-        </div>
-
-         {mode === "employee" && (
-           <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
-             <nav className="space-y-1">
-              {administrationItems.filter(shouldShowItem).map((item) => {
-                const Icon = item.icon
-                return (
-                  <Tooltip key={item.name}>
-                    <TooltipTrigger asChild>
-                       <Link
-                         href={item.href}
-                         onMouseEnter={() => {
-                           // Prefetch data on hover
-                           if (item.href === "/users" || item.href === "/admin/users-teams") {
-                             prefetchUsers()
-                           }
-                         }}
-                         className={cn(
-                           "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                           pathname === item.href
-                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                             : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
-                           isCollapsed 
-                             ? "justify-center px-2" 
-                             : "px-3"
-                         )}
-                       >
-                        <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
-                        {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
-                      </Link>
-                    </TooltipTrigger>
-                    {isCollapsed && (
                       <TooltipContent side="right" className="ml-2">
                         <p>{item.name}</p>
                       </TooltipContent>
-                    )}
-                  </Tooltip>
+                    </Tooltip>
+                  ) : (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onMouseEnter={() => {
+                        // Prefetch data on hover
+                        if (item.href === "/users" || item.href === "/admin/users-teams") {
+                          prefetchUsers()
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
+                        pathname === item.href
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
+                        isCollapsed 
+                          ? "justify-center px-2" 
+                          : "px-3"
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-3")} />
+                      {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{item.name}</span>}
+                    </Link>
+                  )
                 )
               })}
             </nav>
