@@ -13,7 +13,7 @@ import { useSearch } from "@/lib/contexts/search-context"
 import { SearchFilters } from "@/components/search/search-filters"
 import { cn } from "@/lib/utils"
 
-export default function SearchPage() {
+export default function SearchPage({ initialQuery }: { initialQuery?: string } = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { searchTerm, setSearchTerm, results, isSearching, recentSearches, performSearch, addToRecent } = useSearch()
@@ -29,20 +29,20 @@ export default function SearchPage() {
   const [copiedExample, setCopiedExample] = useState<string | null>(null)
 
   useEffect(() => {
-    // Auto-search if there's a search term from URL params
-    const query = searchParams?.get("q")
-    if (query) {
+    // Auto-search if there's a search term from URL params or initialQuery prop
+    const query = initialQuery || searchParams?.get("q")
+    if (query && query !== searchTerm) {
       setSearchTerm(query)
       handleSearch(query)
     }
-  }, [searchParams])
+  }, [searchParams, initialQuery])
 
-  // Fetch suggestions and perform live search as user types
+  // Only fetch suggestions as user types (no auto-search)
   useEffect(() => {
-    const fetchSuggestionsAndSearch = async () => {
+    const fetchSuggestions = async () => {
       if (searchTerm.length > 2) {
         try {
-          // Fetch suggestions
+          // Only fetch suggestions, don't perform search
           const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(searchTerm)}&limit=5`)
           if (response.ok) {
             const data = await response.json()
@@ -50,7 +50,6 @@ export default function SearchPage() {
             
             // Check for spelling suggestions
             if (data.suggestions.length === 0 && searchTerm.length > 3) {
-              // Simple did you mean logic
               const commonTerms = ['ticket', 'user', 'service', 'asset', 'laptop', 'access', 'password', 'reset']
               const similar = commonTerms.find(term => {
                 const distance = levenshteinDistance(searchTerm.toLowerCase(), term.toLowerCase())
@@ -61,32 +60,18 @@ export default function SearchPage() {
               setSpellingSuggestion(null)
             }
           }
-          
-          // Perform live search as user types
-          setHasSearched(true)
-          const { filters, keywords } = parseSearchQuery(searchTerm)
-          
-          // Add active type filter to search
-          if (activeType !== 'all') {
-            filters.type = activeType
-          }
-          
-          const finalSearchTerm = keywords || searchTerm
-          await performSearch(finalSearchTerm, activeType !== 'all' ? activeType : undefined)
-          setFilters(filters)
         } catch (error) {
-          console.error('Error fetching suggestions or searching:', error)
+          console.error('Error fetching suggestions:', error)
         }
       } else {
         setSuggestions([])
         setSpellingSuggestion(null)
-        setHasSearched(false)
       }
     }
 
-    const timeout = setTimeout(fetchSuggestionsAndSearch, 300)
+    const timeout = setTimeout(fetchSuggestions, 300)
     return () => clearTimeout(timeout)
-  }, [searchTerm, activeType])
+  }, [searchTerm])
 
   // Load recently viewed items
   useEffect(() => {
@@ -256,10 +241,16 @@ export default function SearchPage() {
               </div>
               <Button
                 onClick={() => handleSearch(searchTerm)}
-                className="h-10 text-xs"
+                size="icon"
+                className="h-10 w-10"
                 disabled={isSearching}
+                title="Search"
               >
-                {isSearching ? "Searching..." : "Search"}
+                {isSearching ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -437,8 +428,8 @@ export default function SearchPage() {
       {/* Results Area */}
       <div className="flex-1 overflow-auto">
         <div className="max-w-6xl mx-auto px-6 py-6">
-          {/* Search Results */}
-          {hasSearched && (
+          {/* Search Results or Empty State */}
+          {hasSearched && searchTerm.trim() ? (
             <div className="space-y-4">
               {/* Did you mean suggestion */}
               {spellingSuggestion && !isSearching && results.length === 0 && (
@@ -612,13 +603,13 @@ export default function SearchPage() {
                       </div>
                     </div>
                   )}
-                </>
+              </>
               )}
             </div>
-          )}
+          ) : null}
 
-          {/* Default State - No Search */}
-          {!hasSearched && (
+          {/* Empty State - Show Recent & Trending */}
+          {(!hasSearched || !searchTerm.trim()) && (
             <div className="grid gap-4 md:grid-cols-2">
               {/* Recent Searches */}
               {recentSearches.length > 0 && (

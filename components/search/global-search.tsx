@@ -343,20 +343,40 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         e.preventDefault()
         if (selectedIndex >= 0) {
           if (selectedIndex < suggestions.length) {
-            // Selected a suggestion
+            // Selected a suggestion - navigate with search ID
             const suggestion = suggestions[selectedIndex]
-            handleSuggestionClick(suggestion)
+            setSearchTerm(suggestion)
+            setIsOpen(false)
+            trackSearch(suggestion, 0)
+            if (pathname !== '/search' && !pathname.startsWith('/search')) {
+              fetch('/api/search/id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: suggestion })
+              })
+                .then(r => r.json())
+                .then(({ id }) => router.push(`/search/${id}`))
+                .catch(() => router.push(`/search?q=${encodeURIComponent(suggestion)}`))
+            }
           } else {
-            // Selected a result
+            // Selected a result - navigate to result page
             const result = results[selectedIndex - suggestions.length]
-            handleResultClick(result)
+            setIsOpen(false)
+            trackSearch(searchTerm, 1, result.id, result.type)
+            router.push(result.url)
           }
-        } else if (searchTerm) {
-          // Go to search results page if not already there
+        } else if (searchTerm && searchTerm.trim().length >= 1) {
+          // Go to search results page with search ID (non-blocking)
           if (pathname !== '/search' && !pathname.startsWith('/search')) {
-            const params = new URLSearchParams()
-            params.set('q', searchTerm)
-            router.push(`/search?${params.toString()}`)
+            // Create search ID in background and navigate
+            fetch('/api/search/id', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: searchTerm.trim() })
+            })
+              .then(r => r.json())
+              .then(({ id }) => router.push(`/search/${id}`))
+              .catch(() => router.push(`/search?q=${encodeURIComponent(searchTerm)}`))
           }
           setIsOpen(false)
         }
@@ -366,7 +386,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         setSelectedIndex(-1)
         break
     }
-  }, [isOpen, selectedIndex, suggestions.length, results.length, searchTerm, router])
+  }, [isOpen, selectedIndex, suggestions, results, searchTerm, pathname, router])
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -405,7 +425,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   useEffect(() => {
     if (debouncedSearchTerm && debouncedSearchTerm.length >= 1) {
       performSearch(debouncedSearchTerm)
-    } else if (!debouncedSearchTerm) {
+    } else {
       setResults([])
       setIsSearching(false)
     }
@@ -455,11 +475,23 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     setIsOpen(false)
     // Track suggestion click
     await trackSearch(suggestion, 0)
-    // Navigate to /search page if not already there
+    // Navigate to /search page with search ID
     if (pathname !== '/search' && !pathname.startsWith('/search')) {
-      const params = new URLSearchParams()
-      params.set('q', suggestion)
-      router.push(`/search?${params.toString()}`)
+      try {
+        const response = await fetch('/api/search/id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: suggestion })
+        })
+        if (response.ok) {
+          const { id } = await response.json()
+          router.push(`/search/${id}`)
+        } else {
+          router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+        }
+      } catch (error) {
+        router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+      }
     }
   }
 
@@ -467,6 +499,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     setIsOpen(false)
     // Track result click
     await trackSearch(searchTerm, 1, result.id, result.type)
+    // Navigate directly to result (not through search ID system)
     router.push(result.url)
   }
 
@@ -513,13 +546,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       {/* Search Input in Header */}
       <div className="relative">
         <Search 
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-          onClick={() => {
-            // Navigate to search page without query parameter
-            if (pathname !== '/search') {
-              router.push('/search')
-            }
-          }}
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors pointer-events-none" 
         />
         <Input
           ref={inputRef}
@@ -528,25 +555,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           value={searchTerm}
           onChange={(e) => {
             const value = e.target.value
-            
-            // Clear existing URL update timeout
-            if (urlUpdateTimeoutRef.current) {
-              clearTimeout(urlUpdateTimeoutRef.current)
-            }
-            
-            // Update search term immediately in state
             setSearchTerm(value)
-            
-            // Debounce URL update more aggressively (don't update on every keystroke)
-            urlUpdateTimeoutRef.current = setTimeout(() => {
-              const params = new URLSearchParams(searchParams.toString())
-              if (value) {
-                params.set('q', value)
-              } else {
-                params.delete('q')
-              }
-              router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-            }, 800) // Longer delay to prevent conflicts
           }}
           onFocus={() => {
             setIsOpen(true)
@@ -559,6 +568,43 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             // Keep dropdown open when clicking inside search box
             e.stopPropagation()
             setIsOpen(true)
+          }}
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              // Navigate to search page on Enter with search ID
+              if (pathname !== '/search' && !pathname.startsWith('/search')) {
+                if (searchTerm && searchTerm.trim().length >= 1) {
+                  // Create search ID and navigate
+                  try {
+                    const response = await fetch('/api/search/id', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ query: searchTerm.trim() })
+                    })
+                    if (response.ok) {
+                      const { id } = await response.json()
+                      router.push(`/search/${id}`)
+                    } else {
+                      // Fallback to query parameter
+                      router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+                    }
+                  } catch (error) {
+                    // Fallback to query parameter
+                    router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+                  }
+                } else if (searchTerm.trim().length < 1) {
+                  // Empty search - do nothing
+                  return
+                } else {
+                  router.push('/search')
+                }
+                setIsOpen(false)
+              } else if (!searchTerm) {
+                // On search page with empty query, just close dropdown
+                setIsOpen(false)
+              }
+            }
           }}
         />
         <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 flex items-center">
@@ -802,17 +848,29 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                 ))}
                 
                 {/* View all results link */}
-                {searchTerm && (
+                {searchTerm && searchTerm.length >= 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start h-8 text-xs mt-1"
-                    onClick={() => {
-                      // Navigate to /search page if not already there
+                    onClick={async () => {
+                      // Navigate to /search page with search ID
                       if (pathname !== '/search' && !pathname.startsWith('/search')) {
-                        const params = new URLSearchParams()
-                        params.set('q', searchTerm)
-                        router.push(`/search?${params.toString()}`)
+                        try {
+                          const response = await fetch('/api/search/id', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: searchTerm.trim() })
+                          })
+                          if (response.ok) {
+                            const { id } = await response.json()
+                            router.push(`/search/${id}`)
+                          } else {
+                            router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+                          }
+                        } catch (error) {
+                          router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
+                        }
                       }
                       setIsOpen(false)
                     }}
