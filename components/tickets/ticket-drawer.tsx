@@ -200,9 +200,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         ticketData.assignee_ids = []
       }
       
-      // Normalize due_date to ISO if present
-      if (ticketData.due_date) {
+      // Normalize due_date to ISO if present, otherwise remove it
+      if (ticketData.due_date && ticketData.due_date.trim()) {
         ticketData.due_date = new Date(ticketData.due_date).toISOString()
+      } else {
+        // Remove due_date if it's empty to avoid timestamp parsing errors
+        delete ticketData.due_date
       }
       
       if (isCreateMode) {
@@ -809,6 +812,59 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                           <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground capitalize">{form.urgency || "—"}</div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Tags - full width */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Tags</label>
+                      {isEditMode ? (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add tag and press Enter..."
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const input = e.currentTarget
+                                  const tag = input.value.trim()
+                                  if (tag && !form.tags.includes(tag)) {
+                                    setForm({ ...form, tags: [...form.tags, tag] })
+                                    input.value = ''
+                                  }
+                                }
+                              }}
+                              className="text-[11px] h-8"
+                            />
+                          </div>
+                          {form.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {form.tags.map((tag, index) => (
+                                <Badge 
+                                  key={index} 
+                                  variant="secondary" 
+                                  className="text-[10px] h-6 px-2 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                  onClick={() => setForm({ ...form, tags: form.tags.filter((_, i) => i !== index) })}
+                                >
+                                  {tag}
+                                  <X className="h-3 w-3 ml-1" />
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">
+                          {form.tags.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {form.tags.map((tag, index) => (
+                                <Badge key={index} variant="secondary" className="text-[10px] h-6 px-2">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : "—"}
+                        </div>
+                      )}
                     </div>
 
                     {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
