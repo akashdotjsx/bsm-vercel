@@ -1461,8 +1461,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
 
   return (
     <PageContent>
-      <div className="font-sans text-sm w-full max-w-full" style={{ width: '100%', maxWidth: '100%', position: 'relative' }}>
-        <div className="flex-1 flex flex-col min-w-0">
+      <div className="font-sans text-sm h-full w-full max-w-full overflow-hidden" style={{ width: '100%', maxWidth: '100%', position: 'relative' }}>
+        <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Fixed Header Section */}
           <div className="flex-shrink-0 space-y-6 w-full max-w-full overflow-hidden">
             <div className="flex items-start justify-between w-full max-w-full">
@@ -1574,7 +1574,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
           </div>
 
           {/* Scrollable Content Area */}
-          <div className="flex-1 w-full max-w-full">
+          <div className="flex-1 overflow-hidden w-full max-w-full">
             {currentView === "list" && renderListView()}
             {currentView === "kanban" && renderKanbanView()}
           </div>
