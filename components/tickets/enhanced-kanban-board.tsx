@@ -326,18 +326,13 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
         </div>
         
         {/* Bottom Horizontal Scroll Bar */}
-        <div className="mt-6 p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-          <div className="text-xs text-red-600 dark:text-red-400 mb-2 font-medium">Bottom Scroll Bar (Debug)</div>
-          <div ref={bottomScrollRef} className="overflow-x-auto border-t-2 border-primary/50 pt-4 bg-muted/30 rounded-lg" id="kanban-bottom-scroll">
-            <div className="flex gap-6 min-w-min h-16">
-              {kanbanColumns.map((column) => (
-                <div key={`bottom-${column.id}`} className="min-w-[320px] flex items-center justify-center">
-                  <div className="w-full h-6 bg-primary rounded-lg shadow-lg flex items-center justify-center hover:bg-primary/80 transition-colors">
-                    <span className="text-sm font-semibold text-primary-foreground">{column.title}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div ref={bottomScrollRef} className="mt-4 overflow-x-auto border-t border-border pt-2" id="kanban-bottom-scroll">
+          <div className="flex gap-6 min-w-min h-8">
+            {kanbanColumns.map((column) => (
+              <div key={`bottom-${column.id}`} className="min-w-[320px] flex items-center justify-center">
+                <div className="w-full h-2 bg-muted-foreground/20 rounded-full"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
