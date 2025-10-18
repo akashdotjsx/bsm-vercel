@@ -49,6 +49,7 @@ import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
 import { EnhancedKanbanBoard } from "@/components/tickets/enhanced-kanban-board"
+import { FilterDialog } from "@/components/tickets/filter-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
 import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
@@ -296,18 +297,19 @@ export default function TicketsPage() {
   const [isImporting, setIsImporting] = useState(false)
   
   // Filter dialog state
-  const [showFilterDialog, setShowFilterDialog] = useState(false)
   const [activeFilters, setActiveFilters] = useState<{
     type: string[]
     priority: string[]
     status: string[]
     assignee: string[]
+    reportedBy: string[]
     dateRange: { from: string; to: string }
   }>({
     type: [],
     priority: [],
     status: [],
     assignee: [],
+    reportedBy: [],
     dateRange: { from: '', to: '' }
   })
 
@@ -347,6 +349,10 @@ export default function TicketsPage() {
         name: ticket.assignee.display_name,
         avatar: getAvatarInitials(ticket.assignee.first_name, ticket.assignee.last_name, ticket.assignee.display_name)
       } : null),
+      // ✅ FIX: Preserve raw ID fields for filtering
+      assignee_id: ticket.assignee_id,
+      assignee_ids: ticket.assignee_ids,
+      requester_id: ticket.requester_id,
       status: ticket.status,
       timestamp: formatDate(ticket.created_at),
       date: formatDate(ticket.created_at),
@@ -386,6 +392,21 @@ export default function TicketsPage() {
   const filteredTickets = useMemo(() => {
     // Use local tickets for Kanban view, transformed tickets for list view
     const baseTickets = currentView === "kanban" ? localTickets : transformedTickets
+    
+    console.log('🔍 My Tickets - Filtering tickets:', {
+      totalTickets: baseTickets.length,
+      activeFilters: filterConditions.activeFilters,
+      currentView,
+      sampleTicket: baseTickets[0] ? {
+        id: baseTickets[0].id,
+        title: baseTickets[0].title,
+        assignee_id: baseTickets[0].assignee_id,
+        assignee_ids: baseTickets[0].assignee_ids,
+        requester_id: baseTickets[0].requester_id,
+        assignee: baseTickets[0].assignee,
+        requester: baseTickets[0].requester
+      } : null
+    })
     
     // Note: Server-side filtering is now applied via GraphQL query for My Tickets and Assigned to Me
     // No need to filter client-side for these views
@@ -434,6 +455,42 @@ export default function TicketsPage() {
           const ticketStatus = ticket.status?.toLowerCase() || ''
           const selectedStatusLower = filterConditions.status.toLowerCase()
           if (ticketStatus !== selectedStatusLower) return false
+        }
+        
+        // Assignee filter (from active filters) - check both single assignee and multi-assignees
+        if (filterConditions.activeFilters.assignee.length > 0) {
+          const assigneeIds = ticket.assignee_ids || []
+          const singleAssigneeId = ticket.assignee_id
+          const allAssigneeIds = [...assigneeIds, ...(singleAssigneeId ? [singleAssigneeId] : [])]
+          
+          console.log('🔍 My Tickets - Assignee filter check:', {
+            ticketId: ticket.id,
+            ticketTitle: ticket.title,
+            filterAssigneeIds: filterConditions.activeFilters.assignee,
+            ticketAssigneeIds: allAssigneeIds,
+            matches: filterConditions.activeFilters.assignee.some(assigneeId => 
+              allAssigneeIds.includes(assigneeId)
+            )
+          })
+          
+          if (!filterConditions.activeFilters.assignee.some(assigneeId => 
+            allAssigneeIds.includes(assigneeId)
+          )) return false
+        }
+        
+        // Reported By filter (from active filters) - check requester_id
+        if (filterConditions.activeFilters.reportedBy.length > 0) {
+          const requesterId = ticket.requester_id
+          
+          console.log('🔍 My Tickets - Reported By filter check:', {
+            ticketId: ticket.id,
+            ticketTitle: ticket.title,
+            filterRequesterIds: filterConditions.activeFilters.reportedBy,
+            ticketRequesterId: requesterId,
+            matches: requesterId && filterConditions.activeFilters.reportedBy.includes(requesterId)
+          })
+          
+          if (!requesterId || !filterConditions.activeFilters.reportedBy.includes(requesterId)) return false
         }
         
         // Date range filter
@@ -576,6 +633,7 @@ export default function TicketsPage() {
       priority: [],
       status: [],
       assignee: [],
+      reportedBy: [],
       dateRange: { from: '', to: '' }
     })
     setSearchTerm("")
@@ -1054,20 +1112,56 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <SelectItem value="assignee">Group by: Assignee</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 text-sm bg-background border border-border"
-            onClick={() => setShowFilterDialog(true)}
+          <FilterDialog
+            onApply={(filters) => {
+              setActiveFilters({
+                type: filters.type,
+                priority: filters.priority,
+                status: filters.status,
+                assignee: filters.assignee,
+                reportedBy: filters.reportedBy,
+                dateRange: {
+                  from: filters.dateRange.from?.toISOString().split('T')[0] || '',
+                  to: filters.dateRange.to?.toISOString().split('T')[0] || ''
+                }
+              })
+            }}
+            onReset={() => {
+              setActiveFilters({
+                type: [],
+                priority: [],
+                status: [],
+                assignee: [],
+                reportedBy: [],
+                dateRange: { from: '', to: '' }
+              })
+            }}
+            initialFilters={{
+              type: activeFilters.type,
+              priority: activeFilters.priority,
+              status: activeFilters.status,
+              assignee: activeFilters.assignee,
+              reportedBy: activeFilters.reportedBy,
+              dateRange: {
+                from: activeFilters.dateRange.from ? new Date(activeFilters.dateRange.from) : undefined,
+                to: activeFilters.dateRange.to ? new Date(activeFilters.dateRange.to) : undefined
+              }
+            }}
           >
-            <Filter className="h-3 w-3 mr-2" />
-            Filter
-            {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
-              <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
-                {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
-              </span>
-            )}
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 text-sm bg-background border border-border"
+            >
+              <Filter className="h-3 w-3 mr-2" />
+              Filter
+              {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0 || activeFilters.reportedBy.length > 0) && (
+                <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
+                  {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length + activeFilters.reportedBy.length}
+                </span>
+              )}
+            </Button>
+          </FilterDialog>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -1795,144 +1889,6 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         </DialogContent>
       </Dialog>
 
-      {/* Filter Dialog */}
-      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Filter My Tickets</DialogTitle>
-          </DialogHeader>
-           <div className="space-y-6">
-             {/* Type Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Type</label>
-              <div className="flex flex-wrap gap-2">
-                {['incident', 'request', 'problem', 'change', 'general_query'].map((type) => (
-                  <Button
-                    key={type}
-                    variant={activeFilters.type.includes(type) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        type: prev.type.includes(type) 
-                          ? prev.type.filter(t => t !== type)
-                          : [...prev.type, type]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Priority Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Priority</label>
-              <div className="flex flex-wrap gap-2">
-                {['low', 'medium', 'high', 'critical', 'urgent'].map((priority) => (
-                  <Button
-                    key={priority}
-                    variant={activeFilters.priority.includes(priority) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        priority: prev.priority.includes(priority) 
-                          ? prev.priority.filter(p => p !== priority)
-                          : [...prev.priority, priority]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Status Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Status</label>
-              <div className="flex flex-wrap gap-2">
-                {['new', 'in_progress', 'pending', 'resolved', 'closed'].map((status) => (
-                  <Button
-                    key={status}
-                    variant={activeFilters.status.includes(status) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        status: prev.status.includes(status) 
-                          ? prev.status.filter(s => s !== status)
-                          : [...prev.status, status]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Date Range Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Date Range</label>
-               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                   <label className="text-xs text-muted-foreground mb-1 block">From</label>
-                  <Input
-                    type="date"
-                    value={activeFilters.dateRange.from}
-                    onChange={(e) => setActiveFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, from: e.target.value }
-                    }))}
-                    className="text-sm"
-                  />
-                </div>
-                 <div>
-                   <label className="text-xs text-muted-foreground mb-1 block">To</label>
-                  <Input
-                    type="date"
-                    value={activeFilters.dateRange.to}
-                    onChange={(e) => setActiveFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, to: e.target.value }
-                    }))}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setActiveFilters({
-                  type: [],
-                  priority: [],
-                  status: [],
-                  assignee: [],
-                  dateRange: { from: '', to: '' }
-                })
-              }}
-            >
-              Clear All
-            </Button>
-            <Button 
-              onClick={() => setShowFilterDialog(false)}
-              className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
-            >
-              Apply Filters
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Suspense fallback={<LoadingSpinner size="lg" />}>
         <TicketDrawer
