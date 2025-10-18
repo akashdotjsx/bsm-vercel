@@ -611,8 +611,8 @@ export default function UsersPage() {
 
          {/* Main Heading */}
          <div>
-           <h1 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Utilization Report</h1>
-           <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Track and analyze team member utilization across projects and time periods</p>
+           <h1 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>Utilization Report</h1>
+           <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400, marginTop: '8px' }}>Track and analyze team member utilization across projects and time periods</p>
          </div>
 
          {/* Filter Controls Row */}
@@ -621,12 +621,12 @@ export default function UsersPage() {
              {/* Search Input */}
              <div className="relative" style={{ width: '185px', height: '32px' }}>
                <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2" style={{ width: '12.04px', height: '12.04px' }}>
-                 <Search className="w-full h-full text-[#8D8D8D]" />
+                 <Search className="w-full h-full text-muted-foreground" />
                </div>
               <Input
                 placeholder="Search users..."
-                 className="w-full h-full pl-7 pr-3 text-xs rounded-[5px] border border-[#E4E4E4] bg-white"
-                 style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}
+                 className="w-full h-full pl-7 pr-3 text-xs rounded-[5px] bg-background border border-border"
+                 style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -635,8 +635,8 @@ export default function UsersPage() {
              {/* All Departments Dropdown */}
              <div className="ml-4" style={{ width: '144px', height: '32px' }}>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                 <SelectTrigger className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-2.5 pr-8">
-                   <SelectValue placeholder="All Departments" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }} />
+                 <SelectTrigger className="w-full h-full text-xs rounded-[5px] bg-background border border-border pl-2.5 pr-8">
+                   <SelectValue placeholder="All Departments" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
@@ -651,17 +651,17 @@ export default function UsersPage() {
              
              {/* Filter Button */}
              <div className="ml-4" style={{ width: '113px', height: '32px' }}>
-               <Button variant="outline" className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-6 pr-3">
-                 <Filter className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#717171]" />
-                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}>Filter</span>
+               <Button variant="outline" className="w-full h-full text-xs rounded-[5px] bg-background border border-border pl-6 pr-3">
+                 <Filter className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Filter</span>
             </Button>
           </div>
              
              {/* Manage Departments Button */}
              <div className="ml-4" style={{ width: '161px', height: '32px' }}>
-               <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-6 pr-3">
-                 <Settings className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#717171]" />
-                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}>Manage Departments</span>
+               <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="w-full h-full text-xs rounded-[5px] bg-background border border-border pl-6 pr-3">
+                 <Settings className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Manage Departments</span>
                </Button>
              </div>
            </div>
@@ -688,10 +688,10 @@ export default function UsersPage() {
          {/* Stats Cards */}
          <div className="flex gap-4" style={{ marginTop: '24px' }}>
            {/* Total Users Card */}
-           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+           <div className="bg-card border border-border rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
              <div className="flex flex-col">
-               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Total Users</p>
-               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.length}</p>
+               <p className="text-muted-foreground mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Total Users</p>
+               <p className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.length}</p>
                  </div>
              <div style={{ width: '44px', height: '44px' }}>
                <img src="/users.svg" alt="Total Users" className="w-full h-full" />
@@ -699,10 +699,10 @@ export default function UsersPage() {
                </div>
 
            {/* Active Users Card */}
-           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+           <div className="bg-card border border-border rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
              <div className="flex flex-col">
-               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Active Users</p>
-               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => u.is_active).length}</p>
+               <p className="text-muted-foreground mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Active Users</p>
+               <p className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => u.is_active).length}</p>
                  </div>
              <div style={{ width: '44px', height: '44px' }}>
                <img src="/active users.svg" alt="Active Users" className="w-full h-full" />
@@ -710,10 +710,10 @@ export default function UsersPage() {
                </div>
 
            {/* Teams Card */}
-           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+           <div className="bg-card border border-border rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
              <div className="flex flex-col">
-               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Teams</p>
-               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{teams.length}</p>
+               <p className="text-muted-foreground mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Teams</p>
+               <p className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{teams.length}</p>
                  </div>
              <div style={{ width: '44px', height: '44px' }}>
                <img src="/teams.svg" alt="Teams" className="w-full h-full" />
@@ -721,10 +721,10 @@ export default function UsersPage() {
                </div>
 
            {/* New This Month Card */}
-           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+           <div className="bg-card border border-border rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
              <div className="flex flex-col">
-               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>New This Month</p>
-               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => {
+               <p className="text-muted-foreground mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>New This Month</p>
+               <p className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => {
                      const createdDate = new Date(u.created_at)
                      const now = new Date()
                      const thisMonth = now.getMonth()
@@ -739,11 +739,11 @@ export default function UsersPage() {
          </div>
 
          {/* Users Section */}
-         <div className="bg-white border border-[#EEEEEE] rounded-[10px] w-full">
+         <div className="bg-card border border-border rounded-[10px] w-full">
            {/* Header Section */}
            <div className="p-6 pb-4">
-             <h2 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Users</h2>
-             <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Manage user accounts and permissions</p>
+             <h2 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>Users</h2>
+             <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400, marginTop: '8px' }}>Manage user accounts and permissions</p>
             </div>
            
            {/* Table Section */}
@@ -751,42 +751,42 @@ export default function UsersPage() {
             <div className="overflow-x-auto">
                <table className="w-full table-fixed">
                 <thead>
-                   <tr className="border-b border-[#EEEEEE] bg-white">
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '30%' }}>User</th>
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Role</th>
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Department</th>
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Status</th>
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Created On</th>
-                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '10%' }}>Actions</th>
+                   <tr className="border-b border-border bg-card">
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '30%' }}>User</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Role</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Department</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Status</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Created On</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '10%' }}>Actions</th>
                   </tr>
                 </thead>
-                 <tbody className="divide-y divide-[#EEEEEE]">
+                 <tbody className="divide-y divide-border">
                   {filteredUsers.map((user) => (
-                     <tr key={user.id} className="hover:bg-gray-50 bg-white">
+                     <tr key={user.id} className="hover:bg-muted/50 bg-card">
                        <td className="py-3 px-2">
                          <div className="flex flex-col">
-                           <span className="text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>
+                           <span className="text-sm text-foreground truncate" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>
                              {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
                            </span>
-                           <span className="text-xs text-[#6A707C] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '10px', lineHeight: '1.2102272510528564em' }}>
+                           <span className="text-xs text-muted-foreground truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '10px', lineHeight: '1.2102272510528564em' }}>
                              {user.email}
                            </span>
                          </div>
                       </td>
-                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.role || 'N/A'}</td>
-                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.department || 'N/A'}</td>
+                       <td className="py-3 px-2 text-sm text-foreground truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.role || 'N/A'}</td>
+                       <td className="py-3 px-2 text-sm text-foreground truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.department || 'N/A'}</td>
                        <td className="py-3 px-2">
                         {user.is_active ? (
                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#EDFFDE', color: '#47AF47', fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Active</span>
                         ) : (
-                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#FFDEDE', color: '#AF4748', fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Inactive</span>
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Inactive</span>
                         )}
                       </td>
-                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{formatDate(user.created_at)}</td>
+                       <td className="py-3 px-2 text-sm text-foreground truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{formatDate(user.created_at)}</td>
                        <td className="py-3 px-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="sm" className="px-1 text-[#717171] hover:bg-gray-100">
+                             <Button variant="ghost" size="sm" className="px-1 text-muted-foreground hover:bg-muted">
                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -826,12 +826,12 @@ export default function UsersPage() {
          </div>
 
         {/* Teams Section */}
-        <div className="bg-white border border-[#EEEEEE] rounded-[10px] w-full" style={{ marginTop: '24px' }}>
+        <div className="bg-card border border-border rounded-[10px] w-full" style={{ marginTop: '24px' }}>
           <div className="p-6 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Teams</h2>
-                <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Organize users into teams for better collaboration</p>
+                <h2 className="text-base font-semibold tracking-tight font-sans text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>Teams</h2>
+                <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400, marginTop: '8px' }}>Organize users into teams for better collaboration</p>
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
@@ -933,14 +933,14 @@ export default function UsersPage() {
                 return (
                   <div
                     key={team.id}
-                    className="bg-white border border-[#EEEEEE] rounded-[10px]"
+                    className="bg-card border border-border rounded-[10px]"
                     style={{ padding: '16px' }}
                   >
                     <div className="flex flex-col gap-4">
                       {/* Team Info */}
                       <div className="flex flex-col gap-2">
-                        <h3 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '14px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>{team.name}</h3>
-                        <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>
+                        <h3 className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '14px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>{team.name}</h3>
+                        <p className="text-muted-foreground" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>
                           {team.description || 'No description provided'}
                         </p>
                       </div>
@@ -954,16 +954,16 @@ export default function UsersPage() {
                             <path d="M12 12.5C14.651 12.5 16.8 10.351 16.8 7.70002C16.8 5.04906 14.651 2.90002 12 2.90002C9.34905 2.90002 7.20001 5.04906 7.20001 7.70002C7.20001 10.351 9.34905 12.5 12 12.5Z" fill="#6EBAFF" stroke="#6EBAFF" strokeWidth="1.6" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           <div className="flex flex-col">
-                            <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>Lead:</span>
-                            <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>
+                            <span className="text-muted-foreground" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>Lead:</span>
+                            <span className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>
                               {leadUser ? (leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email) : 'No lead assigned'}
                             </span>
                           </div>
                         </div>
 
                         {/* Members Count Badge */}
-                        <div className="bg-[#F3F4FF] border border-[#6E72FF] rounded-[5px] flex items-center justify-center" style={{ padding: '5px 10px' }}>
-                          <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'center' }}>
+                        <div className="bg-muted border border-border rounded-[5px] flex items-center justify-center" style={{ padding: '5px 10px' }}>
+                          <span className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'center' }}>
                             {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
                           </span>
                               </div>
