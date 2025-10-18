@@ -365,6 +365,9 @@ export default function TicketsPage() {
       date: formatDate(ticket.created_at),
       reportedDate: formatDate(ticket.created_at),
       dueDate: ticket.due_date ? formatDate(ticket.due_date) : "No due date",
+      // Keep original date fields for Kanban view
+      created_at: ticket.created_at,
+      due_date: ticket.due_date,
       comments: 0, // Will be updated when we implement comments
       attachments: 0, // Will be updated when we implement attachments
       priority: ticket.priority,
