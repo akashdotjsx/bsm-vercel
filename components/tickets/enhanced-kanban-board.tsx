@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback } from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -76,6 +76,32 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
 }) => {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const mainScrollRef = useRef<HTMLDivElement>(null)
+  const bottomScrollRef = useRef<HTMLDivElement>(null)
+
+  // Sync scroll between main and bottom scroll areas
+  useEffect(() => {
+    const mainScroll = mainScrollRef.current
+    const bottomScroll = bottomScrollRef.current
+
+    if (!mainScroll || !bottomScroll) return
+
+    const syncScroll = (source: HTMLElement, target: HTMLElement) => {
+      target.scrollLeft = source.scrollLeft
+    }
+
+    const handleMainScroll = () => syncScroll(mainScroll, bottomScroll)
+    const handleBottomScroll = () => syncScroll(bottomScroll, mainScroll)
+
+    mainScroll.addEventListener('scroll', handleMainScroll)
+    bottomScroll.addEventListener('scroll', handleBottomScroll)
+
+    return () => {
+      mainScroll.removeEventListener('scroll', handleMainScroll)
+      bottomScroll.removeEventListener('scroll', handleBottomScroll)
+    }
+  }, [])
+
   const getKanbanColumns = useCallback(() => {
     switch (groupBy) {
       case "status":
@@ -140,7 +166,7 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
   const kanbanColumns = getKanbanColumns()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-4">
       {/* Filters Header */}
       <div className="flex items-center gap-4 py-2 border-b border-border flex-wrap overflow-x-auto">
         <div className="relative flex-shrink-0">
@@ -203,8 +229,9 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
       </div>
 
       {/* Kanban Board Grid */}
-      <div className="pb-6 overflow-x-auto">
-        <div className="flex gap-6 min-w-min">
+      <div className="relative">
+        <div ref={mainScrollRef} className="overflow-auto max-h-[calc(100vh-300px)]" id="kanban-main-scroll">
+          <div className="flex gap-6 min-w-min">
           {loading ? (
             // Loading skeleton
             Array.from({ length: 5 }).map((_, i) => (
@@ -295,6 +322,23 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
               )
             })
           )}
+          </div>
+        </div>
+        
+        {/* Bottom Horizontal Scroll Bar */}
+        <div className="mt-6 p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+          <div className="text-xs text-red-600 dark:text-red-400 mb-2 font-medium">Bottom Scroll Bar (Debug)</div>
+          <div ref={bottomScrollRef} className="overflow-x-auto border-t-2 border-primary/50 pt-4 bg-muted/30 rounded-lg" id="kanban-bottom-scroll">
+            <div className="flex gap-6 min-w-min h-16">
+              {kanbanColumns.map((column) => (
+                <div key={`bottom-${column.id}`} className="min-w-[320px] flex items-center justify-center">
+                  <div className="w-full h-6 bg-primary rounded-lg shadow-lg flex items-center justify-center hover:bg-primary/80 transition-colors">
+                    <span className="text-sm font-semibold text-primary-foreground">{column.title}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

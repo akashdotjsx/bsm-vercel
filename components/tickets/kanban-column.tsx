@@ -126,26 +126,26 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
         {/* Tickets Container */}
         <div className="space-y-3 flex-1">
-        {tickets.map((ticket) => (
-          <KanbanTicketCard
-            key={ticket.id}
-            ticket={ticket}
-            isDragging={draggedTicket?.id === ticket.id}
-            onTicketClick={onTicketClick}
-            onDragStart={onDragStart}
-          />
-        ))}
+          {tickets.map((ticket) => (
+            <KanbanTicketCard
+              key={ticket.id}
+              ticket={ticket}
+              isDragging={draggedTicket?.id === ticket.id}
+              onTicketClick={onTicketClick}
+              onDragStart={onDragStart}
+            />
+          ))}
 
-        {/* Add Ticket Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full h-10 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/50 rounded-lg mt-2"
-          onClick={() => onAddTicket(column.id)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Ticket
-        </Button>
+          {/* Add Ticket Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full h-10 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/50 rounded-lg mt-2"
+            onClick={() => onAddTicket(column.id)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Ticket
+          </Button>
         </div>
       </div>
     </div>
