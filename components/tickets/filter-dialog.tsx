@@ -110,12 +110,12 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
         {children}
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[773px] bg-white rounded-[20px] border-0 shadow-[0px_0px_15px_0px_rgba(19,43,76,0.2)] p-0"
+        className="w-[773px] bg-popover rounded-[20px] border border-border shadow-[0px_0px_15px_0px_rgba(19,43,76,0.2)] dark:shadow-[0px_0px_15px_0px_rgba(0,0,0,0.4)] p-0"
         align="start"
         side="bottom"
       >
         <div className="px-6 pt-6 pb-4">
-          <h3 className="text-lg font-semibold text-[#2D2F34]">
+          <h3 className="text-lg font-semibold text-popover-foreground">
             Filter Tickets
           </h3>
         </div>
@@ -125,20 +125,20 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
           <div className="grid grid-cols-6 gap-4">
             {/* Status Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Status</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Status</h3>
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-xs text-gray-500">Loading...</div>
+                  <div className="text-xs text-muted-foreground">Loading...</div>
                 ) : error ? (
-                  <div className="text-xs text-red-500">Error loading options</div>
+                  <div className="text-xs text-destructive">Error loading options</div>
                 ) : (
                   options.status.map((option) => (
                          <div
                            key={option.id}
-                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[#E8E8E8] transition-colors ${
+                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-accent transition-colors ${
                              filters.status.includes(option.id) 
-                               ? 'bg-[#E8F2FF] border border-[#6E72FF]' 
-                               : 'bg-[#F3F3F3]'
+                               ? 'bg-primary/10 border border-primary' 
+                               : 'bg-muted'
                            }`}
                            onClick={() => handleOptionToggle("status", option.id)}
                          >
@@ -151,7 +151,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                                <Check className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white drop-shadow-sm" />
                              )}
                            </div>
-                           <span className="text-xs text-[#2D2F34]">{option.label}</span>
+                           <span className="text-xs text-popover-foreground">{option.label}</span>
                          </div>
                   ))
                 )}
@@ -160,20 +160,20 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             
             {/* Type Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Type</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Type</h3>
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-xs text-gray-500">Loading...</div>
+                  <div className="text-xs text-muted-foreground">Loading...</div>
                 ) : error ? (
-                  <div className="text-xs text-red-500">Error loading options</div>
+                  <div className="text-xs text-destructive">Error loading options</div>
                 ) : (
                   options.type.map((option) => (
                          <div
                            key={option.id}
-                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[#E8E8E8] transition-colors ${
+                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-accent transition-colors ${
                              filters.type.includes(option.id) 
-                               ? 'bg-[#E8F2FF] border border-[#6E72FF]' 
-                               : 'bg-[#F3F3F3]'
+                               ? 'bg-primary/10 border border-primary' 
+                               : 'bg-muted'
                            }`}
                            onClick={() => handleOptionToggle("type", option.id)}
                          >
@@ -186,7 +186,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                                <Check className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white drop-shadow-sm" />
                              )}
                            </div>
-                           <span className="text-xs text-[#2D2F34]">{option.label}</span>
+                           <span className="text-xs text-popover-foreground">{option.label}</span>
                          </div>
                   ))
                 )}
@@ -195,20 +195,20 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             
             {/* Priority Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Priority</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Priority</h3>
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-xs text-gray-500">Loading...</div>
+                  <div className="text-xs text-muted-foreground">Loading...</div>
                 ) : error ? (
-                  <div className="text-xs text-red-500">Error loading options</div>
+                  <div className="text-xs text-destructive">Error loading options</div>
                 ) : (
                   options.priority.map((option) => (
                          <div
                            key={option.id}
-                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[#E8E8E8] transition-colors ${
+                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-accent transition-colors ${
                              filters.priority.includes(option.id) 
-                               ? 'bg-[#E8F2FF] border border-[#6E72FF]' 
-                               : 'bg-[#F3F3F3]'
+                               ? 'bg-primary/10 border border-primary' 
+                               : 'bg-muted'
                            }`}
                            onClick={() => handleOptionToggle("priority", option.id)}
                          >
@@ -221,7 +221,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                                <Check className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white drop-shadow-sm" />
                              )}
                            </div>
-                           <span className="text-xs text-[#2D2F34]">{option.label}</span>
+                           <span className="text-xs text-popover-foreground">{option.label}</span>
                          </div>
                   ))
                 )}
@@ -230,20 +230,20 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             
             {/* Reported By Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Reported By</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Reported By</h3>
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-xs text-gray-500">Loading...</div>
+                  <div className="text-xs text-muted-foreground">Loading...</div>
                 ) : error ? (
-                  <div className="text-xs text-red-500">Error loading options</div>
+                  <div className="text-xs text-destructive">Error loading options</div>
                 ) : (
                   options.reporters.map((option) => (
                          <div
                            key={option.id}
-                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[#E8E8E8] transition-colors ${
+                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-accent transition-colors ${
                              filters.reportedBy.includes(option.id) 
-                               ? 'bg-[#E8F2FF] border border-[#6E72FF]' 
-                               : 'bg-[#F3F3F3]'
+                               ? 'bg-primary/10 border border-primary' 
+                               : 'bg-muted'
                            }`}
                            onClick={() => handleOptionToggle("reportedBy", option.id)}
                          >
@@ -256,7 +256,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                                <Check className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white drop-shadow-sm" />
                              )}
                            </div>
-                           <span className="text-xs text-[#2D2F34]">{option.label}</span>
+                           <span className="text-xs text-popover-foreground">{option.label}</span>
                          </div>
                   ))
                 )}
@@ -265,20 +265,20 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             
             {/* Assignee Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Assignee</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Assignee</h3>
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-xs text-gray-500">Loading...</div>
+                  <div className="text-xs text-muted-foreground">Loading...</div>
                 ) : error ? (
-                  <div className="text-xs text-red-500">Error loading options</div>
+                  <div className="text-xs text-destructive">Error loading options</div>
                 ) : (
                   options.assignees.map((option) => (
                          <div
                            key={option.id}
-                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-[#E8E8E8] transition-colors ${
+                           className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-accent transition-colors ${
                              filters.assignee.includes(option.id) 
-                               ? 'bg-[#E8F2FF] border border-[#6E72FF]' 
-                               : 'bg-[#F3F3F3]'
+                               ? 'bg-primary/10 border border-primary' 
+                               : 'bg-muted'
                            }`}
                            onClick={() => handleOptionToggle("assignee", option.id)}
                          >
@@ -291,7 +291,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                                <Check className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white drop-shadow-sm" />
                              )}
                            </div>
-                           <span className="text-xs text-[#2D2F34]">{option.label}</span>
+                           <span className="text-xs text-popover-foreground">{option.label}</span>
                          </div>
                   ))
                 )}
@@ -300,17 +300,17 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             
             {/* Date Range Filter */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#2D2F34]">Date Range</h3>
+              <h3 className="text-sm font-medium text-popover-foreground">Date Range</h3>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <label className="text-xs text-[#595959]">From</label>
+                  <label className="text-xs text-muted-foreground">From</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-between text-left font-normal border-[#E6E6E6] rounded-[5px] h-8 text-xs px-3 py-2",
-                          !filters.dateRange.from && "text-[#595959]"
+                          "w-full justify-between text-left font-normal border-border rounded-[5px] h-8 text-xs px-3 py-2",
+                          !filters.dateRange.from && "text-muted-foreground"
                         )}
                       >
                         <span className="text-xs">
@@ -320,7 +320,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                             "DD-MM-YYYY"
                           )}
                         </span>
-                        <CalendarIcon className="h-3.5 w-3.5 text-[#000000]" />
+                        <CalendarIcon className="h-3.5 w-3.5 text-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -340,14 +340,14 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-xs text-[#595959]">To</label>
+                  <label className="text-xs text-muted-foreground">To</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-between text-left font-normal border-[#E6E6E6] rounded-[5px] h-8 text-xs px-3 py-2",
-                          !filters.dateRange.to && "text-[#595959]"
+                          "w-full justify-between text-left font-normal border-border rounded-[5px] h-8 text-xs px-3 py-2",
+                          !filters.dateRange.to && "text-muted-foreground"
                         )}
                       >
                         <span className="text-xs">
@@ -357,7 +357,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
                             "DD-MM-YYYY"
                           )}
                         </span>
-                        <CalendarIcon className="h-3.5 w-3.5 text-[#000000]" />
+                        <CalendarIcon className="h-3.5 w-3.5 text-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -385,13 +385,13 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
           <Button
             variant="outline"
             onClick={handleReset}
-            className="px-4 py-2 h-9 text-xs font-semibold border border-black rounded-[5px] text-black hover:bg-gray-50"
+            className="px-4 py-2 h-9 text-xs font-semibold border-border rounded-[5px] text-foreground hover:bg-accent"
           >
             Reset
           </Button>
           <Button
             onClick={handleApply}
-            className="px-4 py-2 h-9 text-xs font-semibold bg-[#6E72FF] text-white rounded-[5px] hover:bg-[#5A5FE5]"
+            className="px-4 py-2 h-9 text-xs font-semibold bg-primary text-primary-foreground rounded-[5px] hover:bg-primary/90"
           >
             Apply
           </Button>
