@@ -57,6 +57,7 @@ import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
 import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import { useDebounce } from "@/hooks/use-debounce"
 import { createClient } from "@/lib/supabase/client"
+import { EnhancedKanbanBoard } from "@/components/tickets/enhanced-kanban-board"
 
 
 const TicketDrawer = dynamic(
@@ -1410,254 +1411,58 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   )
 
   const renderKanbanView = useCallback(() => {
-    const kanbanColumns = getKanbanColumns()
-    const numColumns = kanbanColumns.length > 0 ? kanbanColumns.length : 1
-    
-    // Create responsive grid classes
-    const getGridClass = (cols: number) => {
-      if (cols <= 2) return 'grid-cols-1 md:grid-cols-2'
-      if (cols <= 3) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-      if (cols <= 4) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-      if (cols <= 5) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-      return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-    }
-    
-    const gridColsClass = getGridClass(numColumns)
-    
     return (
-      <div className="space-y-6 font-sans">
-        <div className="flex items-center gap-4 py-2 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search items"
-              className="pl-10 h-9 w-48 border-0 bg-muted/50 text-sm"
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
-          </div>
-
-          <Select
-            value={kanbanGroupBy}
-            onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
-          >
-            <SelectTrigger className="w-48 h-9 text-sm">
-              <SelectValue placeholder="Group By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="type">Group By: Type</SelectItem>
-              <SelectItem value="status">Group By: Status</SelectItem>
-              <SelectItem value="priority">Group By: Priority</SelectItem>
-              <SelectItem value="category">Group By: Category</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-32 h-9 text-sm">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {ticketTypes.map((type) => (
-                <SelectItem key={type.value} value={type.label}>
-                  {type.label}s
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
-            Date Range
-          </Button>
-
-          <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-            <SelectTrigger className="w-40 h-9 text-sm">
-              <SelectValue placeholder="All Priorities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
-            <Filter className="h-4 w-4 mr-2" />
-            Add filter
-          </Button>
-        </div>
-
-        <div className={`grid ${gridColsClass} gap-6`}>
-          {typesLoading ? (
-            <div className={`col-span-${numColumns} flex items-center justify-center py-8`}>
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-                <span className="text-sm text-muted-foreground">Loading ticket types...</span>
-              </div>
-            </div>
-          ) : (
-            kanbanColumns.map((column) => (
-                <div
-                  key={column.id}
-                  className={`space-y-4 transition-all duration-200 ${
-                    dragOverColumn === column.id ? "bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 rounded-lg p-2" : ""
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragEnter={(e) => handleDragEnter(e, column.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, column.id)}
-                >
-                  <div
-                    className={`border-t-4 ${column.color} 0 rounded-t-lg ${
-                      dragOverColumn === column.id ? "shadow-lg border-2 border-[#6E72FF]/30 border-dashed" : ""
-                    }`}
-                  >
-                    <div className="p-4 pb-2">
-                      <h3 className="font-medium text-sm mb-2 leading-tight font-sans text-foreground">
-                        {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
-                      </h3>
-                  {dragOverColumn === column.id && draggedTicket && (
-                    <div className="text-xs text-[#6E72FF] font-medium">Drop ticket here</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-3 px-4">
-                {loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={`kanban-skel-${column.id}-${i}`} className="border border-border 0">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-2 mb-3">
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-2/3" />
-                            <Skeleton className="h-3 w-1/2 mt-2" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-5 w-14 rounded-full" />
-                            <Skeleton className="h-5 w-16 rounded-full" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="w-5 h-5 rounded-full" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                          <Skeleton className="h-3 w-8" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  (() => {
-                    const ticketsInGroup = getTicketsByGroup(column.id)
-                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map((t: any) => ({ id: t.id, title: t.title, type: t.type })))
-                    return ticketsInGroup
-                  })().map((ticket: any) => (
-                  <Card
-                    key={ticket.id}
-                    className={`hover:shadow-md transition-all cursor-move border border-border 0 ${
-                      draggedTicket?.id === ticket.id ? "opacity-50 scale-95" : ""
-                    }`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, ticket)}
-                    onClick={() => handleTicketClick(ticket)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-2 mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-normal text-sm mb-2 leading-tight font-sans">{ticket.title}</h4>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                          {getStatusText(ticket.status)}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            ticket.priority === "urgent"
-                              ? "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200"
-                              : ticket.priority === "high"
-                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                                : ticket.priority === "medium"
-                                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                                  : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                          }`}
-                        >
-                          {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
-                        </span>
-                        <div className="w-4 h-4 rounded border border-muted-foreground/30"></div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                            <User className="h-3 w-3" />
-                          </div>
-                          <span className="text-xs text-red-500">{ticket.timestamp}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          {ticket.comments > 0 && (
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{ticket.comments}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => {
-                    console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", column.id)
-                    // Pre-select the ticket type based on the column
-                    setPreSelectedTicketType(column.id)
-                    setSelectedTicket(null) // No ticket = CREATE mode
-                    setShowTicketTray(true)
-                  }}
-                >
-                  <Plus className="h-3 w-3 mr-2" />
-                  Add Ticket
-                </Button>
-              </div>
-            </div>
-          ))
-            )}
-        </div>
-      </div>
+      <EnhancedKanbanBoard
+        tickets={filteredTickets}
+        loading={loading}
+        groupBy={kanbanGroupBy}
+        searchTerm={searchTerm}
+        selectedType={selectedType}
+        selectedPriority={selectedPriority}
+        ticketTypes={ticketTypes}
+        draggedTicket={draggedTicket}
+        dragOverColumn={dragOverColumn}
+        onSearchChange={handleSearchChange}
+        onGroupByChange={setKanbanGroupBy}
+        onTypeFilterChange={setSelectedType}
+        onPriorityFilterChange={setSelectedPriority}
+        onTicketClick={handleTicketClick}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onAddTicket={(columnType) => {
+          console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", columnType)
+          setPreSelectedTicketType(columnType || null)
+          setSelectedTicket(null)
+          setShowTicketTray(true)
+        }}
+      />
     )
-    },
-    [
-      filteredTickets,
-      searchTerm,
-      selectedType,
-      selectedPriority,
-      kanbanGroupBy,
-      dragOverColumn,
-      draggedTicket,
-      typesLoading,
-      getKanbanColumns,
-      handleDragStart,
-      handleDragOver,
-      handleDragEnter,
-      handleDragLeave,
-      handleDrop,
-      getTicketsByGroup,
-      handleTicketClick,
-    ],
-  )
+  }, [
+    filteredTickets,
+    loading,
+    kanbanGroupBy,
+    searchTerm,
+    selectedType,
+    selectedPriority,
+    ticketTypes,
+    draggedTicket,
+    dragOverColumn,
+    handleSearchChange,
+    handleTicketClick,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnter,
+    handleDragLeave,
+    handleDrop,
+  ])
 
   return (
     <PageContent>
-      <div className="font-sans text-sm h-full w-full max-w-full overflow-hidden" style={{ width: '100%', maxWidth: '100%', position: 'relative' }}>
-        <div className="flex-1 flex flex-col h-full min-w-0">
+      <div className="font-sans text-sm w-full max-w-full" style={{ width: '100%', maxWidth: '100%', position: 'relative' }}>
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Fixed Header Section */}
           <div className="flex-shrink-0 space-y-6 w-full max-w-full overflow-hidden">
             <div className="flex items-start justify-between w-full max-w-full">
@@ -1769,7 +1574,7 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
           </div>
 
           {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-hidden w-full max-w-full">
+          <div className="flex-1 w-full max-w-full">
             {currentView === "list" && renderListView()}
             {currentView === "kanban" && renderKanbanView()}
           </div>
