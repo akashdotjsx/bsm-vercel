@@ -207,52 +207,70 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
         <div className="flex gap-6 min-w-min">
           {loading ? (
             // Loading skeleton
-            Array.from({ length: 4 }).map((_, i) => (
+            Array.from({ length: 5 }).map((_, i) => (
               <div 
                 key={`loading-column-${i}`} 
-                className="rounded-xl p-4 min-h-[400px]"
+                className="rounded-xl p-5 min-h-[400px] flex flex-col min-w-[320px]"
                 style={{
-                  backgroundColor: isDark ? '#1F2937' : '#F8F8F8',
+                  backgroundColor: isDark ? '#282a2f' : '#F8F8F8',
                   borderWidth: '1px',
                   borderStyle: 'solid',
-                  borderColor: isDark ? '#374151' : '#EEEEEE'
+                  borderColor: isDark ? '#2d2f34' : '#EEEEEE'
                 }}
               >
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted animate-pulse"></div>
-                  <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                  <div className="h-4 w-8 bg-muted animate-pulse rounded"></div>
+                {/* Column header skeleton */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-muted/50 animate-pulse"></div>
+                    <div className="h-6 w-24 bg-muted/50 animate-pulse rounded"></div>
+                    <div className="h-4 w-8 bg-muted/50 animate-pulse rounded"></div>
+                  </div>
                 </div>
-                <div className="space-y-3">
+                
+                {/* Ticket cards skeleton */}
+                <div className="space-y-3 flex-1">
                   {Array.from({ length: 3 }).map((_, j) => (
                     <div
                       key={`loading-card-${i}-${j}`}
-                      className="bg-card rounded-lg border p-4"
+                      className="bg-card/50 rounded-xl px-4 py-3 space-y-3"
                     >
-                      <div className="flex items-start justify-between gap-2 mb-3">
+                      {/* Badges skeleton */}
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex gap-2">
-                          <div className="h-5 w-12 bg-muted animate-pulse rounded-full"></div>
-                          <div className="h-5 w-16 bg-muted animate-pulse rounded-full"></div>
+                          <div className="h-5 w-16 bg-muted/50 animate-pulse rounded-full"></div>
+                          <div className="h-5 w-14 bg-muted/50 animate-pulse rounded-full"></div>
                         </div>
-                        <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+                        <div className="h-4 w-4 bg-muted/50 animate-pulse rounded"></div>
                       </div>
-                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded mb-3"></div>
+                      
+                      {/* Title skeleton */}
+                      <div className="h-4 w-4/5 bg-muted/50 animate-pulse rounded"></div>
+                      
+                      {/* Progress skeleton */}
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
-                          <div className="h-3 w-8 bg-muted animate-pulse rounded"></div>
+                          <div className="h-3 w-16 bg-muted/50 animate-pulse rounded"></div>
+                          <div className="h-3 w-8 bg-muted/50 animate-pulse rounded"></div>
                         </div>
-                        <div className="h-2 w-full bg-muted animate-pulse rounded"></div>
+                        <div className="h-2 w-full bg-muted/50 animate-pulse rounded-full"></div>
                       </div>
-                      <div className="flex items-center justify-between mt-3">
+                      
+                      {/* Footer skeleton */}
+                      <div className="flex items-center justify-between">
                         <div className="flex -space-x-1">
-                          <div className="h-6 w-6 bg-muted animate-pulse rounded-full"></div>
-                          <div className="h-6 w-6 bg-muted animate-pulse rounded-full"></div>
+                          <div className="h-6 w-6 bg-muted/50 animate-pulse rounded-full border-2 border-background"></div>
+                          <div className="h-6 w-6 bg-muted/50 animate-pulse rounded-full border-2 border-background"></div>
                         </div>
-                        <div className="h-3 w-20 bg-muted animate-pulse rounded"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-3.5 w-3.5 bg-muted/50 animate-pulse rounded"></div>
+                          <div className="h-3 w-20 bg-muted/50 animate-pulse rounded"></div>
+                        </div>
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Add button skeleton */}
+                  <div className="h-10 w-full bg-muted/30 animate-pulse rounded-lg border border-dashed"></div>
                 </div>
               </div>
             ))
