@@ -142,9 +142,19 @@ function validateTicketRow(row: any, rowIndex: number): {
     }
   }
 
-  // Optional assignee
-  if (row.assignee && typeof row.assignee === 'string' && row.assignee.trim().length > 0) {
-    ticket.assignee = row.assignee.trim()
+  // Optional assignee - clean up newlines and extra whitespace
+  if (row.assignee && typeof row.assignee === 'string') {
+    // Remove all types of newlines and trim
+    const cleanedAssignee = row.assignee
+      .replace(/\r\n/g, ' ')  // Windows line endings
+      .replace(/\n/g, ' ')     // Unix line endings
+      .replace(/\r/g, ' ')     // Mac line endings
+      .replace(/\s+/g, ' ')    // Multiple spaces to single space
+      .trim()
+    
+    if (cleanedAssignee.length > 0) {
+      ticket.assignee = cleanedAssignee
+    }
   }
 
   // Optional due date - format as ISO timestamp for GraphQL
@@ -185,9 +195,19 @@ function validateTicketRow(row: any, rowIndex: number): {
     }
   }
 
-  // Optional reporter
-  if (row.reporter && typeof row.reporter === 'string' && row.reporter.trim().length > 0) {
-    ticket.reporter = row.reporter.trim()
+  // Optional reporter - clean up newlines and extra whitespace
+  if (row.reporter && typeof row.reporter === 'string') {
+    // Remove all types of newlines and trim
+    const cleanedReporter = row.reporter
+      .replace(/\r\n/g, ' ')  // Windows line endings
+      .replace(/\n/g, ' ')     // Unix line endings
+      .replace(/\r/g, ' ')     // Mac line endings
+      .replace(/\s+/g, ' ')    // Multiple spaces to single space
+      .trim()
+    
+    if (cleanedReporter.length > 0) {
+      ticket.reporter = cleanedReporter
+    }
   }
 
   // Optional tags
@@ -225,15 +245,11 @@ function validateTicketRow(row: any, rowIndex: number): {
  * Parse CSV file
  */
 export async function parseCSVFile(file: File): Promise<ImportResult> {
-  console.log('📄 Starting CSV parsing for file:', file.name, 'Size:', file.size)
-  
   // First, try to clean the CSV file to handle malformed data
   let fileToProcess = file
   try {
     fileToProcess = await preprocessCSVFile(file)
-    console.log('📄 CSV preprocessing completed successfully')
   } catch (error) {
-    console.log('📄 CSV preprocessing failed, using original file:', error)
     // Continue with original file if preprocessing fails
   }
   
@@ -243,15 +259,11 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
     const parsingErrors: string[] = []
     const validationErrors: string[] = []
 
-    console.log('📄 Parsing CSV file:', fileToProcess.name, 'Size:', fileToProcess.size)
-
     Papa.parse(fileToProcess, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        console.log('📄 CSV parse complete:', results)
         const rows = results.data as any[]
-        console.log('📄 Parsed rows:', rows.length, rows)
         
         if (rows.length === 0) {
           parsingErrors.push('CSV file is empty or contains no valid data')
@@ -270,17 +282,6 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
           return
         }
 
-        // Debug: Check the raw headers first
-        const sampleRow = rows[0] as any
-        const headers = Object.keys(sampleRow)
-        console.log('📄 Raw CSV headers:', headers)
-        
-        // Show column mappings
-        headers.forEach(header => {
-          const mapped = normalizeColumnName(header)
-          console.log(`📄 Column mapping: "${header}" -> "${mapped}"`)
-        })
-
         // Normalize column names
         const normalizedRows = rows.map(row => {
           const normalizedRow: any = {}
@@ -288,14 +289,10 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
             const normalizedKey = normalizeColumnName(key)
             if (normalizedKey) {
               normalizedRow[normalizedKey] = value
-            } else {
-              console.log(`📄 Unmapped column: "${key}" with value: "${value}"`)
             }
           }
           return normalizedRow
         })
-
-        console.log('📄 Normalized rows sample:', normalizedRows[0])
 
         // Validate each row
         normalizedRows.forEach((row, index) => {
@@ -322,7 +319,6 @@ export async function parseCSVFile(file: File): Promise<ImportResult> {
         })
       },
       error: (error) => {
-        console.error('❌ CSV parsing error:', error)
         parsingErrors.push(`CSV parsing error: ${error.message}`)
         resolve({
           success: false,
@@ -351,15 +347,11 @@ export async function parseExcelFile(file: File): Promise<ImportResult> {
     const parsingErrors: string[] = []
     const validationErrors: string[] = []
 
-    console.log('📊 Parsing Excel file:', file.name, 'Size:', file.size)
-
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer)
-        console.log('📊 Excel file data loaded, size:', data.length)
         const workbook = XLSX.read(data, { type: 'array' })
-        console.log('📊 Excel workbook parsed:', workbook.SheetNames)
         
         // Get the first worksheet
         const firstSheetName = workbook.SheetNames[0]
@@ -404,9 +396,6 @@ export async function parseExcelFile(file: File): Promise<ImportResult> {
         const headers = rows[0] as string[]
         const normalizedHeaders = headers.map(header => normalizeColumnName(header))
         
-        console.log('📊 Headers:', headers)
-        console.log('📊 Normalized headers:', normalizedHeaders)
-        
         // Convert rows to objects with normalized headers
         const dataRows = rows.slice(1).map(row => {
           const obj: any = {}
@@ -418,8 +407,6 @@ export async function parseExcelFile(file: File): Promise<ImportResult> {
           })
           return obj
         })
-
-        console.log('📊 Data rows:', dataRows)
 
         // Validate each row
         dataRows.forEach((row, index) => {
@@ -445,7 +432,6 @@ export async function parseExcelFile(file: File): Promise<ImportResult> {
           importErrors: []
         })
       } catch (error) {
-        console.error('❌ Excel parsing error:', error)
         parsingErrors.push(`Excel parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`)
         resolve({
           success: false,

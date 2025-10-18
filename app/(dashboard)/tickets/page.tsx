@@ -816,11 +816,24 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             if (foundAssigneeId) {
               assigneeId = foundAssigneeId
               assigneeIds = [foundAssigneeId]
-              console.log(`🎯 Assignee "${ticket.assignee}" mapped to ${foundAssigneeId}`)
             } else {
-              console.log(`⚠️ Assignee "${ticket.assignee}" not found in profiles`)
               // Add as metadata tag for reference
               metaTags.push(`assignee-name:${ticket.assignee}`)
+            }
+          }
+
+          // Look up reporter/requester ID from CSV reporter field
+          let requesterId = user?.id // Fallback to logged-in user
+          
+          if (ticket.reporter && profilesMap) {
+            const reporterName = ticket.reporter.toLowerCase().trim()
+            const foundReporterId = profilesMap[reporterName]
+            
+            if (foundReporterId) {
+              requesterId = foundReporterId
+            } else {
+              // Add as metadata tag for reference
+              metaTags.push(`reporter-name:${ticket.reporter}`)
             }
           }
 
@@ -833,8 +846,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             impact: 'medium', // Default value
             urgency: 'medium', // Default value
             tags: ticket.tags || [],
-            // Required fields
-            requester_id: user?.id,
+            // Required fields - use mapped reporter as requester
+            requester_id: requesterId,
             organization_id: organization?.id,
             // Assignee fields - now with actual UUID lookup
             assignee_id: assigneeId,
@@ -871,7 +884,6 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           // TEMPORARILY DISABLED: custom_fields causing GraphQL JSON serialization issues
           // The GraphQL schema might not be properly configured for JSONB
           // TODO: Investigate GraphQL JSONB scalar type configuration
-          console.log('⚠️ Skipping custom_fields due to GraphQL JSONB issues:', customFields)
           
           // Clean up data similar to how the drawer does it
           const cleanedData: any = {}
@@ -892,19 +904,8 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             }
           })
           
-          console.log(`📝 Creating ticket ${i + 1}/${parseResult.tickets.length}:`, {
-            title: cleanedData.title,
-            type: cleanedData.type,
-            priority: cleanedData.priority,
-            status: cleanedData.status,
-            tags: cleanedData.tags,
-            custom_fields: cleanedData.custom_fields,
-            due_date: cleanedData.due_date
-          })
-          
           await createTicket(cleanedData)
           successCount++
-          console.log(`✅ Ticket ${i + 1} created successfully`)
           
       } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -1891,12 +1892,12 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
          }
          setShowImportDialog(open)
        }}>
-         <DialogContent className="max-w-[675px] w-[675px] h-[600px] p-0 bg-white rounded-[20px] border-0 shadow-[0px_0px_15px_0px_rgba(19,43,76,0.1)]">
+         <DialogContent className="max-w-[675px] w-full mx-4 sm:w-[675px] max-h-[90vh] p-0 bg-background dark:bg-background rounded-[20px] border border-border shadow-lg overflow-hidden" showCloseButton={false}>
            {/* Header with Cloud Icon and Close Button */}
-           <div className="flex items-center justify-between p-6 pb-0">
+           <div className="flex items-center justify-between p-4 sm:p-6 pb-0">
              <div className="flex items-center gap-3">
-               <Cloud className="h-6 w-6 text-[#2D2F34]" />
-               <h2 className="text-[16px] font-semibold text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}>
+               <Cloud className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
+               <h2 className="text-sm sm:text-base font-semibold text-foreground">
                  Import Tickets
                </h2>
              </div>
@@ -1904,30 +1905,29 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                variant="ghost"
                size="sm"
                onClick={() => setShowImportDialog(false)}
-               className="h-6 w-6 p-0 hover:bg-transparent"
+               className="h-8 w-8 p-0 hover:bg-muted rounded-md"
              >
-               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+               <svg className="h-5 w-5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                  <line x1="18" y1="6" x2="6" y2="18"></line>
                  <line x1="6" y1="6" x2="18" y2="18"></line>
                </svg>
              </Button>
            </div>
 
-           <div className="px-6 pb-6 flex-1">
+           <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex-1 overflow-y-auto">
              {/* File Selection */}
              {!importProgress && !importResult && (
                <div className="space-y-4">
                  <div>
-                   <label className="text-[16px] font-semibold text-[#202020] mb-4 block" style={{ fontFamily: 'Inter', fontWeight: 600, lineHeight: '1.21em' }}>
+                   <label className="text-sm sm:text-base font-semibold text-foreground mb-4 block">
                      Select file to import
                    </label>
-                   <div className="border-2 border-dashed border-[#A0A8C2] rounded-[10px] p-6 text-center" style={{ borderStyle: 'dashed' }}>
+                   <div className="border-2 border-dashed border-border rounded-lg p-4 sm:p-6 text-center">
                      <div className="flex flex-col items-center gap-4">
-                       <Cloud className="h-6 w-6 text-[#2D2F34]" />
+                       <Cloud className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                        <div className="space-y-2">
                          <Button 
-                           className="bg-[#3B43D6] hover:bg-[#3B43D6]/90 text-white border-0 rounded-[5px] px-4 py-2 h-9"
-                           style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                           className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white border-0 rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
                            onClick={() => document.getElementById('file-input')?.click()}
                          >
                            Choose File
@@ -1941,18 +1941,18 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                            disabled={isImporting}
                          />
                        </div>
-                       <p className="text-[12px] text-[#595959]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                       <p className="text-xs text-muted-foreground">
                          Supported formats: CSV, Excel (.xlsx, .xls)
                        </p>
                      </div>
                    </div>
                  </div>
 
-                 <div className="bg-[#F3F4FF] p-4 rounded-[5px]">
-                   <h4 className="text-[12px] font-medium text-[#717171] mb-2" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                 <div className="bg-muted/50 dark:bg-muted/30 p-4 rounded-lg">
+                   <h4 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">
                      Import Requirements:
                    </h4>
-                   <div className="text-[12px] text-[#2D2F34] leading-8" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '2em' }}>
+                   <div className="text-xs sm:text-sm text-foreground space-y-1">
                      <div>• <strong>Required columns:</strong> Title, Priority, Type</div>
                      <div>• <strong>Optional columns:</strong> Description, Assignee, Due Date, Status</div>
                      <div>• <strong>Priority values:</strong> low, medium, high, urgent, critical</div>
@@ -1963,20 +1963,18 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                    </div>
                  </div>
 
-                 <div className="flex justify-end gap-4 pt-4">
+                 <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
                    <Button 
                      variant="outline" 
                      onClick={() => setShowImportDialog(false)} 
-                     className="border border-black rounded-[5px] px-4 py-2 h-9"
-                     style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
+                     className="w-full sm:w-auto border-border rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
                    >
                      Cancel
                    </Button>
                    <Button 
                      onClick={handleImportTickets} 
                      disabled={!importFile || isImporting}
-                     className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
-                     style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                     className="w-full sm:w-auto bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
                    >
                      Import Tickets
                    </Button>
@@ -1988,30 +1986,30 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
             {importProgress && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                  <span className="text-sm font-medium text-foreground">
                     {importProgress.message}
                   </span>
-                  <span className="text-[14px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                  <span className="text-sm text-muted-foreground">
                     {importProgress.current}%
                   </span>
                 </div>
-                <div className="w-full bg-[#E6E6E6] rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      importProgress.status === 'error' ? 'bg-red-500' : 
+                      importProgress.status === 'error' ? 'bg-destructive' : 
                       importProgress.status === 'completed' ? 'bg-green-500' : 'bg-[#6E72FF]'
                     }`}
                     style={{ width: `${importProgress.current}%` }}
                   />
                 </div>
                 {importProgress.status === 'parsing' && (
-                  <div className="flex items-center gap-2 text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                     <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Parsing file...
                   </div>
                 )}
                 {importProgress.status === 'importing' && (
-                  <div className="flex items-center gap-2 text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                     <div className="h-4 w-4 bg-[#6E72FF]/20 animate-pulse rounded" />
                     Creating tickets...
                   </div>
@@ -2022,20 +2020,20 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
             {/* Results */}
             {importResult && (
               <div className="space-y-4">
-                <div className={`p-4 rounded-[5px] ${
-                  importResult.success ? 'bg-green-50' : 'bg-red-50'
+                <div className={`p-4 rounded-lg ${
+                  importResult.success ? 'bg-green-50 dark:bg-green-950/20' : 'bg-destructive/10'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`h-2 w-2 rounded-full ${
-                      importResult.success ? 'bg-green-500' : 'bg-red-500'
+                      importResult.success ? 'bg-green-500' : 'bg-destructive'
                     }`} />
-                    <h4 className={`text-[14px] font-medium ${
-                      importResult.success ? 'text-green-800' : 'text-red-800'
-                    }`} style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>
+                    <h4 className={`text-sm font-medium ${
+                      importResult.success ? 'text-green-700 dark:text-green-400' : 'text-destructive'
+                    }`}>
                       {importResult.success ? 'Import Successful!' : 'Import Completed with Errors'}
                     </h4>
                   </div>
-                  <div className="text-[12px] text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
                     <div>• Total rows processed: {importResult.totalRows}</div>
                     <div>• Valid tickets found: {importResult.validRows}</div>
                     <div>• Successfully imported: {importResult.successfullyImportedCount}</div>
@@ -2045,9 +2043,9 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
 
                 {importResult.errors.length > 0 && (
                   <div className="space-y-2">
-                    <h5 className="text-[12px] font-medium text-red-800" style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}>Errors:</h5>
-                    <div className="max-h-32 overflow-y-auto bg-red-50 p-3 rounded-[5px]">
-                      <div className="text-[11px] text-red-700 space-y-1" style={{ fontFamily: 'Inter', fontWeight: 400, lineHeight: '1.21em' }}>
+                    <h5 className="text-xs sm:text-sm font-medium text-destructive">Errors:</h5>
+                    <div className="max-h-32 overflow-y-auto bg-destructive/10 p-3 rounded-lg">
+                      <div className="text-xs text-destructive space-y-1">
                         {importResult.parsingErrors.length > 0 && (
                           <div className="font-medium">Parsing Errors:</div>
                         )}
@@ -2077,15 +2075,14 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                   </div>
                 )}
 
-                <div className="flex justify-end gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
                   <Button 
                     variant="outline" 
                     onClick={() => {
                       resetImportState()
                       setShowImportDialog(false)
                     }}
-                    className="border border-black rounded-[5px] px-4 py-2 h-9"
-                    style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em', color: '#000000' }}
+                    className="w-full sm:w-auto border-border rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
                   >
                     Close
                   </Button>
@@ -2095,8 +2092,7 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                         resetImportState()
                         setShowImportDialog(false)
                       }}
-                      className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-[5px] px-4 py-2 h-9"
-                      style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '12px', lineHeight: '1.21em' }}
+                      className="w-full sm:w-auto bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
                     >
                       View Tickets
                     </Button>

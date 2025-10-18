@@ -80,8 +80,6 @@ export function cleanCSVContent(content: string): CleanCSVResult {
       }
     }
     
-    console.log('🧹 CSV headers found:', headers)
-    
     // Clean and reconstruct the CSV
     const cleanedLines = [headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',')]
     
@@ -108,12 +106,6 @@ export function cleanCSVContent(content: string): CleanCSVResult {
     }
     
     const cleanedContent = cleanedLines.join('\n')
-    
-    console.log('🧹 CSV cleaned successfully:', {
-      originalLines: lines.length,
-      cleanedRows: cleanedLines.length - 1, // Exclude header
-      headers
-    })
     
     return {
       success: true,
