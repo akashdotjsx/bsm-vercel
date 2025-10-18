@@ -173,18 +173,18 @@ export default function ServicesPage() {
         {/* Search Bar and Filter Dropdowns */}
         <div className="flex items-center gap-3 h-[38px]">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6A707C] h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search services"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white border-[#DDE1E9] rounded-[8px] h-[38px] text-[12px] text-[#6A707C] font-inter py-0 min-h-[38px]"
+              className="pl-10 bg-background border-border rounded-[8px] h-[38px] text-[12px] text-muted-foreground font-inter py-0 min-h-[38px]"
             />
           </div>
           
           {/* All Categories Dropdown */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="h-[38px] w-[140px] bg-white border border-[#DDE1E9] rounded-[8px] text-[#595959] text-[12px] font-medium font-inter py-0 min-h-[38px]">
+            <SelectTrigger className="h-[38px] w-[140px] bg-background border border-border rounded-[8px] text-muted-foreground text-[12px] font-medium font-inter py-0 min-h-[38px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
@@ -199,7 +199,7 @@ export default function ServicesPage() {
           
           {/* Popularity Dropdown */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="h-[38px] w-[120px] bg-white border border-[#DDE1E9] rounded-[8px] text-[#595959] text-[12px] font-medium font-inter py-0 min-h-[38px]">
+            <SelectTrigger className="h-[38px] w-[120px] bg-background border border-border rounded-[8px] text-muted-foreground text-[12px] font-medium font-inter py-0 min-h-[38px]">
               <SelectValue placeholder="Popularity" />
             </SelectTrigger>
             <SelectContent>
@@ -245,7 +245,7 @@ export default function ServicesPage() {
                     {category.services.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {category.services.map((service, index) => (
-                          <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-border transition-all cursor-pointer" onClick={() => handleServiceRequest(service)}>
+                          <div key={index} className="p-4 border border-border rounded-lg hover:shadow-md hover:border-border transition-all cursor-pointer" onClick={() => handleServiceRequest(service)}>
                             <div className="space-y-3">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
@@ -273,7 +273,7 @@ export default function ServicesPage() {
                                   <span>{formatSLA(service.estimated_delivery_days)}</span>
                                 </div>
                                 <Button 
-                                  className="text-[12px] h-8 bg-white border border-gray-200 text-[#595959] rounded-[5px] font-medium hover:bg-gray-50"
+                                  className="text-[12px] h-8 bg-background border border-border text-muted-foreground rounded-[5px] font-medium hover:bg-accent"
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation()
