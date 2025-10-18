@@ -87,9 +87,19 @@ interface Team {
       id: string
       display_name: string
       email: string
+      avatar_url?: string
     }
   }>
-  members?: number
+  members?: Array<{
+    id: string
+    role: string
+    user: {
+      id: string
+      display_name: string
+      email: string
+      avatar_url?: string
+    }
+  }>
   lead_id?: string
 }
 
@@ -593,43 +603,40 @@ export default function UsersPage() {
 
   return (
     <PageContent
-      title="Users & Teams"
-      description="Manage user accounts, teams, and access permissions across your organization"
-      breadcrumb={[
-        { label: "Service Management", href: "/dashboard" },
-        { label: "Users & Teams", href: "/users" },
-      ]}
+      title=""
+      description=""
+      breadcrumb={[]}
     >
-      <div className="space-y-6 font-sans text-[11px]">
+      <div className="space-y-6 font-sans">
 
-        {/* Header Actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+         {/* Main Heading */}
+         <div>
+           <h1 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Utilization Report</h1>
+           <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Track and analyze team member utilization across projects and time periods</p>
+         </div>
+
+         {/* Filter Controls Row */}
+         <div className="flex items-center justify-between w-full" style={{ marginTop: '16px' }}>
+           <div className="flex items-center" style={{ gap: '0px' }}>
+             {/* Search Input */}
+             <div className="relative" style={{ width: '185px', height: '32px' }}>
+               <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2" style={{ width: '12.04px', height: '12.04px' }}>
+                 <Search className="w-full h-full text-[#8D8D8D]" />
+               </div>
               <Input
                 placeholder="Search users..."
-                className="pl-10 w-80 text-sm"
+                 className="w-full h-full pl-7 pr-3 text-xs rounded-[5px] border border-[#E4E4E4] bg-white"
+                 style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 text-sm">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="All Stat" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+             
+             {/* All Departments Dropdown */}
+             <div className="ml-4" style={{ width: '144px', height: '32px' }}>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-48 text-sm">
-                <SelectValue placeholder="Department" />
+                 <SelectTrigger className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-2.5 pr-8">
+                   <SelectValue placeholder="All Departments" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
@@ -640,70 +647,84 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="text-sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Manage Departments
+             </div>
+             
+             {/* Filter Button */}
+             <div className="ml-4" style={{ width: '113px', height: '32px' }}>
+               <Button variant="outline" className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-6 pr-3">
+                 <Filter className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#717171]" />
+                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}>Filter</span>
             </Button>
           </div>
-          <Button 
-            onClick={() => setShowAddUser(true)}
-            className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]"
-          >
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+             
+             {/* Manage Departments Button */}
+             <div className="ml-4" style={{ width: '161px', height: '32px' }}>
+               <Button variant="outline" onClick={() => setShowManageDepartments(true)} className="w-full h-full text-xs rounded-[5px] border border-[#E4E4E4] bg-white pl-6 pr-3">
+                 <Settings className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#717171]" />
+                 <span style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', color: '#717171' }}>Manage Departments</span>
+               </Button>
+             </div>
+           </div>
+           
+           {/* Add User Button - Positioned on the right */}
+           <Button
+             onClick={() => setShowAddUser(true)}
+             className="bg-[#6E72FF] hover:bg-[#5b4cf2] text-white rounded-[5px] flex items-center justify-center"
+             style={{ 
+               width: '96px', 
+               height: '36px', 
+               fontFamily: 'Inter', 
+               fontWeight: '600', 
+               fontSize: '12px', 
+               lineHeight: '1.2102272510528564em',
+               padding: '0px'
+             }}
+           >
+             <UserPlus className="mr-2" style={{ width: '14px', height: '14px' }} />
+             Add User
+           </Button>
         </div>
 
          {/* Stats Cards */}
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-           <Card>
-             <CardContent className="p-6">
-               <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                   <User className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+         <div className="flex gap-4" style={{ marginTop: '24px' }}>
+           {/* Total Users Card */}
+           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+             <div className="flex flex-col">
+               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Total Users</p>
+               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.length}</p>
                  </div>
-                 <div className="ml-4">
-                   <p className="text-xs font-medium text-muted-foreground">Total Users</p>
-                   <p className="text-2xl font-bold">{users.length}</p>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
-           <Card>
-             <CardContent className="p-6">
-               <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                   <Shield className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
-                 </div>
-                 <div className="ml-4">
-                   <p className="text-xs font-medium text-muted-foreground">Active Users</p>
-                   <p className="text-2xl font-bold">{users.filter((u) => u.is_active).length}</p>
+             <div style={{ width: '44px', height: '44px' }}>
+               <img src="/users.svg" alt="Total Users" className="w-full h-full" />
                  </div>
                </div>
-             </CardContent>
-           </Card>
-           <Card>
-             <CardContent className="p-6">
-               <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                   <Users className="h-7 w-7 text-purple-600 dark:text-purple-400" />
+
+           {/* Active Users Card */}
+           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+             <div className="flex flex-col">
+               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Active Users</p>
+               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => u.is_active).length}</p>
                  </div>
-                 <div className="ml-4">
-                   <p className="text-xs font-medium text-muted-foreground">Teams</p>
-                   <p className="text-2xl font-bold">{teams.length}</p>
+             <div style={{ width: '44px', height: '44px' }}>
+               <img src="/active users.svg" alt="Active Users" className="w-full h-full" />
                  </div>
                </div>
-             </CardContent>
-           </Card>
-           <Card>
-             <CardContent className="p-6">
-               <div className="flex items-center">
-                 <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                   <Calendar className="h-7 w-7 text-orange-600 dark:text-orange-400" />
+
+           {/* Teams Card */}
+           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+             <div className="flex flex-col">
+               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Teams</p>
+               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{teams.length}</p>
                  </div>
-                 <div className="ml-4">
-                   <p className="text-xs font-medium text-muted-foreground">New This Month</p>
-                   <p className="text-2xl font-bold">{users.filter((u) => {
+             <div style={{ width: '44px', height: '44px' }}>
+               <img src="/teams.svg" alt="Teams" className="w-full h-full" />
+                 </div>
+               </div>
+
+           {/* New This Month Card */}
+           <div className="bg-white border border-[#EEEEEE] rounded-[10px] flex items-center justify-between" style={{ width: '290px', height: '70px', paddingLeft: '13px', paddingRight: '13px' }}>
+             <div className="flex flex-col">
+               <p className="text-black mb-1" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>New This Month</p>
+               <p className="text-black" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '18px', lineHeight: '1.2102272245619032em', textAlign: 'left', margin: '0px', padding: '0px' }}>{users.filter((u) => {
                      const createdDate = new Date(u.created_at)
                      const now = new Date()
                      const thisMonth = now.getMonth()
@@ -711,82 +732,84 @@ export default function UsersPage() {
                      return createdDate.getMonth() === thisMonth && createdDate.getFullYear() === thisYear
                    }).length}</p>
                  </div>
+             <div style={{ width: '44px', height: '44px' }}>
+               <img src="/new this month.svg" alt="New This Month" className="w-full h-full" />
                </div>
-             </CardContent>
-           </Card>
+           </div>
          </div>
 
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-bold">Users</CardTitle>
+         {/* Users Section */}
+         <div className="bg-white border border-[#EEEEEE] rounded-[10px] w-full">
+           {/* Header Section */}
+           <div className="p-6 pb-4">
+             <h2 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Users</h2>
+             <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Manage user accounts and permissions</p>
             </div>
-            <CardDescription className="text-sm">Manage user accounts and permissions</CardDescription>
-          </CardHeader>
-          <CardContent>
+           
+           {/* Table Section */}
+           <div className="px-6 pb-6">
             <div className="overflow-x-auto">
-              <table className="w-full">
+               <table className="w-full table-fixed">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-semibold text-sm">User</th>
-                    <th className="text-left py-3 px-4 font-semibold text-sm">Role</th>
-                    <th className="text-left py-3 px-4 font-semibold text-sm">Department</th>
-                    <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
-                    <th className="text-left py-3 px-4 font-semibold text-sm">Created On</th>
-                    <th className="text-left py-3 px-4 font-semibold text-sm">Actions</th>
+                   <tr className="border-b border-[#EEEEEE] bg-white">
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '30%' }}>User</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Role</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Department</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Status</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '15%' }}>Created On</th>
+                     <th className="text-left py-3 px-2 font-semibold text-sm text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '12px', lineHeight: '1.2102272510528564em', width: '10%' }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                 <tbody className="divide-y divide-[#EEEEEE]">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <UserAvatar 
-                          user={user} 
-                          size="md" 
-                          showName 
-                          showRole={false}
-                          showStatus
-                          className="min-w-0"
-                        />
+                     <tr key={user.id} className="hover:bg-gray-50 bg-white">
+                       <td className="py-3 px-2">
+                         <div className="flex flex-col">
+                           <span className="text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>
+                             {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
+                           </span>
+                           <span className="text-xs text-[#6A707C] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '10px', lineHeight: '1.2102272510528564em' }}>
+                             {user.email}
+                           </span>
+                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm">{user.role || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm">{user.department || 'N/A'}</td>
-                      <td className="py-3 px-4">
+                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.role || 'N/A'}</td>
+                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{user.department || 'N/A'}</td>
+                       <td className="py-3 px-2">
                         {user.is_active ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">Active</span>
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#EDFFDE', color: '#47AF47', fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Active</span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30">Inactive</span>
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#FFDEDE', color: '#AF4748', fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>Inactive</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-sm">{formatDate(user.created_at)}</td>
-                      <td className="py-3 px-4">
+                       <td className="py-3 px-2 text-sm text-[#2D2F34] truncate" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em' }}>{formatDate(user.created_at)}</td>
+                       <td className="py-3 px-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="px-2 text-muted-foreground hover:bg-transparent">
-                              ...
+                             <Button variant="ghost" size="sm" className="px-1 text-[#717171] hover:bg-gray-100">
+                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="font-sans">
-                            <DropdownMenuItem onClick={() => handleEditUser(user)} className="text-[13px]">
+                             <DropdownMenuItem onClick={() => handleEditUser(user)} className="text-sm">
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditUserRole(user)} className="text-[13px]">
+                             <DropdownMenuItem onClick={() => handleEditUserRole(user)} className="text-sm">
                               <ShieldCheck className="mr-2 h-4 w-4" />
                               Manage Role
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleResetPassword(user)} className="text-[13px]">
+                             <DropdownMenuItem onClick={() => handleResetPassword(user)} className="text-sm">
                               <Key className="mr-2 h-4 w-4" />
                               Reset Password
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeactivateUser(user.id, user.is_active)} className="text-[13px]">
+                             <DropdownMenuItem onClick={() => handleDeactivateUser(user.id, user.is_active)} className="text-sm">
                               <UserX className="mr-2 h-4 w-4" />
                               {user.is_active ? "Deactivate" : "Activate"}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteUser(user.id)}
-                              className="text-destructive text-sm"
+                               className="text-red-600 text-sm"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete User
@@ -799,26 +822,29 @@ export default function UsersPage() {
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
+           </div>
+         </div>
 
         {/* Teams Section */}
-        <Card>
-          <CardHeader>
+        <div className="bg-white border border-[#EEEEEE] rounded-[10px] w-full" style={{ marginTop: '24px' }}>
+          <div className="p-6 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg font-bold">Teams</CardTitle>
-                </div>
-                <CardDescription className="text-sm">
-                  Organize users into teams for better collaboration
-                </CardDescription>
+                <h2 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '16px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px' }}>Teams</h2>
+                <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left', margin: '0px', padding: '0px', marginTop: '8px' }}>Organize users into teams for better collaboration</p>
               </div>
               <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white text-sm h-10 px-5 rounded-lg shadow-[0_8px_18px_rgba(106,92,255,0.35)]">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Team
+                  <Button className="bg-[#6E72FF] hover:bg-[#5b4cf2] text-white rounded-[5px] flex items-center justify-center" style={{ 
+                    width: '96px', 
+                    height: '36px', 
+                    fontFamily: 'Inter', 
+                    fontWeight: '600', 
+                    fontSize: '12px', 
+                    lineHeight: '1.2102272510528564em',
+                    padding: '0px'
+                  }}>
+                    + Add Team
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="font-sans">
@@ -895,8 +921,9 @@ export default function UsersPage() {
                 </DialogContent>
               </Dialog>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          
+          <div className="px-6 pb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teams.map((team) => {
                 const teamData = team as any
@@ -904,114 +931,50 @@ export default function UsersPage() {
                 const teamMembers = teamData.team_members || []
                 
                 return (
-                  <Card
+                  <div
                     key={team.id}
-                    className="border bg-gradient-to-br from-card via-card to-muted/30 dark:from-card dark:via-card dark:to-muted/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    className="bg-white border border-[#EEEEEE] rounded-[10px]"
+                    style={{ padding: '16px' }}
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 flex items-center justify-center shadow-lg">
-                          <Users className="h-6 w-6 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-foreground text-base mb-1">{team.name}</h3>
-                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{team.description || 'No description provided'}</p>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-accent/50 border-accent">
-                              {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
-                            </Badge>
-                            {team.department && (
-                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-muted/50 border-muted">
-                                {team.department}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="font-sans">
-                            <DropdownMenuItem onClick={() => handleManageMembers(team)} className="text-[11px]">
-                              <Users className="mr-2 h-3 w-3" />
-                              Manage Members
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditTeam(team)} className="text-[11px]">
-                              <Edit className="mr-2 h-3 w-3" />
-                              Edit Team
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteTeam(team.id)}
-                              className="text-destructive text-[11px]"
-                            >
-                              <Trash2 className="mr-2 h-3 w-3" />
-                              Delete Team
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                    <div className="flex flex-col gap-4">
+                      {/* Team Info */}
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '600', fontSize: '14px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>{team.name}</h3>
+                        <p className="text-[#6A707C]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'left' }}>
+                          {team.description || 'No description provided'}
+                        </p>
                       </div>
 
-                      {/* Team Lead */}
-                      {leadUser && (
-                        <div className="flex items-center gap-2 mb-4 p-2 bg-accent/30 dark:bg-accent/20 rounded-lg">
-                          <UserAvatar 
-                            user={leadUser}
-                            size="sm"
-                            showStatus
-                          />
-                          <div className="min-w-0">
-                            <p className="text-[9px] text-muted-foreground">Team Lead</p>
-                            <p className="font-medium text-xs text-foreground truncate">
-                              {leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email}
-                            </p>
+                      {/* Team Lead and Members Count */}
+                      <div className="flex items-center justify-between">
+                        {/* Team Lead */}
+                        <div className="flex items-center" style={{ width: '157px', height: '24px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                            <path d="M19.2 22.9H4.80001C3.92001 22.9 3.20001 22.18 3.20001 21.3C3.20001 18.18 5.68001 15.7 8.80001 15.7H15.2C18.32 15.7 20.8 18.18 20.8 21.3C20.8 22.18 20.08 22.9 19.2 22.9Z" fill="#6C3DB7" stroke="#6C3DB7" strokeWidth="1.6" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 12.5C14.651 12.5 16.8 10.351 16.8 7.70002C16.8 5.04906 14.651 2.90002 12 2.90002C9.34905 2.90002 7.20001 5.04906 7.20001 7.70002C7.20001 10.351 9.34905 12.5 12 12.5Z" fill="#6EBAFF" stroke="#6EBAFF" strokeWidth="1.6" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <div className="flex flex-col">
+                            <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>Lead:</span>
+                            <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>
+                              {leadUser ? (leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email) : 'No lead assigned'}
+                            </span>
                           </div>
                         </div>
-                      )}
 
-                      {/* Team Members */}
-                      {teamMembers.length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-[9px] text-muted-foreground font-medium">Team Members</p>
-                          <div className="flex -space-x-2">
-                            {teamMembers.slice(0, 6).map((member: any, index: number) => (
-                              <UserAvatar 
-                                key={member.user?.id || index}
-                                user={member.user}
-                                size="sm"
-                                className="ring-2 ring-background hover:z-10 hover:scale-110 transition-transform"
-                                showStatus
-                              />
-                            ))}
-                            {teamMembers.length > 6 && (
-                              <div className="w-6 h-6 rounded-full ring-2 ring-background bg-muted dark:bg-muted/70 flex items-center justify-center text-[7px] font-bold text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
-                                +{teamMembers.length - 6}
+                        {/* Members Count Badge */}
+                        <div className="bg-[#F3F4FF] border border-[#6E72FF] rounded-[5px] flex items-center justify-center" style={{ padding: '5px 10px' }}>
+                          <span className="text-[#2D2F34]" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'center' }}>
+                            {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
+                          </span>
                               </div>
-                            )}
                           </div>
                         </div>
-                      ) : (
-                        <div className="text-center py-4 border-2 border-dashed border-muted rounded-lg">
-                          <Users className="h-6 w-6 text-muted-foreground mx-auto mb-1" />
-                          <p className="text-[9px] text-muted-foreground">No members added yet</p>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            onClick={() => handleManageMembers(team)}
-                            className="text-[9px] h-6 mt-1"
-                          >
-                            Add Members
-                          </Button>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
                 )
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Edit User Dialog */}
         <Dialog open={showEditUser} onOpenChange={setShowEditUser}>

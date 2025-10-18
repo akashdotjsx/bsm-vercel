@@ -7,8 +7,7 @@ import {
   Lock, 
   RefreshCw, 
   Settings, 
-  LogOut, 
-  Clock,
+  LogOut,
   ChevronDown,
   Sparkles,
   MoreHorizontal,
@@ -33,6 +32,7 @@ import {
 import { CustomMenuItem, CustomMenuSeparator } from "@/components/ui/custom-menu"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useGraphQLMutation, useGraphQL } from "@/hooks/use-graphql"
 
 // Status options from the main-components reference
 const statusOptions = [
@@ -52,28 +52,98 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
   const router = useRouter()
   const isMobile = useIsMobile()
   const { user, profile, organization, signOut, loading } = useAuth()
-  const [status, setStatus] = useState({ label: "Online", color: "#16a34a" })
   const [customColor, setCustomColor] = useState("#8b5cf6")
   const [editCustom, setEditCustom] = useState(false)
   const [customInput, setCustomInput] = useState("")
   const [statusMenuOpen, setStatusMenuOpen] = useState(false)
-  const [localTime, setLocalTime] = useState("")
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [userCustomStatuses, setUserCustomStatuses] = useState<Array<{label: string, color: string}>>([])
 
-  // Update local time every minute
+  // Initialize status from profile
+  const [status, setStatus] = useState({ 
+    label: profile?.status || "Online", 
+    color: profile?.status_color || "#16a34a" 
+  })
+
+  // Fetch user's custom statuses
+  const { data: customStatusData } = useGraphQL(
+    `query GetUserCustomStatuses($userId: UUID!) {
+      user_custom_statusesCollection(filter: { user_id: { eq: $userId }, is_active: { eq: true } }, orderBy: { last_used_at: DescNullsLast }) {
+        edges {
+          node {
+            id
+            status_label
+            status_color
+          }
+        }
+      }
+    }`,
+    { userId: profile?.id },
+    { enabled: !!profile?.id }
+  )
+
+  // Update status mutation
+  const updateStatusMutation = useGraphQLMutation(
+    `mutation UpdateUserStatus($userId: UUID!, $status: String!, $statusColor: String!) {
+      updateprofilesCollection(
+        filter: { id: { eq: $userId } }
+        set: { status: $status, status_color: $statusColor }
+      ) {
+        records {
+          id
+          status
+          status_color
+        }
+      }
+    }`
+  )
+
+  // Save custom status mutation
+  const saveCustomStatusMutation = useGraphQLMutation(
+    `mutation SaveCustomStatus($userId: UUID!, $statusLabel: String!, $statusColor: String!) {
+      insertIntouser_custom_statusesCollection(
+        objects: [{ user_id: $userId, status_label: $statusLabel, status_color: $statusColor, last_used_at: "now()" }]
+      ) {
+        records {
+          id
+          status_label
+          status_color
+        }
+      }
+    }`
+  )
+
+  // Update custom status last used
+  const updateCustomStatusMutation = useGraphQLMutation(
+    `mutation UpdateCustomStatusLastUsed($userId: UUID!, $statusLabel: String!) {
+      updateuser_custom_statusesCollection(
+        filter: { user_id: { eq: $userId }, status_label: { eq: $statusLabel } }
+        set: { last_used_at: "now()" }
+      ) {
+        records {
+          id
+        }
+      }
+    }`
+  )
+
+  // Update local status when profile changes
   useEffect(() => {
-    const updateTime = () => {
-      setLocalTime(new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }))
+    if (profile?.status && profile?.status_color) {
+      setStatus({ label: profile.status, color: profile.status_color })
     }
-    
-    updateTime()
-    const interval = setInterval(updateTime, 60000)
-    return () => clearInterval(interval)
-  }, [])
+  }, [profile?.status, profile?.status_color])
+
+  // Update user custom statuses from GraphQL
+  useEffect(() => {
+    if (customStatusData?.user_custom_statusesCollection?.edges) {
+      const statuses = customStatusData.user_custom_statusesCollection.edges.map((edge: any) => ({
+        label: edge.node.status_label,
+        color: edge.node.status_color
+      }))
+      setUserCustomStatuses(statuses)
+    }
+  }, [customStatusData])
 
   if (loading) {
     return (
@@ -125,12 +195,63 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
     router.push("/profile")
   }
 
-  const handleSaveCustomStatus = () => {
-    if (customInput.trim()) {
-      setStatus({ label: customInput.trim(), color: customColor })
+  const handleSaveCustomStatus = async () => {
+    if (customInput.trim() && profile?.id) {
+      const newStatus = { label: customInput.trim(), color: customColor }
+      setStatus(newStatus)
       setEditCustom(false)
       setCustomInput("")
       setStatusMenuOpen(false)
+      
+      // Save to custom statuses and update profile
+      try {
+        // Save custom status
+        await saveCustomStatusMutation.mutateAsync({
+          userId: profile.id,
+          statusLabel: newStatus.label,
+          statusColor: newStatus.color,
+        })
+        
+        // Update profile status
+        await updateStatusMutation.mutateAsync({
+          userId: profile.id,
+          status: newStatus.label,
+          statusColor: newStatus.color,
+        })
+        
+        // Add to local list
+        setUserCustomStatuses(prev => [newStatus, ...prev.filter(s => s.label !== newStatus.label)])
+      } catch (error) {
+        console.error('Failed to save custom status:', error)
+      }
+    }
+  }
+
+  const handleStatusChange = async (newStatus: { label: string; color: string }, isCustom = false) => {
+    setStatus(newStatus)
+    setEditCustom(false)
+    setStatusMenuOpen(false)
+    
+    // Persist to database
+    if (profile?.id) {
+      try {
+        // If it's a custom status, update last used time
+        if (isCustom) {
+          await updateCustomStatusMutation.mutateAsync({
+            userId: profile.id,
+            statusLabel: newStatus.label,
+          })
+        }
+        
+        // Update profile status
+        await updateStatusMutation.mutateAsync({
+          userId: profile.id,
+          status: newStatus.label,
+          statusColor: newStatus.color,
+        })
+      } catch (error) {
+        console.error('Failed to update status:', error)
+      }
     }
   }
 
@@ -248,10 +369,11 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
                       key={opt.key}
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (opt.key === "custom") return
-                        setStatus({ label: opt.label, color: opt.color })
-                        setEditCustom(false)
-                        setStatusMenuOpen(false)
+                        if (opt.key === "custom") {
+                          setEditCustom(true)
+                          return
+                        }
+                        handleStatusChange({ label: opt.label, color: opt.color })
                       }}
                       className="flex items-center gap-2 cursor-pointer h-7 px-3 py-0"
                       style={{
@@ -283,6 +405,34 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
                       )}
                     </CustomMenuItem>
                   ))}
+                  
+                  {/* User's saved custom statuses */}
+                  {userCustomStatuses.length > 0 && (
+                    <>
+                      <div className="px-3 py-1 text-xs text-muted-foreground border-t mt-1 pt-1">
+                        Recent Custom
+                      </div>
+                      {userCustomStatuses.slice(0, 3).map((customStatus, idx) => (
+                        <CustomMenuItem
+                          key={`custom-${idx}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleStatusChange(customStatus, true)
+                          }}
+                          className="flex items-center gap-2 cursor-pointer h-7 px-3 py-0"
+                          style={{
+                            backgroundColor: status.label === customStatus.label ? "var(--accent)" : "transparent",
+                          }}
+                        >
+                          <span
+                            className="min-w-[10px] h-[10px] rounded-full"
+                            style={{ backgroundColor: customStatus.color }}
+                          />
+                          <span className="truncate text-sm">{customStatus.label}</span>
+                        </CustomMenuItem>
+                      ))}
+                    </>
+                  )}
                   
                   {editCustom && (
                     <div className="px-3 py-2 border-t">
@@ -323,49 +473,6 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
                 </div>
               </PopoverContent>
             </Popover>
-          </div>
-        </div>
-
-        {/* Time Display */}
-        <div className="px-4 pb-3 border-b border-border">
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{localTime} local time</span>
-          </div>
-        </div>
-
-        {/* Account Information Section */}
-        <div className="px-4 pb-3 border-b border-border bg-muted/20">
-          <div className="space-y-2">
-            <div>
-              <span className="text-sm text-muted-foreground">Account:</span>
-              <div className="font-medium text-sm text-foreground mt-0.5">{userData.account}</div>
-              {userData.id && (
-                <div className="text-xs text-muted-foreground">ID: {userData.id}</div>
-              )}
-            </div>
-            <div>
-              <span className="text-sm text-muted-foreground">Current Plan:</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <Badge 
-                  variant="secondary" 
-                  className="text-xs font-semibold px-2 py-0.5 bg-primary/10 text-primary border-primary/20"
-                >
-                  {userData.plan}
-                </Badge>
-                {isDemoAccount && (
-                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">
-                    Demo
-                  </Badge>
-                )}
-              </div>
-            </div>
-            {userData.role && (
-              <div>
-                <span className="text-sm text-muted-foreground">Role:</span>
-                <div className="text-sm font-medium text-foreground mt-0.5">{userData.role}</div>
-              </div>
-            )}
           </div>
         </div>
 

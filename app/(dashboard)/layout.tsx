@@ -8,6 +8,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { useState } from "react"
+import { SidebarProvider, useSidebar } from "@/lib/contexts/sidebar-context"
+import { cn } from "@/lib/utils"
 
 /**
  * Persistent Dashboard Layout
@@ -19,13 +21,10 @@ import { useState } from "react"
  * - No remounting on navigation
  * - Mobile-responsive with sheet sidebar
  */
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { isCollapsed } = useSidebar()
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -36,7 +35,10 @@ export default function DashboardLayout({
         {/* Desktop Sidebar - Persistent */}
         {!isMobile && (
           <div 
-            className="w-64 border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar overflow-hidden"
+            className={cn(
+              "border-r border-sidebar-border h-[calc(100vh-3rem)] flex flex-col fixed left-0 top-12 z-40 shadow-sm bg-sidebar overflow-hidden transition-all duration-300",
+              isCollapsed ? "w-16" : "w-64"
+            )}
           >
             <SidebarNavigation />
           </div>
@@ -57,12 +59,27 @@ export default function DashboardLayout({
         )}
 
         {/* Main Content Area - Only this changes on navigation */}
-        <div className={`flex-1 flex flex-col overflow-hidden ${!isMobile ? "ml-64" : ""}`}>
+        <div className={cn(
+          "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+          !isMobile && (isCollapsed ? "ml-16" : "ml-64")
+        )}>
           <main className="flex-1 overflow-auto bg-muted/30">
             {children}
           </main>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <SidebarProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </SidebarProvider>
   )
 }

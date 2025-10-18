@@ -16,11 +16,13 @@ import {
   Calendar,
   Filter,
   SortAsc,
+  Loader2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -30,40 +32,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-// Sample articles data
-const sampleArticles = [
-  {
-    id: 1,
-    title: "Setting up Billing Automation",
-    description: "Complete guide to configuring automated billing processes and invoice generation",
-    author: "John Smith",
-    lastModified: "2 days ago",
-    status: "Published",
-    views: 245,
-    readTime: "5 min read",
-  },
-  {
-    id: 2,
-    title: "Financial Reporting Best Practices",
-    description: "Guidelines for creating comprehensive financial reports and analytics",
-    author: "Sarah Johnson",
-    lastModified: "1 week ago",
-    status: "Draft",
-    views: 89,
-    readTime: "8 min read",
-  },
-  {
-    id: 3,
-    title: "Invoice Management Workflow",
-    description: "Step-by-step process for managing invoices from creation to payment",
-    author: "Mike Davis",
-    lastModified: "3 days ago",
-    status: "Published",
-    views: 156,
-    readTime: "6 min read",
-  },
-]
+import { useKnowledgeArticles, useDeleteArticle } from "@/hooks/use-knowledge-articles"
+import { toast } from "sonner"
+import { formatDistanceToNow } from "date-fns"
 
 export default function CategoryArticlesPage() {
   const router = useRouter()
@@ -76,13 +47,21 @@ export default function CategoryArticlesPage() {
     ? String(params.slug)
         .replace(/-/g, " ")
         .replace(/\b\w/g, (l) => l.toUpperCase())
+        .replace(/\bIt\b/g, "IT") // Fix IT Support case
     : "Category"
 
-  const filteredArticles = sampleArticles.filter(
-    (article) =>
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Fetch real articles from database
+  const { data: articles, isLoading } = useKnowledgeArticles({
+    category: categoryName,
+    status: 'published',
+    query: searchQuery,
+    limit: 100,
+  })
+
+  // Delete mutation
+  const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle()
+
+  const filteredArticles = articles || []
 
   const handleArticleClick = (article: any) => {
     router.push(`/knowledge-base/article/${article.id}`)
@@ -98,9 +77,22 @@ export default function CategoryArticlesPage() {
   }
 
   const handleConfirmDelete = () => {
-    console.log("[v0] Deleting article:", selectedArticle?.title)
-    alert(`Article "${selectedArticle?.title}" deleted successfully!`)
-    setShowDeleteDialog(false)
+    if (!selectedArticle?.id) return
+
+    deleteArticle(selectedArticle.id, {
+      onSuccess: () => {
+        toast.success('Article deleted', {
+          description: `"${selectedArticle.title}" has been deleted successfully.`
+        })
+        setShowDeleteDialog(false)
+        setSelectedArticle(null)
+      },
+      onError: (error: any) => {
+        toast.error('Failed to delete article', {
+          description: error.message || 'Please try again.'
+        })
+      }
+    })
   }
 
   return (
@@ -152,7 +144,32 @@ export default function CategoryArticlesPage() {
         </div>
 
         <div className="grid gap-4">
-          {filteredArticles.map((article) => (
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Card key={`skel-${i}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <div className="flex gap-4">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredArticles.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <p className="text-muted-foreground">No articles found in this category.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredArticles.map((article) => (
             <Card key={article.id} className="hover:shadow-md transition-all duration-200 group">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -169,19 +186,19 @@ export default function CategoryArticlesPage() {
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <User className="h-4 w-4" />
-                        {article.author}
+                        {article.author_name || 'Unknown'}
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {article.lastModified}
+                        {article.updated_at ? formatDistanceToNow(new Date(article.updated_at), { addSuffix: true }) : 'Unknown'}
                       </div>
                       <div className="flex items-center gap-1">
                         <Eye className="h-4 w-4" />
-                        {article.views} views
+                        {article.view_count || 0} views
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {article.readTime}
+                        {Math.ceil((article.content?.length || 0) / 1000)} min read
                       </div>
                     </div>
                   </div>
@@ -209,7 +226,8 @@ export default function CategoryArticlesPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          )}
         </div>
       </div>
 
@@ -222,10 +240,11 @@ export default function CategoryArticlesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="text-[13px]">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="text-[13px]" disabled={isDeleting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete} className="text-[13px]">
+            <Button variant="destructive" onClick={handleConfirmDelete} className="text-[13px]" disabled={isDeleting}>
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Delete Article
             </Button>
           </DialogFooter>

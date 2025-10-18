@@ -94,6 +94,65 @@ CREATE TABLE public.knowledge_articles (
   CONSTRAINT knowledge_articles_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id),
   CONSTRAINT knowledge_articles_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.article_bookmarks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_bookmarks_pkey PRIMARY KEY (id),
+  CONSTRAINT article_bookmarks_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_bookmarks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT article_bookmarks_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_bookmarks_unique UNIQUE (article_id, user_id)
+);
+CREATE TABLE public.article_comments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  content text NOT NULL,
+  is_internal boolean DEFAULT false,
+  parent_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_comments_pkey PRIMARY KEY (id),
+  CONSTRAINT article_comments_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT article_comments_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_comments_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.article_comments(id)
+);
+CREATE TABLE public.article_votes (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  vote_type character varying NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_votes_pkey PRIMARY KEY (id),
+  CONSTRAINT article_votes_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_votes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT article_votes_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_votes_unique UNIQUE (article_id, user_id)
+);
+CREATE TABLE public.article_revisions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  version_number integer NOT NULL,
+  title character varying NOT NULL,
+  content text NOT NULL,
+  summary text,
+  change_description text,
+  changed_by uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_revisions_pkey PRIMARY KEY (id),
+  CONSTRAINT article_revisions_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_revisions_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.profiles(id),
+  CONSTRAINT article_revisions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_revisions_unique UNIQUE (article_id, version_number)
+);
 CREATE TABLE public.metrics_cache (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL,
@@ -151,12 +210,26 @@ CREATE TABLE public.profiles (
   is_active boolean DEFAULT true,
   last_login timestamp with time zone,
   preferences jsonb DEFAULT '{}'::jsonb,
+  status character varying DEFAULT 'Online'::character varying,
+  status_color character varying DEFAULT '#16a34a'::character varying,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT profiles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT profiles_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.user_custom_statuses (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  status_label character varying NOT NULL,
+  status_color character varying NOT NULL,
+  is_active boolean DEFAULT true,
+  last_used_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_custom_statuses_pkey PRIMARY KEY (id),
+  CONSTRAINT user_custom_statuses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT unique_user_status UNIQUE (user_id, status_label)
 );
 CREATE TABLE public.service_categories (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

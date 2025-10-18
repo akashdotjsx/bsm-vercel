@@ -9,10 +9,16 @@ import { useHydration } from '@/hooks/use-hydration'
 import dynamic from 'next/dynamic'
 
 // Dynamic import to prevent SSR hydration issues
-const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-loader'), {
-  ssr: false,
-  loading: () => <div className="min-h-screen bg-background" />
-})
+const KrooloMainLoader = dynamic(
+  () => import('@/components/common/kroolo-main-loader').catch(() => {
+    // Fallback if import fails
+    return { default: () => <div className="min-h-screen bg-background" /> }
+  }),
+  {
+    ssr: false,
+    loading: () => <div className="min-h-screen bg-background" />
+  }
+)
 
 // Create a single instance of the client to be used throughout the auth context
 const supabase = createClient()
@@ -52,6 +58,7 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   organization: Organization | null
+  organizationId: string | null
   permissions: UserPermissionsResponse[]
   userRoles: UserRole[]
   loading: boolean
@@ -389,6 +396,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     profile,
     organization,
+    organizationId: profile?.organization_id || null,
     permissions,
     userRoles,
     loading,

@@ -82,6 +82,7 @@
     "input-otp": "1.4.1",
     "json-rules-engine": "^7.3.1",
     "lucide-react": "^0.454.0",
+    "nanoid": "^5.1.6",
     "next": "14.2.16",
     "next-themes": "latest",
     "openai": "^6.2.0",
