@@ -486,35 +486,21 @@ CREATE TABLE public.tickets (
   CONSTRAINT tickets_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT tickets_sla_policy_id_fkey FOREIGN KEY (sla_policy_id) REFERENCES public.sla_policies(id)
 );
-CREATE TABLE public.custom_columns (
+CREATE TABLE public.custom_column_definitions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL,
   user_id uuid NOT NULL,
   title character varying(255) NOT NULL,
-  type character varying(50) NOT NULL CHECK (type IN ('text', 'number', 'date', 'select', 'multiselect')),
+  type character varying(50) NOT NULL CHECK (type IN ('text', 'number', 'date')),
   options jsonb DEFAULT '[]'::jsonb,
   default_value text,
   visible boolean DEFAULT true,
   sort_order integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT custom_columns_pkey PRIMARY KEY (id),
-  CONSTRAINT custom_columns_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
-  CONSTRAINT custom_columns_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE
-);
-CREATE TABLE public.custom_column_values (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  organization_id uuid NOT NULL,
-  ticket_id uuid NOT NULL,
-  column_id uuid NOT NULL,
-  value jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT custom_column_values_pkey PRIMARY KEY (id),
-  CONSTRAINT custom_column_values_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
-  CONSTRAINT custom_column_values_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES public.tickets(id) ON DELETE CASCADE,
-  CONSTRAINT custom_column_values_column_id_fkey FOREIGN KEY (column_id) REFERENCES public.custom_columns(id) ON DELETE CASCADE,
-  CONSTRAINT custom_column_values_ticket_id_column_id_key UNIQUE (ticket_id, column_id)
+  CONSTRAINT custom_column_definitions_pkey PRIMARY KEY (id),
+  CONSTRAINT custom_column_definitions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
+  CONSTRAINT custom_column_definitions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE
 );
 CREATE TABLE public.workflow_executions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

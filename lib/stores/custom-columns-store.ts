@@ -3,8 +3,8 @@ import { create } from 'zustand'
 export interface CustomColumn {
   id: string
   title: string
-  type: 'text' | 'number' | 'date' | 'select' | 'multiselect'
-  options?: string[] // For select/multiselect types
+  type: 'text' | 'number' | 'date'
+  options?: string[] // For future use if needed
   defaultValue?: string
   visible?: boolean // Whether the column is visible in the table
   sortOrder?: number

@@ -24,6 +24,8 @@ import { useCreateTicketGraphQL } from "@/hooks/queries/use-tickets-graphql-quer
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useUsers } from "@/hooks/use-users"
+import { useCustomColumnsGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
+import { useCustomColumnValuesGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
 import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
@@ -49,6 +51,7 @@ import {
   Calendar,
   History
 } from "lucide-react"
+import { CustomColumn } from "@/lib/stores/custom-columns-store"
 
 interface TicketDrawerProps {
   isOpen: boolean
@@ -57,9 +60,204 @@ interface TicketDrawerProps {
   preSelectedType?: string | null // Pre-selected ticket type from Kanban column
 }
 
+// Helper function to format custom field values for display
+function formatCustomFieldValue(value: any, type: string): string {
+  if (value === null || value === undefined || value === "") {
+    return ""
+  }
+  
+  switch (type) {
+    case "date":
+      try {
+        return format(new Date(value), "MMM d, y")
+      } catch {
+        return String(value)
+      }
+    case "number":
+      return String(value)
+    case "text":
+    default:
+      return String(value)
+  }
+}
+
+// Custom field input component
+interface CustomFieldInputProps {
+  column: CustomColumn
+  value: any
+  onValueChange: (value: any) => void
+  isSetting: boolean
+}
+
+function CustomFieldInput({ column, value, onValueChange, isSetting }: CustomFieldInputProps) {
+  const [localValue, setLocalValue] = useState(value || "")
+  const [isValid, setIsValid] = useState(true)
+
+  useEffect(() => {
+    setLocalValue(value || "")
+  }, [value])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    
+    // For number type, validate the input
+    if (column.type === "number") {
+      if (newValue === "" || newValue === "-" || /^-?\d*\.?\d*$/.test(newValue)) {
+        setLocalValue(newValue)
+        setIsValid(true)
+      } else {
+        setIsValid(false)
+      }
+      return
+    }
+    
+    // For date type, validate date format
+    if (column.type === "date") {
+      if (newValue === "" || /^\d{4}-\d{2}-\d{2}$/.test(newValue)) {
+        setLocalValue(newValue)
+        setIsValid(true)
+      } else {
+        setIsValid(false)
+      }
+      return
+    }
+    
+    // For text type, allow any input
+    setLocalValue(newValue)
+    setIsValid(true)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // For number type, only allow numbers, decimal point, and minus sign
+    if (column.type === "number") {
+      const char = e.key
+      const currentValue = (e.target as HTMLInputElement).value
+      
+      // Allow: numbers, decimal point, minus sign, backspace, delete, arrow keys, tab
+      if (!/[\d.-]/.test(char) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(char)) {
+        e.preventDefault()
+        return
+      }
+      
+      // Prevent multiple decimal points
+      if (char === '.' && currentValue.includes('.')) {
+        e.preventDefault()
+        return
+      }
+      
+      // Prevent multiple minus signs
+      if (char === '-' && (currentValue.includes('-') || currentValue.length > 0)) {
+        e.preventDefault()
+        return
+      }
+    }
+  }
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      console.log('🔄 CustomFieldInput handleBlur:', {
+        columnTitle: column.title,
+        columnType: column.type,
+        localValue,
+        currentValue: value
+      })
+      
+      // Convert value to appropriate type before saving
+      let processedValue = localValue
+      
+      if (column.type === "number") {
+        if (localValue === "" || localValue === "-") {
+          processedValue = null
+        } else if (!isNaN(Number(localValue)) && localValue !== "") {
+          processedValue = Number(localValue)
+        } else {
+          console.log('❌ Invalid number, not saving:', localValue)
+          return // Don't save invalid numbers
+        }
+      } else if (column.type === "date") {
+        if (localValue === "") {
+          processedValue = null
+        } else {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+          if (!dateRegex.test(localValue)) {
+            console.log('❌ Invalid date format, not saving:', localValue)
+            return // Don't save invalid dates
+          }
+          processedValue = localValue
+        }
+      } else if (column.type === "text") {
+        processedValue = localValue || ""
+      }
+      
+      console.log('💾 Calling onValueChange with:', {
+        original: localValue,
+        processed: processedValue,
+        type: typeof processedValue
+      })
+      
+      onValueChange(processedValue)
+    }
+  }
+
+  switch (column.type) {
+    case "text":
+      return (
+        <Input
+          placeholder={`Enter ${column.title.toLowerCase()}...`}
+          className="h-8 text-[11px]"
+          value={localValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          disabled={isSetting}
+        />
+      )
+
+    case "number":
+      return (
+        <Input
+          type="number"
+          placeholder="0"
+          className={`h-8 text-[11px] ${!isValid ? 'ring-1 ring-red-500 focus:ring-red-500' : ''}`}
+          value={localValue}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          onBlur={handleBlur}
+          step="any"
+          disabled={isSetting}
+        />
+      )
+
+    case "date":
+      return (
+        <Input
+          type="date"
+          className={`h-8 text-[11px] ${!isValid ? 'ring-1 ring-red-500 focus:ring-red-500' : ''}`}
+          value={localValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          disabled={isSetting}
+        />
+      )
+
+    default:
+      return (
+        <span className="text-[11px] text-muted-foreground">
+          Unknown type
+        </span>
+      )
+  }
+}
+
 export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType }: TicketDrawerProps) {
   const ticketId = ticket?.dbId || ""
   const isCreateMode = !ticketId // CREATE mode when no ticket ID
+  
+  // Debug logging
+  console.log('🎫 TicketDrawer props:', {
+    ticket,
+    ticketId,
+    isCreateMode
+  })
   
   // Auth context for organization and user
   const { user, organization } = useAuth()
@@ -77,6 +275,20 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   
   const { categories: supabaseCategories } = useServiceCategories()
   const { users, teams } = useUsers()
+  
+  // Custom columns hooks
+  const { organizationId } = useAuth()
+  const { columns: customColumns } = useCustomColumnsGraphQL(organizationId || '')
+  const { customFields, setValue, isSetting } = useCustomColumnValuesGraphQL(ticketId)
+  
+  // Debug custom fields
+  console.log('🔧 Custom fields debug:', {
+    organizationId,
+    ticketId,
+    customColumns: customColumns.length,
+    customFields,
+    isSetting
+  })
   
   // Extract nested data from ticket
   const comments = dbTicket?.comments || []
@@ -866,6 +1078,48 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                         </div>
                       )}
                     </div>
+
+                    {/* Custom Fields Section */}
+                    {customColumns.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {customColumns
+                            .filter(column => column.visible !== false)
+                            .map((column) => (
+                            <div key={column.id} className="space-y-2">
+                              <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                                {column.title}
+                              </label>
+                              {isEditMode ? (
+                                <CustomFieldInput
+                                  column={column}
+                                  value={customFields[column.title] || ""}
+                                  onValueChange={async (value) => {
+                                    console.log('🎯 CustomField onValueChange called:', {
+                                      fieldName: column.title,
+                                      value,
+                                      type: typeof value
+                                    })
+                                    try {
+                                      await setValue({ fieldName: column.title, value })
+                                      console.log('✅ Custom field saved successfully')
+                                    } catch (error) {
+                                      console.error('❌ Error saving custom field:', error)
+                                    }
+                                  }}
+                                  isSetting={isSetting}
+                                />
+                              ) : (
+                                <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">
+                                  {formatCustomFieldValue(customFields[column.title], column.type) || "—"}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
                     {isCreateMode && (

@@ -7,25 +7,25 @@ export function useCustomColumnsGraphQL(organizationId: string) {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
-  // Get custom columns
+  // Get custom column definitions
   const { data: columns = [], isLoading, error } = useQuery({
-    queryKey: ['custom-columns', organizationId],
+    queryKey: ['custom-column-definitions', organizationId],
     queryFn: async () => {
-      console.log('🔍 Fetching custom columns for organization_id:', organizationId)
+      console.log('🔍 Fetching custom column definitions for organization_id:', organizationId)
       
       const { data, error } = await supabase
-        .from('custom_columns')
+        .from('custom_column_definitions')
         .select('*')
         .eq('organization_id', organizationId)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true })
 
       if (error) {
-        console.error('❌ Error fetching custom columns:', error)
+        console.error('❌ Error fetching custom column definitions:', error)
         throw error
       }
       
-      console.log('✅ Fetched custom columns:', data)
+      console.log('✅ Fetched custom column definitions:', data)
       return data || []
     },
     enabled: !!organizationId && organizationId.length > 0
@@ -34,7 +34,7 @@ export function useCustomColumnsGraphQL(organizationId: string) {
   // Create custom column mutation
   const createColumnMutation = useMutation({
     mutationFn: async (column: Omit<CustomColumn, 'id'>) => {
-      console.log('🚀 Creating custom column:', column)
+      console.log('🚀 Creating custom column definition:', column)
       console.log('🔍 Organization ID:', organizationId)
 
       const { data: userData } = await supabase.auth.getUser()
@@ -45,9 +45,9 @@ export function useCustomColumnsGraphQL(organizationId: string) {
 
       console.log('👤 User ID:', userData.user.id)
       
-      // First, create the custom column
+      // First, create the custom column definition
       const { data: newColumn, error: columnError } = await supabase
-        .from('custom_columns')
+        .from('custom_column_definitions')
         .insert({
           organization_id: organizationId,
           user_id: userData.user.id,
@@ -62,23 +62,24 @@ export function useCustomColumnsGraphQL(organizationId: string) {
         .single()
 
       if (columnError) {
-        console.error('❌ Error creating custom column:', columnError)
+        console.error('❌ Error creating custom column definition:', columnError)
         throw columnError
       }
 
-      console.log('✅ Custom column created:', newColumn)
+      console.log('✅ Custom column definition created:', newColumn)
 
-      // Then, add this column to all existing tickets in the organization
+      // Then, add this column to all existing tickets in the organization using the new function
       const { data: ticketsCount, error: functionError } = await supabase
-        .rpc('add_custom_column_to_all_tickets', {
-          p_column_id: newColumn.id,
+        .rpc('add_custom_column_to_tickets', {
           p_organization_id: organizationId,
-          p_default_value: column.defaultValue ? JSON.parse(column.defaultValue) : null
+          p_column_title: column.title,
+          p_column_type: column.type,
+          p_default_value: column.defaultValue
         })
 
       if (functionError) {
         console.error('Error adding column to existing tickets:', functionError)
-        // Don't throw here - the column was created successfully
+        // Don't throw here - the column definition was created successfully
       } else {
         console.log(`✅ Added custom column to ${ticketsCount} existing tickets`)
       }
@@ -86,7 +87,7 @@ export function useCustomColumnsGraphQL(organizationId: string) {
       return newColumn
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-columns', organizationId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-column-definitions', organizationId] })
     }
   })
 
@@ -94,7 +95,7 @@ export function useCustomColumnsGraphQL(organizationId: string) {
   const updateColumnMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<CustomColumn> }) => {
       const { data, error } = await supabase
-        .from('custom_columns')
+        .from('custom_column_definitions')
         .update({
           title: updates.title,
           type: updates.type,
@@ -111,15 +112,37 @@ export function useCustomColumnsGraphQL(organizationId: string) {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-columns', organizationId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-column-definitions', organizationId] })
     }
   })
 
   // Delete custom column mutation
   const deleteColumnMutation = useMutation({
     mutationFn: async (id: string) => {
+      // First get the column definition to know the title
+      const { data: columnData, error: fetchError } = await supabase
+        .from('custom_column_definitions')
+        .select('title')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Remove the column from all tickets
+      const { error: removeError } = await supabase
+        .rpc('remove_custom_column_from_tickets', {
+          p_organization_id: organizationId,
+          p_column_title: columnData.title
+        })
+
+      if (removeError) {
+        console.error('Error removing column from tickets:', removeError)
+        // Continue with deletion even if removal from tickets fails
+      }
+
+      // Delete the column definition
       const { data, error } = await supabase
-        .from('custom_columns')
+        .from('custom_column_definitions')
         .delete()
         .eq('id', id)
         .select()
@@ -128,7 +151,7 @@ export function useCustomColumnsGraphQL(organizationId: string) {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-columns', organizationId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-column-definitions', organizationId] })
     }
   })
 
@@ -145,55 +168,62 @@ export function useCustomColumnsGraphQL(organizationId: string) {
   }
 }
 
-// Custom hook for custom column values
+// Custom hook for custom column values (now stored in tickets.custom_fields)
 export function useCustomColumnValuesGraphQL(ticketId: string) {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
-  // Get custom column values for a ticket
-  const { data: values = [], isLoading, error } = useQuery({
-    queryKey: ['custom-column-values', ticketId],
+  // Get custom field values from tickets table
+  const { data: customFields = {}, isLoading, error } = useQuery({
+    queryKey: ['ticket-custom-fields', ticketId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('custom_column_values')
-        .select('*')
-        .eq('ticket_id', ticketId)
+        .from('tickets')
+        .select('custom_fields')
+        .eq('id', ticketId)
+        .single()
 
       if (error) throw error
-      return data || []
+      return data?.custom_fields || {}
     },
     enabled: !!ticketId
   })
 
-  // Set custom column value mutation
+  // Set custom field value mutation
   const setValueMutation = useMutation({
-    mutationFn: async ({ columnId, value, organizationId }: { 
-      columnId: string; 
-      value: any; 
-      organizationId: string;
+    mutationFn: async ({ fieldName, value }: { 
+      fieldName: string; 
+      value: any;
     }) => {
+      // Convert value to proper JSONB format
+      let jsonbValue;
+      if (typeof value === 'string') {
+        jsonbValue = `"${value}"`; // Wrap string in quotes for JSONB
+      } else if (typeof value === 'number') {
+        jsonbValue = value.toString();
+      } else if (typeof value === 'boolean') {
+        jsonbValue = value.toString();
+      } else {
+        jsonbValue = JSON.stringify(value);
+      }
+
       const { data, error } = await supabase
-        .from('custom_column_values')
-        .upsert({
-          organization_id: organizationId,
-          ticket_id: ticketId,
-          column_id: columnId,
-          value: value,
-          updated_at: new Date().toISOString()
+        .rpc('update_ticket_custom_field', {
+          p_ticket_id: ticketId,
+          p_field_name: fieldName,
+          p_field_value: jsonbValue
         })
-        .select()
-        .single()
 
       if (error) throw error
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-column-values', ticketId] })
+      queryClient.invalidateQueries({ queryKey: ['ticket-custom-fields', ticketId] })
     }
   })
 
   return {
-    values,
+    customFields,
     isLoading,
     error,
     setValue: setValueMutation.mutateAsync,

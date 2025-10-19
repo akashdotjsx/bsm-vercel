@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useCustomColumnsStore, CustomColumn } from "@/lib/stores/custom-columns-store"
+import { CustomColumn } from "@/lib/stores/custom-columns-store"
 import { useCustomColumnsGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { Plus, Trash2, X, Check } from "lucide-react"
@@ -27,7 +27,6 @@ interface CustomColumnsDropdownProps {
 
 export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: CustomColumnsDropdownProps) {
   const { user, profile, organizationId, loading } = useAuth()
-  const { columns, setColumns, addColumn, removeColumn, updateColumn, toggleColumnVisibility } = useCustomColumnsStore()
   
   // Debug user and organization
   console.log('🔍 CustomColumnsDropdown - user:', user)
@@ -43,7 +42,7 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
   
   // Use GraphQL for custom columns - only if we have a valid organization_id
   const {
-    columns: graphqlColumns,
+    columns,
     isLoading,
     createColumn,
     updateColumn: updateColumnGraphQL,
@@ -56,18 +55,11 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
   
   const [newColumnTitle, setNewColumnTitle] = useState("")
   const [newColumnType, setNewColumnType] = useState<CustomColumn["type"]>("text")
-  const [newColumnOptions, setNewColumnOptions] = useState<string[]>([])
-  const [optionInput, setOptionInput] = useState("")
 
   // Position dropdown relative to trigger
   const [position, setPosition] = useState({ top: 100, left: 100, width: 498 })
 
-  // Sync GraphQL data with store
-  useEffect(() => {
-    if (graphqlColumns.length > 0) {
-      setColumns(graphqlColumns)
-    }
-  }, [graphqlColumns, setColumns])
+  // No need to sync with store - using GraphQL directly
 
   useEffect(() => {
     if (open) {
@@ -196,11 +188,17 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node
+      
+      // Check if click is on SelectContent (which is rendered in a portal)
+      const isSelectContent = (target as Element)?.closest('[data-slot="select-content"]')
+      
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(target) &&
         triggerRef?.current &&
-        !triggerRef.current.contains(event.target as Node)
+        !triggerRef.current.contains(target) &&
+        !isSelectContent
       ) {
         onOpenChange(false)
       }
@@ -262,29 +260,17 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
       await createColumn({
         title: newColumnTitle.trim(),
         type: newColumnType,
-        options: (newColumnType === "select" || newColumnType === "multiselect") ? newColumnOptions : undefined,
         visible: true,
       })
 
       // Reset form
       setNewColumnTitle("")
       setNewColumnType("text")
-      setNewColumnOptions([])
-      setOptionInput("")
     } catch (error) {
       console.error('Error creating custom column:', error)
     }
   }
 
-  const handleAddOption = () => {
-    if (!optionInput.trim()) return
-    setNewColumnOptions([...newColumnOptions, optionInput.trim()])
-    setOptionInput("")
-  }
-
-  const handleRemoveOption = (index: number) => {
-    setNewColumnOptions(newColumnOptions.filter((_, i) => i !== index))
-  }
 
   const handleRemoveColumn = async (columnId: string) => {
     if (confirm("Are you sure you want to remove this column? All data will be lost.")) {
@@ -386,12 +372,10 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                 <SelectTrigger id="column-type" className="h-8 text-xs bg-background border-border focus:border-[#6E72FF] focus:ring-[#6E72FF]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10000]">
                   <SelectItem value="text">Text</SelectItem>
                   <SelectItem value="number">Number</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="select">Select (Dropdown)</SelectItem>
-                  <SelectItem value="multiselect">Multi-select</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -407,53 +391,6 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
             </div>
           </div>
 
-          {/* Options for Select/Multi-select */}
-          {(newColumnType === "select" || newColumnType === "multiselect") && (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-foreground">Options</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add option..."
-                  value={optionInput}
-                  onChange={(e) => setOptionInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handleAddOption()
-                    }
-                  }}
-                  className="h-8 text-xs bg-background border-border focus:border-[#6E72FF] focus:ring-[#6E72FF]"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleAddOption}
-                  className="h-8 px-3 bg-muted hover:bg-muted/80 text-foreground"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-              {newColumnOptions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {newColumnOptions.map((option, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="text-xs flex items-center gap-1 bg-muted text-foreground"
-                    >
-                      {option}
-                      <button
-                        onClick={() => handleRemoveOption(index)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -514,7 +451,6 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                           id: column.id, 
                           updates: { visible: !column.visible } 
                         })
-                        toggleColumnVisibility(column.id)
                       } catch (error) {
                         console.error('Error toggling column visibility:', error)
                       }

@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
 import { CustomColumnCell } from "@/components/tickets/custom-column-cell"
-import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
+import { useCustomColumnsGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 
 interface TicketsTableProps {
@@ -61,7 +62,8 @@ export function TicketsTable({
   onBulkUpdate,
   customColumnsButtonRef,
 }: TicketsTableProps) {
-  const { columns: customColumns } = useCustomColumnsStore()
+  const { organizationId } = useAuth()
+  const { columns: customColumns } = useCustomColumnsGraphQL(organizationId || '')
   
   // Filter custom columns to only show visible ones
   const visibleCustomColumns = customColumns.filter(column => column.visible !== false)
