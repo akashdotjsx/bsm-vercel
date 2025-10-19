@@ -278,17 +278,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   
   // Custom columns hooks
   const { organizationId } = useAuth()
-  const { columns: customColumns } = useCustomColumnsGraphQL(organizationId || '')
+  const { columns: customColumns, isLoading: customColumnsLoading, error: customColumnsError } = useCustomColumnsGraphQL(organizationId || '')
   const { customFields, setValue, isSetting } = useCustomColumnValuesGraphQL(ticketId)
-  
-  // Debug custom fields
-  console.log('🔧 Custom fields debug:', {
-    organizationId,
-    ticketId,
-    customColumns: customColumns.length,
-    customFields,
-    isSetting
-  })
   
   // Extract nested data from ticket
   const comments = dbTicket?.comments || []
@@ -308,6 +299,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   // Edit mode toggle - for existing tickets, start in view mode
   const [isEditMode, setIsEditMode] = useState(isCreateMode)
   const [saving, setSaving] = useState(false)
+  
+  // Debug custom fields
+  console.log('🔧 Custom fields debug:', {
+    organizationId,
+    ticketId,
+    customColumns: customColumns.length,
+    customColumnsLoading,
+    customColumnsError,
+    customFields,
+    isSetting,
+    isEditMode,
+    isCreateMode
+  })
   
   // State for comments
   const [newComment, setNewComment] = useState("")
@@ -1080,7 +1084,17 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                     </div>
 
                     {/* Custom Fields Section */}
-                    {customColumns.length > 0 && (
+                    {customColumnsLoading ? (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="text-[11px] text-muted-foreground">Loading custom fields...</div>
+                      </div>
+                    ) : customColumnsError ? (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="text-[11px] text-red-500">Error loading custom fields: {customColumnsError.message}</div>
+                      </div>
+                    ) : customColumns.length > 0 ? (
                       <div className="space-y-4 pt-4 border-t border-border">
                         <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
                         <div className="grid grid-cols-1 gap-4">
@@ -1099,11 +1113,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                                     console.log('🎯 CustomField onValueChange called:', {
                                       fieldName: column.title,
                                       value,
-                                      type: typeof value
+                                      type: typeof value,
+                                      ticketId
                                     })
                                     try {
-                                      await setValue({ fieldName: column.title, value })
-                                      console.log('✅ Custom field saved successfully')
+                                      const result = await setValue({ fieldName: column.title, value })
+                                      console.log('✅ Custom field saved successfully:', result)
                                     } catch (error) {
                                       console.error('❌ Error saving custom field:', error)
                                     }
@@ -1119,7 +1134,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
                     {isCreateMode && (

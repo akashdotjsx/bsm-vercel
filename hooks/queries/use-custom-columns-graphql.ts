@@ -195,29 +195,50 @@ export function useCustomColumnValuesGraphQL(ticketId: string) {
       fieldName: string; 
       value: any;
     }) => {
-      // Convert value to proper JSONB format
-      let jsonbValue;
-      if (typeof value === 'string') {
-        jsonbValue = `"${value}"`; // Wrap string in quotes for JSONB
+      console.log('🔄 setValueMutation called:', {
+        ticketId,
+        fieldName,
+        value,
+        valueType: typeof value
+      })
+      
+      // Convert value to proper text format for the RPC function
+      let textValue;
+      if (value === null || value === undefined) {
+        textValue = null;
+      } else if (typeof value === 'string') {
+        textValue = value; // Pass string as-is
       } else if (typeof value === 'number') {
-        jsonbValue = value.toString();
+        textValue = value.toString();
       } else if (typeof value === 'boolean') {
-        jsonbValue = value.toString();
+        textValue = value.toString();
       } else {
-        jsonbValue = JSON.stringify(value);
+        textValue = JSON.stringify(value);
       }
+
+      console.log('💾 Calling RPC with:', {
+        p_ticket_id: ticketId,
+        p_field_name: fieldName,
+        p_field_value: textValue
+      })
 
       const { data, error } = await supabase
         .rpc('update_ticket_custom_field', {
           p_ticket_id: ticketId,
           p_field_name: fieldName,
-          p_field_value: jsonbValue
+          p_field_value: textValue
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ RPC error:', error)
+        throw error
+      }
+      
+      console.log('✅ RPC success:', data)
       return data
     },
     onSuccess: () => {
+      console.log('🔄 Invalidating cache for ticket:', ticketId)
       queryClient.invalidateQueries({ queryKey: ['ticket-custom-fields', ticketId] })
     }
   })
