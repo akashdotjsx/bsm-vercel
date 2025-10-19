@@ -316,17 +316,17 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
   const getColumnTypeColor = (type: string) => {
     switch (type) {
       case "text":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
       case "number":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
       case "date":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400"
       case "select":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
       case "multiselect":
-        return "bg-pink-100 text-pink-800"
+        return "bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
     }
   }
 
@@ -338,7 +338,7 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
   const dropdownContent = (
     <div
       ref={dropdownRef}
-      className="fixed z-[9999] bg-white rounded-2xl shadow-xl border border-gray-200 p-6 overflow-y-auto"
+      className="fixed z-[9999] bg-background dark:bg-background rounded-2xl shadow-xl border border-border p-6 overflow-y-auto"
       style={{
         position: 'fixed',
         top: position.top || 100, // Fallback to 100 if position.top is 0
@@ -351,22 +351,22 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
     >
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg font-semibold text-foreground mb-2">
           Manage Custom Columns
         </h2>
-        <p className="text-sm text-gray-600">
-          Add custom columns to your ticket table. Values are stored locally and persist across sessions.
+        <p className="text-sm text-muted-foreground">
+          Add custom columns to your ticket table. Values are stored in the database and persist across sessions.
         </p>
       </div>
 
       {/* Add New Column Section */}
       <div className="mb-8">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Add New Column</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Add New Column</h3>
         
         <div className="space-y-4">
           <div className="flex gap-3">
             <div className="flex-[2]">
-              <Label htmlFor="column-title" className="text-xs font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="column-title" className="text-xs font-medium text-foreground mb-1 block">
                 Column Title
               </Label>
               <Input
@@ -374,16 +374,16 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                 placeholder="e.g. Team, Project, Customer ID"
                 value={newColumnTitle}
                 onChange={(e) => setNewColumnTitle(e.target.value)}
-                className="h-8 text-xs border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="h-8 text-xs bg-background border-border focus:border-[#6E72FF] focus:ring-[#6E72FF]"
               />
             </div>
 
             <div className="flex-1">
-              <Label htmlFor="column-type" className="text-xs font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="column-type" className="text-xs font-medium text-foreground mb-1 block">
                 Column Type
               </Label>
               <Select value={newColumnType} onValueChange={(value) => setNewColumnType(value as CustomColumn["type"])}>
-                <SelectTrigger id="column-type" className="h-8 text-xs border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger id="column-type" className="h-8 text-xs bg-background border-border focus:border-[#6E72FF] focus:ring-[#6E72FF]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -410,7 +410,7 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
           {/* Options for Select/Multi-select */}
           {(newColumnType === "select" || newColumnType === "multiselect") && (
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-700">Options</Label>
+              <Label className="text-xs font-medium text-foreground">Options</Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="Add option..."
@@ -422,13 +422,13 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                       handleAddOption()
                     }
                   }}
-                  className="h-8 text-xs border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="h-8 text-xs bg-background border-border focus:border-[#6E72FF] focus:ring-[#6E72FF]"
                 />
                 <Button
                   type="button"
                   size="sm"
                   onClick={handleAddOption}
-                  className="h-8 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  className="h-8 px-3 bg-muted hover:bg-muted/80 text-foreground"
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -439,12 +439,12 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                     <Badge
                       key={index}
                       variant="secondary"
-                      className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700"
+                      className="text-xs flex items-center gap-1 bg-muted text-foreground"
                     >
                       {option}
                       <button
                         onClick={() => handleRemoveOption(index)}
-                        className="ml-1 hover:text-red-600"
+                        className="ml-1 hover:text-destructive"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -459,13 +459,13 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
 
       {/* Existing Columns Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           Existing Custom Columns ({columns.length})
         </h3>
         
         {columns.length === 0 ? (
-          <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-            <p className="text-sm text-gray-500">
+          <div className="text-center py-8 border border-dashed border-border rounded-lg">
+            <p className="text-sm text-muted-foreground">
               No custom columns added yet. Create your first column above.
             </p>
           </div>
@@ -474,15 +474,15 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
             {columns.map((column) => (
               <div
                 key={column.id}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <span className="text-lg">{getColumnTypeIcon(column.type)}</span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-gray-900">{column.title}</span>
+                      <span className="text-sm font-medium text-foreground">{column.title}</span>
                       <Badge 
                         variant="outline" 
                         className={cn("text-xs px-2 py-1", getColumnTypeColor(column.type))}
@@ -493,12 +493,12 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                     {column.options && column.options.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {column.options.slice(0, 3).map((option, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                          <Badge key={idx} variant="secondary" className="text-xs bg-muted text-muted-foreground">
                             {option}
                           </Badge>
                         ))}
                         {column.options.length > 3 && (
-                          <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                          <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">
                             +{column.options.length - 3} more
                           </Badge>
                         )}
@@ -521,14 +521,14 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                     }}
                     className={`w-11 h-6 rounded-full flex items-center px-1 transition-colors ${
                       column.visible !== false 
-                        ? 'bg-green-100 justify-end' 
-                        : 'bg-gray-200 justify-start'
+                        ? 'bg-green-100 dark:bg-green-900/20 justify-end' 
+                        : 'bg-muted justify-start'
                     }`}
                   >
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
                       column.visible !== false 
                         ? 'bg-green-500' 
-                        : 'bg-gray-400'
+                        : 'bg-muted-foreground'
                     }`}>
                       {column.visible !== false && <Check className="h-3 w-3 text-white" />}
                     </div>
@@ -537,7 +537,7 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveColumn(column.id)}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
