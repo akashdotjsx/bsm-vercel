@@ -49,6 +49,9 @@ export function TicketsTable({
   onOpenCustomColumns,
 }: TicketsTableProps) {
   const { columns: customColumns } = useCustomColumnsStore()
+  
+  // Filter custom columns to only show visible ones
+  const visibleCustomColumns = customColumns.filter(column => column.visible !== false)
 
   // Helper functions
   const getStatusColor = (status: string) => {
@@ -143,7 +146,7 @@ export function TicketsTable({
                 <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border">
                   Notes
                 </th>
-                {customColumns.map((column) => (
+                {visibleCustomColumns.map((column) => (
                   <th
                     key={column.id}
                     className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider border-r border-border"
@@ -488,7 +491,7 @@ function TicketRow({
       </td>
 
       {/* Custom column cells */}
-      {customColumns.map((column: any) => (
+      {visibleCustomColumns.map((column: any) => (
         <td key={column.id} className="px-3 py-2.5 whitespace-nowrap border-r border-border">
           <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
         </td>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -42,6 +42,7 @@ interface TicketsTableProps {
   onOpenCustomColumns?: () => void
   onBulkDelete?: (ticketIds: string[]) => Promise<void>
   onBulkUpdate?: (ticketIds: string[], updates: any) => Promise<void>
+  customColumnsButtonRef?: React.RefObject<HTMLButtonElement>
 }
 
 export function TicketsTable({
@@ -58,8 +59,12 @@ export function TicketsTable({
   onOpenCustomColumns,
   onBulkDelete,
   onBulkUpdate,
+  customColumnsButtonRef,
 }: TicketsTableProps) {
   const { columns: customColumns } = useCustomColumnsStore()
+  
+  // Filter custom columns to only show visible ones
+  const visibleCustomColumns = customColumns.filter(column => column.visible !== false)
   
   // Bulk selection state
   const [selectedTickets, setSelectedTickets] = useState<string[]>([])
@@ -232,7 +237,7 @@ export function TicketsTable({
                 <th className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32" style={{ fontSize: '12px', fontWeight: 600 }}>
                   Notes
                 </th>
-                {customColumns.map((column) => (
+                {visibleCustomColumns.map((column) => (
                   <th
                     key={column.id}
                     className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32"
@@ -242,6 +247,7 @@ export function TicketsTable({
                 ))}
                 <th className="px-6 py-4 text-center">
                   <Button
+                    ref={customColumnsButtonRef}
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
@@ -376,7 +382,7 @@ export function TicketsTable({
                    Notes
                  </th>
                 {/* Custom columns headers */}
-                {customColumns.map((column) => (
+                {visibleCustomColumns.map((column) => (
                   <th
                     key={column.id}
                     className="px-6 py-4 text-left text-xs font-semibold text-foreground whitespace-nowrap w-32"
@@ -388,6 +394,7 @@ export function TicketsTable({
                 {/* Add column button */}
                 <th className="px-6 py-4 text-center">
                   <Button
+                    ref={customColumnsButtonRef}
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
@@ -422,7 +429,7 @@ export function TicketsTable({
                       <TicketRow
                         key={ticket.id}
                         ticket={ticket}
-                        customColumns={customColumns}
+                        customColumns={visibleCustomColumns}
                         isSelected={isTicketSelected(ticket.dbId || ticket.id)}
                         onSelectTicket={(checked: boolean) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
                         onTicketClick={onTicketClick}
@@ -444,7 +451,7 @@ export function TicketsTable({
                   <TicketRow
                     key={ticket.id}
                     ticket={ticket}
-                    customColumns={customColumns}
+                    customColumns={visibleCustomColumns}
                     isSelected={isTicketSelected(ticket.dbId || ticket.id)}
                     onSelectTicket={(checked: boolean) => handleSelectTicket(ticket.dbId || ticket.id, checked)}
                     onTicketClick={onTicketClick}
