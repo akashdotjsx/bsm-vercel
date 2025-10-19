@@ -8,9 +8,10 @@ import { useCustomColumnValuesGraphQL } from "@/hooks/queries/use-custom-columns
 interface CustomColumnCellProps {
   column: CustomColumn
   ticketId: string
+  editable?: boolean // New prop to control editability
 }
 
-export function CustomColumnCell({ column, ticketId }: CustomColumnCellProps) {
+export function CustomColumnCell({ column, ticketId, editable = true }: CustomColumnCellProps) {
   const { customFields, setValue: updateCustomField, isSetting } = useCustomColumnValuesGraphQL(ticketId)
   const [value, setValue] = useState<any>(customFields[column.title] || "")
   const [isValid, setIsValid] = useState(true)
@@ -123,7 +124,39 @@ export function CustomColumnCell({ column, ticketId }: CustomColumnCellProps) {
     setIsValid(true)
   }
 
-  // Render based on column type
+  // Helper function to format display value
+  const formatDisplayValue = (value: any, type: string): string => {
+    if (value === null || value === undefined || value === "") {
+      return "—"
+    }
+    
+    switch (type) {
+      case "date":
+        try {
+          // Format date for display (convert from YYYY-MM-DD to a more readable format)
+          const date = new Date(value)
+          return date.toLocaleDateString()
+        } catch {
+          return String(value)
+        }
+      case "number":
+        return String(value)
+      case "text":
+      default:
+        return String(value)
+    }
+  }
+
+  // If not editable, render as view-only
+  if (!editable) {
+    return (
+      <div className="h-8 text-sm text-foreground min-w-[120px] flex items-center px-2">
+        {formatDisplayValue(value, column.type)}
+      </div>
+    )
+  }
+
+  // Render based on column type (editable mode)
   switch (column.type) {
     case "text":
       return (
@@ -164,7 +197,6 @@ export function CustomColumnCell({ column, ticketId }: CustomColumnCellProps) {
           onBlur={handleBlur}
         />
       )
-
 
     default:
       return (

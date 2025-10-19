@@ -495,7 +495,7 @@ function TicketRow({
       {/* Custom column cells */}
       {visibleCustomColumns.map((column: any) => (
         <td key={column.id} className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-          <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} />
+          <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} editable={false} />
         </td>
       ))}
 
