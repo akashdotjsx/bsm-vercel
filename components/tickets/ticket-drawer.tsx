@@ -287,14 +287,17 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   const attachments = dbTicket?.attachments || []
   const checklist = dbTicket?.checklist || []
   const history = (dbTicket as any)?.history || []
-  const mockHistory = [
-    { id: "h1", field_name: "type", old_value: "Incident", new_value: "Task", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
-    { id: "h2", field_name: "Priority", old_value: null, new_value: "High", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
-    { id: "h3", field_name: "type", old_value: "Request", new_value: "Incident", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
-    { id: "h4", field_name: "Task", old_value: null, new_value: null, change_reason: "created", created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
-    { id: "h5", field_name: "Priority", old_value: null, new_value: "Medium", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
-  ]
-  const effectiveHistory = history.length ? history : mockHistory
+  const effectiveHistory = history.length ? history : (
+    dbTicket ? [{
+      id: `created-${dbTicket.id}`,
+      field_name: 'created',
+      old_value: null,
+      new_value: null,
+      change_reason: 'Created ticket',
+      created_at: dbTicket.created_at,
+      changed_by: dbTicket.requester || null,
+    }] : []
+  )
 
   // Helpers to format history details nicely
   const profileNameById = (id?: string) => {
@@ -1608,10 +1611,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                       const name = h.changed_by?.display_name || h.changed_by?.email || "System"
                       const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
                       const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
-                      const summary = h.change_reason && h.field_name === 'checklist'
+                      const summary = h.field_name === 'created'
+                        ? `${name} created the ticket`
+                        : h.change_reason && h.field_name === 'checklist'
                         ? `${name} ${h.change_reason}`
                         : (h.field_name ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}` : `${name} made an update`)
-                      const details = h.field_name === 'checklist'
+                      const details = h.field_name === 'created'
+                        ? ''
+                        : h.field_name === 'checklist'
                         ? ''
                         : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
                       return (
