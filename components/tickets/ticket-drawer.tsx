@@ -623,7 +623,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     try {
       await updateCommentMutation.mutateAsync({
         commentId: editingCommentId,
-        content: editCommentContent.trim()
+        content: editCommentContent.trim(),
+        actorId: user?.id
       })
       setEditingCommentId(null)
       setEditCommentContent("")
@@ -639,12 +640,21 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     setEditCommentContent("")
   }
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return
-    
+  const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId)
+    setShowDeleteCommentDialog(true)
+  }
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return
     try {
-      await deleteCommentMutation.mutateAsync({ commentId })
+      await deleteCommentMutation.mutateAsync({ commentId: commentToDelete, actorId: user?.id })
       toast.success("Comment deleted successfully!")
+      setShowDeleteCommentDialog(false)
+      setCommentToDelete(null)
     } catch (error) {
       console.error("Error deleting comment:", error)
       toast.error("Failed to delete comment")
@@ -675,7 +685,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     try {
       await updateChecklistItemMutation.mutateAsync({
         itemId,
-        updates: { completed }
+        updates: { completed },
+        actorId: user?.id
       })
     } catch (error) {
       console.error("Error updating checklist item:", error)
@@ -691,7 +702,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   const confirmDeleteChecklistItem = async () => {
     if (!checklistItemToDelete) return
     try {
-      await deleteChecklistItemMutation.mutateAsync(checklistItemToDelete)
+      await deleteChecklistItemMutation.mutateAsync({ itemId: checklistItemToDelete, actorId: user?.id })
       toast.success("Checklist item deleted", "The item has been removed")
       setShowDeleteChecklistDialog(false)
       setChecklistItemToDelete(null)
@@ -726,6 +737,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         >
           {/* Header */}
           <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
+            <DeleteConfirmationDialog
+              open={showDeleteCommentDialog}
+              onOpenChange={setShowDeleteCommentDialog}
+              onConfirm={confirmDeleteComment}
+              title="Delete Comment"
+              description="Do you want to delete this comment?"
+              isDeleting={deleteCommentMutation.isPending}
+            />
             <div className="flex-1 min-w-0 mr-4">
               <h2 className="text-sm md:text-[13px] font-semibold text-foreground dark:text-foreground mb-1 truncate">
                 {isCreateMode ? "Create New Ticket" : (dbTicket?.title || ticket?.title || "Loading...")}
@@ -1589,10 +1608,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                       const name = h.changed_by?.display_name || h.changed_by?.email || "System"
                       const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
                       const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
-                      const summary = h.field_name
-                        ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
-                        : `${name} made an update`
-                      const details = h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || ''
+                      const summary = h.change_reason && h.field_name === 'checklist'
+                        ? `${name} ${h.change_reason}`
+                        : (h.field_name ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}` : `${name} made an update`)
+                      const details = h.field_name === 'checklist'
+                        ? ''
+                        : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
                       return (
                         <div key={h.id} className="flex gap-3 items-start">
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">

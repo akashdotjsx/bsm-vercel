@@ -353,8 +353,19 @@ export function useAddCommentGraphQL(ticketId: string) {
 /**
  * Update comment using GraphQL
  */
-async function updateCommentGraphQL(commentId: string, content: string) {
+async function updateCommentGraphQL(commentId: string, content: string, actorId?: string) {
   const client = await createGraphQLClient()
+
+  // Fetch current comment for history
+  const currentQuery = gql`
+    query CurrentComment($id: UUID!) {
+      ticket_commentsCollection(filter: { id: { eq: $id } }, first: 1) {
+        edges { node { id ticket_id content } }
+      }
+    }
+  `
+  const currentData: any = await client.request(currentQuery, { id: commentId })
+  const current = currentData.ticket_commentsCollection.edges[0]?.node
 
   const mutation = gql`
     mutation UpdateComment($id: UUID!, $input: ticket_commentsUpdateInput!) {
@@ -385,14 +396,50 @@ async function updateCommentGraphQL(commentId: string, content: string) {
   }
 
   const data: any = await client.request(mutation, { id: commentId, input })
-  return data.updateticket_commentsCollection.records[0]
+  const updated = data.updateticket_commentsCollection.records[0]
+
+  // Log history: comment updated
+  try {
+    if (current) {
+      const historyMutation = gql`
+        mutation InsertCommentUpdateHistory($input: ticket_historyInsertInput!) {
+          insertIntoticket_historyCollection(objects: [$input]) { affectedCount }
+        }
+      `
+      await client.request(historyMutation, {
+        input: {
+          ticket_id: current.ticket_id,
+          field_name: 'comment',
+          old_value: current.content,
+          new_value: content.trim(),
+          change_reason: 'comment_updated',
+          changed_by: actorId || null,
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Comment update history logging failed', e)
+  }
+
+  return updated
 }
 
 /**
  * Delete comment using GraphQL
  */
-async function deleteCommentGraphQL(commentId: string) {
+async function deleteCommentGraphQL(commentId: string, actorId?: string) {
   const client = await createGraphQLClient()
+
+  // Fetch current comment for history
+  const currentQuery = gql`
+    query CurrentComment($id: UUID!) {
+      ticket_commentsCollection(filter: { id: { eq: $id } }, first: 1) {
+        edges { node { id ticket_id content } }
+      }
+    }
+  `
+  const currentData: any = await client.request(currentQuery, { id: commentId })
+  const current = currentData.ticket_commentsCollection.edges[0]?.node
 
   const mutation = gql`
     mutation DeleteComment($id: UUID!) {
@@ -406,6 +453,30 @@ async function deleteCommentGraphQL(commentId: string) {
   `
 
   const data: any = await client.request(mutation, { id: commentId })
+
+  // Log history: comment deleted
+  try {
+    if (current) {
+      const historyMutation = gql`
+        mutation InsertCommentDeleteHistory($input: ticket_historyInsertInput!) {
+          insertIntoticket_historyCollection(objects: [$input]) { affectedCount }
+        }
+      `
+      await client.request(historyMutation, {
+        input: {
+          ticket_id: current.ticket_id,
+          field_name: 'comment',
+          old_value: current.content,
+          new_value: null,
+          change_reason: 'comment_deleted',
+          changed_by: actorId || null,
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Comment delete history logging failed', e)
+  }
+
   return data.deleteFromticket_commentsCollection.records[0]
 }
 
@@ -416,8 +487,8 @@ export function useUpdateCommentGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
-      updateCommentGraphQL(commentId, content),
+    mutationFn: ({ commentId, content, actorId }: { commentId: string; content: string; actorId?: string }) =>
+      updateCommentGraphQL(commentId, content, actorId),
     onSuccess: (updatedComment) => {
       // Update comment in cache
       queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
@@ -445,8 +516,8 @@ export function useDeleteCommentGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ commentId }: { commentId: string }) =>
-      deleteCommentGraphQL(commentId),
+    mutationFn: ({ commentId, actorId }: { commentId: string; actorId?: string }) =>
+      deleteCommentGraphQL(commentId, actorId),
     onSuccess: (deletedComment) => {
       // Remove comment from cache
       queryClient.setQueryData(ticketDetailKeys.ticket(ticketId), (old: any) => {
@@ -607,7 +678,30 @@ async function addChecklistItemGraphQL(
   if (createdBy) input.created_by = createdBy
 
   const data: any = await client.request(mutation, { input })
-  return data.insertIntoticket_checklistCollection.records[0]
+  const item = data.insertIntoticket_checklistCollection.records[0]
+
+  // Log history: checklist added
+  try {
+    const historyMutation = gql`
+      mutation InsertChecklistAdded($input: ticket_historyInsertInput!) {
+        insertIntoticket_historyCollection(objects: [$input]) { affectedCount }
+      }
+    `
+    await client.request(historyMutation, {
+      input: {
+        ticket_id: ticketId,
+        field_name: 'checklist',
+        old_value: null,
+        new_value: null,
+        change_reason: `Added checklist '${text}'`,
+        changed_by: createdBy || null,
+      }
+    })
+  } catch (e) {
+    console.warn('Checklist add history logging failed', e)
+  }
+
+  return item
 }
 
 /**
@@ -615,9 +709,21 @@ async function addChecklistItemGraphQL(
  */
 async function updateChecklistItemGraphQL(
   itemId: string,
-  updates: { text?: string; completed?: boolean; assignee_id?: string; due_date?: string }
+  updates: { text?: string; completed?: boolean; assignee_id?: string; due_date?: string },
+  actorId?: string
 ) {
   const client = await createGraphQLClient()
+
+  // Fetch current item to generate history
+  const currentQuery = gql`
+    query CurrentChecklist($id: UUID!) {
+      ticket_checklistCollection(filter: { id: { eq: $id } }, first: 1) {
+        edges { node { id ticket_id text completed } }
+      }
+    }
+  `
+  const currentData: any = await client.request(currentQuery, { id: itemId })
+  const current = currentData.ticket_checklistCollection.edges[0]?.node
 
   const mutation = gql`
     mutation UpdateChecklistItem($id: UUID!, $updates: ticket_checklistUpdateInput!) {
@@ -641,14 +747,64 @@ async function updateChecklistItemGraphQL(
   `
 
   const data: any = await client.request(mutation, { id: itemId, updates })
-  return data.updateticket_checklistCollection.records[0]
+  const updated = data.updateticket_checklistCollection.records[0]
+
+  // Write history entries based on changes
+  try {
+    if (current) {
+      const historyObjects: any[] = []
+      if (typeof updates.completed === 'boolean' && updates.completed !== current.completed) {
+        historyObjects.push({
+          ticket_id: current.ticket_id,
+          field_name: 'checklist',
+          old_value: null,
+          new_value: null,
+          change_reason: updates.completed ? `Marked '${current.text}' as completed` : `Marked '${current.text}' as incomplete`,
+          changed_by: actorId || null,
+        })
+      }
+      if (typeof updates.text === 'string' && updates.text !== current.text) {
+        historyObjects.push({
+          ticket_id: current.ticket_id,
+          field_name: 'checklist',
+          old_value: null,
+          new_value: null,
+          change_reason: `Renamed checklist '${current.text}' → '${updates.text}'`,
+          changed_by: actorId || null,
+        })
+      }
+      if (historyObjects.length > 0) {
+        const insertHistory = gql`
+          mutation InsertChecklistHistory($objects: [ticket_historyInsertInput!]!) {
+            insertIntoticket_historyCollection(objects: $objects) { affectedCount }
+          }
+        `
+        await client.request(insertHistory, { objects: historyObjects })
+      }
+    }
+  } catch (e) {
+    console.warn('Checklist update history logging failed', e)
+  }
+
+  return updated
 }
 
 /**
  * Delete checklist item using GraphQL
  */
-async function deleteChecklistItemGraphQL(itemId: string) {
+async function deleteChecklistItemGraphQL(itemId: string, actorId?: string) {
   const client = await createGraphQLClient()
+
+  // Fetch existing for history data
+  const currentQuery = gql`
+    query CurrentChecklist($id: UUID!) {
+      ticket_checklistCollection(filter: { id: { eq: $id } }, first: 1) {
+        edges { node { id ticket_id text } }
+      }
+    }
+  `
+  const currentData: any = await client.request(currentQuery, { id: itemId })
+  const current = currentData.ticket_checklistCollection.edges[0]?.node
 
   const mutation = gql`
     mutation DeleteChecklistItem($id: UUID!) {
@@ -661,6 +817,29 @@ async function deleteChecklistItemGraphQL(itemId: string) {
   `
 
   await client.request(mutation, { id: itemId })
+
+  // Log delete
+  try {
+    if (current) {
+      const historyMutation = gql`
+        mutation InsertChecklistDeleted($input: ticket_historyInsertInput!) {
+          insertIntoticket_historyCollection(objects: [$input]) { affectedCount }
+        }
+      `
+      await client.request(historyMutation, {
+        input: {
+          ticket_id: current.ticket_id,
+          field_name: 'checklist',
+          old_value: null,
+          new_value: null,
+          change_reason: `Deleted checklist '${current.text}'`,
+          changed_by: actorId || null,
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Checklist delete history logging failed', e)
+  }
 }
 
 /**
@@ -696,8 +875,8 @@ export function useUpdateChecklistItemGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ itemId, updates }: { itemId: string; updates: any }) =>
-      updateChecklistItemGraphQL(itemId, updates),
+    mutationFn: ({ itemId, updates, actorId }: { itemId: string; updates: any; actorId?: string }) =>
+      updateChecklistItemGraphQL(itemId, updates, actorId),
     onMutate: async ({ itemId, updates }) => {
       await queryClient.cancelQueries({ queryKey: ticketDetailKeys.ticket(ticketId) })
       const previousTicket = queryClient.getQueryData(ticketDetailKeys.ticket(ticketId))
@@ -732,7 +911,7 @@ export function useDeleteChecklistItemGraphQL(ticketId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (itemId: string) => deleteChecklistItemGraphQL(itemId),
+    mutationFn: ({ itemId, actorId }: { itemId: string; actorId?: string }) => deleteChecklistItemGraphQL(itemId, actorId),
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: ticketDetailKeys.ticket(ticketId) })
       const previousTicket = queryClient.getQueryData(ticketDetailKeys.ticket(ticketId))

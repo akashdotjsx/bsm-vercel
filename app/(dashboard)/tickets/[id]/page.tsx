@@ -52,6 +52,7 @@ import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { toast } from "@/lib/toast"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 
 interface TicketDetailPageProps {
   params: {
@@ -249,7 +250,8 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
     try {
       await updateCommentMutation.mutateAsync({
         commentId: editingCommentId,
-        content: editCommentContent.trim()
+        content: editCommentContent.trim(),
+        actorId: currentUser?.id
       })
       setEditingCommentId(null)
       setEditCommentContent("")
@@ -266,11 +268,20 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   }
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return
-    
+    setCommentToDelete(commentId)
+    setShowDeleteCommentDialog(true)
+  }
+
+  const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return
     try {
-      await deleteCommentMutation.mutateAsync({ commentId })
+      await deleteCommentMutation.mutateAsync({ commentId: commentToDelete, actorId: currentUser?.id })
       toast.success("Comment deleted successfully!")
+      setShowDeleteCommentDialog(false)
+      setCommentToDelete(null)
     } catch (error) {
       console.error("Error deleting comment:", error)
       toast.error("Failed to delete comment")
@@ -407,6 +418,14 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
 
   return (
     <PageContent breadcrumb={[{ label: "Tickets", href: "/tickets" }, { label: `#${ticket.ticket_number}` }]}>
+      <DeleteConfirmationDialog
+        open={showDeleteCommentDialog}
+        onOpenChange={setShowDeleteCommentDialog}
+        onConfirm={confirmDeleteComment}
+        title="Delete Comment"
+        description="Do you want to delete this comment?"
+        isDeleting={deleteCommentMutation.isPending}
+      />
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -1014,10 +1033,12 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                       const name = h.changed_by?.display_name || h.changed_by?.email || "System"
                       const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
                       const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
-                      const summary = h.field_name
-                        ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
-                        : `${name} made an update`
-                      const details = h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || ''
+                      const summary = h.change_reason && h.field_name === 'checklist'
+                        ? `${name} ${h.change_reason}`
+                        : (h.field_name ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}` : `${name} made an update`)
+                      const details = h.field_name === 'checklist'
+                        ? ''
+                        : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
                       return (
                         <div key={h.id} className="flex gap-3 items-start">
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
