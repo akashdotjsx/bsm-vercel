@@ -222,6 +222,18 @@ export function useCustomColumnValuesGraphQL(ticketId: string) {
         p_field_value: textValue
       })
 
+      // Fetch current custom_fields to calculate old value for history
+      const { data: currentTicket, error: currentErr } = await supabase
+        .from('tickets')
+        .select('custom_fields')
+        .eq('id', ticketId)
+        .single()
+
+      if (currentErr) {
+        console.error('❌ Error fetching current custom fields before update:', currentErr)
+      }
+      const previousValue = currentTicket?.custom_fields?.[fieldName]
+
       const { data, error } = await supabase
         .rpc('update_ticket_custom_field', {
           p_ticket_id: ticketId,
@@ -235,6 +247,34 @@ export function useCustomColumnValuesGraphQL(ticketId: string) {
       }
       
       console.log('✅ RPC success:', data)
+
+      // Insert into ticket_history so UI reflects this change
+      try {
+        const { data: userData } = await supabase.auth.getUser()
+        const changedBy = userData.user?.id || null
+        const stringify = (v: any) => {
+          if (v === null || v === undefined) return null
+          if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v)
+          try { return JSON.stringify(v) } catch { return String(v) }
+        }
+
+        const { error: histErr } = await supabase
+          .from('ticket_history')
+          .insert({
+            ticket_id: ticketId,
+            field_name: fieldName,
+            old_value: stringify(previousValue),
+            new_value: textValue,
+            change_reason: 'custom_field_updated',
+            changed_by: changedBy,
+          })
+
+        if (histErr) {
+          console.warn('⚠️ Failed to write ticket_history for custom field update:', histErr)
+        }
+      } catch (e) {
+        console.warn('⚠️ Unexpected error logging custom field history:', e)
+      }
       return data
     },
     onSuccess: () => {
