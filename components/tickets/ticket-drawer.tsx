@@ -285,6 +285,15 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   const comments = dbTicket?.comments || []
   const attachments = dbTicket?.attachments || []
   const checklist = dbTicket?.checklist || []
+  const history = (dbTicket as any)?.history || []
+  const mockHistory = [
+    { id: "h1", field_name: "type", old_value: "Incident", new_value: "Task", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
+    { id: "h2", field_name: "Priority", old_value: null, new_value: "High", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
+    { id: "h3", field_name: "type", old_value: "Request", new_value: "Incident", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
+    { id: "h4", field_name: "Task", old_value: null, new_value: null, change_reason: "created", created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
+    { id: "h5", field_name: "Priority", old_value: null, new_value: "Medium", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
+  ]
+  const effectiveHistory = history.length ? history : mockHistory
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -509,7 +518,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         })
         
         console.log("[UPDATE] Cleaned data:", cleanedData)
-        const updatedTicket = await updateTicketMutation.mutateAsync({ id: ticketId, updates: cleanedData })
+        const updatedTicket = await updateTicketMutation.mutateAsync({ id: ticketId, updates: cleanedData, actorId: user?.id })
         
         // Update form with the returned data to stay in sync
         // Cache invalidation already happened in the mutation hook
@@ -832,10 +841,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                   value="history"
                   className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
-                  History
-                  <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                    5
-                  </Badge>
+                  {`History${effectiveHistory.length ? ` (${effectiveHistory.length})` : ""}`}
                 </TabsTrigger>
               </TabsList>
               </div>
@@ -1536,52 +1542,38 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[11px] font-semibold text-foreground">History</h3>
                 </div>
-                
                 <div className="space-y-3">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
-                      S
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">System</span>
-                          <span className="text-[10px] text-muted-foreground">45 minutes ago</span>
+                  {effectiveHistory.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-[11px]">No history yet</div>
+                  ) : (
+                    effectiveHistory.map((h: any) => {
+                      const name = h.changed_by?.display_name || h.changed_by?.email || "System"
+                      const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
+                      const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
+                      const summary = h.field_name
+                        ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
+                        : `${name} made an update`
+                      const details = h.field_name ? `${h.old_value ? `${h.old_value} → ` : ''}${h.new_value ?? ''}` : h.change_reason || ''
+                      return (
+                        <div key={h.id} className="flex gap-3 items-start">
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
+                            {initials}
+                          </div>
+                          <div className="flex-1">
+                            <div className="rounded-lg p-3 bg-muted/50">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] font-semibold">{summary}</span>
+                                <span className="text-[10px] text-muted-foreground">{when}</span>
+                              </div>
+                              {details && (
+                                <p className="text-[11px] text-foreground">{details}</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[10px] font-medium shrink-0">
-                      JS
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-[#6E72FF]/10 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">John Smith</span>
-                          <span className="text-[10px] text-muted-foreground">1 hour ago</span>
-                        </div>
-                        <p className="text-[11px] text-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
-                      RJ
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">Richard Jeffries</span>
-                          <span className="text-[10px] text-muted-foreground">2 hours ago</span>
-                        </div>
-                        <p className="text-[11px] text-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
-                      </div>
-                    </div>
-                  </div>
+                      )
+                    })
+                  )}
                 </div>
               </TabsContent>
               </div>

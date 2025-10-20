@@ -92,6 +92,55 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const comments = ticket?.comments || []
   const attachments = ticket?.attachments || []
   const checklist = ticket?.checklist || []
+  const history = (ticket as any)?.history || []
+  const mockHistory = [
+    {
+      id: "h1",
+      field_name: "type",
+      old_value: "Incident",
+      new_value: "Task",
+      change_reason: null,
+      created_at: "2025-09-29T12:37:00.000Z",
+      changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" }
+    },
+    {
+      id: "h2",
+      field_name: "Priority",
+      old_value: null,
+      new_value: "High",
+      change_reason: null,
+      created_at: "2025-09-29T12:37:00.000Z",
+      changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" }
+    },
+    {
+      id: "h3",
+      field_name: "type",
+      old_value: "Request",
+      new_value: "Incident",
+      change_reason: null,
+      created_at: "2025-09-29T12:37:00.000Z",
+      changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" }
+    },
+    {
+      id: "h4",
+      field_name: "Task",
+      old_value: null,
+      new_value: null,
+      change_reason: "created",
+      created_at: "2025-09-29T12:37:00.000Z",
+      changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" }
+    },
+    {
+      id: "h5",
+      field_name: "Priority",
+      old_value: null,
+      new_value: "Medium",
+      change_reason: null,
+      created_at: "2025-09-29T12:37:00.000Z",
+      changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" }
+    },
+  ]
+  const effectiveHistory = history.length ? history : mockHistory
 
   // Initialize edit values when ticket loads
   useEffect(() => {
@@ -116,7 +165,8 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
           status: editStatus as any,
           priority: editPriority as any,
           assignee_id: editAssignee || undefined,
-        }
+        },
+        actorId: currentUser?.id
       })
       setIsEditing(false)
       toast.success("Ticket updated successfully!")
@@ -408,10 +458,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                     value="history"
                     className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
                   >
-                    History
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      5
-                    </Badge>
+                    {`History${effectiveHistory.length ? ` (${effectiveHistory.length})` : ""}`}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -913,53 +960,38 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[11px] font-semibold">History</h3>
                 </div>
-                
                 <div className="space-y-3">
-                  {/* Sample history entries - these would come from ticket_history table */}
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-                      S
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">System</span>
-                          <span className="text-xs text-muted-foreground">45 minutes ago</span>
+                  {effectiveHistory.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">No history yet</div>
+                  ) : (
+                    effectiveHistory.map((h: any) => {
+                      const name = h.changed_by?.display_name || h.changed_by?.email || "System"
+                      const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
+                      const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
+                      const summary = h.field_name
+                        ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
+                        : `${name} made an update`
+                      const details = h.field_name ? `${h.old_value ? `${h.old_value} → ` : ''}${h.new_value ?? ''}` : h.change_reason || ''
+                      return (
+                        <div key={h.id} className="flex gap-3 items-start">
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                            {initials}
+                          </div>
+                          <div className="flex-1">
+                            <div className="rounded-lg p-3 bg-[#FAFAFA]">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-semibold">{summary}</span>
+                                <span className="text-xs text-muted-foreground">{when}</span>
+                              </div>
+                              {details && (
+                                <p className="text-sm text-foreground">{details}</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-                      JS
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">John Smith</span>
-                          <span className="text-xs text-muted-foreground">1 hour ago</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-                      RJ
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-green-50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">Richard Jeffries</span>
-                          <span className="text-xs text-muted-foreground">2 hours ago</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
-                      </div>
-                    </div>
-                  </div>
+                      )
+                    })
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

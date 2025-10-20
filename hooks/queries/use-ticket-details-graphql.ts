@@ -82,6 +82,10 @@ async function fetchTicketWithDetailsGraphQL(id: string) {
     checklist: ticketNode.checklist?.edges.map((e: any) => ({
       ...e.node,
       assignee: e.node.assignee || null
+    })) || [],
+    history: ticketNode.history?.edges.map((e: any) => ({
+      ...e.node,
+      changed_by: e.node.changed_by || null,
     })) || []
   }
 
@@ -109,8 +113,37 @@ export function useTicketDetailsGraphQL(id: string) {
 /**
  * Update ticket using GraphQL mutation
  */
-async function updateTicketDetailsGraphQL({ id, updates }: { id: string; updates: any }) {
+async function updateTicketDetailsGraphQL({ id, updates, actorId }: { id: string; updates: any; actorId?: string }) {
   const client = await createGraphQLClient()
+
+  // Fetch current values to compute diffs for history
+  const currentQuery = gql`
+    query CurrentTicket($id: UUID!) {
+      ticketsCollection(filter: { id: { eq: $id } }, first: 1) {
+        edges { node {
+          id
+          title
+          description
+          type
+          category
+          subcategory
+          priority
+          urgency
+          impact
+          status
+          assignee_id
+          assignee_ids
+          team_id
+          due_date
+          custom_fields
+          tags
+        } }
+      }
+    }
+  `
+
+  const currentData: any = await client.request(currentQuery, { id })
+  const current = currentData.ticketsCollection.edges[0]?.node || {}
 
   const mutation = gql`
     mutation UpdateTicket($id: UUID!, $updates: ticketsUpdateInput!) {
@@ -140,7 +173,45 @@ async function updateTicketDetailsGraphQL({ id, updates }: { id: string; updates
   `
 
   const data: any = await client.request(mutation, { id, updates })
-  return data.updateticketsCollection.records[0]
+  const updated = data.updateticketsCollection.records[0]
+
+  // Compute diffs for keys present in updates
+  try {
+    const changedKeys = Object.keys(updates || {})
+    const historyObjects = changedKeys
+      .filter((key) => key !== 'updated_at')
+      .map((key) => {
+        const oldVal = (current as any)[key]
+        const newVal = (updated as any)[key]
+        const stringify = (v: any) => {
+          if (v === null || v === undefined) return null as any
+          if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v)
+          try { return JSON.stringify(v) } catch { return String(v) }
+        }
+        return {
+          ticket_id: id,
+          field_name: key,
+          old_value: stringify(oldVal),
+          new_value: stringify(newVal),
+          change_reason: null,
+          changed_by: actorId || null,
+        }
+      })
+      .filter((h) => h.old_value !== h.new_value)
+
+    if (historyObjects.length > 0) {
+      const insertHistory = gql`
+        mutation InsertHistory($objects: [ticket_historyInsertInput!]!) {
+          insertIntoticket_historyCollection(objects: $objects) { affectedCount }
+        }
+      `
+      await client.request(insertHistory, { objects: historyObjects })
+    }
+  } catch (e) {
+    console.warn('History logging failed', e)
+  }
+
+  return updated
 }
 
 /**
@@ -226,7 +297,30 @@ async function addCommentGraphQL(ticketId: string, content: string, isInternal: 
   }
 
   const data: any = await client.request(mutation, { input })
-  return data.insertIntoticket_commentsCollection.records[0]
+  const newComment = data.insertIntoticket_commentsCollection.records[0]
+
+  // Log to ticket_history
+  try {
+    const historyMutation = gql`
+      mutation InsertCommentHistory($input: ticket_historyInsertInput!) {
+        insertIntoticket_historyCollection(objects: [$input]) { affectedCount }
+      }
+    `
+    await client.request(historyMutation, {
+      input: {
+        ticket_id: ticketId,
+        field_name: 'comment',
+        old_value: null,
+        new_value: content.slice(0, 500),
+        change_reason: 'added_comment',
+        changed_by: authorId || null,
+      }
+    })
+  } catch (e) {
+    console.warn('Comment history logging failed', e)
+  }
+
+  return newComment
 }
 
 /**
