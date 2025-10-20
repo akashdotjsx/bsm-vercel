@@ -1603,13 +1603,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[11px] font-semibold text-foreground">History</h3>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {effectiveHistory.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-[11px]">No history yet</div>
                   ) : (
                     effectiveHistory.map((h: any) => {
                       const name = h.changed_by?.display_name || h.changed_by?.email || "System"
-                      const initials = (h.changed_by?.first_name?.[0] || name?.[0] || "S") + (h.changed_by?.last_name?.[0] || "")
                       const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
                       const summary = h.field_name === 'created'
                         ? `${name} created the ticket`
@@ -1622,20 +1621,20 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                         ? ''
                         : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
                       return (
-                        <div key={h.id} className="flex gap-3 items-start">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
-                            {initials}
+                        <div key={h.id} className="flex items-center gap-2.5 p-[15px] rounded-[5px] bg-muted/40 dark:bg-muted/20">
+                          <div className="w-[33px] h-[33px] rounded-full overflow-hidden bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
+                            {h.changed_by?.avatar_url ? (
+                              <img src={h.changed_by.avatar_url} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{(h.changed_by?.first_name?.[0] || name?.[0] || 'S')}{h.changed_by?.last_name?.[0] || ''}</span>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <div className="rounded-lg p-3 bg-muted/50">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[11px] font-semibold">{summary}</span>
-                                <span className="text-[10px] text-muted-foreground">{when}</span>
-                              </div>
-                              {details && (
-                                <p className="text-[11px] text-foreground">{details}</p>
-                              )}
-                            </div>
+                          <div className="flex flex-col gap-[5px]">
+                            <span className="text-[12px] leading-[14px] text-foreground/80">{when}</span>
+                            <span className="text-[11px] md:text-[14px] leading-none font-semibold text-foreground">{summary}</span>
+                            {details && (
+                              <span className="text-[12px] text-foreground">{details}</span>
+                            )}
                           </div>
                         </div>
                       )
