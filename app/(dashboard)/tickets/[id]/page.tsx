@@ -48,6 +48,7 @@ import {
 } from "@/hooks/queries/use-ticket-details-graphql"
 import { UserSelector } from "@/components/users/user-selector"
 import { useUsers } from "@/hooks/use-users"
+import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { toast } from "@/lib/toast"
@@ -86,6 +87,7 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const updateChecklistItemMutation = useUpdateChecklistItemGraphQL(params.id)
   const deleteChecklistItemMutation = useDeleteChecklistItemGraphQL(params.id)
   const { users, loading: usersLoading } = useUsers()
+  const { categories: serviceCategories } = useServiceCategories()
   const { user: currentUser } = useAuth()
   
   // Extract nested data from ticket
@@ -141,6 +143,50 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
     },
   ]
   const effectiveHistory = history.length ? history : mockHistory
+
+  // Helpers to format history values into human-friendly labels
+  const profileNameById = (id?: string) => {
+    if (!id) return null
+    const u = users.find((x: any) => x.id === id)
+    return u?.display_name || u?.email || null
+  }
+  const categoryNameById = (id?: string) => {
+    if (!id) return null
+    const c = serviceCategories.find((x: any) => x.id === id)
+    return c?.name || null
+  }
+  const formatValueForHistory = (field: string, raw: any): string => {
+    if (raw === null || raw === undefined) return ""
+    // Try to parse JSON arrays/objects represented as strings
+    let value: any = raw
+    if (typeof raw === "string") {
+      const s = raw.trim()
+      if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("{") && s.endsWith("}"))) {
+        try { value = JSON.parse(s) } catch { value = raw }
+      }
+    }
+
+    // Map well-known fields
+    if (field === "assignee_id") {
+      return profileNameById(typeof value === "string" ? value : String(value)) || String(raw)
+    }
+    if (field === "assignee_ids") {
+      const arr = Array.isArray(value) ? value : []
+      const names = arr.map((id: string) => profileNameById(id) || id)
+      return names.join(", ") || String(raw)
+    }
+    if (field === "category") {
+      return categoryNameById(String(value)) || String(raw)
+    }
+    if (field === "status" || field === "priority" || field === "type") {
+      return String(value).replace(/_/g, " ").toLowerCase().replace(/^(.|\s)(.*)$/,(m)=>m.toUpperCase())
+    }
+    // Fallback: stringify
+    if (Array.isArray(value) || typeof value === "object") {
+      try { return JSON.stringify(value) } catch { return String(raw) }
+    }
+    return String(value)
+  }
 
   // Initialize edit values when ticket loads
   useEffect(() => {
@@ -971,7 +1017,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                       const summary = h.field_name
                         ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
                         : `${name} made an update`
-                      const details = h.field_name ? `${h.old_value ? `${h.old_value} → ` : ''}${h.new_value ?? ''}` : h.change_reason || ''
+                      const details = h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || ''
                       return (
                         <div key={h.id} className="flex gap-3 items-start">
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">

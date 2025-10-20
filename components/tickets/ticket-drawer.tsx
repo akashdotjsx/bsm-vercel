@@ -275,6 +275,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   
   const { categories: supabaseCategories } = useServiceCategories()
   const { users, teams } = useUsers()
+  const { categories: serviceCategories } = useServiceCategories()
   
   // Custom columns hooks
   const { organizationId } = useAuth()
@@ -294,6 +295,44 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     { id: "h5", field_name: "Priority", old_value: null, new_value: "Medium", change_reason: null, created_at: "2025-09-29T12:37:00.000Z", changed_by: { first_name: "Emma", last_name: "Cord", display_name: "Emma Cord" } },
   ]
   const effectiveHistory = history.length ? history : mockHistory
+
+  // Helpers to format history details nicely
+  const profileNameById = (id?: string) => {
+    if (!id) return null
+    const u = users.find((x: any) => x.id === id)
+    return u?.display_name || u?.email || null
+  }
+  const categoryNameById = (id?: string) => {
+    if (!id) return null
+    const c = serviceCategories.find((x: any) => x.id === id)
+    return c?.name || null
+  }
+  const formatValueForHistory = (field: string, raw: any): string => {
+    if (raw === null || raw === undefined) return ""
+    let value: any = raw
+    if (typeof raw === "string") {
+      const s = raw.trim()
+      if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("{") && s.endsWith("}"))) {
+        try { value = JSON.parse(s) } catch { value = raw }
+      }
+    }
+    if (field === "assignee_id") {
+      return profileNameById(typeof value === "string" ? value : String(value)) || String(raw)
+    }
+    if (field === "assignee_ids") {
+      const arr = Array.isArray(value) ? value : []
+      const names = arr.map((id: string) => profileNameById(id) || id)
+      return names.join(", ") || String(raw)
+    }
+    if (field === "category") return categoryNameById(String(value)) || String(raw)
+    if (field === "status" || field === "priority" || field === "type") {
+      return String(value).replace(/_/g, " ").toLowerCase().replace(/^(.|\s)(.*)$/,(m)=>m.toUpperCase())
+    }
+    if (Array.isArray(value) || typeof value === "object") {
+      try { return JSON.stringify(value) } catch { return String(raw) }
+    }
+    return String(value)
+  }
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -1553,7 +1592,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                       const summary = h.field_name
                         ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}`
                         : `${name} made an update`
-                      const details = h.field_name ? `${h.old_value ? `${h.old_value} → ` : ''}${h.new_value ?? ''}` : h.change_reason || ''
+                      const details = h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || ''
                       return (
                         <div key={h.id} className="flex gap-3 items-start">
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
