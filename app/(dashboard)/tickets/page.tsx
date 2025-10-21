@@ -130,11 +130,12 @@ export default function TicketsPage() {
   const ticketsParams = useMemo(() => {
     const params: any = {
       page: 1,
-      limit: 50,
+      // Remove limit to fetch all tickets
       status: selectedStatus === "all" ? undefined : selectedStatus,
       priority: selectedPriority === "all" ? undefined : selectedPriority,
       type: selectedType === "all" ? undefined : selectedType,
       search: debouncedSearchTerm || undefined, // ✅ Use debounced search
+      organization_id: organization?.id, // Add organization filter
     }
 
     // Apply filters based on selectedTicketView dropdown
@@ -151,7 +152,7 @@ export default function TicketsPage() {
     // If "all-tickets" is selected, no specific filter is applied (shows all tickets)
     
     return params
-  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, selectedTicketView])
+  }, [selectedStatus, selectedPriority, selectedType, debouncedSearchTerm, user?.id, selectedTicketView, organization?.id])
 
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
@@ -166,6 +167,7 @@ export default function TicketsPage() {
     error: queryError,
     hasData: !!ticketsData,
     ticketsCount: ticketsData?.tickets?.length || 0,
+    totalCount: ticketsData?.total || 0,
     params: ticketsParams
   })
   
@@ -187,11 +189,11 @@ export default function TicketsPage() {
   const tickets = ticketsData?.tickets || []
   
   const pagination = {
-    page: ticketsParams.page || 1,
-    limit: ticketsParams.limit || 50,
+    page: 1, // Single page since we fetch all tickets
+    limit: ticketsData?.total || 0, // Total tickets available
     total: ticketsData?.total || 0,
-    hasNextPage: ticketsData?.hasNextPage || false,
-    hasPreviousPage: ticketsData?.hasPreviousPage || false,
+    hasNextPage: false, // No pagination since we fetch all
+    hasPreviousPage: false, // No pagination since we fetch all
   }
   const error = queryError ? String(queryError) : null
 

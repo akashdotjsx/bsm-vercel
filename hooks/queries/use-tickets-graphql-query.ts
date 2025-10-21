@@ -32,41 +32,73 @@ interface TicketsParams {
  */
 async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   console.log("🚀 GraphQL: Fetching tickets with params:", params)
+  console.log("🔍 Organization ID being used:", params.organization_id)
+
+  // Try REST API first to bypass GraphQL limits
+  try {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    
+    let query = supabase
+      .from('tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    // Apply filters
+    if (params.organization_id) {
+      query = query.eq('organization_id', params.organization_id)
+    }
+    if (params.requester_id) {
+      query = query.eq('requester_id', params.requester_id)
+    }
+    if (params.assignee_id) {
+      query = query.contains('assignee_ids', [params.assignee_id])
+    }
+    if (params.status && params.status !== 'all') {
+      query = query.eq('status', params.status)
+    }
+    if (params.priority && params.priority !== 'all') {
+      query = query.eq('priority', params.priority)
+    }
+    if (params.type && params.type !== 'all') {
+      query = query.eq('type', params.type)
+    }
+    if (params.created_at_gte) {
+      query = query.gte('created_at', params.created_at_gte)
+    }
+    
+    const { data: tickets, error } = await query
+    
+    if (error) {
+      console.error('❌ REST API Error:', error)
+      throw error
+    }
+    
+    console.log("✅ REST API Success:", tickets?.length || 0, "tickets")
+    
+    // Transform tickets to match expected format
+    const transformedTickets = tickets?.map((ticket: any) => ({
+      ...ticket,
+      requester: null, // Will be populated separately if needed
+      assignee: null,  // Will be populated separately if needed
+      assignees: [],   // Will be populated separately if needed
+    })) || []
+    
+    return {
+      tickets: transformedTickets,
+      total: transformedTickets.length,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    }
+  } catch (restError) {
+    console.log("⚠️ REST API failed, falling back to GraphQL:", restError)
+  }
 
   const client = await createGraphQLClient()
 
-  // GraphQL query with assignee_ids array (simplified data model)
-  const query = gql`
-    query GetTickets($first: Int!, $offset: Int!, $filter: ticketsFilter) {
-      ticketsCollection(first: $first, offset: $offset, orderBy: [{ created_at: DescNullsLast }], filter: $filter) {
-        edges {
-          node {
-            id
-            ticket_number
-            title
-            description
-            type
-            category
-            subcategory
-            priority
-            urgency
-            impact
-            status
-            requester_id
-            assignee_id
-            assignee_ids
-            team_id
-            sla_policy_id
-            due_date
-            created_at
-            updated_at
-            custom_fields
-            tags
-          }
-        }
-      }
-    }
-  `
+  // Import the standard query from lib/graphql/queries.ts
+  const { GET_TICKETS_QUERY } = await import('@/lib/graphql/queries')
+  const query = GET_TICKETS_QUERY
 
   // Build GraphQL filter
   const filter: any = {}
@@ -95,17 +127,39 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
     filter.created_at = { gte: params.created_at_gte }
   }
   
-  const variables: any = {
-    first: params.limit || 50,
-    offset: ((params.page || 1) - 1) * (params.limit || 50),
+  if (params.organization_id) {
+    filter.organization_id = { eq: params.organization_id }
   }
   
-  // Only add filter if it has properties
-  if (Object.keys(filter).length > 0) {
-    variables.filter = filter
+  const variables: any = {
+    first: 10000, // Set a very high limit to fetch all tickets
+    offset: 0, // Start from the beginning
+    filter: Object.keys(filter).length > 0 ? filter : undefined,
   }
 
   const data: any = await client.request(query, variables)
+  
+  console.log("🔍 GraphQL Response:", {
+    edgesCount: data.ticketsCollection?.edges?.length || 0,
+    hasPageInfo: !!data.ticketsCollection?.pageInfo,
+    pageInfo: data.ticketsCollection?.pageInfo
+  })
+
+  // Get total count with a separate query
+  const countQuery = gql`
+    query GetTicketsCount($filter: ticketsFilter) {
+      ticketsCollection(filter: $filter) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  `
+  
+  const countData: any = await client.request(countQuery, { filter: variables.filter })
+  const totalCount = countData.ticketsCollection.edges.length
 
   // Transform GraphQL response
   const rawTickets = data.ticketsCollection.edges.map((edge: any) => edge.node)
@@ -169,6 +223,8 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   })
 
   console.log("✅ GraphQL response processed:", tickets.length, "tickets")
+  console.log("🔍 Total count from database:", totalCount)
+  console.log("🔍 Raw tickets from GraphQL:", rawTickets.length)
   console.log("🔍 Sample processed ticket:", tickets[0] ? {
     id: tickets[0].id,
     title: tickets[0].title,
@@ -181,9 +237,9 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
 
   return {
     tickets,
-    total: tickets.length,
-    hasNextPage: tickets.length === (params.limit || 50),
-    hasPreviousPage: (params.page || 1) > 1,
+    total: totalCount,
+    hasNextPage: data.ticketsCollection.pageInfo?.hasNextPage || false,
+    hasPreviousPage: data.ticketsCollection.pageInfo?.hasPreviousPage || false,
   }
 }
 
@@ -386,12 +442,10 @@ export function useTicketsGraphQLQuery(params: TicketsParams = {}) {
   return useQuery({
     queryKey: ticketKeys.list(params),
     queryFn: () => fetchTicketsGraphQL(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
-    gcTime: 10 * 60 * 1000, // 10 minutes - data stays in cache
-    // No refetch on mount if data is fresh!
-    refetchOnMount: false,
-    // Only refetch on window focus if data is stale
-    refetchOnWindowFocus: "always",
+    staleTime: 0, // Always refetch to get latest data
+    gcTime: 0, // Don't cache to ensure fresh data
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: true, // Always refetch on window focus
   })
 }
 
