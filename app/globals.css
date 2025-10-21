@@ -54,9 +54,9 @@
   /* Primary pink color system */
   --primary-pink: #FF2CB9;
   --primary-pink-foreground: #ffffff;
-  --secondary: #f4f4f5;
+  --secondary: #f8f8f8;
   --secondary-foreground: #525252;
-  --muted: #f4f4f5;
+  --muted: #f8f8f8;
   --muted-foreground: #737373;
   /* Accent matches primary for consistency */
   --accent: #f9fafb;
@@ -122,15 +122,15 @@
   /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
   --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #f7f7f7;
+  --sidebar-primary: #f8f8f8;
   --sidebar-primary-foreground: #525252;
-  --sidebar-accent: #f7f7f7;
+  --sidebar-accent: #f8f8f8;
   --sidebar-accent-foreground: #525252;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: rgba(110, 114, 255, 0.5);
   --sidebar-hover: #f1f1f1;
   --sidebar-active: #ededed;
-  --menu-hover: #f4f4f5;
+  --menu-hover: #f8f8f8;
   --menu-border: #e5e5e5;
   
   /* Scrollbar colors */
