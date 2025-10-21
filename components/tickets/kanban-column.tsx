@@ -146,7 +146,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
            <Button
              variant="ghost"
              size="sm"
-             className="w-full h-9 text-xs font-semibold text-[#6E72FF] bg-white border-dashed border border-[#EEEEEE] hover:border-[#6E72FF] hover:bg-[#6E72FF]/5 dark:text-[#6E72FF] dark:bg-white dark:border-[#EEEEEE] dark:hover:border-[#6E72FF] dark:hover:bg-[#6E72FF]/10 rounded-[5px] mt-2 font-[Inter]"
+             className="w-full h-9 text-xs font-semibold text-[#6E72FF] hover:bg-[#6E72FF]/5 dark:text-[#6E72FF] dark:hover:bg-[#6E72FF]/10 rounded-[5px] mt-2 font-[Inter]"
+             style={{
+               backgroundColor: isDark ? '#1e2024' : '#ffffff'
+             }}
              onClick={() => onAddTicket(column.id)}
            >
              + Add Ticket
