@@ -309,6 +309,8 @@ export const GET_TEAMS_QUERY = gql`
           name
           description
           department
+          lead_id
+          organization_id
           is_active
           created_at
           updated_at
@@ -316,6 +318,9 @@ export const GET_TEAMS_QUERY = gql`
             id
             display_name
             email
+            first_name
+            last_name
+            avatar_url
           }
           organization: organizations {
             id
@@ -331,6 +336,8 @@ export const GET_TEAMS_QUERY = gql`
                   display_name
                   email
                   avatar_url
+                  first_name
+                  last_name
                 }
               }
             }

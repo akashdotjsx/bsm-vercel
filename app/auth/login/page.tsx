@@ -396,15 +396,19 @@ export default function Page() {
             >
               By signing up, You agree to Kroolo's{" "}
               <Link 
-                href="#" 
+                href="https://kroolo.com/legal/terms-of-use?_gl=1*1sl9z05*_gcl_au*NDYwMzU3NTY0LjE3NjEwMzM2NjU" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[#6366F1] hover:text-[#5558E3]"
                 style={{ fontWeight: 400, textDecoration: 'underline' }}
               >
-                Terms of Use
+                Terms of Service
               </Link>
               {" "}and{" "}
               <Link 
-                href="#" 
+                href="https://kroolo.com/legal/privacy-policy?_gl=1*s3golz*_gcl_au*NDYwMzU3NTY0LjE3NjEwMzM2NjU"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[#6366F1] hover:text-[#5558E3]"
                 style={{ fontWeight: 400, textDecoration: 'underline' }}
               >

@@ -1870,28 +1870,91 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                      Select file to import
                    </label>
                    <div className="border-2 border-dashed border-border rounded-lg p-4 sm:p-6 text-center">
-                     <div className="flex flex-col items-center gap-4">
-                       <Cloud className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
-                       <div className="space-y-2">
-                         <Button 
-                           className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white border-0 rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
-                           onClick={() => document.getElementById('file-input')?.click()}
-                         >
-                           Choose File
-                         </Button>
-                         <Input
-                           id="file-input"
-                           type="file"
-                           accept=".csv,.xlsx,.xls"
-                           onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                           className="hidden"
-                           disabled={isImporting}
-                         />
+                     {!importFile ? (
+                       <div className="flex flex-col items-center gap-4">
+                         <Cloud className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                         <div className="space-y-2">
+                           <Button 
+                             className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white border-0 rounded-md px-4 py-2 text-xs sm:text-sm font-medium"
+                             onClick={() => document.getElementById('file-input')?.click()}
+                           >
+                             Choose File
+                           </Button>
+                           <Input
+                             id="file-input"
+                             type="file"
+                             accept=".csv,.xlsx,.xls"
+                             onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                             className="hidden"
+                             disabled={isImporting}
+                           />
+                         </div>
+                         <p className="text-xs text-muted-foreground">
+                           Supported formats: CSV, Excel (.xlsx, .xls)
+                         </p>
                        </div>
-                       <p className="text-xs text-muted-foreground">
-                         Supported formats: CSV, Excel (.xlsx, .xls)
-                       </p>
-                     </div>
+                     ) : (
+                       <div className="flex flex-col items-center gap-4">
+                         <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg w-full max-w-md">
+                           <div className="flex-shrink-0">
+                             <div className="h-10 w-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                               {importFile.name.endsWith('.csv') ? (
+                                 <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
+                                   <path d="M8 6h4v1H8V6zM8 8h4v1H8V8zM8 10h4v1H8v-1zM8 12h4v1H8v-1z" />
+                                 </svg>
+                               ) : (
+                                 <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                   <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
+                                   <path d="M7 6h6v1H7V6zM7 8h6v1H7V8zM7 10h6v1H7v-1zM7 12h3v1H7v-1z" />
+                                 </svg>
+                               )}
+                             </div>
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <p className="text-sm font-medium text-green-800 dark:text-green-200 truncate">
+                               {importFile.name}
+                             </p>
+                             <p className="text-xs text-green-600 dark:text-green-400">
+                               {(importFile.size / 1024 / 1024).toFixed(2)} MB • {importFile.type || 'File'}
+                             </p>
+                           </div>
+                           <button
+                             onClick={() => setImportFile(null)}
+                             className="flex-shrink-0 h-8 w-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
+                             title="Remove file"
+                           >
+                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                             </svg>
+                           </button>
+                         </div>
+                         <div className="space-y-2">
+                           <Button 
+                             variant="outline"
+                             size="sm"
+                             onClick={() => document.getElementById('file-input')?.click()}
+                             className="text-xs"
+                           >
+                             Change File
+                           </Button>
+                           <Input
+                             id="file-input"
+                             type="file"
+                             accept=".csv,.xlsx,.xls"
+                             onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                             className="hidden"
+                             disabled={isImporting}
+                           />
+                         </div>
+                         <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg>
+                           File loaded successfully
+                         </div>
+                       </div>
+                     )}
                    </div>
                  </div>
 

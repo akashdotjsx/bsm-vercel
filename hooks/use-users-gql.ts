@@ -31,6 +31,8 @@ interface Team {
   name: string
   description?: string
   department?: string
+  organization_id?: string
+  lead_id?: string
   is_active: boolean
   created_at: string
   updated_at: string
@@ -364,6 +366,8 @@ export async function createTeamGQL(teamData: Partial<Team>): Promise<Team> {
           name
           description
           department
+          organization_id
+          lead_id
           is_active
           created_at
           updated_at
@@ -429,7 +433,7 @@ export async function addTeamMemberGQL(teamId: string, userId: string, role: str
           team_id
           user_id
           role
-          created_at
+          joined_at
         }
       }
     }
