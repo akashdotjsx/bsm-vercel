@@ -2238,9 +2238,18 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         open={showBulkDeleteDialog}
         onOpenChange={setShowBulkDeleteDialog}
         onConfirm={confirmBulkDelete}
-        title="Delete Multiple Tickets"
-        description={`Do you want to delete ${bulkDeleteTicketIds.length} ticket${bulkDeleteTicketIds.length > 1 ? 's' : ''}`}
-        itemName={undefined}
+        title={bulkDeleteTicketIds.length === 1 ? "Delete Ticket" : "Delete Multiple Tickets"}
+        description={bulkDeleteTicketIds.length === 1 
+          ? `Do you want to delete this ticket?`
+          : `Do you want to delete ${bulkDeleteTicketIds.length} tickets?`
+        }
+        itemName={bulkDeleteTicketIds.length === 1 
+          ? (() => {
+              const ticket = tickets.find(t => t.id === bulkDeleteTicketIds[0])
+              return ticket ? ticket.title : undefined
+            })()
+          : undefined
+        }
         requireCheckbox={true}
         checkboxLabel="I understand this action cannot be undone"
         isDeleting={isBulkDeleting}
