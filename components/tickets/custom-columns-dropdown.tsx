@@ -111,11 +111,11 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
             width: 498 // Fixed width from Figma design
           }
           
-          // TEMPORARY: Force position for testing
-          console.log('🎯 FORCING POSITION FOR TESTING - Original:', finalPosition)
-          finalPosition.top = rect.bottom + 20 // Force 20px below button
+          // Position modal exactly at the bottom of the trigger button
+          console.log('🎯 POSITIONING MODAL AT BOTTOM OF TRIGGER')
+          finalPosition.top = rect.bottom // Start exactly at the bottom edge of the button
           finalPosition.left = rect.right - 498 // Align right edge of dropdown with right edge of button
-          console.log('🎯 FORCED POSITION:', finalPosition)
+          console.log('🎯 FINAL POSITION:', finalPosition)
           
           console.log('🎯 Final position:', finalPosition)
           setPosition(finalPosition)
@@ -130,8 +130,8 @@ export function CustomColumnsDropdown({ open, onOpenChange, triggerRef }: Custom
             const viewportWidth = window.innerWidth
             const viewportHeight = window.innerHeight
             
-            // Position dropdown directly below the trigger button
-            let top = rect.bottom + 8
+            // Position dropdown exactly at the bottom of the trigger button
+            let top = rect.bottom // Start exactly at the bottom edge of the button
             let left = rect.right - 498 // Align right edge of dropdown with right edge of button
             
             // Ensure dropdown doesn't go off screen horizontally
