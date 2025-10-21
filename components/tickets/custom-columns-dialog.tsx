@@ -67,41 +67,77 @@ export function CustomColumnsDialog({ open, onOpenChange }: CustomColumnsDialogP
     }
   }
 
+  const getColumnTypeIcon = (type: string) => {
+    switch (type) {
+      case "text":
+        return "📝"
+      case "number":
+        return "🔢"
+      case "date":
+        return "📅"
+      case "select":
+        return "📋"
+      case "multiselect":
+        return "☑️"
+      default:
+        return "📝"
+    }
+  }
+
+  const getColumnIconBgColor = (type: string) => {
+    switch (type) {
+      case "text":
+        return "bg-[#6366F1]"
+      case "number":
+        return "bg-[#10B981]"
+      case "date":
+        return "bg-[#6366F1]"
+      case "select":
+        return "bg-[#F59E0B]"
+      case "multiselect":
+        return "bg-[#EC4899]"
+      default:
+        return "bg-[#6B7280]"
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Manage Custom Columns</DialogTitle>
-          <DialogDescription>
-            Add custom columns to your ticket table. Values are stored locally and persist across sessions.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="!max-w-[380px] rounded-2xl p-0 max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="p-6 pb-4 border-b border-border flex-shrink-0">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-semibold text-foreground">Manage Custom Columns</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Add custom columns to your ticket table. Values are stored locally and persist across sessions.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-6">
-          {/* Add New Column Form */}
-          <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/20">
-            <h3 className="text-sm font-semibold">Add New Column</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="column-title" className="text-xs">
+        <div className="overflow-y-auto flex-1 px-6 py-4 scrollbar-thin">
+          <div className="space-y-6">
+          {/* Add New Column Form - FIRST */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Add New Column</h3>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <Label htmlFor="column-title" className="text-xs font-medium text-foreground mb-1.5 block">
                   Column Title
                 </Label>
                 <Input
                   id="column-title"
-                  placeholder="e.g., Team, Project, Customer ID"
+                  placeholder="e.g. Team, Project, Customer ID"
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
-                  className="h-8 text-xs"
+                  className="h-9 text-sm"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="column-type" className="text-xs">
+              <div className="flex-1">
+                <Label htmlFor="column-type" className="text-xs font-medium text-foreground mb-1.5 block">
                   Column Type
                 </Label>
                 <Select value={newColumnType} onValueChange={(value) => setNewColumnType(value as CustomColumn["type"])}>
-                  <SelectTrigger id="column-type" className="h-8 text-xs">
+                  <SelectTrigger id="column-type" className="h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -113,12 +149,20 @@ export function CustomColumnsDialog({ open, onOpenChange }: CustomColumnsDialogP
                   </SelectContent>
                 </Select>
               </div>
+
+              <Button
+                onClick={handleAddColumn}
+                disabled={!newColumnTitle.trim()}
+                className="h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg"
+              >
+                Add Column
+              </Button>
             </div>
 
             {/* Options for Select/Multi-select */}
             {(newColumnType === "select" || newColumnType === "multiselect") && (
               <div className="space-y-2">
-                <Label className="text-xs">Options</Label>
+                <Label className="text-xs font-medium text-foreground">Options</Label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add option..."
@@ -130,15 +174,15 @@ export function CustomColumnsDialog({ open, onOpenChange }: CustomColumnsDialogP
                         handleAddOption()
                       }
                     }}
-                    className="h-8 text-xs"
+                    className="h-9 text-sm"
                   />
                   <Button
                     type="button"
                     size="sm"
                     onClick={handleAddOption}
-                    className="h-8 text-xs"
+                    className="h-9 px-3"
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 {newColumnOptions.length > 0 && (
@@ -162,72 +206,54 @@ export function CustomColumnsDialog({ open, onOpenChange }: CustomColumnsDialogP
                 )}
               </div>
             )}
-
-            <Button
-              onClick={handleAddColumn}
-              disabled={!newColumnTitle.trim()}
-              className="w-full h-8 text-xs"
-            >
-              <Plus className="h-3 w-3 mr-2" />
-              Add Column
-            </Button>
           </div>
 
-          {/* Existing Columns List */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Existing Custom Columns ({columns.length})</h3>
+          {/* Existing Columns Section - SECOND */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">
+              Existing Custom Columns ({columns.length})
+            </h3>
             {columns.length === 0 ? (
-              <p className="text-xs text-muted-foreground p-4 text-center border border-dashed border-border rounded-lg">
+              <p className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border rounded-lg">
                 No custom columns added yet. Create your first column above.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
                 {columns.map((column) => (
                   <div
                     key={column.id}
-                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50"
+                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium">{column.title}</span>
-                        <Badge variant="outline" className="text-[10px] h-5">
-                          {column.type}
-                        </Badge>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 ${getColumnIconBgColor(column.type)} rounded-lg flex items-center justify-center text-white text-lg`}>
+                        {getColumnTypeIcon(column.type)}
                       </div>
-                      {column.options && column.options.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {column.options.slice(0, 3).map((option, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-[10px] h-4">
-                              {option}
-                            </Badge>
-                          ))}
-                          {column.options.length > 3 && (
-                            <Badge variant="secondary" className="text-[10px] h-4">
-                              +{column.options.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                      <div>
+                        <div className="text-sm font-medium text-foreground">{column.title}</div>
+                        <div className="text-xs text-muted-foreground">Type: {column.type.charAt(0).toUpperCase() + column.type.slice(1)}</div>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveColumn(column.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    <button
+                      onClick={() => {
+                        // Toggle visibility
+                        updateColumn({ id: column.id, visible: column.visible !== false ? false : true })
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        column.visible !== false ? 'bg-success' : 'bg-border'
+                      }`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-background border border-muted-foreground transition-transform ${
+                          column.visible !== false ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="text-xs h-8">
-            Close
-          </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
