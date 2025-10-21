@@ -146,9 +146,25 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
            <Button
              variant="ghost"
              size="sm"
-             className="w-full h-9 text-xs font-semibold text-[#6E72FF] hover:bg-[#6E72FF]/5 dark:text-[#6E72FF] dark:hover:bg-[#6E72FF]/10 rounded-[5px] mt-2 font-[Inter]"
+             className="w-full h-9 text-xs font-semibold rounded-[5px] mt-2 font-[Inter] border transition-colors duration-200"
              style={{
-               backgroundColor: isDark ? '#1e2024' : '#ffffff'
+               backgroundColor: isDark ? '#1e2024' : '#ffffff',
+               color: '#6E72FF',
+               borderColor: isDark ? '#374151' : '#EEEEEE',
+               borderWidth: '1px'
+             }}
+             onMouseEnter={(e) => {
+               if (isDark) {
+                 e.currentTarget.style.backgroundColor = '#374151'
+                 e.currentTarget.style.color = '#6E72FF'
+               } else {
+                 e.currentTarget.style.backgroundColor = '#f8f9fa'
+                 e.currentTarget.style.color = '#000000'
+               }
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.backgroundColor = isDark ? '#1e2024' : '#ffffff'
+               e.currentTarget.style.color = '#6E72FF'
              }}
              onClick={() => onAddTicket(column.id)}
            >

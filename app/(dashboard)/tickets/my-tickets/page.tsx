@@ -36,6 +36,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "@/lib/toast"
+import { useTheme } from "next-themes"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
@@ -112,6 +113,8 @@ const formatDate = (dateString: string) => {
 export default function TicketsPage() {
   const { user } = useStore()
   const { organization } = useAuth()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -1099,15 +1102,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         <div className="flex-shrink-0 flex items-center gap-4 py-2 mb-4 w-full max-w-full overflow-hidden">
           <Select value={groupBy} onValueChange={setGroupBy}>
             <SelectTrigger 
-              className="w-48 h-[31px] border border-[#E4E4E4] bg-white text-sm rounded-[5px]"
+              className="w-48 h-[31px] border border-[#E4E4E4] bg-white dark:bg-[#1e2024] dark:border-gray-600 dark:text-white text-sm rounded-[5px]"
               style={{ 
-                backgroundColor: '#FFFFFF', 
-                borderColor: '#E4E4E4',
-                color: '#717171',
+                backgroundColor: isDark ? '#1e2024' : '#FFFFFF', 
+                borderColor: isDark ? '#374151' : '#E4E4E4',
+                color: '#8e8e8e',
                 fontSize: '11px'
               }}
             >
-              <List className="h-3 w-3 mr-2" style={{ color: '#717171' }} />
+              <List className="h-3 w-3 mr-2" style={{ color: '#8e8e8e' }} />
               <SelectValue placeholder="Group by: None" />
             </SelectTrigger>
             <SelectContent>
@@ -1159,15 +1162,15 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             <Button 
               variant="outline" 
               size="sm" 
-              className="h-[31px] border border-[#E4E4E4] bg-white rounded-[5px]"
+              className="h-[31px] border border-[#E4E4E4] bg-white dark:bg-[#1e2024] dark:border-gray-600 dark:text-white rounded-[5px]"
               style={{ 
-                backgroundColor: '#FFFFFF', 
-                borderColor: '#E4E4E4',
-                color: '#717171',
+                backgroundColor: isDark ? '#1e2024' : '#FFFFFF', 
+                borderColor: isDark ? '#374151' : '#E4E4E4',
+                color: '#8e8e8e',
                 fontSize: '11px'
               }}
             >
-              <Filter className="h-3 w-3 mr-2" style={{ color: '#717171' }} />
+              <Filter className="h-3 w-3 mr-2" style={{ color: '#8e8e8e' }} />
               Filter
               {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0 || activeFilters.reportedBy.length > 0) && (
                 <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
@@ -1177,14 +1180,14 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             </Button>
           </FilterDialog>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: '#8D8D8D' }} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: '#8e8e8e' }} />
             <Input
               placeholder="Search items"
-              className="pl-10 h-[31px] w-48 border border-[#E4E4E4] bg-white rounded-[5px]"
+              className="pl-10 h-[31px] w-48 border border-[#E4E4E4] bg-white dark:bg-[#1e2024] dark:border-gray-600 dark:text-white rounded-[5px]"
               style={{ 
-                backgroundColor: '#FFFFFF', 
-                borderColor: '#E4E4E4',
-                color: '#717171',
+                backgroundColor: isDark ? '#1e2024' : '#FFFFFF', 
+                borderColor: isDark ? '#374151' : '#E4E4E4',
+                color: '#8e8e8e',
                 fontSize: '11px'
               }}
               value={searchTerm}
@@ -1502,16 +1505,21 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
             </div>
 
              <div className="space-y-4 w-full max-w-full overflow-hidden">
-               <div className="flex items-center justify-between border-b border-[#EEEEEE] bg-[#F8F8F8] w-full max-w-full rounded-[10px]" style={{ borderColor: '#EEEEEE', backgroundColor: '#F8F8F8' }}>
+               <div className="flex items-center justify-between border-b border-[#EEEEEE] bg-[#F8F8F8] dark:bg-[#282a2f] dark:border-gray-600 w-full max-w-full rounded-[10px]" style={{ 
+                 borderColor: isDark ? '#374151' : '#EEEEEE', 
+                 backgroundColor: isDark ? '#282a2f' : '#F8F8F8' 
+               }}>
                  <div className="flex items-center gap-0">
                    <button
                      onClick={() => setCurrentView("list")}
                      className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
                        currentView === "list"
                          ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
-                         : "text-black border-transparent hover:text-foreground"
+                         : "text-black dark:text-gray-300 border-transparent hover:text-foreground dark:hover:text-white"
                      }`}
-                     style={{ color: currentView === "list" ? "#6E72FF" : "#000000" }}
+                     style={{ 
+                       color: currentView === "list" ? "#6E72FF" : (isDark ? "#D1D5DB" : "#000000")
+                     }}
                    >
                      List
                    </button>
@@ -1520,9 +1528,11 @@ className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounde
                      className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
                        currentView === "kanban"
                          ? "text-[#6E72FF] border-[#6E72FF] dark:text-[#6E72FF] dark:border-[#6E72FF]"
-                         : "text-black border-transparent hover:text-foreground"
+                         : "text-black dark:text-gray-300 border-transparent hover:text-foreground dark:hover:text-white"
                      }`}
-                     style={{ color: currentView === "kanban" ? "#6E72FF" : "#000000" }}
+                     style={{ 
+                       color: currentView === "kanban" ? "#6E72FF" : (isDark ? "#D1D5DB" : "#000000")
+                     }}
                    >
                      Kanban
                    </button>
@@ -1720,7 +1730,7 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
                 {/* Import Requirements */}
                 <div className="bg-[#F3F4FF] p-4 rounded-[5px]">
                   <h4 
-                    className="text-[12px] font-medium text-[#717171] mb-2" 
+                    className="text-[12px] font-medium text-[#8e8e8e] mb-2" 
                     style={{ fontFamily: 'Inter', fontWeight: 500, lineHeight: '1.21em' }}
                   >
                     Import Requirements:

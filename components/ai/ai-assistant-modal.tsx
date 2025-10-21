@@ -65,7 +65,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[#2D2F34]">AI Assistant</h2>
-              <p className="text-sm text-[#717171]">Ask me anything about your tickets</p>
+              <p className="text-sm text-[#8e8e8e]">Ask me anything about your tickets</p>
             </div>
           </div>
           
@@ -97,7 +97,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
         <div className="px-6 py-4 h-full flex flex-col">
           {/* Suggestions Section */}
           <div className="mb-8">
-            <h3 className="text-sm font-medium text-[#717171] mb-4">Suggestions</h3>
+            <h3 className="text-sm font-medium text-[#8e8e8e] mb-4">Suggestions</h3>
             <div className="space-y-3">
               {suggestions.map((suggestion, index) => (
                 <button
@@ -137,7 +137,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
             <div className="relative">
               <div className="w-full h-[120px] bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] rounded-xl p-[2px]">
                 <div className="w-full h-full bg-white rounded-xl flex items-start p-4">
-                  <span className="text-sm text-[#797979]">Ask Anything...</span>
+                  <span className="text-sm text-[#8e8e8e]">Ask Anything...</span>
                 </div>
               </div>
             </div>
@@ -146,14 +146,14 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button className="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Settings className="w-4 h-4 text-[#717171]" />
+                  <Settings className="w-4 h-4 text-[#8e8e8e]" />
                 </button>
                 
                 <div className="flex items-center gap-2 bg-white border border-[#DADADA] rounded-lg px-3 py-2">
                   <div className="w-4 h-4 bg-[#168846] rounded flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-sm" />
                   </div>
-                  <span className="text-xs text-[#9F9F9F]">GPT-4.1</span>
+                  <span className="text-xs text-[#8e8e8e]">GPT-4.1</span>
                   <svg
                     width="12"
                     height="12"
@@ -172,8 +172,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 bg-white border border-[#DADADA] rounded-lg px-3 py-2">
-                  <span className="text-xs text-[#9F9F9F]">Output in -</span>
-                  <span className="text-xs text-[#9F9F9F]">English</span>
+                  <span className="text-xs text-[#8e8e8e]">Output in -</span>
+                  <span className="text-xs text-[#8e8e8e]">English</span>
                   <svg
                     width="12"
                     height="12"

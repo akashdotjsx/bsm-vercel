@@ -92,11 +92,11 @@
   --error-red: #d32f2f;
   --error-border: #f44336;
   --pink-600: #ff3465;
-  --action-icon-color: #6a707c;
-  --placeholder-text: #6a707c;
+  --action-icon-color: #8e8e8e;
+  --placeholder-text: #8e8e8e;
   --main-text-color: #000000;
   --text-color: #2d2f34;
-  --secondary-text-color: #6a707c;
+  --secondary-text-color: #8e8e8e;
   --url-color: #f2f4f7;
   
   /* Shadows */
@@ -109,7 +109,7 @@
   --chart-2: #2d2f34;
   --chart-3: #f04438;
   --chart-4: #6E72FF;
-  --chart-5: #6a707c;
+  --chart-5: #8e8e8e;
   --radius: 0.625rem;
   
   /* Layout dimensions */
@@ -154,9 +154,9 @@
   --primary-pink: #FF2CB9;
   --primary-pink-foreground: #ffffff;
   --secondary: #282a2f;
-  --secondary-foreground: #acb1b9;
+  --secondary-foreground: #8e8e8e;
   --muted: #282a2f;
-  --muted-foreground: #acb1b9;
+  --muted-foreground: #8e8e8e;
   --accent: #282a2f;
   --accent-foreground: #ffffff;
   --destructive: #f04438;
@@ -173,9 +173,9 @@
   /* Dark mode specific colors */
   --main-text-color: #ffffff;
   --text-color: #ffffff;
-  --secondary-text-color: #acb1b9;
-  --placeholder-text: #ffffff;
-  --action-icon-color: #ffffff;
+  --secondary-text-color: #8e8e8e;
+  --placeholder-text: #8e8e8e;
+  --action-icon-color: #8e8e8e;
   --url-color: #282a2f;
   --menu-hover: #282a2f;
   --menu-border: #424447;
@@ -206,7 +206,7 @@
   --chart-2: #ffffff;
   --chart-3: #f04438;
   --chart-4: #6E72FF;
-  --chart-5: #acb1b9;
+  --chart-5: #8e8e8e;
   
   /* Kroolo button colors for dark mode */
   --btn-color-base: #6E72FF;

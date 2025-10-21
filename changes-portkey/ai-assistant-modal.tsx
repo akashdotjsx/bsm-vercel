@@ -176,7 +176,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[#2D2F34]">AI Assistant</h2>
-              <p className="text-sm text-[#717171]">Ask me anything about your tickets</p>
+              <p className="text-sm text-[#8e8e8e]">Ask me anything about your tickets</p>
             </div>
           </div>
           
@@ -210,7 +210,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           <div className="mb-4 space-y-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <label className="text-xs font-medium text-[#717171] mb-1 block">AI Provider</label>
+                <label className="text-xs font-medium text-[#8e8e8e] mb-1 block">AI Provider</label>
                 <Select value={currentProvider} onValueChange={(v) => { setCurrentProvider(v as Provider); setCurrentModel('auto') }}>
                   <SelectTrigger className="h-9 text-sm border-[#DADADA]">
                     <SelectValue>
@@ -238,7 +238,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                 </Select>
               </div>
               <div className="flex-1">
-                <label className="text-xs font-medium text-[#717171] mb-1 block">Model</label>
+                <label className="text-xs font-medium text-[#8e8e8e] mb-1 block">Model</label>
                 <Select value={currentModel} onValueChange={setCurrentModel}>
                   <SelectTrigger className="h-9 text-sm border-[#DADADA]">
                     <SelectValue placeholder="Auto" />
@@ -260,7 +260,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           <div className="flex-1 overflow-y-auto mb-4">
             {messages.length === 0 ? (
               <div>
-                <h3 className="text-sm font-medium text-[#717171] mb-4">Suggestions</h3>
+                <h3 className="text-sm font-medium text-[#8e8e8e] mb-4">Suggestions</h3>
                 <div className="space-y-3">
                   {suggestions.map((suggestion, index) => (
                     <button
@@ -318,7 +318,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                       <p className="text-sm whitespace-pre-wrap">{streamingText}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Loader2 className="h-3 w-3 animate-spin text-[#6E72FF]" />
-                        <span className="text-xs text-[#717171]">AI is typing...</span>
+                        <span className="text-xs text-[#8e8e8e]">AI is typing...</span>
                       </div>
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                     }}
                     disabled={isLoading}
                     placeholder="Ask anything about your tickets..."
-                    className="w-full h-20 text-sm text-[#2D2F34] placeholder:text-[#797979] bg-transparent border-0 outline-none resize-none"
+                    className="w-full h-20 text-sm text-[#2D2F34] placeholder:text-[#8e8e8e] bg-transparent border-0 outline-none resize-none"
                   />
                 </div>
               </div>
@@ -355,7 +355,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                 {messages.length > 0 && (
                   <button
                     onClick={() => setMessages([])}
-                    className="text-xs text-[#717171] hover:text-[#2D2F34] transition-colors"
+                    className="text-xs text-[#8e8e8e] hover:text-[#2D2F34] transition-colors"
                   >
                     Clear Chat
                   </button>
