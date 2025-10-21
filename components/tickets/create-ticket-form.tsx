@@ -53,6 +53,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
     category: "",
     subcategory: "",
     assignee: "",
+    assignee_ids: [] as string[], // Multiple assignees
     watchers: "",
     targetDueDate: "",
     priority: "medium", // Default priority
@@ -213,8 +214,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       alert('Please select a sub-category')
       return
     }
-    if (!form.assignee) {
-      alert('Please select an assignee')
+    if (!form.assignee_ids || form.assignee_ids.length === 0) {
+      alert('Please select at least one assignee')
       return
     }
     if (!form.targetDueDate) {
@@ -231,7 +232,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       priority: form.priority,
       urgency: form.urgency,
       impact: form.impact,
-      assignee_id: form.assignee,
+      assignee_id: form.assignee_ids.length > 0 ? form.assignee_ids[0] : null, // First assignee for backward compatibility
+      assignee_ids: form.assignee_ids, // Multiple assignees
       due_date: form.targetDueDate ? calculateDueDate(form.targetDueDate) : null,
       tags: form.tags && form.tags.length > 0 ? form.tags : null,
       custom_fields: form.customFields && Object.keys(form.customFields).length > 0 ? form.customFields : null,
@@ -396,22 +398,76 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Assignee *</Label>
+              <Label className="text-sm font-medium text-foreground dark:text-foreground">Assignees *</Label>
               <div className="relative">
-                <Select value={form.assignee} onValueChange={(value) => handleInputChange('assignee', value)} required>
+                <Select 
+                  value="" 
+                  onValueChange={(value) => {
+                    if (value && !form.assignee_ids.includes(value)) {
+                      setForm({ ...form, assignee_ids: [...form.assignee_ids, value] })
+                    }
+                  }}
+                >
                   <SelectTrigger className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground">
-                    <SelectValue placeholder="Select Assignee" />
+                    <SelectValue placeholder="Select Assignees" />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.display_name || user.email}
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
+                            {user.avatar_url ? (
+                              <img
+                                src={user.avatar_url}
+                                alt={user.display_name || user.email}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              (() => {
+                                if (user.display_name) {
+                                  return user.display_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                                }
+                                if (user.first_name && user.last_name) {
+                                  return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+                                }
+                                if (user.first_name) {
+                                  return user.first_name.substring(0, 2).toUpperCase()
+                                }
+                                return user.email.substring(0, 2).toUpperCase()
+                              })()
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{user.display_name || user.email}</div>
+                            {user.email !== user.display_name && (
+                              <div className="text-xs text-muted-foreground">{user.email}</div>
+                            )}
+                          </div>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary dark:text-primary" />
               </div>
+              {form.assignee_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {form.assignee_ids.map((id) => {
+                    const user = users.find(u => u.id === id)
+                    return (
+                      <Badge key={id} variant="secondary" className="text-xs">
+                        {user?.display_name || user?.email || id}
+                        <button
+                          onClick={() => setForm({ ...form, assignee_ids: form.assignee_ids.filter(aid => aid !== id) })}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )
+                  })}
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium text-foreground dark:text-foreground">Watchers</Label>

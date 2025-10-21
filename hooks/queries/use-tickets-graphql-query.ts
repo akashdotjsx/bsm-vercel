@@ -34,84 +34,6 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   console.log("🚀 GraphQL: Fetching tickets with params:", params)
   console.log("🔍 Organization ID being used:", params.organization_id)
 
-  // Try REST API first to bypass GraphQL limits
-  try {
-    const { createClient } = await import('@/lib/supabase/client')
-    const supabase = createClient()
-    
-    let query = supabase
-      .from('tickets')
-      .select(`
-        *,
-        requester:profiles!requester_id(
-          id,
-          first_name,
-          last_name,
-          display_name,
-          email,
-          avatar_url
-        ),
-        assignee:profiles!assignee_id(
-          id,
-          first_name,
-          last_name,
-          display_name,
-          email,
-          avatar_url
-        )
-      `)
-      .order('created_at', { ascending: false })
-    
-    // Apply filters
-    if (params.organization_id) {
-      query = query.eq('organization_id', params.organization_id)
-    }
-    if (params.requester_id) {
-      query = query.eq('requester_id', params.requester_id)
-    }
-    if (params.assignee_id) {
-      query = query.contains('assignee_ids', [params.assignee_id])
-    }
-    if (params.status && params.status !== 'all') {
-      query = query.eq('status', params.status)
-    }
-    if (params.priority && params.priority !== 'all') {
-      query = query.eq('priority', params.priority)
-    }
-    if (params.type && params.type !== 'all') {
-      query = query.eq('type', params.type)
-    }
-    if (params.created_at_gte) {
-      query = query.gte('created_at', params.created_at_gte)
-    }
-    
-    const { data: tickets, error } = await query
-    
-    if (error) {
-      console.error('❌ REST API Error:', error)
-      throw error
-    }
-    
-    console.log("✅ REST API Success:", tickets?.length || 0, "tickets")
-    
-    // Transform tickets to match expected format
-    const transformedTickets = tickets?.map((ticket: any) => ({
-      ...ticket,
-      requester: ticket.requester, // Use the fetched requester data
-      assignee: ticket.assignee,  // Use the fetched assignee data
-      assignees: ticket.assignee ? [ticket.assignee] : [], // Convert single assignee to array
-    })) || []
-    
-    return {
-      tickets: transformedTickets,
-      total: transformedTickets.length,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    }
-  } catch (restError) {
-    console.log("⚠️ REST API failed, falling back to GraphQL:", restError)
-  }
-
   const client = await createGraphQLClient()
 
   // Import the standard query from lib/graphql/queries.ts
@@ -182,11 +104,9 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   // Transform GraphQL response
   const rawTickets = data.ticketsCollection.edges.map((edge: any) => edge.node)
 
-  // Batch-fetch requester and assignee profiles via GraphQL
+  // Get all unique user IDs from requester_id, assignee_id, and assignee_ids arrays
   const requesterIds = Array.from(new Set(rawTickets.map((t: any) => t.requester_id).filter(Boolean)))
   const assigneeIds = Array.from(new Set(rawTickets.map((t: any) => t.assignee_id).filter(Boolean)))
-  
-  // Get all user IDs from assignee_ids array
   const arrayAssigneeIds = rawTickets.flatMap((t: any) => t.assignee_ids || []).filter(Boolean)
   
   const allIds = Array.from(new Set([...requesterIds, ...assigneeIds, ...arrayAssigneeIds]))

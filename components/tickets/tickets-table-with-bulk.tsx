@@ -663,11 +663,11 @@ function TicketRow({
       {/* Assignee */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center justify-center w-full">
-          <div className="w-6 h-6 rounded-full bg-[#47AF47] border border-[#47AF47] flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-medium">
-              {ticket.assignee?.name?.charAt(0) || '?'}
-            </span>
-          </div>
+          <MultiAssigneeAvatars 
+            assignees={ticket.assignees || []} 
+            maxDisplay={3}
+            size="sm"
+          />
         </div>
       </td>
 

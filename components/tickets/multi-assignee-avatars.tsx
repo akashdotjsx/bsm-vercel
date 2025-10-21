@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface Assignee {
   id: string
@@ -77,42 +78,55 @@ export function MultiAssigneeAvatars({
     return name.slice(0, 2).toUpperCase()
   }
 
+  // Create a single tooltip content with all assignee names
+  const allAssigneeNames = assignees.map(assignee => getDisplayName(assignee)).join(', ')
+  const tooltipContent = remainingCount > 0 
+    ? `${allAssigneeNames} (+${remainingCount} more)`
+    : allAssigneeNames
+
   return (
-    <div className={cn('flex items-center -space-x-2', className)}>
-      {displayedAssignees.map((assignee, index) => (
-        <div
-          key={assignee.id || index}
-          className={cn(
-            'rounded-full bg-[#6E72FF] flex items-center justify-center text-white font-medium ring-2 ring-background',
-            sizeClasses[size].avatar
-          )}
-          title={getDisplayName(assignee)}
-          style={{ zIndex: maxDisplay - index }}
-        >
-          {assignee.avatar_url ? (
-            <img
-              src={assignee.avatar_url}
-              alt={getDisplayName(assignee)}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            getInitials(assignee)
-          )}
-        </div>
-      ))}
-      
-      {remainingCount > 0 && (
-        <div
-          className={cn(
-            'rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold ring-2 ring-background',
-            sizeClasses[size].badge
-          )}
-          title={`+${remainingCount} more assignee${remainingCount > 1 ? 's' : ''}`}
-          style={{ zIndex: 0 }}
-        >
-          +{remainingCount}
-        </div>
-      )}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn('flex items-center -space-x-2', className)}>
+            {displayedAssignees.map((assignee, index) => (
+              <div
+                key={assignee.id || index}
+                className={cn(
+                  'rounded-full bg-[#6E72FF] flex items-center justify-center text-white font-medium ring-2 ring-background',
+                  sizeClasses[size].avatar
+                )}
+                style={{ zIndex: maxDisplay - index }}
+              >
+                {assignee.avatar_url ? (
+                  <img
+                    src={assignee.avatar_url}
+                    alt={getDisplayName(assignee)}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  getInitials(assignee)
+                )}
+              </div>
+            ))}
+            
+            {remainingCount > 0 && (
+              <div
+                className={cn(
+                  'rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold ring-2 ring-background',
+                  sizeClasses[size].badge
+                )}
+                style={{ zIndex: 0 }}
+              >
+                +{remainingCount}
+              </div>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="bg-foreground text-background">
+          <p className="font-medium">{tooltipContent}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

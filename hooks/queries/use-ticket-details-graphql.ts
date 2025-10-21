@@ -226,16 +226,33 @@ export function useUpdateTicketDetailsGraphQL() {
       await queryClient.cancelQueries({ queryKey: ticketDetailKeys.ticket(id) })
       const previousTicket = queryClient.getQueryData(ticketDetailKeys.ticket(id))
 
+      // Optimistic update for ticket details
       queryClient.setQueryData(ticketDetailKeys.ticket(id), (old: any) => ({
         ...old,
         ...updates,
       }))
+
+      // Also optimistically update any tickets lists that contain this ticket
+      queryClient.setQueriesData(
+        { queryKey: ["tickets", "list"] },
+        (old: any) => {
+          if (!old?.tickets) return old
+          return {
+            ...old,
+            tickets: old.tickets.map((ticket: any) => 
+              ticket.id === id ? { ...ticket, ...updates } : ticket
+            )
+          }
+        }
+      )
 
       return { previousTicket }
     },
     onError: (err, { id }, context) => {
       if (context?.previousTicket) {
         queryClient.setQueryData(ticketDetailKeys.ticket(id), context.previousTicket)
+        // Also rollback the tickets list optimistic update
+        queryClient.invalidateQueries({ queryKey: ["tickets", "list"] })
       }
     },
     onSettled: (data, error, { id }) => {
@@ -243,7 +260,9 @@ export function useUpdateTicketDetailsGraphQL() {
       queryClient.invalidateQueries({ queryKey: ticketDetailKeys.ticket(id) })
       // Invalidate ALL ticket details
       queryClient.invalidateQueries({ queryKey: ticketDetailKeys.all })
-      // CRITICAL: Invalidate ALL ticket LISTS (separate query key namespace)
+      // CRITICAL: Invalidate ALL ticket LISTS using the correct query key pattern
+      queryClient.invalidateQueries({ queryKey: ["tickets", "list"] })
+      // Also invalidate any tickets queries that might exist
       queryClient.invalidateQueries({ queryKey: ["tickets"] })
       console.log("✅ Ticket updated - invalidated detail and all ticket lists")
     },
