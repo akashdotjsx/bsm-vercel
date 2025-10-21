@@ -1735,28 +1735,31 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
-<Button
-className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/90 hover:to-[var(--primary-pink)] text-white text-sm h-8 px-4 rounded-lg shadow-xs"
+                <Button
+                  className="bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] hover:from-[#6E72FF]/90 hover:to-[#FF2CB9]/90 text-white font-medium h-8 px-3 rounded-[5px] transition-all"
                   onClick={() => setShowAIPanel(true)}
+                  style={{ fontSize: '13px', fontWeight: 500, boxShadow: '0px 14px 37px 0px rgba(80, 0, 255, 0.22)' }}
                 >
-                  <Sparkles className="h-3 w-3 mr-2" />
+                  <Sparkles className="h-3 w-3 mr-1.5" />
                   Ask AI
                 </Button>
-<Button
+                <Button
                   variant="outline"
-className="bg-background text-[#6E72FF] border-[#6E72FF]/20 hover:bg-[#6E72FF]/5 text-sm h-8 px-4 rounded-lg"
+                  className="bg-white dark:bg-background text-[#6E72FF] border border-[#DDDEFF] hover:bg-[#6E72FF]/5 font-medium h-8 px-3 rounded-[5px] transition-all"
                   onClick={() => setShowImportDialog(true)}
+                  style={{ fontSize: '13px', fontWeight: 500 }}
                 >
-                  <Download className="h-3 w-3 mr-2" />
+                  <Download className="h-3 w-3 mr-1.5" />
                   Import
                 </Button>
-<Button 
-className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white text-sm h-8 px-4 rounded-lg shadow-xs"
+                <Button 
+                  className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white font-medium h-8 px-3 rounded-[5px] shadow-sm transition-all"
                   onClick={() => {
                     console.log("[CREATE] Opening drawer for new ticket")
                     setSelectedTicket(null) // No ticket = CREATE mode
                     setShowTicketTray(true)
-                  }} 
+                  }}
+                  style={{ fontSize: '13px', fontWeight: 500 }}
                 >
                   + Create Ticket
                 </Button>
