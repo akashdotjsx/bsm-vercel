@@ -50,6 +50,8 @@ interface EnhancedKanbanBoardProps {
   onDragLeave: (e: React.DragEvent) => void
   onDrop: (e: React.DragEvent, columnId: string) => void
   onAddTicket: (columnType?: string) => void
+  onCheckboxChange?: (ticketId: string, checked: boolean) => void
+  onDateChange?: (ticketId: string, date: Date | null) => void
 }
 
 export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
@@ -73,6 +75,8 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
   onDragLeave,
   onDrop,
   onAddTicket,
+  onCheckboxChange,
+  onDateChange,
 }) => {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -318,6 +322,8 @@ export const EnhancedKanbanBoard: React.FC<EnhancedKanbanBoardProps> = ({
                   onTicketClick={onTicketClick}
                   onDragStart={onDragStart}
                   onAddTicket={onAddTicket}
+                  onCheckboxChange={onCheckboxChange}
+                  onDateChange={onDateChange}
                 />
               )
             })

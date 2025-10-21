@@ -44,6 +44,8 @@ interface KanbanColumnProps {
   onTicketClick: (ticket: Ticket) => void
   onDragStart: (e: React.DragEvent, ticket: Ticket) => void
   onAddTicket: (columnId: string) => void
+  onCheckboxChange?: (ticketId: string, checked: boolean) => void
+  onDateChange?: (ticketId: string, date: Date | null) => void
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -58,6 +60,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onTicketClick,
   onDragStart,
   onAddTicket,
+  onCheckboxChange,
+  onDateChange,
 }) => {
   const { theme } = useTheme()
   const isDropTarget = dragOverColumn === column.id
@@ -133,19 +137,20 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               isDragging={draggedTicket?.id === ticket.id}
               onTicketClick={onTicketClick}
               onDragStart={onDragStart}
+              onCheckboxChange={onCheckboxChange}
+              onDateChange={onDateChange}
             />
           ))}
 
-          {/* Add Ticket Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full h-10 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/50 rounded-lg mt-2"
-            onClick={() => onAddTicket(column.id)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Ticket
-          </Button>
+           {/* Add Ticket Button */}
+           <Button
+             variant="ghost"
+             size="sm"
+             className="w-full h-9 text-xs font-semibold text-[#6E72FF] bg-white border-dashed border border-[#EEEEEE] hover:border-[#6E72FF] hover:bg-[#6E72FF]/5 dark:text-[#6E72FF] dark:bg-white dark:border-[#EEEEEE] dark:hover:border-[#6E72FF] dark:hover:bg-[#6E72FF]/10 rounded-[5px] mt-2 font-[Inter]"
+             onClick={() => onAddTicket(column.id)}
+           >
+             + Add Ticket
+           </Button>
         </div>
       </div>
     </div>

@@ -45,6 +45,8 @@ import {
   useUpdateTicketGraphQL, 
   useDeleteTicketGraphQL 
 } from "@/hooks/queries/use-tickets-graphql-query"
+import { createClient } from "@/lib/supabase/client"
+import { useQueryClient } from "@tanstack/react-query"
 import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
@@ -56,7 +58,6 @@ import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
 import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import { useDebounce } from "@/hooks/use-debounce"
-import { createClient } from "@/lib/supabase/client"
 import { EnhancedKanbanBoard } from "@/components/tickets/enhanced-kanban-board"
 import { FilterDialog } from "@/components/tickets/filter-dialog"
 
@@ -114,6 +115,7 @@ export default function TicketsPage() {
   const { user, organization, isAdmin } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState("")
@@ -1581,6 +1583,93 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
           setPreSelectedTicketType(columnType || null)
           setSelectedTicket(null)
           setShowTicketTray(true)
+        }}
+        onCheckboxChange={async (ticketId, checked) => {
+          console.log("[KANBAN CHECKBOX] Ticket:", ticketId, "Checked:", checked)
+          try {
+            const supabase = createClient()
+            
+            // Get current ticket data to preserve existing custom_fields
+            const { data: currentTicket, error: fetchError } = await supabase
+              .from('tickets')
+              .select('custom_fields')
+              .eq('id', ticketId)
+              .single()
+            
+            if (fetchError) {
+              console.error('Error fetching ticket data:', fetchError)
+              toast.error('Failed to fetch ticket data')
+              return
+            }
+            
+            // Update the custom_fields with the completion status
+            const updatedCustomFields = {
+              ...(currentTicket.custom_fields || {}),
+              completed: checked
+            }
+            
+            console.log("[KANBAN CHECKBOX] Updated custom fields:", updatedCustomFields)
+            
+            // Update the ticket's completion status in Supabase
+            const { data, error } = await supabase
+              .from('tickets')
+              .update({ 
+                custom_fields: updatedCustomFields,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', ticketId)
+              .select()
+            
+            console.log("[KANBAN CHECKBOX] Supabase response:", { data, error })
+            
+            if (error) {
+              console.error('Error updating ticket completion status:', error)
+              toast.error('Failed to update completion status')
+            } else {
+              console.log('Successfully updated ticket completion status')
+              toast.success(checked ? 'Ticket marked as completed' : 'Ticket marked as incomplete')
+              
+              // Invalidate and refetch tickets data to reflect the change
+              await queryClient.invalidateQueries({ queryKey: ['tickets'] })
+            }
+          } catch (error) {
+            console.error('Error updating ticket completion status:', error)
+            toast.error('Failed to update completion status')
+          }
+        }}
+        onDateChange={async (ticketId, date) => {
+          console.log("[KANBAN DATE] Ticket:", ticketId, "Date:", date)
+          console.log("[KANBAN DATE] Date ISO String:", date ? date.toISOString() : null)
+          try {
+            const supabase = createClient()
+            console.log("[KANBAN DATE] Supabase client created")
+            
+            // Update the ticket's due_date in Supabase
+            const { data, error } = await supabase
+              .from('tickets')
+              .update({ 
+                due_date: date ? date.toISOString() : null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', ticketId)
+              .select()
+            
+            console.log("[KANBAN DATE] Supabase response:", { data, error })
+            
+            if (error) {
+              console.error('Error updating ticket due date:', error)
+              toast.error('Failed to update due date: ' + error.message)
+            } else {
+              console.log('Successfully updated ticket due date')
+              toast.success('Due date updated successfully')
+              
+              // Invalidate and refetch tickets data to reflect the change
+              await queryClient.invalidateQueries({ queryKey: ['tickets'] })
+            }
+          } catch (error) {
+            console.error('Error updating ticket due date:', error)
+            toast.error('Failed to update due date')
+          }
         }}
       />
     )

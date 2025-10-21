@@ -334,6 +334,8 @@ async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }
           type
           priority
           status
+          due_date
+          custom_fields
           updated_at
         }
       }

@@ -1,12 +1,16 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar, Square, User } from "lucide-react"
 import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 
 interface Ticket {
   id: string
@@ -27,6 +31,10 @@ interface Ticket {
   due_date?: string
   progress?: number
   ticket_number?: string
+  custom_fields?: {
+    completed?: boolean
+    [key: string]: any
+  }
 }
 
 interface KanbanTicketCardProps {
@@ -34,6 +42,8 @@ interface KanbanTicketCardProps {
   isDragging?: boolean
   onTicketClick: (ticket: Ticket) => void
   onDragStart: (e: React.DragEvent, ticket: Ticket) => void
+  onCheckboxChange?: (ticketId: string, checked: boolean) => void
+  onDateChange?: (ticketId: string, date: Date | null) => void
 }
 
 export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
@@ -41,7 +51,13 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
   isDragging,
   onTicketClick,
   onDragStart,
+  onCheckboxChange,
+  onDateChange,
 }) => {
+  const [isChecked, setIsChecked] = useState(ticket.custom_fields?.completed || false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    ticket.due_date ? new Date(ticket.due_date) : null
+  )
   const getPriorityBadgeColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
       case "urgent":
@@ -124,6 +140,20 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
     }
   }
 
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsChecked(checked)
+    if (onCheckboxChange) {
+      onCheckboxChange(ticket.dbId, checked)
+    }
+  }
+
+  const handleDateChange = (date: Date | null) => {
+    setSelectedDate(date)
+    if (onDateChange) {
+      onDateChange(ticket.dbId, date)
+    }
+  }
+
   return (
     <Card
       className={`hover:shadow-sm transition-all cursor-move border bg-card rounded-xl ${
@@ -150,7 +180,12 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
               {ticket.priority?.charAt(0).toUpperCase() + ticket.priority?.slice(1)}
             </Badge>
           </div>
-          <Square className="h-4 w-4 text-muted-foreground stroke-2" />
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={handleCheckboxChange}
+            className="h-4 w-4 border-[#C4C4C4] data-[state=checked]:bg-[#6E72FF] data-[state=checked]:border-[#6E72FF]"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
 
         {/* Title */}
@@ -206,12 +241,29 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
           </div>
 
           {/* Date */}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
-            <span className="font-medium">
-              {formatDate(ticket.due_date) || formatDate(ticket.created_at) || 'No date'}
-            </span>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Calendar className="h-3.5 w-3.5 mr-1" />
+                <span className="font-medium">
+                  {selectedDate ? format(selectedDate, "MMM dd, yyyy") : 'Set Date'}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate || undefined}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </CardContent>
     </Card>
