@@ -44,7 +44,7 @@ import {
   AlertCircle,
   ShieldCheck,
 } from "lucide-react"
-import { useProfilesGQL, useTeamsGQL, createProfileGQL, updateProfileGQL, deleteProfileGQL, createTeamGQL, updateTeamGQL, deleteTeamGQL, addTeamMemberGQL, removeTeamMemberGQL } from "@/hooks/use-users-gql"
+import { useProfilesGQL, useTeamsGQL, inviteUserViaAPI, updateProfileGQL, deleteProfileGQL, createTeamGQL, updateTeamGQL, deleteTeamGQL, addTeamMemberGQL, removeTeamMemberGQL } from "@/hooks/use-users-gql"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { RoleEditModal } from "@/components/rbac/role-edit-modal"
@@ -226,9 +226,15 @@ export default function UsersPage() {
     }
   }, [teams, selectedTeamForMembers])
   
-  // GraphQL mutation wrappers (non-hooks)
+  // API call wrappers (non-hooks)
   const inviteUser = async (userData: any) => {
-    const result = await createProfileGQL(userData)
+    const result = await inviteUserViaAPI({
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      role: userData.role,
+      department: userData.department
+    })
     refetchUsers()
     return result
   }
@@ -341,20 +347,20 @@ export default function UsersPage() {
 
   const handleAddUser = async (userData: { first_name: string; last_name: string; email: string; role: string; department: string }) => {
     try {
-      await inviteUser({
+      const result = await inviteUser({
         ...userData,
         display_name: `${userData.first_name} ${userData.last_name}`.trim()
       })
       toast({
-        title: "User added successfully",
-        description: `${userData.first_name} ${userData.last_name} has been invited`,
+        title: "User invited successfully",
+        description: result.message || `${userData.first_name} ${userData.last_name} has been invited`,
       })
       setShowAddUser(false)
     } catch (error) {
-      console.error('Error adding user:', error)
+      console.error('Error inviting user:', error)
       toast({
-        title: "Error adding user",
-        description: error instanceof Error ? error.message : 'Failed to add user',
+        title: "Error inviting user",
+        description: error instanceof Error ? error.message : 'Failed to invite user',
         variant: "destructive"
       })
     }

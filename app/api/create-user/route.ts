@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 // Create admin client with service role key
 const supabaseAdmin = createClient(
@@ -33,17 +35,60 @@ export async function POST(request: NextRequest) {
       last_name, 
       role, 
       department, 
-      manager_id,
-      organization_id 
+      manager_id 
     } = userData
 
     // Validate required fields
-    if (!email || !first_name || !last_name || !organization_id) {
+    if (!email || !first_name || !last_name) {
       return NextResponse.json(
-        { error: true, message: 'Missing required fields' },
+        { error: true, message: 'Missing required fields: email, first_name, last_name' },
         { status: 400 }
       )
     }
+
+    // Get organization_id from the authenticated user making the request
+    const cookieStore = cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: true, message: 'Unauthorized - must be logged in to invite users' },
+        { status: 401 }
+      )
+    }
+
+    // Get the inviting user's profile to find their organization
+    const { data: inviterProfile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !inviterProfile?.organization_id) {
+      return NextResponse.json(
+        { error: true, message: 'Could not determine organization - inviter profile not found' },
+        { status: 400 }
+      )
+    }
+
+    const organization_id = inviterProfile.organization_id
 
     // Try to invite user first (this will create the user and send invite email)
     let authUser = null
@@ -107,7 +152,7 @@ export async function POST(request: NextRequest) {
     // Ensure we have the user ID - handle different response structures
     const userId = authUser?.user?.id || authUser?.id
     if (!userId) {
-      console.error('No user ID found in authUser:', authUser)
+      console.error('No user ID found in authUser:' , authUser)
       return NextResponse.json(
         { error: true, message: 'Failed to get user ID from auth response' },
         { status: 500 }
@@ -115,7 +160,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the profile record
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileCreationError } = await supabaseAdmin
       .from('profiles')
       .insert({
         id: userId,
@@ -132,7 +177,7 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (profileError) {
+    if (profileCreationError) {
       // If profile creation fails, we should delete the auth user to maintain consistency
       try {
         await supabaseAdmin.auth.admin.deleteUser(userId)
@@ -140,9 +185,9 @@ export async function POST(request: NextRequest) {
         console.error('Error cleaning up auth user after profile creation failed:', deleteError)
       }
       
-      console.error('Error creating profile:', profileError)
+      console.error('Error creating profile:', profileCreationError)
       return NextResponse.json(
-        { error: true, message: `Failed to create user profile: ${profileError.message}` },
+        { error: true, message: `Failed to create user profile: ${profileCreationError.message}` },
         { status: 500 }
       )
     }

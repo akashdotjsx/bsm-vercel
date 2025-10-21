@@ -275,32 +275,35 @@ export function useTeamsGQL(params: { organization_id?: string; is_active?: bool
 // MUTATIONS - PROFILES/USERS
 // ============================================
 
+// DEPRECATED: Use inviteUserViaAPI instead for proper auth user creation with email invitations
 export async function createProfileGQL(profileData: Partial<Profile>): Promise<Profile> {
-  const client = await createGraphQLClient()
+  throw new Error('createProfileGQL is deprecated - use inviteUserViaAPI for proper user creation with email invitations')
+}
+
+/**
+ * Create a user with proper Supabase auth user creation and email invitation
+ * This calls the /api/create-user endpoint which handles both auth user and profile creation
+ */
+export async function inviteUserViaAPI(userData: {
+  first_name: string
+  last_name: string  
+  email: string
+  role: string
+  department?: string
+  organization_id?: string
+}): Promise<any> {
+  const response = await fetch('/api/create-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData)
+  })
   
-  const mutation = gql`
-    mutation CreateProfile($input: profilesInsertInput!) {
-      insertIntoprofilesCollection(objects: [$input]) {
-        records {
-          id
-          email
-          first_name
-          last_name
-          display_name
-          avatar_url
-          phone
-          department
-          role
-          is_active
-          created_at
-          updated_at
-        }
-      }
-    }
-  `
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || 'Failed to invite user')
+  }
   
-  const response: any = await client.request(mutation, { input: profileData })
-  return response.insertIntoprofilesCollection.records[0]
+  return response.json()
 }
 
 export async function updateProfileGQL(id: string, updates: Partial<Profile>): Promise<Profile> {
