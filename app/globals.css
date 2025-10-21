@@ -122,8 +122,8 @@
   /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
   --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #f8f8f8;
-  --sidebar-primary-foreground: #525252;
+  --sidebar-primary: #6E72FF;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f8f8f8;
   --sidebar-accent-foreground: #525252;
   --sidebar-border: #e5e5e5;

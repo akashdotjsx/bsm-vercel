@@ -218,7 +218,7 @@ export function SidebarNavigation() {
             {navigationItems.filter(shouldShowItem).map((item) => {
               const Icon = item.icon
               const isExpanded = expandedMenus.includes(item.name)
-              const isTicketsPath = pathname.startsWith("/tickets")
+              const isActive = pathname.startsWith(item.href) || (item.name === 'Tickets' && pathname.startsWith("/tickets")) || (item.name === 'Services' && pathname.startsWith("/services"))
 
               return (
                 <div key={item.name}>
@@ -231,7 +231,7 @@ export function SidebarNavigation() {
                                onClick={() => handleMenuClick(item)}
                                className={cn(
                                  "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                                 isTicketsPath
+                                 isActive
                                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                    : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                                  isCollapsed 
@@ -255,7 +255,7 @@ export function SidebarNavigation() {
                           onClick={() => handleMenuClick(item)}
                           className={cn(
                             "flex items-center w-full py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                            isTicketsPath
+                            isActive
                               ? "bg-sidebar-primary text-sidebar-primary-foreground"
                               : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                             isCollapsed 
@@ -315,7 +315,7 @@ export function SidebarNavigation() {
                              }}
                              className={cn(
                                "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                               pathname === item.href
+                               isActive
                                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                  : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                                isCollapsed 
@@ -344,7 +344,7 @@ export function SidebarNavigation() {
                         }}
                         className={cn(
                           "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                          pathname === item.href
+                          isActive
                             ? "bg-sidebar-primary text-sidebar-primary-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                           isCollapsed 
@@ -373,6 +373,7 @@ export function SidebarNavigation() {
              <nav className="space-y-1">
               {administrationItems.filter(shouldShowItem).map((item) => {
                 const Icon = item.icon
+                const isActive = pathname === item.href
                 return (
                   isCollapsed ? (
                     <Tooltip key={item.name}>
@@ -387,7 +388,7 @@ export function SidebarNavigation() {
                            }}
                            className={cn(
                              "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                             pathname === item.href
+                             isActive
                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
                                : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                              isCollapsed 
@@ -415,7 +416,7 @@ export function SidebarNavigation() {
                       }}
                       className={cn(
                         "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
-                        pathname === item.href
+                        isActive
                           ? "bg-sidebar-primary text-sidebar-primary-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-foreground",
                         isCollapsed 
