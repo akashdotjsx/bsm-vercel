@@ -20,7 +20,6 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  ArrowUpRight,
   BookOpen,
   HardDrive,
   MessageSquare,
@@ -433,31 +432,6 @@ export function SidebarNavigation() {
             </nav>
           </div>
         )}
-      </div>
-
-       {/* Fixed footer */}
-       <div className="flex-shrink-0 p-4 border-t border-sidebar-border">
-         <div className="bg-sidebar-primary rounded-lg p-4 transition-all duration-300 ease-in-out">
-           {!isCollapsed && (
-             <div className="flex items-center justify-between mb-3 transition-all duration-300 ease-in-out">
-               <span className="text-[11px] font-medium text-sidebar-primary-foreground whitespace-nowrap overflow-hidden">
-                 {organization?.subscription_tier || 'Basic'} Plan
-               </span>
-             </div>
-           )}
-           <Button
-             size="sm"
-             className={cn(
-               "bg-sidebar-accent hover:bg-sidebar-accent/90 text-sidebar-accent-foreground text-[10px] font-medium transition-all duration-300 ease-in-out",
-               isCollapsed 
-                 ? "w-8 h-8 p-0 justify-center" 
-                 : "w-full"
-             )}
-           >
-             <ArrowUpRight className={cn("h-4 w-4 flex-shrink-0 transition-all duration-300 ease-in-out", !isCollapsed && "mr-1")} />
-             {!isCollapsed && <span className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden">{profile?.role === 'admin' ? 'Manage License' : 'View License'}</span>}
-           </Button>
-        </div>
       </div>
     </div>
     </TooltipProvider>
