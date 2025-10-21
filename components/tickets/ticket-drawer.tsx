@@ -52,6 +52,7 @@ import {
   History
 } from "lucide-react"
 import { CustomColumn } from "@/lib/stores/custom-columns-store"
+import CreateTicketForm from "./create-ticket-form"
 
 interface TicketDrawerProps {
   isOpen: boolean
@@ -451,15 +452,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     return dbTicket.requester.display_name || dbTicket.requester.email || ""
   }, [dbTicket])
 
-  const handleSave = async () => {
+  const handleSave = async (formData?: any) => {
     setSaving(true)
     try {
-      // Prepare ticket data
-      const ticketData: any = { ...form }
+      // In create mode, use the data passed from CreateTicketForm
+      // In edit mode, use the local form state
+      const ticketData: any = isCreateMode && formData ? { ...formData } : { ...form }
       
       // Keep assignee_ids as array for multiple assignees
       // Also update single assignee_id for backward compatibility
-      if (form.assignee_ids.length > 0) {
+      if (isCreateMode && formData) {
+        // In create mode, assignee_id is already set from formData
+        ticketData.assignee_ids = ticketData.assignee_id ? [ticketData.assignee_id] : []
+      } else if (form.assignee_ids && form.assignee_ids.length > 0) {
         ticketData.assignee_id = form.assignee_ids[0]
         ticketData.assignee_ids = form.assignee_ids
       } else {
@@ -468,8 +473,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
       }
       
       // Normalize due_date to ISO if present, otherwise remove it
-      if (ticketData.due_date && ticketData.due_date.trim()) {
-        ticketData.due_date = new Date(ticketData.due_date).toISOString()
+      if (ticketData.due_date) {
+        if (typeof ticketData.due_date === 'string' && ticketData.due_date.trim()) {
+          ticketData.due_date = new Date(ticketData.due_date).toISOString()
+        } else if (typeof ticketData.due_date === 'string' && !ticketData.due_date.trim()) {
+          // Remove due_date if it's empty to avoid timestamp parsing errors
+          delete ticketData.due_date
+        }
+        // If it's already an ISO string (from create mode), leave it as is
       } else {
         // Remove due_date if it's empty to avoid timestamp parsing errors
         delete ticketData.due_date
@@ -490,14 +501,55 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         ticketData.requester_id = user?.id
         ticketData.organization_id = organization?.id
         
-        const newTicket = await createTicketMutation.mutateAsync(ticketData)
-        console.log("[CREATE] Ticket created:", newTicket)
+        // Extract non-ticket fields for separate processing
+        const { newComment, isInternalComment, draftChecklist, ...ticketFields } = ticketData
+        
+        // Remove any fields that might cause JSON type issues
+        const cleanTicketData = { ...ticketFields }
+        
+        // Remove assignee_ids completely - this field should not be in ticket creation
+        delete cleanTicketData.assignee_ids
+        
+        // Ensure custom_fields is properly formatted - remove if empty object
+        if (!cleanTicketData.custom_fields || Object.keys(cleanTicketData.custom_fields).length === 0) {
+          delete cleanTicketData.custom_fields
+        }
+        
+        // Ensure tags is properly formatted
+        if (cleanTicketData.tags === null || cleanTicketData.tags === undefined) {
+          delete cleanTicketData.tags
+        }
+        
+        console.log("[CREATE] Final ticket data before mutation:", {
+          ...cleanTicketData,
+          requester_id: cleanTicketData.requester_id,
+          organization_id: cleanTicketData.organization_id,
+          user_id: user?.id,
+          org_id: organization?.id
+        })
+        
+        console.log("[CREATE] Extracted non-ticket data:", {
+          newComment,
+          isInternalComment,
+          draftChecklist
+        })
+        
+        let newTicket
+        try {
+          newTicket = await createTicketMutation.mutateAsync(cleanTicketData)
+          console.log("[CREATE] Ticket created successfully:", newTicket)
+        } catch (mutationError) {
+          console.error("[CREATE] Mutation failed:", mutationError)
+          toast.error("Failed to create ticket: " + (mutationError as Error).message)
+          setSaving(false)
+          return
+        }
         
         // After create, insert initial comment and checklist via GraphQL if provided
         try {
           const client = await createGraphQLClient()
 
-          // Initial comment
+          // Initial comment (staff-only)
           if (newComment && newComment.trim().length > 0) {
             const addCommentMutation = gql`
               mutation AddComment($input: ticket_commentsInsertInput!) {
@@ -509,14 +561,15 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 ticket_id: newTicket.id,
                 author_id: user?.id,
                 content: newComment.trim(),
-                is_internal: isInternalComment,
+                is_internal: isInternalComment || true, // Default to internal for staff-only
                 is_system: false,
               },
             })
+            console.log("[CREATE] Staff comment added:", newComment.trim())
           }
 
           // Checklist items (staged)
-          if (draftChecklist.length > 0) {
+          if (draftChecklist && draftChecklist.length > 0) {
             const addChecklistMutation = gql`
               mutation AddChecklist($objects: [ticket_checklistInsertInput!]!) {
                 insertIntoticket_checklistCollection(objects: $objects) { affectedCount }
@@ -530,6 +583,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
             }))
             if (objects.length > 0) {
               await client.request(addChecklistMutation, { objects })
+              console.log("[CREATE] Checklist items added:", objects.length)
             }
           }
         } catch (postErr) {
@@ -738,59 +792,56 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
           className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background text-foreground shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-border"
           style={{ height: 'calc(100vh - var(--header-height, 56px))' }}
         >
-          {/* Header */}
-          <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
-            <DeleteConfirmationDialog
-              open={showDeleteCommentDialog}
-              onOpenChange={setShowDeleteCommentDialog}
-              onConfirm={confirmDeleteComment}
-              title="Delete Comment"
-              description="Do you want to delete this comment?"
-              isDeleting={deleteCommentMutation.isPending}
-            />
-            <div className="flex-1 min-w-0 mr-4">
-              <h2 className="text-sm md:text-[13px] font-semibold text-foreground dark:text-foreground mb-1 truncate">
-                {isCreateMode ? "Create New Ticket" : (dbTicket?.title || ticket?.title || "Loading...")}
-              </h2>
-              {!isCreateMode && (dbTicket?.ticket_number || ticket?.id) && (
-                <p className="text-[10px] md:text-[11px] text-muted-foreground dark:text-muted-foreground">
-                  #{dbTicket?.ticket_number || ticket?.id}
-                  {dbTicket?.created_at && (
-                    <>
-                      <span className="mx-1">•</span>
-                      <span>Created {format(new Date(dbTicket.created_at), "MMM d, y h:mm a")}</span>
-                    </>
-                  )}
-                </p>
-              )}
-              {isCreateMode && (
-                <p className="text-[10px] md:text-[11px] text-muted-foreground dark:text-muted-foreground">
-                  Fill in the details below to create a new ticket
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {!isCreateMode && !loading && (
+          {/* Header - Hide in create mode since CreateTicketForm has its own header */}
+          {!isCreateMode && (
+            <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
+              <DeleteConfirmationDialog
+                open={showDeleteCommentDialog}
+                onOpenChange={setShowDeleteCommentDialog}
+                onConfirm={confirmDeleteComment}
+                title="Delete Comment"
+                description="Do you want to delete this comment?"
+                isDeleting={deleteCommentMutation.isPending}
+              />
+              <div className="flex-1 min-w-0 mr-4">
+                <h2 className="text-sm md:text-[13px] font-semibold text-foreground dark:text-foreground mb-1 truncate">
+                  {dbTicket?.title || ticket?.title || "Loading..."}
+                </h2>
+                {(dbTicket?.ticket_number || ticket?.id) && (
+                  <p className="text-[10px] md:text-[11px] text-muted-foreground dark:text-muted-foreground">
+                    #{dbTicket?.ticket_number || ticket?.id}
+                    {dbTicket?.created_at && (
+                      <>
+                        <span className="mx-1">•</span>
+                        <span>Created {format(new Date(dbTicket.created_at), "MMM d, y h:mm a")}</span>
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {!loading && (
+                  <Button 
+                    variant={isEditMode ? "default" : "outline"}
+                    size="sm" 
+                    className="h-8 px-3 text-[11px]" 
+                    onClick={() => setIsEditMode(!isEditMode)}
+                  >
+                    <Edit className="h-3 w-3 mr-2" />
+                    {isEditMode ? "View Mode" : "Edit"}
+                  </Button>
+                )}
                 <Button 
-                  variant={isEditMode ? "default" : "outline"}
+                  variant="ghost" 
                   size="sm" 
-                  className="h-8 px-3 text-[11px]" 
-                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="h-8 w-8 p-0 shrink-0" 
+                  onClick={onClose}
                 >
-                  <Edit className="h-3 w-3 mr-2" />
-                  {isEditMode ? "View Mode" : "Edit"}
+                  <X className="h-4 w-4" />
                 </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 shrink-0" 
-                onClick={onClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Error state - only for EDIT mode */}
           {!isCreateMode && error ? (
@@ -847,10 +898,17 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 </div>
               </div>
             </div>
+          ) : isCreateMode ? (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <CreateTicketForm
+                onSave={(formData) => handleSave(formData)}
+                onCancel={onClose}
+                isSubmitting={saving}
+              />
+            </div>
           ) : (
             <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
               {/* Hide tabs in CREATE mode - only show Details */}
-              {!isCreateMode && (
               <div className="px-4 md:px-6 bg-muted/30 dark:bg-muted/30 flex-shrink-0">
               <TabsList className="bg-transparent rounded-none w-full justify-start px-0 border-0">
                 <TabsTrigger
@@ -906,7 +964,6 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 </TabsTrigger>
               </TabsList>
               </div>
-              )}
 
               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <TabsContent value="details" className="p-6 space-y-6 mt-0">
@@ -1202,83 +1259,6 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                         </div>
                       </div>
                     ) : null}
-
-                    {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
-                    {isCreateMode && (
-                      <div className="space-y-8 pt-4">
-                        {/* Checklist */}
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Checklist</h3>
-                          </div>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Add checklist item..."
-                              value={newChecklistItem}
-                              onChange={(e) => setNewChecklistItem(e.target.value)}
-                              onKeyPress={(e) => e.key === "Enter" && newChecklistItem.trim() && setDraftChecklist((prev) => { const next=[...prev, newChecklistItem.trim()]; setNewChecklistItem(""); return next })}
-                              className="text-[11px] h-8"
-                            />
-                            <Button 
-                              onClick={() => {
-                                if (!newChecklistItem.trim()) return
-                                setDraftChecklist((prev) => [...prev, newChecklistItem.trim()])
-                                setNewChecklistItem("")
-                              }} 
-                              disabled={!newChecklistItem.trim()} 
-                              className="text-[10px] h-8 px-3"
-                            >
-                              <Plus className="h-3 w-3 mr-2" />
-                              Add
-                            </Button>
-                          </div>
-                          {draftChecklist.length > 0 && (
-                            <div className="space-y-2">
-                              {draftChecklist.map((text, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-2 border border-border rounded bg-background">
-                                  <span className="text-[11px] text-foreground dark:text-foreground">{text}</span>
-                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setDraftChecklist((prev) => prev.filter((_, i) => i !== idx))}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Initial Comment */}
-                        <div className="space-y-3">
-                          <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Initial Comment</h3>
-                          <div className="flex items-center gap-2">
-                            <Switch id="internal-comment-create" checked={isInternalComment} onCheckedChange={setIsInternalComment} />
-                            <Label htmlFor="internal-comment-create" className="text-[11px]">Internal Note</Label>
-                          </div>
-                          <div className="flex gap-2">
-                            <Textarea
-                              placeholder="Add a comment..."
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              className="min-h-20 resize-none text-[11px]"
-                            />
-                            <Button onClick={() => { /* staged; saved on ticket creation */ }} disabled={!newComment.trim()} className="h-10 text-[10px]" title="This comment will be added when you create the ticket">
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Attachments */}
-                        <div className="space-y-3">
-                          <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Attachments</h3>
-                          <div className="border-2 border-dashed border-muted-foreground/25 dark:border-muted-foreground/25 rounded-lg p-4 text-center bg-muted/10 dark:bg-muted/10">
-                            <p className="text-[10px] text-muted-foreground mb-2">Upload files after the ticket is created</p>
-                            <Button variant="outline" size="sm" className="text-[10px] h-8 px-3">
-                              <Upload className="h-3 w-3 mr-2" />
-                              Choose Files
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
               </TabsContent>
 
               <TabsContent value="accounts" className="p-6">
@@ -1646,18 +1626,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
             </Tabs>
           )}
 
-          {/* Footer - show save button only in edit mode or create mode */}
-          {(isCreateMode || isEditMode) && (
+          {/* Footer - show save button only in edit mode (create mode handles its own buttons) */}
+          {!isCreateMode && isEditMode && (
             <div className="border-t border-border p-3 md:p-4 flex justify-end gap-2 flex-shrink-0 bg-background">
               <Button 
                 variant="outline" 
-                onClick={() => {
-                  if (isCreateMode) {
-                    onClose()
-                  } else {
-                    setIsEditMode(false)
-                  }
-                }}
+                onClick={() => setIsEditMode(false)}
                 className="text-[11px] h-8 px-3"
                 disabled={saving}
               >
@@ -1665,18 +1639,18 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
               </Button>
               <Button 
                 onClick={handleSave} 
-                disabled={saving || (!isCreateMode && loading)} 
+                disabled={saving || loading} 
                 className="text-[11px] h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {saving ? (
                   <>
                     <LoadingSpinner className="h-3 w-3 mr-2" />
-                    {isCreateMode ? "Creating..." : "Saving..."}
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Save className="h-3 w-3 mr-2" />
-                    {isCreateMode ? "Create Ticket" : "Save Changes"}
+                    Save Changes
                   </>
                 )}
               </Button>

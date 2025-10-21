@@ -300,9 +300,20 @@ async function createTicketGraphQL(ticketData: any) {
           title
           description
           type
+          category
+          subcategory
           priority
+          urgency
+          impact
           status
+          organization_id
+          requester_id
+          assignee_id
+          due_date
+          custom_fields
+          tags
           created_at
+          updated_at
         }
       }
     }
