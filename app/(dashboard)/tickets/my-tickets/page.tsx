@@ -48,6 +48,8 @@ import {
 import { useTicketTypes } from "@/hooks/use-ticket-types"
 import { format } from "date-fns"
 import { parseImportFile, validateFile, ImportResult, ImportProgress } from "@/lib/utils/file-import"
+import { EnhancedKanbanBoard } from "@/components/tickets/enhanced-kanban-board"
+import { FilterDialog } from "@/components/tickets/filter-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MultiAssigneeAvatars } from "@/components/tickets/multi-assignee-avatars"
 import { CustomColumnsDialog } from "@/components/tickets/custom-columns-dialog"
@@ -295,18 +297,19 @@ export default function TicketsPage() {
   const [isImporting, setIsImporting] = useState(false)
   
   // Filter dialog state
-  const [showFilterDialog, setShowFilterDialog] = useState(false)
   const [activeFilters, setActiveFilters] = useState<{
     type: string[]
     priority: string[]
     status: string[]
     assignee: string[]
+    reportedBy: string[]
     dateRange: { from: string; to: string }
   }>({
     type: [],
     priority: [],
     status: [],
     assignee: [],
+    reportedBy: [],
     dateRange: { from: '', to: '' }
   })
 
@@ -346,6 +349,10 @@ export default function TicketsPage() {
         name: ticket.assignee.display_name,
         avatar: getAvatarInitials(ticket.assignee.first_name, ticket.assignee.last_name, ticket.assignee.display_name)
       } : null),
+      // ✅ FIX: Preserve raw ID fields for filtering
+      assignee_id: ticket.assignee_id,
+      assignee_ids: ticket.assignee_ids,
+      requester_id: ticket.requester_id,
       status: ticket.status,
       timestamp: formatDate(ticket.created_at),
       date: formatDate(ticket.created_at),
@@ -385,6 +392,21 @@ export default function TicketsPage() {
   const filteredTickets = useMemo(() => {
     // Use local tickets for Kanban view, transformed tickets for list view
     const baseTickets = currentView === "kanban" ? localTickets : transformedTickets
+    
+    console.log('🔍 My Tickets - Filtering tickets:', {
+      totalTickets: baseTickets.length,
+      activeFilters: filterConditions.activeFilters,
+      currentView,
+      sampleTicket: baseTickets[0] ? {
+        id: baseTickets[0].id,
+        title: baseTickets[0].title,
+        assignee_id: baseTickets[0].assignee_id,
+        assignee_ids: baseTickets[0].assignee_ids,
+        requester_id: baseTickets[0].requester_id,
+        assignee: baseTickets[0].assignee,
+        requester: baseTickets[0].requester
+      } : null
+    })
     
     // Note: Server-side filtering is now applied via GraphQL query for My Tickets and Assigned to Me
     // No need to filter client-side for these views
@@ -433,6 +455,42 @@ export default function TicketsPage() {
           const ticketStatus = ticket.status?.toLowerCase() || ''
           const selectedStatusLower = filterConditions.status.toLowerCase()
           if (ticketStatus !== selectedStatusLower) return false
+        }
+        
+        // Assignee filter (from active filters) - check both single assignee and multi-assignees
+        if (filterConditions.activeFilters.assignee.length > 0) {
+          const assigneeIds = ticket.assignee_ids || []
+          const singleAssigneeId = ticket.assignee_id
+          const allAssigneeIds = [...assigneeIds, ...(singleAssigneeId ? [singleAssigneeId] : [])]
+          
+          console.log('🔍 My Tickets - Assignee filter check:', {
+            ticketId: ticket.id,
+            ticketTitle: ticket.title,
+            filterAssigneeIds: filterConditions.activeFilters.assignee,
+            ticketAssigneeIds: allAssigneeIds,
+            matches: filterConditions.activeFilters.assignee.some(assigneeId => 
+              allAssigneeIds.includes(assigneeId)
+            )
+          })
+          
+          if (!filterConditions.activeFilters.assignee.some(assigneeId => 
+            allAssigneeIds.includes(assigneeId)
+          )) return false
+        }
+        
+        // Reported By filter (from active filters) - check requester_id
+        if (filterConditions.activeFilters.reportedBy.length > 0) {
+          const requesterId = ticket.requester_id
+          
+          console.log('🔍 My Tickets - Reported By filter check:', {
+            ticketId: ticket.id,
+            ticketTitle: ticket.title,
+            filterRequesterIds: filterConditions.activeFilters.reportedBy,
+            ticketRequesterId: requesterId,
+            matches: requesterId && filterConditions.activeFilters.reportedBy.includes(requesterId)
+          })
+          
+          if (!requesterId || !filterConditions.activeFilters.reportedBy.includes(requesterId)) return false
         }
         
         // Date range filter
@@ -575,6 +633,7 @@ export default function TicketsPage() {
       priority: [],
       status: [],
       assignee: [],
+      reportedBy: [],
       dateRange: { from: '', to: '' }
     })
     setSearchTerm("")
@@ -1053,20 +1112,56 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <SelectItem value="assignee">Group by: Assignee</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 text-sm bg-background border border-border"
-            onClick={() => setShowFilterDialog(true)}
+          <FilterDialog
+            onApply={(filters) => {
+              setActiveFilters({
+                type: filters.type,
+                priority: filters.priority,
+                status: filters.status,
+                assignee: filters.assignee,
+                reportedBy: filters.reportedBy,
+                dateRange: {
+                  from: filters.dateRange.from?.toISOString().split('T')[0] || '',
+                  to: filters.dateRange.to?.toISOString().split('T')[0] || ''
+                }
+              })
+            }}
+            onReset={() => {
+              setActiveFilters({
+                type: [],
+                priority: [],
+                status: [],
+                assignee: [],
+                reportedBy: [],
+                dateRange: { from: '', to: '' }
+              })
+            }}
+            initialFilters={{
+              type: activeFilters.type,
+              priority: activeFilters.priority,
+              status: activeFilters.status,
+              assignee: activeFilters.assignee,
+              reportedBy: activeFilters.reportedBy,
+              dateRange: {
+                from: activeFilters.dateRange.from ? new Date(activeFilters.dateRange.from) : undefined,
+                to: activeFilters.dateRange.to ? new Date(activeFilters.dateRange.to) : undefined
+              }
+            }}
           >
-            <Filter className="h-3 w-3 mr-2" />
-            Filter
-            {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0) && (
-              <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
-                {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length}
-              </span>
-            )}
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 text-sm bg-background border border-border"
+            >
+              <Filter className="h-3 w-3 mr-2" />
+              Filter
+              {(activeFilters.type.length > 0 || activeFilters.priority.length > 0 || activeFilters.status.length > 0 || activeFilters.assignee.length > 0 || activeFilters.reportedBy.length > 0) && (
+                <span className="ml-1 bg-[#6E72FF] text-white text-xs rounded-full px-1.5 py-0.5">
+                  {activeFilters.type.length + activeFilters.priority.length + activeFilters.status.length + activeFilters.assignee.length + activeFilters.reportedBy.length}
+                </span>
+              )}
+            </Button>
+          </FilterDialog>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -1270,249 +1365,53 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
   )
 
   const renderKanbanView = useCallback(() => {
-    const kanbanColumns = getKanbanColumns()
-    const numColumns = kanbanColumns.length > 0 ? kanbanColumns.length : 1
-    
-    // Create responsive grid classes
-    const getGridClass = (cols: number) => {
-      if (cols <= 2) return 'grid-cols-1 md:grid-cols-2'
-      if (cols <= 3) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-      if (cols <= 4) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-      if (cols <= 5) return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-      return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-    }
-    
-    const gridColsClass = getGridClass(numColumns)
-    
     return (
-      <div className="space-y-6 font-sans">
-        <div className="flex items-center gap-4 py-2 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search items"
-              className="pl-10 h-9 w-48 border-0 bg-muted/50 text-sm"
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
-          </div>
-
-          <Select
-            value={kanbanGroupBy}
-            onValueChange={(value: "type" | "status" | "priority" | "category") => setKanbanGroupBy(value)}
-          >
-            <SelectTrigger className="w-48 h-9 text-sm">
-              <SelectValue placeholder="Group By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="type">Group By: Type</SelectItem>
-              <SelectItem value="status">Group By: Status</SelectItem>
-              <SelectItem value="priority">Group By: Priority</SelectItem>
-              <SelectItem value="category">Group By: Category</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-32 h-9 text-sm">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {ticketTypes.map((type) => (
-                <SelectItem key={type.value} value={type.label}>
-                  {type.label}s
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
-            Date Range
-          </Button>
-
-          <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-            <SelectTrigger className="w-40 h-9 text-sm">
-              <SelectValue placeholder="All Priorities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" size="sm" className="h-9 text-sm bg-transparent font-sans">
-            <Filter className="h-4 w-4 mr-2" />
-            Add filter
-          </Button>
-        </div>
-
-        <div className={`grid ${gridColsClass} gap-6`}>
-          {typesLoading ? (
-            <div className={`col-span-${numColumns} flex items-center justify-center py-8`}>
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-                <span className="text-sm text-muted-foreground">Loading ticket types...</span>
-              </div>
-            </div>
-          ) : (
-            kanbanColumns.map((column) => (
-                <div
-                  key={column.id}
-                  className={`space-y-4 transition-all duration-200 ${
-                    dragOverColumn === column.id ? "bg-[#6E72FF]/5 dark:bg-[#6E72FF]/10 rounded-lg p-2" : ""
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragEnter={(e) => handleDragEnter(e, column.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, column.id)}
-                >
-                  <div
-                    className={`border-t-4 ${column.color} 0 rounded-t-lg ${
-                      dragOverColumn === column.id ? "shadow-lg border-2 border-[#6E72FF]/30 border-dashed" : ""
-                    }`}
-                  >
-                    <div className="p-4 pb-2">
-                      <h3 className="font-medium text-sm mb-2 leading-tight font-sans text-foreground">
-                        {column.title} <span className="text-muted-foreground">{getTicketsByGroup(column.id).length}</span>
-                      </h3>
-                  {dragOverColumn === column.id && draggedTicket && (
-                    <div className="text-xs text-[#6E72FF] font-medium">Drop ticket here</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-3 px-4">
-                {loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={`kanban-skel-${column.id}-${i}`} className="border border-border 0">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-2 mb-3">
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-2/3" />
-                            <Skeleton className="h-3 w-1/2 mt-2" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-5 w-14 rounded-full" />
-                            <Skeleton className="h-5 w-16 rounded-full" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="w-5 h-5 rounded-full" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                          <Skeleton className="h-3 w-8" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  (() => {
-                    const ticketsInGroup = getTicketsByGroup(column.id)
-                    console.log(`🎯 Column ${column.title} (${column.id}) has ${ticketsInGroup.length} tickets:`, ticketsInGroup.map((t: any) => ({ id: t.id, title: t.title, type: t.type })))
-                    return ticketsInGroup
-                  })().map((ticket: any) => (
-                  <Card
-                    key={ticket.id}
-                    className={`hover:shadow-md transition-all cursor-move border border-border 0 ${
-                      draggedTicket?.id === ticket.id ? "opacity-50 scale-95" : ""
-                    }`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, ticket)}
-                    onClick={() => handleTicketClick(ticket)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-2 mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-normal text-sm mb-2 leading-tight font-sans">{ticket.title}</h4>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                          {getStatusText(ticket.status)}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            ticket.priority === "urgent"
-                              ? "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200"
-                              : ticket.priority === "high"
-                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                                : ticket.priority === "medium"
-                                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                                  : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                          }`}
-                        >
-                          {ticket.priority ? ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1) : "Unknown"}
-                        </span>
-                        <div className="w-4 h-4 rounded border border-muted-foreground/30"></div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                            <User className="h-3 w-3" />
-                          </div>
-                          <span className="text-xs text-red-500">{ticket.timestamp}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          {ticket.comments > 0 && (
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{ticket.comments}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full h-8 text-xs text-muted-foreground border-dashed border border-muted-foreground/30 hover:border-muted-foreground/50"
-                  onClick={() => {
-                    console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", column.id)
-                    // Pre-select the ticket type based on the column
-                    setPreSelectedTicketType(column.id)
-                    setSelectedTicket(null) // No ticket = CREATE mode
-                    setShowTicketTray(true)
-                  }}
-                >
-                  <Plus className="h-3 w-3 mr-2" />
-                  Add Ticket
-                </Button>
-              </div>
-            </div>
-          ))
-            )}
-        </div>
-      </div>
+      <EnhancedKanbanBoard
+        tickets={filteredTickets}
+        loading={loading}
+        groupBy={kanbanGroupBy}
+        searchTerm={searchTerm}
+        selectedType={selectedType}
+        selectedPriority={selectedPriority}
+        ticketTypes={ticketTypes}
+        draggedTicket={draggedTicket}
+        dragOverColumn={dragOverColumn}
+        onSearchChange={handleSearchChange}
+        onGroupByChange={setKanbanGroupBy}
+        onTypeFilterChange={setSelectedType}
+        onPriorityFilterChange={setSelectedPriority}
+        onTicketClick={handleTicketClick}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onAddTicket={(columnType) => {
+          console.log("[KANBAN ADD TICKET] Opening drawer for new ticket with type:", columnType)
+          setPreSelectedTicketType(columnType || null)
+          setSelectedTicket(null)
+          setShowTicketTray(true)
+        }}
+      />
     )
-    },
-    [
-      filteredTickets,
-      searchTerm,
-      selectedType,
-      selectedPriority,
-      kanbanGroupBy,
-      dragOverColumn,
-      draggedTicket,
-      typesLoading,
-      getKanbanColumns,
-      handleDragStart,
-      handleDragOver,
-      handleDragEnter,
-      handleDragLeave,
-      handleDrop,
-      getTicketsByGroup,
-      handleTicketClick,
-    ],
-  )
+  }, [
+    filteredTickets,
+    loading,
+    kanbanGroupBy,
+    searchTerm,
+    selectedType,
+    selectedPriority,
+    ticketTypes,
+    draggedTicket,
+    dragOverColumn,
+    handleSearchChange,
+    handleTicketClick,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnter,
+    handleDragLeave,
+    handleDrop,
+  ])
 
   return (
     <PageContent>
@@ -1990,144 +1889,6 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
         </DialogContent>
       </Dialog>
 
-      {/* Filter Dialog */}
-      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Filter My Tickets</DialogTitle>
-          </DialogHeader>
-           <div className="space-y-6">
-             {/* Type Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Type</label>
-              <div className="flex flex-wrap gap-2">
-                {['incident', 'request', 'problem', 'change', 'general_query'].map((type) => (
-                  <Button
-                    key={type}
-                    variant={activeFilters.type.includes(type) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        type: prev.type.includes(type) 
-                          ? prev.type.filter(t => t !== type)
-                          : [...prev.type, type]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Priority Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Priority</label>
-              <div className="flex flex-wrap gap-2">
-                {['low', 'medium', 'high', 'critical', 'urgent'].map((priority) => (
-                  <Button
-                    key={priority}
-                    variant={activeFilters.priority.includes(priority) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        priority: prev.priority.includes(priority) 
-                          ? prev.priority.filter(p => p !== priority)
-                          : [...prev.priority, priority]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Status Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Status</label>
-              <div className="flex flex-wrap gap-2">
-                {['new', 'in_progress', 'pending', 'resolved', 'closed'].map((status) => (
-                  <Button
-                    key={status}
-                    variant={activeFilters.status.includes(status) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        status: prev.status.includes(status) 
-                          ? prev.status.filter(s => s !== status)
-                          : [...prev.status, status]
-                      }))
-                    }}
-                    className="text-xs"
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-             {/* Date Range Filter */}
-             <div>
-               <label className="text-sm font-medium text-foreground mb-2 block">Date Range</label>
-               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                   <label className="text-xs text-muted-foreground mb-1 block">From</label>
-                  <Input
-                    type="date"
-                    value={activeFilters.dateRange.from}
-                    onChange={(e) => setActiveFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, from: e.target.value }
-                    }))}
-                    className="text-sm"
-                  />
-                </div>
-                 <div>
-                   <label className="text-xs text-muted-foreground mb-1 block">To</label>
-                  <Input
-                    type="date"
-                    value={activeFilters.dateRange.to}
-                    onChange={(e) => setActiveFilters(prev => ({
-                      ...prev,
-                      dateRange: { ...prev.dateRange, to: e.target.value }
-                    }))}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setActiveFilters({
-                  type: [],
-                  priority: [],
-                  status: [],
-                  assignee: [],
-                  dateRange: { from: '', to: '' }
-                })
-              }}
-            >
-              Clear All
-            </Button>
-            <Button 
-              onClick={() => setShowFilterDialog(false)}
-              className="bg-[#6a5cff] hover:bg-[#5b4cf2] text-white"
-            >
-              Apply Filters
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Suspense fallback={<LoadingSpinner size="lg" />}>
         <TicketDrawer

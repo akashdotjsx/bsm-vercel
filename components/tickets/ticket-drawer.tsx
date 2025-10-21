@@ -24,6 +24,8 @@ import { useCreateTicketGraphQL } from "@/hooks/queries/use-tickets-graphql-quer
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useUsers } from "@/hooks/use-users"
+import { useCustomColumnsGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
+import { useCustomColumnValuesGraphQL } from "@/hooks/queries/use-custom-columns-graphql"
 import { TeamSelector } from "@/components/users/team-selector"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { format } from "date-fns"
@@ -49,6 +51,7 @@ import {
   Calendar,
   History
 } from "lucide-react"
+import { CustomColumn } from "@/lib/stores/custom-columns-store"
 
 interface TicketDrawerProps {
   isOpen: boolean
@@ -57,9 +60,204 @@ interface TicketDrawerProps {
   preSelectedType?: string | null // Pre-selected ticket type from Kanban column
 }
 
+// Helper function to format custom field values for display
+function formatCustomFieldValue(value: any, type: string): string {
+  if (value === null || value === undefined || value === "") {
+    return ""
+  }
+  
+  switch (type) {
+    case "date":
+      try {
+        return format(new Date(value), "MMM d, y")
+      } catch {
+        return String(value)
+      }
+    case "number":
+      return String(value)
+    case "text":
+    default:
+      return String(value)
+  }
+}
+
+// Custom field input component
+interface CustomFieldInputProps {
+  column: CustomColumn
+  value: any
+  onValueChange: (value: any) => void
+  isSetting: boolean
+}
+
+function CustomFieldInput({ column, value, onValueChange, isSetting }: CustomFieldInputProps) {
+  const [localValue, setLocalValue] = useState(value || "")
+  const [isValid, setIsValid] = useState(true)
+
+  useEffect(() => {
+    setLocalValue(value || "")
+  }, [value])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    
+    // For number type, validate the input
+    if (column.type === "number") {
+      if (newValue === "" || newValue === "-" || /^-?\d*\.?\d*$/.test(newValue)) {
+        setLocalValue(newValue)
+        setIsValid(true)
+      } else {
+        setIsValid(false)
+      }
+      return
+    }
+    
+    // For date type, validate date format
+    if (column.type === "date") {
+      if (newValue === "" || /^\d{4}-\d{2}-\d{2}$/.test(newValue)) {
+        setLocalValue(newValue)
+        setIsValid(true)
+      } else {
+        setIsValid(false)
+      }
+      return
+    }
+    
+    // For text type, allow any input
+    setLocalValue(newValue)
+    setIsValid(true)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // For number type, only allow numbers, decimal point, and minus sign
+    if (column.type === "number") {
+      const char = e.key
+      const currentValue = (e.target as HTMLInputElement).value
+      
+      // Allow: numbers, decimal point, minus sign, backspace, delete, arrow keys, tab
+      if (!/[\d.-]/.test(char) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(char)) {
+        e.preventDefault()
+        return
+      }
+      
+      // Prevent multiple decimal points
+      if (char === '.' && currentValue.includes('.')) {
+        e.preventDefault()
+        return
+      }
+      
+      // Prevent multiple minus signs
+      if (char === '-' && (currentValue.includes('-') || currentValue.length > 0)) {
+        e.preventDefault()
+        return
+      }
+    }
+  }
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      console.log('🔄 CustomFieldInput handleBlur:', {
+        columnTitle: column.title,
+        columnType: column.type,
+        localValue,
+        currentValue: value
+      })
+      
+      // Convert value to appropriate type before saving
+      let processedValue = localValue
+      
+      if (column.type === "number") {
+        if (localValue === "" || localValue === "-") {
+          processedValue = null
+        } else if (!isNaN(Number(localValue)) && localValue !== "") {
+          processedValue = Number(localValue)
+        } else {
+          console.log('❌ Invalid number, not saving:', localValue)
+          return // Don't save invalid numbers
+        }
+      } else if (column.type === "date") {
+        if (localValue === "") {
+          processedValue = null
+        } else {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+          if (!dateRegex.test(localValue)) {
+            console.log('❌ Invalid date format, not saving:', localValue)
+            return // Don't save invalid dates
+          }
+          processedValue = localValue
+        }
+      } else if (column.type === "text") {
+        processedValue = localValue || ""
+      }
+      
+      console.log('💾 Calling onValueChange with:', {
+        original: localValue,
+        processed: processedValue,
+        type: typeof processedValue
+      })
+      
+      onValueChange(processedValue)
+    }
+  }
+
+  switch (column.type) {
+    case "text":
+      return (
+        <Input
+          placeholder={`Enter ${column.title.toLowerCase()}...`}
+          className="h-8 text-[11px]"
+          value={localValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          disabled={isSetting}
+        />
+      )
+
+    case "number":
+      return (
+        <Input
+          type="number"
+          placeholder="0"
+          className={`h-8 text-[11px] ${!isValid ? 'ring-1 ring-red-500 focus:ring-red-500' : ''}`}
+          value={localValue}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          onBlur={handleBlur}
+          step="any"
+          disabled={isSetting}
+        />
+      )
+
+    case "date":
+      return (
+        <Input
+          type="date"
+          className={`h-8 text-[11px] ${!isValid ? 'ring-1 ring-red-500 focus:ring-red-500' : ''}`}
+          value={localValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          disabled={isSetting}
+        />
+      )
+
+    default:
+      return (
+        <span className="text-[11px] text-muted-foreground">
+          Unknown type
+        </span>
+      )
+  }
+}
+
 export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType }: TicketDrawerProps) {
   const ticketId = ticket?.dbId || ""
   const isCreateMode = !ticketId // CREATE mode when no ticket ID
+  
+  // Debug logging
+  console.log('🎫 TicketDrawer props:', {
+    ticket,
+    ticketId,
+    isCreateMode
+  })
   
   // Auth context for organization and user
   const { user, organization } = useAuth()
@@ -77,11 +275,67 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   
   const { categories: supabaseCategories } = useServiceCategories()
   const { users, teams } = useUsers()
+  const { categories: serviceCategories } = useServiceCategories()
+  
+  // Custom columns hooks
+  const { organizationId } = useAuth()
+  const { columns: customColumns, isLoading: customColumnsLoading, error: customColumnsError } = useCustomColumnsGraphQL(organizationId || '')
+  const { customFields, setValue, isSetting } = useCustomColumnValuesGraphQL(ticketId)
   
   // Extract nested data from ticket
   const comments = dbTicket?.comments || []
   const attachments = dbTicket?.attachments || []
   const checklist = dbTicket?.checklist || []
+  const history = (dbTicket as any)?.history || []
+  const effectiveHistory = history.length ? history : (
+    dbTicket ? [{
+      id: `created-${dbTicket.id}`,
+      field_name: 'created',
+      old_value: null,
+      new_value: null,
+      change_reason: 'Created ticket',
+      created_at: dbTicket.created_at,
+      changed_by: dbTicket.requester || null,
+    }] : []
+  )
+
+  // Helpers to format history details nicely
+  const profileNameById = (id?: string) => {
+    if (!id) return null
+    const u = users.find((x: any) => x.id === id)
+    return u?.display_name || u?.email || null
+  }
+  const categoryNameById = (id?: string) => {
+    if (!id) return null
+    const c = serviceCategories.find((x: any) => x.id === id)
+    return c?.name || null
+  }
+  const formatValueForHistory = (field: string, raw: any): string => {
+    if (raw === null || raw === undefined) return ""
+    let value: any = raw
+    if (typeof raw === "string") {
+      const s = raw.trim()
+      if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("{") && s.endsWith("}"))) {
+        try { value = JSON.parse(s) } catch { value = raw }
+      }
+    }
+    if (field === "assignee_id") {
+      return profileNameById(typeof value === "string" ? value : String(value)) || String(raw)
+    }
+    if (field === "assignee_ids") {
+      const arr = Array.isArray(value) ? value : []
+      const names = arr.map((id: string) => profileNameById(id) || id)
+      return names.join(", ") || String(raw)
+    }
+    if (field === "category") return categoryNameById(String(value)) || String(raw)
+    if (field === "status" || field === "priority" || field === "type") {
+      return String(value).replace(/_/g, " ").toLowerCase().replace(/^(.|\s)(.*)$/,(m)=>m.toUpperCase())
+    }
+    if (Array.isArray(value) || typeof value === "object") {
+      try { return JSON.stringify(value) } catch { return String(raw) }
+    }
+    return String(value)
+  }
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -96,6 +350,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   // Edit mode toggle - for existing tickets, start in view mode
   const [isEditMode, setIsEditMode] = useState(isCreateMode)
   const [saving, setSaving] = useState(false)
+  
+  // Debug custom fields
+  console.log('🔧 Custom fields debug:', {
+    organizationId,
+    ticketId,
+    customColumns: customColumns.length,
+    customColumnsLoading,
+    customColumnsError,
+    customFields,
+    isSetting,
+    isEditMode,
+    isCreateMode
+  })
   
   // State for comments
   const [newComment, setNewComment] = useState("")
@@ -293,7 +560,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         })
         
         console.log("[UPDATE] Cleaned data:", cleanedData)
-        const updatedTicket = await updateTicketMutation.mutateAsync({ id: ticketId, updates: cleanedData })
+        const updatedTicket = await updateTicketMutation.mutateAsync({ id: ticketId, updates: cleanedData, actorId: user?.id })
         
         // Update form with the returned data to stay in sync
         // Cache invalidation already happened in the mutation hook
@@ -359,7 +626,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     try {
       await updateCommentMutation.mutateAsync({
         commentId: editingCommentId,
-        content: editCommentContent.trim()
+        content: editCommentContent.trim(),
+        actorId: user?.id
       })
       setEditingCommentId(null)
       setEditCommentContent("")
@@ -375,12 +643,21 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     setEditCommentContent("")
   }
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return
-    
+  const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId)
+    setShowDeleteCommentDialog(true)
+  }
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return
     try {
-      await deleteCommentMutation.mutateAsync({ commentId })
+      await deleteCommentMutation.mutateAsync({ commentId: commentToDelete, actorId: user?.id })
       toast.success("Comment deleted successfully!")
+      setShowDeleteCommentDialog(false)
+      setCommentToDelete(null)
     } catch (error) {
       console.error("Error deleting comment:", error)
       toast.error("Failed to delete comment")
@@ -411,7 +688,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
     try {
       await updateChecklistItemMutation.mutateAsync({
         itemId,
-        updates: { completed }
+        updates: { completed },
+        actorId: user?.id
       })
     } catch (error) {
       console.error("Error updating checklist item:", error)
@@ -427,7 +705,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
   const confirmDeleteChecklistItem = async () => {
     if (!checklistItemToDelete) return
     try {
-      await deleteChecklistItemMutation.mutateAsync(checklistItemToDelete)
+      await deleteChecklistItemMutation.mutateAsync({ itemId: checklistItemToDelete, actorId: user?.id })
       toast.success("Checklist item deleted", "The item has been removed")
       setShowDeleteChecklistDialog(false)
       setChecklistItemToDelete(null)
@@ -462,6 +740,14 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         >
           {/* Header */}
           <div className="p-4 md:p-6 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
+            <DeleteConfirmationDialog
+              open={showDeleteCommentDialog}
+              onOpenChange={setShowDeleteCommentDialog}
+              onConfirm={confirmDeleteComment}
+              title="Delete Comment"
+              description="Do you want to delete this comment?"
+              isDeleting={deleteCommentMutation.isPending}
+            />
             <div className="flex-1 min-w-0 mr-4">
               <h2 className="text-sm md:text-[13px] font-semibold text-foreground dark:text-foreground mb-1 truncate">
                 {isCreateMode ? "Create New Ticket" : (dbTicket?.title || ticket?.title || "Loading...")}
@@ -616,10 +902,7 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                   value="history"
                   className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md bg-transparent text-[11px] font-medium px-4 py-2 transition-all"
                 >
-                  History
-                  <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                    5
-                  </Badge>
+                  {`History${effectiveHistory.length ? ` (${effectiveHistory.length})` : ""}`}
                 </TabsTrigger>
               </TabsList>
               </div>
@@ -866,6 +1149,59 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                         </div>
                       )}
                     </div>
+
+                    {/* Custom Fields Section */}
+                    {customColumnsLoading ? (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="text-[11px] text-muted-foreground">Loading custom fields...</div>
+                      </div>
+                    ) : customColumnsError ? (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="text-[11px] text-red-500">Error loading custom fields: {customColumnsError.message}</div>
+                      </div>
+                    ) : customColumns.length > 0 ? (
+                      <div className="space-y-4 pt-4 border-t border-border">
+                        <h3 className="text-[11px] font-semibold text-foreground dark:text-foreground">Custom Fields</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {customColumns
+                            .filter(column => column.visible !== false)
+                            .map((column) => (
+                            <div key={column.id} className="space-y-2">
+                              <label className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                                {column.title}
+                              </label>
+                              {isEditMode ? (
+                                <CustomFieldInput
+                                  column={column}
+                                  value={customFields[column.title] || ""}
+                                  onValueChange={async (value) => {
+                                    console.log('🎯 CustomField onValueChange called:', {
+                                      fieldName: column.title,
+                                      value,
+                                      type: typeof value,
+                                      ticketId
+                                    })
+                                    try {
+                                      const result = await setValue({ fieldName: column.title, value })
+                                      console.log('✅ Custom field saved successfully:', result)
+                                    } catch (error) {
+                                      console.error('❌ Error saving custom field:', error)
+                                    }
+                                  }}
+                                  isSetting={isSetting}
+                                />
+                              ) : (
+                                <div className="text-[11px] p-2 border border-border rounded bg-muted/30 dark:bg-muted/30 text-foreground dark:text-foreground">
+                                  {formatCustomFieldValue(customFields[column.title], column.type) || "—"}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     {/* In CREATE mode, surface Checklist, Comment, and Attachments inline */}
                     {isCreateMode && (
@@ -1267,52 +1603,43 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[11px] font-semibold text-foreground">History</h3>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
-                      S
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">System</span>
-                          <span className="text-[10px] text-muted-foreground">45 minutes ago</span>
+                <div className="space-y-2.5">
+                  {effectiveHistory.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-[11px]">No history yet</div>
+                  ) : (
+                    effectiveHistory.map((h: any) => {
+                      const name = h.changed_by?.display_name || h.changed_by?.email || "System"
+                      const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
+                      const summary = h.field_name === 'created'
+                        ? `${name} created the ticket`
+                        : h.change_reason && h.field_name === 'checklist'
+                        ? `${name} ${h.change_reason}`
+                        : (h.field_name ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}` : `${name} made an update`)
+                      const details = h.field_name === 'created'
+                        ? ''
+                        : h.field_name === 'checklist'
+                        ? ''
+                        : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
+                      return (
+                        <div key={h.id} className="flex items-center gap-2.5 p-[15px] rounded-[5px] bg-muted/40 dark:bg-muted/20">
+                          <div className="w-[33px] h-[33px] rounded-full overflow-hidden bg-muted flex items-center justify-center text-[10px] font-medium shrink-0">
+                            {h.changed_by?.avatar_url ? (
+                              <img src={h.changed_by.avatar_url} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{(h.changed_by?.first_name?.[0] || name?.[0] || 'S')}{h.changed_by?.last_name?.[0] || ''}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-[5px]">
+                            <span className="text-[12px] leading-[14px] text-foreground/80">{when}</span>
+                            <span className="text-[11px] md:text-[14px] leading-none font-semibold text-foreground">{summary}</span>
+                            {details && (
+                              <span className="text-[12px] text-foreground">{details}</span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-[10px] font-medium shrink-0">
-                      JS
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-[#6E72FF]/10 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">John Smith</span>
-                          <span className="text-[10px] text-muted-foreground">1 hour ago</span>
-                        </div>
-                        <p className="text-[11px] text-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px] font-medium shrink-0">
-                      RJ
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-medium text-foreground">Richard Jeffries</span>
-                          <span className="text-[10px] text-muted-foreground">2 hours ago</span>
-                        </div>
-                        <p className="text-[11px] text-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
-                      </div>
-                    </div>
-                  </div>
+                      )
+                    })
+                  )}
                 </div>
               </TabsContent>
               </div>

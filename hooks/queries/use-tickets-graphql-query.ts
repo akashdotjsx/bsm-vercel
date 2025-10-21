@@ -169,6 +169,15 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   })
 
   console.log("✅ GraphQL response processed:", tickets.length, "tickets")
+  console.log("🔍 Sample processed ticket:", tickets[0] ? {
+    id: tickets[0].id,
+    title: tickets[0].title,
+    assignee_id: tickets[0].assignee_id,
+    assignee_ids: tickets[0].assignee_ids,
+    requester_id: tickets[0].requester_id,
+    assignee: tickets[0].assignee,
+    requester: tickets[0].requester
+  } : null)
 
   return {
     tickets,

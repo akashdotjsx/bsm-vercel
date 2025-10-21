@@ -553,7 +553,7 @@ export function ServiceCatalog() {
           placeholder="Search categories and services..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-muted/50 border-gray-200 rounded-lg"
+          className="pl-10 bg-muted/50 border-border rounded-lg"
         />
       </div>
 
@@ -771,7 +771,7 @@ export function ServiceCatalog() {
                   {category.services.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {category.services.map((service, index) => (
-                        <div key={index} className="p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-border transition-all cursor-pointer 0">
+                        <div key={index} className="p-4 border border-border rounded-lg hover:shadow-md hover:border-border transition-all cursor-pointer">
                           <div className="space-y-3">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

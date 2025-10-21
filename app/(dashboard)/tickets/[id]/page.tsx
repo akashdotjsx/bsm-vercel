@@ -48,9 +48,11 @@ import {
 } from "@/hooks/queries/use-ticket-details-graphql"
 import { UserSelector } from "@/components/users/user-selector"
 import { useUsers } from "@/hooks/use-users"
+import { useServiceCategories } from "@/lib/hooks/use-service-categories"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { toast } from "@/lib/toast"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 
 interface TicketDetailPageProps {
   params: {
@@ -86,12 +88,69 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   const updateChecklistItemMutation = useUpdateChecklistItemGraphQL(params.id)
   const deleteChecklistItemMutation = useDeleteChecklistItemGraphQL(params.id)
   const { users, loading: usersLoading } = useUsers()
+  const { categories: serviceCategories } = useServiceCategories()
   const { user: currentUser } = useAuth()
   
   // Extract nested data from ticket
   const comments = ticket?.comments || []
   const attachments = ticket?.attachments || []
   const checklist = ticket?.checklist || []
+  const history = (ticket as any)?.history || []
+  const effectiveHistory = history.length ? history : [
+    {
+      id: `created-${ticket?.id}`,
+      field_name: 'created',
+      old_value: null,
+      new_value: null,
+      change_reason: 'Created ticket',
+      created_at: ticket?.created_at,
+      changed_by: ticket?.requester || null,
+    }
+  ]
+
+  // Helpers to format history values into human-friendly labels
+  const profileNameById = (id?: string) => {
+    if (!id) return null
+    const u = users.find((x: any) => x.id === id)
+    return u?.display_name || u?.email || null
+  }
+  const categoryNameById = (id?: string) => {
+    if (!id) return null
+    const c = serviceCategories.find((x: any) => x.id === id)
+    return c?.name || null
+  }
+  const formatValueForHistory = (field: string, raw: any): string => {
+    if (raw === null || raw === undefined) return ""
+    // Try to parse JSON arrays/objects represented as strings
+    let value: any = raw
+    if (typeof raw === "string") {
+      const s = raw.trim()
+      if ((s.startsWith("[") && s.endsWith("]")) || (s.startsWith("{") && s.endsWith("}"))) {
+        try { value = JSON.parse(s) } catch { value = raw }
+      }
+    }
+
+    // Map well-known fields
+    if (field === "assignee_id") {
+      return profileNameById(typeof value === "string" ? value : String(value)) || String(raw)
+    }
+    if (field === "assignee_ids") {
+      const arr = Array.isArray(value) ? value : []
+      const names = arr.map((id: string) => profileNameById(id) || id)
+      return names.join(", ") || String(raw)
+    }
+    if (field === "category") {
+      return categoryNameById(String(value)) || String(raw)
+    }
+    if (field === "status" || field === "priority" || field === "type") {
+      return String(value).replace(/_/g, " ").toLowerCase().replace(/^(.|\s)(.*)$/,(m)=>m.toUpperCase())
+    }
+    // Fallback: stringify
+    if (Array.isArray(value) || typeof value === "object") {
+      try { return JSON.stringify(value) } catch { return String(raw) }
+    }
+    return String(value)
+  }
 
   // Initialize edit values when ticket loads
   useEffect(() => {
@@ -116,7 +175,8 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
           status: editStatus as any,
           priority: editPriority as any,
           assignee_id: editAssignee || undefined,
-        }
+        },
+        actorId: currentUser?.id
       })
       setIsEditing(false)
       toast.success("Ticket updated successfully!")
@@ -153,7 +213,8 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
     try {
       await updateCommentMutation.mutateAsync({
         commentId: editingCommentId,
-        content: editCommentContent.trim()
+        content: editCommentContent.trim(),
+        actorId: currentUser?.id
       })
       setEditingCommentId(null)
       setEditCommentContent("")
@@ -170,11 +231,20 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   }
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return
-    
+    setCommentToDelete(commentId)
+    setShowDeleteCommentDialog(true)
+  }
+
+  const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return
     try {
-      await deleteCommentMutation.mutateAsync({ commentId })
+      await deleteCommentMutation.mutateAsync({ commentId: commentToDelete, actorId: currentUser?.id })
       toast.success("Comment deleted successfully!")
+      setShowDeleteCommentDialog(false)
+      setCommentToDelete(null)
     } catch (error) {
       console.error("Error deleting comment:", error)
       toast.error("Failed to delete comment")
@@ -311,6 +381,14 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
 
   return (
     <PageContent breadcrumb={[{ label: "Tickets", href: "/tickets" }, { label: `#${ticket.ticket_number}` }]}>
+      <DeleteConfirmationDialog
+        open={showDeleteCommentDialog}
+        onOpenChange={setShowDeleteCommentDialog}
+        onConfirm={confirmDeleteComment}
+        title="Delete Comment"
+        description="Do you want to delete this comment?"
+        isDeleting={deleteCommentMutation.isPending}
+      />
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -408,10 +486,7 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                     value="history"
                     className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-[13px]"
                   >
-                    History
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      5
-                    </Badge>
+                    {`History${effectiveHistory.length ? ` (${effectiveHistory.length})` : ""}`}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -913,53 +988,43 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[11px] font-semibold">History</h3>
                 </div>
-                
-                <div className="space-y-3">
-                  {/* Sample history entries - these would come from ticket_history table */}
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-                      S
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">System</span>
-                          <span className="text-xs text-muted-foreground">45 minutes ago</span>
+                <div className="space-y-2.5">
+                  {effectiveHistory.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">No history yet</div>
+                  ) : (
+                    effectiveHistory.map((h: any) => {
+                      const name = h.changed_by?.display_name || h.changed_by?.email || "System"
+                      const when = format(new Date(h.created_at), "dd MMM yyyy 'at' h:mm a")
+                      const summary = h.field_name === 'created'
+                        ? `${name} created the ticket`
+                        : h.change_reason && h.field_name === 'checklist'
+                        ? `${name} ${h.change_reason}`
+                        : (h.field_name ? `${name} ${h.old_value !== undefined ? 'changed' : 'updated'} the ${h.field_name}` : `${name} made an update`)
+                      const details = h.field_name === 'created'
+                        ? ''
+                        : h.field_name === 'checklist'
+                        ? ''
+                        : (h.field_name ? `${h.old_value ? `${formatValueForHistory(h.field_name, h.old_value)} → ` : ''}${formatValueForHistory(h.field_name, h.new_value)}` : h.change_reason || '')
+                      return (
+                        <div key={h.id} className="flex items-center gap-2.5 p-[15px] rounded-[5px] bg-muted/40 dark:bg-muted/20">
+                          <div className="w-[33px] h-[33px] rounded-full overflow-hidden bg-muted flex items-center justify-center text-[12px] font-medium shrink-0">
+                            {h.changed_by?.avatar_url ? (
+                              <img src={h.changed_by.avatar_url} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{(h.changed_by?.first_name?.[0] || name?.[0] || 'S')}{h.changed_by?.last_name?.[0] || ''}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-[5px]">
+                            <span className="text-[12px] leading-[14px] text-foreground/80">{when}</span>
+                            <span className="text-[14px] leading-none font-semibold text-foreground">{summary}</span>
+                            {details && (
+                              <span className="text-[12px] text-foreground">{details}</span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">Status changed from 'New' to 'In Progress'</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-                      JS
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">John Smith</span>
-                          <span className="text-xs text-muted-foreground">1 hour ago</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Thanks for reporting this. I've reproduced the issue and confirmed it's a stored XSS vulnerability. Escalating to high priority.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-                      RJ
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-green-50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">Richard Jeffries</span>
-                          <span className="text-xs text-muted-foreground">2 hours ago</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">I've identified this XSS vulnerability in the user profile section. It allows malicious scripts to be executed when viewing other users' profiles.</p>
-                      </div>
-                    </div>
-                  </div>
+                      )
+                    })
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

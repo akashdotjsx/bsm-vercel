@@ -172,6 +172,27 @@ export const GET_TICKET_BY_ID_QUERY = gql`
               }
             }
           }
+          history: ticket_historyCollection(filter: { ticket_id: { eq: $id } }, orderBy: [{ created_at: DescNullsLast }], first: 500) {
+            edges {
+              node {
+                id
+                ticket_id
+                field_name
+                old_value
+                new_value
+                change_reason
+                created_at
+                changed_by: profiles {
+                  id
+                  first_name
+                  last_name
+                  display_name
+                  email
+                  avatar_url
+                }
+              }
+            }
+          }
         }
       }
     }

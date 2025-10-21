@@ -1,6 +1,6 @@
 "use client"
 
-import { Sun, Moon, HelpCircle, Sparkles, Timer, Bell } from "lucide-react"
+import { Moon, HelpCircle, Sparkles, Timer, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -162,8 +162,11 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="h-7 w-7 p-0"
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" style={{ color: theme === 'dark' ? '#d1d5db' : '#000000' }} />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" style={{ color: theme === 'dark' ? '#d1d5db' : '#000000' }} />
+              {theme !== 'dark' ? (
+                <img src="/light.svg" alt="Light mode" className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" style={{ color: '#d1d5db' }} />
+              )}
               <span className="sr-only">Toggle theme</span>
             </Button>
           </TooltipTrigger>
