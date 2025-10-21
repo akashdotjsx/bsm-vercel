@@ -18,11 +18,49 @@ export default function AuthConfirm() {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // Get the hash fragment from the URL (contains tokens)
+        console.log('🔍 Auth confirm page loaded')
+        console.log('🔍 Full URL:', window.location.href)
+        
+        // First, check if Supabase already set a session via cookies
+        // This is the most common scenario after email verification
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        
+        console.log('🔍 Session check:', {
+          hasSession: !!sessionData?.session,
+          hasUser: !!sessionData?.session?.user,
+          email: sessionData?.session?.user?.email,
+          error: sessionError?.message
+        })
+
+        if (sessionData?.session?.user) {
+          // Session already exists (Supabase set it via cookies)
+          console.log('✅ Session found via cookies:', sessionData.session.user.email)
+          setStatus('success')
+          setMessage(`Welcome, ${sessionData.session.user.email}!`)
+
+          // Check if this is an invite flow
+          if (sessionData.session.user.user_metadata?.invited) {
+            console.log('🔄 Invite flow detected, redirecting to set password')
+            setTimeout(() => {
+              router.push('/auth/set-password')
+            }, 1500)
+          } else {
+            console.log('� Regular login, redirecting to dashboard')
+            setTimeout(() => {
+              router.push('/dashboard')
+            }, 1500)
+          }
+          return
+        }
+
+        // If no session in cookies, try to get tokens from hash fragment
         const hashFragment = window.location.hash.substring(1)
+        console.log('🔍 Hash fragment:', hashFragment || '(empty)')
         
         if (!hashFragment) {
-          throw new Error('No authentication data found')
+          // No hash fragment and no session - something went wrong
+          console.error('❌ No session in cookies and no hash fragment in URL')
+          throw new Error('No authentication data found. Please click the link in your invitation email again.')
         }
 
         // Parse the hash fragment
@@ -31,33 +69,41 @@ export default function AuthConfirm() {
         const refreshToken = params.get('refresh_token')
         const type = params.get('type')
 
+        console.log('🔍 Hash params:', {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          type
+        })
+
         if (!accessToken) {
-          throw new Error('No access token found')
+          throw new Error('No access token found in URL')
         }
 
-        // Set the session using the tokens
+        // Set the session using the tokens from hash
+        console.log('🔄 Setting session from hash tokens...')
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ''
         })
 
         if (error) {
+          console.error('❌ Error setting session:', error)
           throw error
         }
 
         if (data?.user) {
-          console.log('User authenticated:', data.user.email)
+          console.log('✅ Session set successfully:', data.user.email)
           setStatus('success')
           setMessage(`Welcome, ${data.user.email}!`)
 
           // Check if this is an invite flow
           if (type === 'invite' || data.user.user_metadata?.invited) {
-            // Redirect to password setup
+            console.log('🔄 Invite flow detected, redirecting to set password')
             setTimeout(() => {
               router.push('/auth/set-password')
             }, 1500)
           } else {
-            // Regular login - redirect to dashboard
+            console.log('🔄 Regular login, redirecting to dashboard')
             setTimeout(() => {
               router.push('/dashboard')
             }, 1500)

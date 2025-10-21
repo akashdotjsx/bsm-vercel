@@ -96,8 +96,12 @@ export async function POST(request: NextRequest) {
     
     try {
       // Use inviteUserByEmail - this creates the user AND sends the invite email in one step
+      // Use /auth/confirm because Supabase sends tokens as hash fragments, not query params
+      const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
+      console.log('🔗 Sending invitation with redirect URL:', redirectUrl)
+      
       const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/callback`,
+        redirectTo: redirectUrl,
         data: {
           first_name,
           last_name,
@@ -149,8 +153,8 @@ export async function POST(request: NextRequest) {
       inviteResult = null // No invite email was sent
     }
 
-    // Ensure we have the user ID - handle different response structures
-    const userId = authUser?.user?.id || authUser?.id
+    // Ensure we have the user ID
+    const userId = authUser?.user?.id
     if (!userId) {
       console.error('No user ID found in authUser:' , authUser)
       return NextResponse.json(
