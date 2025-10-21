@@ -259,6 +259,10 @@ export default function UsersPage() {
   }
   
   const createTeam = async (teamData: any) => {
+    // Add organization_id if available and not already set
+    if (!teamData.organization_id && profile?.organization_id) {
+      teamData.organization_id = profile.organization_id
+    }
     const result = await createTeamGQL(teamData)
     refetchTeams()
     return result
@@ -424,11 +428,41 @@ export default function UsersPage() {
 
   const handleAddTeam = async () => {
     try {
+      // Check if user has permission to create teams
+      if (!profile?.role || !['admin', 'manager'].includes(profile.role)) {
+        toast({
+          title: "Permission Denied",
+          description: "Only administrators and managers can create teams",
+          variant: "destructive"
+        })
+        return
+      }
+      
       await createTeam(newTeam)
       setNewTeam({ name: "", lead_id: "", description: "", department: "" })
       setShowAddTeam(false)
+      toast({
+        title: "Team created successfully",
+        description: `Team "${newTeam.name}" has been created`,
+      })
     } catch (error) {
       console.error('Error creating team:', error)
+      let errorMessage = 'Failed to create team'
+      
+      // Handle specific GraphQL/RLS errors
+      if (error instanceof Error) {
+        if (error.message.includes('row-level security policy')) {
+          errorMessage = 'You do not have permission to create teams. Only administrators and managers can create teams.'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      toast({
+        title: "Error creating team",
+        description: errorMessage,
+        variant: "destructive"
+      })
     }
   }
 
@@ -566,10 +600,20 @@ export default function UsersPage() {
   const handleAddMemberToTeam = async (userId: string, role: string = 'member') => {
     if (!selectedTeamForMembers) return
     try {
+      const user = users.find(u => u.id === userId)
       await addUserToTeam(selectedTeamForMembers.id, userId, role)
       setShowAddMember(false)
+      toast({
+        title: "Member added successfully",
+        description: `${user?.display_name || user?.email} has been added to ${selectedTeamForMembers.name}`,
+      })
     } catch (error) {
       console.error('Error adding member to team:', error)
+      toast({
+        title: "Error adding member",
+        description: error instanceof Error ? error.message : 'Failed to add member to team',
+        variant: "destructive"
+      })
     }
   }
 
@@ -933,8 +977,10 @@ export default function UsersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teams.map((team) => {
                 const teamData = team as any
-                const leadUser = teamData.lead_id ? users.find(u => u.id === teamData.lead_id) : null
-                const teamMembers = teamData.team_members || []
+                // Use the nested lead object from GraphQL, not lead_id lookup
+                const leadUser = teamData.lead || null
+                // Get members from the nested GraphQL structure
+                const teamMembers = teamData.members?.edges?.map((edge: any) => edge.node) || []
                 
                 return (
                   <div
@@ -962,7 +1008,7 @@ export default function UsersPage() {
                           <div className="flex flex-col">
                             <span className="text-muted-foreground" style={{ fontFamily: 'Inter', fontWeight: '400', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>Lead:</span>
                             <span className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '14px', lineHeight: '1.2102272851126534em', textAlign: 'left' }}>
-                              {leadUser ? (leadUser.display_name || `${leadUser.first_name || ''} ${leadUser.last_name || ''}`.trim() || leadUser.email) : 'No lead assigned'}
+                              {leadUser ? (leadUser.display_name || leadUser.email) : 'No lead assigned'}
                             </span>
                           </div>
                         </div>
@@ -972,10 +1018,42 @@ export default function UsersPage() {
                           <span className="text-foreground" style={{ fontFamily: 'Inter', fontWeight: '500', fontSize: '12px', lineHeight: '1.2102272510528564em', textAlign: 'center' }}>
                             {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
                           </span>
-                              </div>
-                          </div>
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManageMembers(team)}
+                          className="text-[11px] px-3 py-1"
+                        >
+                          Manage Members
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditTeam(team)}
+                            className="text-[11px] px-2 py-1"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteTeam(team.id)}
+                            className="text-[11px] px-2 py-1 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
                         </div>
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>
@@ -1283,60 +1361,72 @@ export default function UsersPage() {
               {/* Add Member Section */}
               <div className="border-b pb-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-medium">Team Members ({(selectedTeamForMembers as any)?.team_members?.length || 0})</h3>
+                  <h3 className="text-sm font-medium">Team Members ({(selectedTeamForMembers as any)?.members?.edges?.length || 0})</h3>
                   <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
                     <DialogTrigger asChild>
-                      <Button size="sm" className="text-[12px]">
-                        <UserPlus className="mr-2 h-3 w-3" />
+                      <Button className="bg-[#6E72FF] hover:bg-[#5b4cf2] text-white text-[12px] px-4 py-2 rounded-md">
+                        <UserPlus className="mr-2 h-4 w-4" />
                         Add Member
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-lg">
                       <DialogHeader>
-                        <DialogTitle className="text-[13px]">Add Team Member</DialogTitle>
-                        <DialogDescription className="text-[12px]">
-                          Select a user to add to {selectedTeamForMembers?.name}
+                        <DialogTitle className="text-[15px] font-semibold">Add Team Member</DialogTitle>
+                        <DialogDescription className="text-[13px] text-muted-foreground">
+                          Add a new member to <span className="font-medium text-foreground">{selectedTeamForMembers?.name}</span> team
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label className="text-[12px] font-medium">Select User</Label>
-                          <Select value={selectedUserToAdd} onValueChange={setSelectedUserToAdd}>
-                            <SelectTrigger className="text-[12px]">
-                              <SelectValue placeholder="Choose a user to add" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {users
-                                .filter(user => user.is_active && 
-                                  !((selectedTeamForMembers as any)?.team_members?.some((member: any) => member.user.id === user.id)))
-                                .map((user) => (
-                                  <SelectItem key={user.id} value={user.id} className="text-[12px]">
-                                    {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-medium">Select User</Label>
+                          <UserSelector
+                            users={users.filter(user => user.is_active && !((selectedTeamForMembers as any)?.members?.edges?.some((edge: any) => edge.node.user.id === user.id)))}
+                            value={selectedUserToAdd}
+                            onValueChange={setSelectedUserToAdd}
+                            placeholder="Search and select a user..."
+                            className="w-full"
+                            showOnlyActive={true}
+                          />
                         </div>
-                        <div>
-                          <Label className="text-[12px] font-medium">Role</Label>
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-medium">Team Role</Label>
                           <Select value={selectedUserRole} onValueChange={setSelectedUserRole}>
-                            <SelectTrigger className="text-[12px]">
-                              <SelectValue />
+                            <SelectTrigger className="text-[13px] h-10">
+                              <SelectValue placeholder="Select role for team member" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="member" className="text-[12px]">Member</SelectItem>
-                              <SelectItem value="lead" className="text-[12px]">Lead</SelectItem>
-                              <SelectItem value="admin" className="text-[12px]">Admin</SelectItem>
+                              <SelectItem value="member" className="text-[13px]">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Member</span>
+                                  <span className="text-xs text-muted-foreground">Standard team member</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="lead" className="text-[13px]">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Team Lead</span>
+                                  <span className="text-xs text-muted-foreground">Can manage team members</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin" className="text-[13px]">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Admin</span>
+                                  <span className="text-xs text-muted-foreground">Full team administration</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => {
-                          setShowAddMember(false)
-                          setSelectedUserToAdd('')
-                          setSelectedUserRole('member')
-                        }} className="text-[12px]">
+                      <DialogFooter className="gap-2 pt-6">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setShowAddMember(false)
+                            setSelectedUserToAdd('')
+                            setSelectedUserRole('member')
+                          }} 
+                          className="text-[13px] px-4"
+                        >
                           Cancel
                         </Button>
                         <Button 
@@ -1348,9 +1438,10 @@ export default function UsersPage() {
                             }
                           }}
                           disabled={!selectedUserToAdd}
-                          className="text-[12px]"
+                          className="bg-[#6E72FF] hover:bg-[#5b4cf2] text-white text-[13px] px-6"
                         >
-                          Add Member
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Add to Team
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1360,7 +1451,7 @@ export default function UsersPage() {
 
               {/* Current Members List */}
               <div className="space-y-2">
-                {(selectedTeamForMembers as any)?.team_members?.length === 0 ? (
+                {((selectedTeamForMembers as any)?.members?.edges?.length || 0) === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="mx-auto h-12 w-12 mb-2 opacity-50" />
                     <p className="text-[13px]">No team members yet</p>
@@ -1368,7 +1459,9 @@ export default function UsersPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {((selectedTeamForMembers as any)?.team_members || []).map((member: any) => (
+                    {((selectedTeamForMembers as any)?.members?.edges || []).map((edge: any) => {
+                      const member = edge.node
+                      return (
                       <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="h-8 w-8 bg-muted rounded-full flex items-center justify-center">
@@ -1408,7 +1501,8 @@ export default function UsersPage() {
                           </Button>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
