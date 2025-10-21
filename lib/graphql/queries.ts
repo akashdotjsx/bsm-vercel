@@ -47,6 +47,22 @@ export const GET_TICKETS_QUERY = gql`
           tags
           created_at
           updated_at
+          requester: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+            avatar_url
+          }
+          assignee: profiles {
+            id
+            first_name
+            last_name
+            display_name
+            email
+            avatar_url
+          }
         }
       }
       pageInfo {

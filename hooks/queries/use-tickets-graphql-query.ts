@@ -41,7 +41,25 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
     
     let query = supabase
       .from('tickets')
-      .select('*')
+      .select(`
+        *,
+        requester:profiles!requester_id(
+          id,
+          first_name,
+          last_name,
+          display_name,
+          email,
+          avatar_url
+        ),
+        assignee:profiles!assignee_id(
+          id,
+          first_name,
+          last_name,
+          display_name,
+          email,
+          avatar_url
+        )
+      `)
       .order('created_at', { ascending: false })
     
     // Apply filters
@@ -79,9 +97,9 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
     // Transform tickets to match expected format
     const transformedTickets = tickets?.map((ticket: any) => ({
       ...ticket,
-      requester: null, // Will be populated separately if needed
-      assignee: null,  // Will be populated separately if needed
-      assignees: [],   // Will be populated separately if needed
+      requester: ticket.requester, // Use the fetched requester data
+      assignee: ticket.assignee,  // Use the fetched assignee data
+      assignees: ticket.assignee ? [ticket.assignee] : [], // Convert single assignee to array
     })) || []
     
     return {
