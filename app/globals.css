@@ -42,7 +42,7 @@
 
 :root {
   /* Enterprise Search Frontend Design System */
-  --background: #fafafa;
+  --background: #ffffff;
   --foreground: #1a1a1a;
   --card: #ffffff;
   --card-foreground: #1a1a1a;
@@ -120,7 +120,7 @@
   --btn-color-hover: #5A5FE0;
 
   /* Sidebar colors matching Enterprise Search Frontend - improved contrast */
-  --sidebar: #fafafa;
+  --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
   --sidebar-primary: #f7f7f7;
   --sidebar-primary-foreground: #525252;

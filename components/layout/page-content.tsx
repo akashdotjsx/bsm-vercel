@@ -34,7 +34,7 @@ export function PageContent({
     <div className={`flex flex-col h-full ${className}`}>
       {/* Breadcrumb */}
       {breadcrumb && breadcrumb.length > 0 && (
-        <div className="border-b border-border px-4 md:px-6 py-2 flex-shrink-0" style={{ backgroundColor: '#ffffff' }}>
+        <div className="border-b border-border px-4 md:px-6 py-2 flex-shrink-0 bg-background">
           <div className="flex items-center space-x-2 text-xs md:text-sm text-muted-foreground">
             {breadcrumb.map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -61,7 +61,7 @@ export function PageContent({
       )}
 
       {/* Page Content */}
-      <div className="flex-1 p-4 md:p-6 overflow-auto" style={{ backgroundColor: '#ffffff' }}>
+      <div className="flex-1 p-4 md:p-6 overflow-auto bg-background">
         {children}
       </div>
     </div>
