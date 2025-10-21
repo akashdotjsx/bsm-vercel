@@ -60,7 +60,7 @@ const employeeViewItems = [
 
 const ticketSubmenuItems = [
   { name: "All Tickets", href: "/tickets", icon: List },
-  { name: "Following", href: "/tickets/following", icon: Eye },
+  // { name: "Following", href: "/tickets/following", icon: Eye }, // Hidden from UI
   { name: "My Tickets", href: "/tickets/my-tickets", icon: User },
 ]
 
