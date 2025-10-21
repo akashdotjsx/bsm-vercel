@@ -108,7 +108,7 @@ export function CustomColumnsDialog({ open, onOpenChange }: CustomColumnsDialogP
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-foreground">Manage Custom Columns</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Add custom columns to your ticket table. Values are stored locally and persist across sessions.
+              Add custom columns to your ticket table. Values are stored in the database and persist across sessions.
             </DialogDescription>
           </DialogHeader>
         </div>

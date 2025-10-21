@@ -4,7 +4,7 @@ import React from "react"
 import type { FC } from "react"
 
 import dynamic from "next/dynamic"
-import { useState, useCallback, useMemo, Suspense, useEffect } from "react"
+import { useState, useCallback, useMemo, Suspense, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -59,6 +59,7 @@ import { useCustomColumnsStore } from "@/lib/stores/custom-columns-store"
 import { TicketsTable } from "@/components/tickets/tickets-table-with-bulk"
 import { AIAssistantModal } from "@/components/ai/ai-assistant-modal"
 import { useDebounce } from "@/hooks/use-debounce"
+import { CustomColumnsDropdown } from "@/components/tickets/custom-columns-dropdown"
 
 
 const TicketDrawer = dynamic(
@@ -255,6 +256,8 @@ export default function TicketsPage() {
   const [groupBy, setGroupBy] = useState("none")
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [showCustomColumnsDialog, setShowCustomColumnsDialog] = useState(false)
+  const [showCustomColumnsDropdown, setShowCustomColumnsDropdown] = useState(false)
+  const customColumnsButtonRef = useRef<HTMLButtonElement>(null)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false)
   const [bulkDeleteTicketIds, setBulkDeleteTicketIds] = useState<string[]>([])
@@ -1216,9 +1219,10 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
             onDuplicateTicket={handleDuplicateTicket}
             onDeleteTicket={handleDeleteTicket}
             onUpdateTicket={updateTicket}
-            onOpenCustomColumns={() => setShowCustomColumnsDialog(true)}
+            onOpenCustomColumns={() => setShowCustomColumnsDropdown(true)}
             onBulkDelete={handleBulkDeleteRequest}
             onBulkUpdate={handleBulkUpdate}
+            customColumnsButtonRef={customColumnsButtonRef}
           />
         </div>
       </div>
@@ -2055,6 +2059,13 @@ className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
       <CustomColumnsDialog
         open={showCustomColumnsDialog}
         onOpenChange={setShowCustomColumnsDialog}
+      />
+
+      {/* Custom Columns Dropdown */}
+      <CustomColumnsDropdown
+        open={showCustomColumnsDropdown}
+        onOpenChange={setShowCustomColumnsDropdown}
+        triggerRef={customColumnsButtonRef}
       />
 
     </PageContent>
