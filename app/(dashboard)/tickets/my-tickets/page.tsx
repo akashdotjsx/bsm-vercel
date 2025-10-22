@@ -1475,7 +1475,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
                    </span>
                  </div>
                  <p className="text-xs font-sans text-muted-foreground" style={{ fontSize: '12px', fontWeight: 400 }}>
-                   Manage your support tickets and track customer issues effortlessly.
+                   Manage all support tickets and track customer issues effortlessly.
                  </p>
               </div>
 
