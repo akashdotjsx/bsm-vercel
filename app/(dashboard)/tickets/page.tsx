@@ -1845,7 +1845,9 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
              <div className="space-y-4 w-full max-w-full overflow-hidden">
                <div className="flex items-center justify-between border-b border-[#EEEEEE] bg-[#F8F8F8] dark:bg-[#282a2f] dark:border-gray-600 w-full max-w-full rounded-[10px]" style={{ 
                  borderColor: isDark ? '#374151' : '#EEEEEE', 
-                 backgroundColor: isDark ? '#282a2f' : '#F8F8F8' 
+                 backgroundColor: isDark ? '#282a2f' : '#F8F8F8',
+                 width: '1617px',
+                 height: '42px'
                }}>
                  <div className="flex items-center gap-0">
                    <button
