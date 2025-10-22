@@ -1758,30 +1758,87 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
-                <Button
-                  className="bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] hover:from-[#6E72FF]/90 hover:to-[#FF2CB9]/90 text-white font-medium h-8 px-3 rounded-[5px] transition-all"
-                  style={{ fontSize: '13px', fontWeight: 500, boxShadow: '0px 14px 37px 0px rgba(80, 0, 255, 0.22)' }}
-                >
-                  <Sparkles className="h-3 w-3 mr-1.5" />
-                  Ask AI
-                </Button>
+                <div className="relative inline-block">
+                  <Button
+                    className="bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] hover:from-[#6E72FF]/90 hover:to-[#FF2CB9]/90 text-white transition-all relative z-10 flex items-center justify-center"
+                    style={{ 
+                      fontSize: '13px', 
+                      fontWeight: 500, 
+                      width: '80px',
+                      height: '37px',
+                      padding: '0',
+                      borderRadius: '5px',
+                      gap: '6px'
+                    }}
+                  >
+                    <svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                      <path d="M8.86499 4.24871L9.55886 6.01401C9.81605 6.66739 10.3326 7.18505 10.986 7.44114L12.7513 8.13501C13.0829 8.26525 13.0829 8.73475 12.7513 8.86499L10.986 9.55886C10.3326 9.81604 9.81605 10.3326 9.55886 10.986L8.86499 12.7513C8.73475 13.0829 8.26525 13.0829 8.13501 12.7513L7.44114 10.986C7.18395 10.3326 6.66739 9.81495 6.01402 9.55886L4.24871 8.86499C3.9171 8.73475 3.9171 8.26525 4.24871 8.13501L6.01402 7.44114C6.66739 7.18395 7.18505 6.66739 7.44114 6.01401L8.13501 4.24871C8.26525 3.9171 8.73366 3.9171 8.86499 4.24871Z" fill="white"/>
+                      <path d="M3.24333 0.165805L3.70591 1.34268C3.87737 1.77826 4.22174 2.12337 4.65732 2.2941L5.83419 2.75667C6.05527 2.8435 6.05527 3.1565 5.83419 3.24333L4.65732 3.7059C4.22174 3.87736 3.87737 4.22174 3.70591 4.65732L3.24333 5.83419C3.1565 6.05527 2.8435 6.05527 2.75667 5.83419L2.2941 4.65732C2.12264 4.22174 1.77826 3.87663 1.34268 3.7059L0.165805 3.24333C-0.0552684 3.1565 -0.0552684 2.8435 0.165805 2.75667L1.34268 2.2941C1.77826 2.12264 2.12336 1.77826 2.2941 1.34268L2.75667 0.165805C2.8435 -0.0552684 3.15577 -0.0552684 3.24333 0.165805Z" fill="white"/>
+                      <path d="M12.6217 2.0829L12.853 2.67134C12.9387 2.88913 13.1109 3.06168 13.3287 3.14705L13.9171 3.37834C14.0276 3.42175 14.0276 3.57825 13.9171 3.62166L13.3287 3.85295C13.1109 3.93868 12.9387 4.11087 12.853 4.32866L12.6217 4.9171C12.5783 5.02763 12.4217 5.02763 12.3783 4.9171L12.147 4.32866C12.0613 4.11087 11.8891 3.93832 11.6713 3.85295L11.0829 3.62166C10.9724 3.57825 10.9724 3.42175 11.0829 3.37834L11.6713 3.14705C11.8891 3.06132 12.0617 2.88913 12.147 2.67134L12.3783 2.0829C12.4217 1.97237 12.5779 1.97237 12.6217 2.0829Z" fill="white"/>
+                    </svg>
+                    <span>Ask AI</span>
+                  </Button>
+                  <svg 
+                    className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                    style={{ top: '14px', opacity: 0.78 }}
+                    width="101" 
+                    height="37" 
+                    viewBox="0 0 101 37" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g opacity="0.78" filter="url(#filter0_f_2_112)">
+                      <path d="M26.6957 14.0001L74.3043 14L87 23H14L26.6957 14.0001Z" fill="url(#paint0_linear_2_112)"/>
+                    </g>
+                    <defs>
+                      <filter id="filter0_f_2_112" x="0" y="0" width="101" height="37" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                        <feFlood floodOpacity="0" result="BackgroundImageFix"/>
+                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+                        <feGaussianBlur stdDeviation="7" result="effect1_foregroundBlur_2_112"/>
+                      </filter>
+                      <linearGradient id="paint0_linear_2_112" x1="17.7029" y1="16.7166" x2="83.2971" y2="16.7166" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.0576923" stopColor="#006AFF"/>
+                        <stop offset="0.35" stopColor="#4400FE"/>
+                        <stop offset="0.65" stopColor="#B300FF"/>
+                        <stop offset="1" stopColor="#FF0078"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
                 <Button
                   variant="outline"
-                  className="bg-white dark:bg-background text-[#6E72FF] border border-[#DDDEFF] hover:bg-[#6E72FF]/5 font-medium h-8 px-3 rounded-[5px] transition-all"
+                  className="bg-white dark:bg-background text-[#6E72FF] border border-[#DDDEFF] hover:bg-[#6E72FF]/5 hover:text-[#6E72FF] transition-all flex items-center justify-center"
                   onClick={() => setShowImportDialog(true)}
-                  style={{ fontSize: '13px', fontWeight: 500 }}
+                  style={{ 
+                    fontSize: '13px', 
+                    fontWeight: 500,
+                    width: '91px',
+                    height: '37px',
+                    padding: '0',
+                    borderRadius: '5px',
+                    gap: '6px'
+                  }}
                 >
-                  <Download className="h-3 w-3 mr-1.5" />
-                  Import
+                  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                    <path d="M9.5 9.49999V15.0417M9.5 15.0417L7.71875 13.1945M9.5 15.0417L11.2813 13.1945M5.225 14.118C3.65099 14.118 2.375 12.8184 2.375 11.2153C2.375 9.89424 3.24138 8.77934 4.42698 8.42784C4.47737 8.41288 4.5125 8.36593 4.5125 8.31249C4.5125 5.90775 6.42648 3.95833 8.7875 3.95833C11.1485 3.95833 13.0625 5.90775 13.0625 8.31249C13.0625 8.35857 13.1049 8.39277 13.1491 8.38272C13.3505 8.33672 13.56 8.31249 13.775 8.31249C15.349 8.31249 16.625 9.61209 16.625 11.2153C16.625 12.8184 15.349 14.118 13.775 14.118" stroke="#6E72FF" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Import</span>
                 </Button>
                 <Button 
-                  className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white font-medium h-8 px-3 rounded-[5px] shadow-sm transition-all"
+                  className="bg-[#6E72FF] hover:bg-[#6E72FF]/90 text-white transition-all flex items-center justify-center"
                   onClick={() => {
                     console.log("[CREATE] Opening drawer for new ticket")
                     setSelectedTicket(null) // No ticket = CREATE mode
                     setShowTicketTray(true)
                   }}
-                  style={{ fontSize: '13px', fontWeight: 500 }}
+                  style={{ 
+                    fontSize: '13px', 
+                    fontWeight: 500,
+                    width: '117px',
+                    height: '37px',
+                    padding: '0',
+                    borderRadius: '5px'
+                  }}
                 >
                   + Create Ticket
                 </Button>
