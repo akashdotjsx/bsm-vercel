@@ -152,7 +152,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
         height: 'calc(100vh - 84px)', // Full height minus navbar and bottom margin
         transform: 'translateX(0)',
         transition: 'transform 0.2s ease-in-out',
-        pointerEvents: 'auto'
+        pointerEvents: 'auto',
+        zIndex: 9999 // Ensure modal appears above all other content
       }}
     >
       {/* Side Tray - Overlay that doesn't affect layout */}

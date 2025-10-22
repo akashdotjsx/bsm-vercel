@@ -173,12 +173,6 @@ export function SidebarNavigation() {
             </nav>
           </div>
         </div>
-        <div className="flex-shrink-0 p-4 border-t border-sidebar-border">
-          <div className="bg-sidebar-primary rounded-lg p-4">
-            <div className="h-4 w-20 bg-muted animate-pulse rounded mb-3"></div>
-            <div className="h-6 w-full bg-muted animate-pulse rounded"></div>
-          </div>
-        </div>
       </div>
     )
   }

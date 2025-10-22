@@ -1482,7 +1482,6 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <div className="flex items-center gap-3 flex-shrink-0">
 <Button
 className="bg-gradient-to-r from-[#6E72FF] to-[var(--primary-pink)] hover:from-[#6E72FF]/90 hover:to-[var(--primary-pink)] text-white text-sm h-8 px-4 rounded-lg shadow-xs"
-                  onClick={() => setShowAIPanel(true)}
                 >
                   <Sparkles className="h-3 w-3 mr-2" />
                   Ask AI
