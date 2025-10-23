@@ -181,6 +181,47 @@
   background-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Ticket form colors - light and dark mode */
+.ticket-form-label {
+  color: #595959;
+}
+
+.dark .ticket-form-label {
+  color: #d1d5db; /* gray-300 */
+}
+
+.ticket-form-heading {
+  color: #595959;
+}
+
+.dark .ticket-form-heading {
+  color: #e5e7eb; /* gray-200 */
+}
+
+.ticket-form-input {
+  color: #2D2F34;
+}
+
+.dark .ticket-form-input {
+  color: #e5e7eb; /* gray-200 */
+}
+
+.ticket-form-placeholder::placeholder {
+  color: #595959;
+}
+
+.dark .ticket-form-placeholder::placeholder {
+  color: #9ca3af; /* gray-400 */
+}
+
+.ticket-form-text {
+  color: #595959;
+}
+
+.dark .ticket-form-text {
+  color: #d1d5db; /* gray-300 */
+}
+
 .dark {
   /* Enterprise Search Frontend dark mode */
   --background: #1e2024;

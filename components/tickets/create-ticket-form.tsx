@@ -48,6 +48,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       [data-placeholder] {
         color: #595959 !important;
       }
+      .dark [data-placeholder] {
+        color: #9ca3af !important;
+      }
     `
     document.head.appendChild(style)
     return () => {
@@ -313,18 +316,17 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Basic Details Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Basic Details</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Basic Details</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           {/* Ticket Title */}
                  <div className="space-y-2 mb-4">
-                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Ticket Title *</Label>
+                   <Label className="text-sm font-medium ticket-form-label">Ticket Title *</Label>
             <Input
               value={form.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
                      placeholder="Enter Title"
-                     className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card placeholder:text-[#595959]"
-                     style={{ color: '#2D2F34' }}
+                     className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card ticket-form-input ticket-form-placeholder"
               required
             />
           </div>
@@ -332,9 +334,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           {/* Requester and Department Row */}
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Requester</Label>
+              <Label className="text-sm font-medium ticket-form-label">Requester</Label>
               <Select value={form.requester} onValueChange={(value) => handleInputChange('requester', value)}>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.requester ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" style={{ height: '38px', width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -345,9 +347,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               </Select>
             </div>
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Department *</Label>
+              <Label className="text-sm font-medium ticket-form-label">Department *</Label>
               <Select value={form.department} onValueChange={(value) => handleInputChange('department', value)} required>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.department ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" style={{ height: '38px', width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,9 +365,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           {/* Category and Sub-Category Row */}
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Category *</Label>
+              <Label className="text-sm font-medium ticket-form-label">Category *</Label>
               <Select value={form.category} onValueChange={(value) => handleInputChange('category', value)} required>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.category ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" style={{ height: '38px', width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,14 +380,14 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               </Select>
             </div>
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Sub-Category *</Label>
+              <Label className="text-sm font-medium ticket-form-label">Sub-Category *</Label>
               <Select
                 value={form.subcategory}
                 onValueChange={(value) => handleInputChange('subcategory', value)}
                 disabled={!form.category}
                 required
               >
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.subcategory ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" style={{ height: '38px', width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -401,13 +403,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           {/* Description */}
           <div className="space-y-2">
-                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Description *</Label>
+                   <Label className="text-sm font-medium ticket-form-label">Description *</Label>
             <Textarea
               value={form.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe the issue or request in detail..."
-               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card placeholder:text-[#595959]"
-               style={{ color: '#2D2F34' }}
+               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card ticket-form-input ticket-form-placeholder"
               required
             />
           </div>
@@ -417,12 +418,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Assignment & Communication Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Assignment & Communication</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Assignment & Communication</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
                    <div className="space-y-2 flex-1">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Assignees *</Label>
+                     <Label className="text-sm font-medium ticket-form-label">Assignees *</Label>
               <div className="relative">
                 <Select 
                   value="" 
@@ -433,11 +434,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                   }}
                 >
                   <SelectTrigger 
-                    className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground" 
+                    className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                     style={{ 
-                      width: '100%',
-                      '--placeholder-color': '#595959'
-                    } as React.CSSProperties}
+                      width: '100%'
+                    }}
                   >
                     <SelectValue placeholder="Select Assignees" />
                   </SelectTrigger>
@@ -500,11 +500,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               )}
             </div>
             <div className="space-y-2 flex-1">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Watchers</Label>
+                     <Label className="text-sm font-medium ticket-form-label">Watchers</Label>
               <Select value={form.watchers} onValueChange={(value) => handleInputChange('watchers', value)}>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card" 
-                  style={{ color: '#2D2F34', width: '100%' }}
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
+                  style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Add Watchers" />
                 </SelectTrigger>
@@ -521,10 +521,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Target Due Date *</Label>
+                     <Label className="text-sm font-medium ticket-form-label">Target Due Date *</Label>
               <Select value={form.targetDueDate} onValueChange={(value) => handleInputChange('targetDueDate', value)} required>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                   style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Select Due Date" />
@@ -538,10 +538,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               </Select>
             </div>
             <div className="space-y-2 flex-1">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Priority *</Label>
+                     <Label className="text-sm font-medium ticket-form-label">Priority *</Label>
               <Select value={form.priority} onValueChange={(value) => handleInputChange('priority', value)} required>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                   style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Select Priority" />
@@ -558,10 +558,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Status</Label>
+              <Label className="text-sm font-medium ticket-form-label">Status</Label>
               <Select value={form.status} onValueChange={(value) => handleInputChange('status', value)}>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                   style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Select" />
@@ -584,7 +584,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Associated Project Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Associated Project</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Associated Project</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2">
@@ -614,15 +614,15 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Timeline & Priority Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Timeline & Priority</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Timeline & Priority</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="flex gap-4 mb-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Impact</Label>
+              <Label className="text-sm font-medium ticket-form-label">Impact</Label>
               <Select value={form.impact} onValueChange={(value) => handleInputChange('impact', value)}>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                   style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Select Impact Level" />
@@ -636,10 +636,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               </Select>
             </div>
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Urgency</Label>
+              <Label className="text-sm font-medium ticket-form-label">Urgency</Label>
               <Select value={form.urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
                 <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
                   style={{ width: '100%' }}
                 >
                   <SelectValue placeholder="Select Urgency Level" />
@@ -656,13 +656,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           <div className="flex gap-4 w-full max-w-4xl">
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Calculated Priority</Label>
+              <Label className="text-sm font-medium ticket-form-label">Calculated Priority</Label>
               <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4" style={{ width: '100%' }}>
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">N/A</span>
               </div>
             </div>
             <div className="space-y-2 flex-1">
-              <Label className="text-sm font-medium" style={{ color: '#595959' }}>SLA Policy</Label>
+              <Label className="text-sm font-medium ticket-form-label">SLA Policy</Label>
               <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4" style={{ width: '100%' }}>
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">Select impact & urgency for SLA</span>
               </div>
@@ -674,17 +674,17 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Task Management Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Task Management</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Task Management</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2">
-                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Checklist</Label>
+                   <Label className="text-sm font-medium ticket-form-label">Checklist</Label>
             
             {/* Checklist Items */}
             {draftChecklist.map((item, index) => (
               <div key={index} className="flex items-center gap-3 p-3 bg-background dark:bg-card border border-border dark:border-border rounded-md">
                 <Square className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
-                       <span className="flex-1 text-sm" style={{ color: '#2D2F34' }}>{item}</span>
+                       <span className="flex-1 text-sm ticket-form-input">{item}</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -704,8 +704,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
                 placeholder="Gather user requirements"
-                       className="flex-1 border-0 focus:ring-0 text-sm bg-transparent placeholder:text-[#595959]"
-                       style={{ color: '#2D2F34' }}
+                       className="flex-1 border-0 focus:ring-0 text-sm bg-transparent ticket-form-input ticket-form-placeholder"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -741,7 +740,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {customColumns && customColumns.length > 0 && (
           <div className="space-y-0">
             <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-              <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21', color: '#595959' }}>Custom Fields</h3>
+              <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Custom Fields</h3>
             </div>
             <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6">
               <div className="space-y-4">
@@ -750,7 +749,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                   .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) // Sort by sort_order
                   .map((column) => (
                     <div key={column.id} className="space-y-2">
-                      <Label className="text-sm font-medium" style={{ color: '#595959' }}>
+                      <Label className="text-sm font-medium ticket-form-label">
                         {column.title}
                         {column.defaultValue && (
                           <span className="text-xs text-muted-foreground dark:text-muted-foreground ml-1">(Default: {column.defaultValue})</span>
@@ -818,7 +817,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           </div>
 
           <div className="space-y-2 pl-0 pr-6 pb-6">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Staff-only Comments</Label>
+                     <Label className="text-sm font-medium ticket-form-label">Staff-only Comments</Label>
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -850,42 +849,42 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </defs>
               </svg>
             </Button>
-            <p className="text-sm" style={{ color: '#595959' }}>Drag and drop files here, or click to upload</p>
+            <p className="text-sm ticket-form-text">Drag and drop files here, or click to upload</p>
           </div>
         </div>
 
         {/* AI & Automation Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>AI & Automation</h3>
+            <h3 className="pl-3 ticket-form-heading" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>AI & Automation</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2 mb-4">
-                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Suggested Solutions</Label>
+                   <Label className="text-sm font-medium ticket-form-label">Suggested Solutions</Label>
             <div className="p-4">
-                     <p className="text-sm leading-relaxed" style={{ color: '#595959', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', lineHeight: '2em' }}>
+                     <p className="text-sm leading-relaxed ticket-form-text" style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', lineHeight: '2em' }}>
                 Based on the category, potential solutions might include:<br/>
                 • Refer to knowledge base article KB-203.<br/>
                 • Verify network connectivity.<br/>
-                • Restart relevant services. <span style={{ color: '#595959' }}>(AI-generated suggestions)</span>
+                • Restart relevant services. <span className="ticket-form-text">(AI-generated suggestions)</span>
               </p>
             </div>
           </div>
 
-          <div className="p-4 border border-[#DEE3ED] rounded-[5px] bg-white">
+          <div className="p-4 border border-[#DEE3ED] dark:border-border rounded-[5px] bg-white dark:bg-card">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4.45489 15.6009V11.8866M2.5 13.7438H6.40979M13.4475 8.91516L12.7037 10.3283C12.4961 10.7227 12.3923 10.9199 12.2536 11.0909C12.1306 11.2425 11.9875 11.3785 11.8278 11.4953C11.6479 11.6271 11.4403 11.7257 11.0251 11.923L9.53763 12.6295L11.0251 13.3361C11.4403 13.5332 11.6479 13.6318 11.8278 13.7636C11.9875 13.8805 12.1306 14.0165 12.2536 14.1681C12.3923 14.339 12.4961 14.5362 12.7037 14.9307L13.4475 16.3438L14.1912 14.9307C14.3988 14.5362 14.5025 14.339 14.6412 14.1681C14.7642 14.0165 14.9074 13.8805 15.067 13.7636C15.2469 13.6318 15.4545 13.5332 15.8697 13.3361L17.3572 12.6295L15.8697 11.923C15.4545 11.7257 15.2469 11.6271 15.067 11.4953C14.9074 11.3785 14.7642 11.2425 14.6412 11.0909C14.5025 10.9199 14.3988 10.7227 14.1912 10.3283L13.4475 8.91516Z" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7.20239 4.15311L7.60708 3.34375L8.01176 4.15311L8.0118 4.15319C8.14873 4.42706 8.21721 4.56401 8.30869 4.68267C8.38986 4.78799 8.48427 4.8824 8.58959 4.96358C8.70827 5.05506 8.84523 5.12355 9.11915 5.26051L9.92851 5.66519L9.11915 6.06987C8.84523 6.20683 8.70827 6.27531 8.58959 6.36679C8.48427 6.44797 8.38986 6.54238 8.30869 6.6477C8.2172 6.76638 8.14872 6.90334 8.01176 7.17726L7.60708 7.98662L7.20239 7.17726C7.06544 6.90334 6.99696 6.76638 6.90547 6.6477C6.82429 6.54238 6.72988 6.44797 6.62457 6.36679C6.50588 6.27531 6.36893 6.20683 6.09501 6.06987L5.28564 5.66519L6.09501 5.26051C6.36893 5.12355 6.50588 5.05507 6.62457 4.96358C6.72988 4.8824 6.82429 4.78799 6.90547 4.68267C6.99695 4.56401 7.06542 4.42706 7.20236 4.15319L7.20239 4.15311Z" stroke="black" strokeWidth="0.835717" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black dark:text-white">
+                    <path d="M4.45489 15.6009V11.8866M2.5 13.7438H6.40979M13.4475 8.91516L12.7037 10.3283C12.4961 10.7227 12.3923 10.9199 12.2536 11.0909C12.1306 11.2425 11.9875 11.3785 11.8278 11.4953C11.6479 11.6271 11.4403 11.7257 11.0251 11.923L9.53763 12.6295L11.0251 13.3361C11.4403 13.5332 11.6479 13.6318 11.8278 13.7636C11.9875 13.8805 12.1306 14.0165 12.2536 14.1681C12.3923 14.339 12.4961 14.5362 12.7037 14.9307L13.4475 16.3438L14.1912 14.9307C14.3988 14.5362 14.5025 14.339 14.6412 14.1681C14.7642 14.0165 14.9074 13.8805 15.067 13.7636C15.2469 13.6318 15.4545 13.5332 15.8697 13.3361L17.3572 12.6295L15.8697 11.923C15.4545 11.7257 15.2469 11.6271 15.067 11.4953C14.9074 11.3785 14.7642 11.2425 14.6412 11.0909C14.5025 10.9199 14.3988 10.7227 14.1912 10.3283L13.4475 8.91516Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M7.20239 4.15311L7.60708 3.34375L8.01176 4.15311L8.0118 4.15319C8.14873 4.42706 8.21721 4.56401 8.30869 4.68267C8.38986 4.78799 8.48427 4.8824 8.58959 4.96358C8.70827 5.05506 8.84523 5.12355 9.11915 5.26051L9.92851 5.66519L9.11915 6.06987C8.84523 6.20683 8.70827 6.27531 8.58959 6.36679C8.48427 6.44797 8.38986 6.54238 8.30869 6.6477C8.2172 6.76638 8.14872 6.90334 8.01176 7.17726L7.60708 7.98662L7.20239 7.17726C7.06544 6.90334 6.99696 6.76638 6.90547 6.6477C6.82429 6.54238 6.72988 6.44797 6.62457 6.36679C6.50588 6.27531 6.36893 6.20683 6.09501 6.06987L5.28564 5.66519L6.09501 5.26051C6.36893 5.12355 6.50588 5.05507 6.62457 4.96358C6.72988 4.8824 6.82429 4.78799 6.90547 4.68267C6.99695 4.56401 7.06542 4.42706 7.20236 4.15319L7.20239 4.15311Z" stroke="currentColor" strokeWidth="0.835717" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold" style={{ color: '#202020', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px' }}>Auto-Assign via AI</span>
+                    <span className="text-sm font-semibold ticket-form-input" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px' }}>Auto-Assign via AI</span>
                   </div>
-                  <p className="text-sm" style={{ color: '#595959', fontFamily: 'Inter', fontWeight: 400, fontSize: '12px' }}>Allow AI to intelligently assign this ticket to the most suitable agent.</p>
+                  <p className="text-sm ticket-form-text" style={{ fontFamily: 'Inter', fontWeight: 400, fontSize: '12px' }}>Allow AI to intelligently assign this ticket to the most suitable agent.</p>
                 </div>
               </div>
               <Switch
@@ -924,11 +923,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="h-9 px-4 text-sm font-medium border-black text-black hover:bg-gray-100"
+          className="h-9 px-4 text-sm font-medium border-black text-black dark:text-black hover:bg-gray-100 dark:hover:bg-gray-200 hover:text-black dark:hover:text-black"
           style={{ 
             backgroundColor: '#FAFAFA',
             borderColor: '#000000',
-            borderRadius: '5px'
+            borderRadius: '5px',
+            color: '#000000'
           }}
         >
           Cancel
