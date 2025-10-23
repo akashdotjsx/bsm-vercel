@@ -78,6 +78,7 @@ CREATE TABLE public.knowledge_articles (
   content text NOT NULL,
   summary text,
   category character varying,
+  category_id uuid,
   tags ARRAY,
   related_service_ids ARRAY,
   author_id uuid,
@@ -92,7 +93,8 @@ CREATE TABLE public.knowledge_articles (
   CONSTRAINT knowledge_articles_pkey PRIMARY KEY (id),
   CONSTRAINT knowledge_articles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT knowledge_articles_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id),
-  CONSTRAINT knowledge_articles_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.profiles(id)
+  CONSTRAINT knowledge_articles_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.profiles(id),
+  CONSTRAINT knowledge_articles_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.article_categories(id)
 );
 CREATE TABLE public.article_bookmarks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -152,6 +154,91 @@ CREATE TABLE public.article_revisions (
   CONSTRAINT article_revisions_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.profiles(id),
   CONSTRAINT article_revisions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
   CONSTRAINT article_revisions_unique UNIQUE (article_id, version_number)
+);
+CREATE TABLE public.article_categories (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  icon character varying,
+  color character varying,
+  parent_id uuid,
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_categories_pkey PRIMARY KEY (id),
+  CONSTRAINT article_categories_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.article_categories(id),
+  CONSTRAINT article_categories_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT article_categories_unique UNIQUE (organization_id, name)
+);
+CREATE TABLE public.article_attachments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  filename character varying NOT NULL,
+  file_size integer,
+  mime_type character varying,
+  storage_path text NOT NULL,
+  uploaded_by uuid,
+  is_public boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_attachments_pkey PRIMARY KEY (id),
+  CONSTRAINT article_attachments_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_attachments_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_attachments_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.article_relationships (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  source_article_id uuid NOT NULL,
+  target_article_id uuid NOT NULL,
+  relationship_type character varying NOT NULL,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_relationships_pkey PRIMARY KEY (id),
+  CONSTRAINT article_relationships_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_relationships_source_article_id_fkey FOREIGN KEY (source_article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_relationships_target_article_id_fkey FOREIGN KEY (target_article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_relationships_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT article_relationships_unique UNIQUE (source_article_id, target_article_id, relationship_type),
+  CONSTRAINT article_relationships_no_self_reference CHECK (source_article_id != target_article_id)
+);
+CREATE TABLE public.article_templates (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  name character varying NOT NULL,
+  description text,
+  content_template text NOT NULL,
+  category_id uuid,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_templates_pkey PRIMARY KEY (id),
+  CONSTRAINT article_templates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_templates_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.article_categories(id),
+  CONSTRAINT article_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
+  CONSTRAINT article_templates_unique UNIQUE (organization_id, name)
+);
+CREATE TABLE public.article_analytics (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  article_id uuid NOT NULL,
+  user_id uuid,
+  event_type character varying NOT NULL,
+  session_id character varying,
+  ip_address inet,
+  user_agent text,
+  referrer text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT article_analytics_pkey PRIMARY KEY (id),
+  CONSTRAINT article_analytics_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id),
+  CONSTRAINT article_analytics_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.knowledge_articles(id),
+  CONSTRAINT article_analytics_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.metrics_cache (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
