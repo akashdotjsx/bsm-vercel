@@ -1757,6 +1757,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="relative inline-block">
                   <Button
+                    onClick={() => setShowAIChat(true)}
                     className="bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] hover:from-[#6E72FF]/90 hover:to-[#FF2CB9]/90 text-white transition-all relative z-10 flex items-center justify-center"
                     style={{ 
                       fontSize: '13px', 

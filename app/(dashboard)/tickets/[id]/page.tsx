@@ -33,7 +33,8 @@ import {
   AlertCircle,
   CheckCircle,
   Circle,
-  History
+  History,
+  Sparkles
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
 import { 
@@ -53,6 +54,7 @@ import { useAuth } from "@/lib/contexts/auth-context"
 import { format } from "date-fns"
 import { toast } from "@/lib/toast"
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
+import { ChatModal } from "@/components/tickets/ai-chat/ChatModal"
 
 interface TicketDetailPageProps {
   params: {
@@ -77,6 +79,9 @@ export default function TicketDetailPage({ params }: TicketDetailPageProps) {
   
   // State for checklist
   const [newChecklistItem, setNewChecklistItem] = useState("")
+  
+  // State for AI chat
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false)
   
   // Hooks for GraphQL data - Single query fetches everything!
   const { data: ticket, isLoading: ticketLoading, error } = useTicketDetailsGraphQL(params.id)
@@ -1031,6 +1036,37 @@ className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 ro
           </CardContent>
         </Card>
       </div>
+      
+      {/* Floating Ask AI Button - Always visible on ticket pages */}
+      <Button
+        onClick={() => {
+          console.log('Ask AI clicked! Ticket:', ticket?.id)
+          if (!ticket) {
+            console.error('No ticket loaded yet')
+            return
+          }
+          setIsAIChatOpen(true)
+        }}
+        disabled={!ticket}
+        className="fixed bottom-8 right-8 h-16 px-8 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-200 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
+        style={{ zIndex: 99999, pointerEvents: 'auto' }}
+        size="lg"
+      >
+        <Sparkles className="h-5 w-5 mr-2" />
+        Ask AI
+      </Button>
+      
+      {isAIChatOpen && ticket && (
+        <ChatModal
+          isOpen={isAIChatOpen}
+          onClose={() => {
+            console.log('Closing AI chat')
+            setIsAIChatOpen(false)
+          }}
+          ticketId={ticket.id}
+          ticketNumber={ticket.ticket_number}
+        />
+      )}
     </PageContent>
   )
 }
