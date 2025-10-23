@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
-import { X, Maximize2, ChevronRight, Settings, Send, ChevronDown, Globe } from "lucide-react"
+import { X, Maximize2, ChevronRight, Settings, Send, ChevronDown, ChevronUp, Globe, Plus, Search, Users, Database } from "lucide-react"
 import Image from "next/image"
 import ReactMarkdown from 'react-markdown'
 import { useAuth } from "@/lib/contexts/auth-context"
@@ -39,6 +39,8 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  toolsUsed?: string[]
+  conversationId?: string
 }
 
 export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
@@ -57,6 +59,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelDropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     setMounted(true)
@@ -95,7 +98,9 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
     setIsStreaming(true)
 
     const aiMessageId = crypto.randomUUID()
+    const conversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     let fullContent = ''
+    let toolsUsed: string[] = []
 
     try {
       // Call backend API route with user context
@@ -137,6 +142,15 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
 
           try {
             const parsed = JSON.parse(data)
+            
+            // Check if this is a tools metadata chunk
+            if (parsed.type === 'tools') {
+              toolsUsed = parsed.tools || []
+              console.log('🔧 Tools received from backend:', toolsUsed)
+              continue
+            }
+            
+            // Regular content chunk
             const content = parsed.choices?.[0]?.delta?.content
             if (content) {
               fullContent += content
@@ -147,7 +161,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                 if (existing) {
                   return prev.map(m =>
                     m.id === aiMessageId
-                      ? { ...m, content: fullContent }
+                      ? { ...m, content: fullContent, toolsUsed, conversationId }
                       : m
                   )
                 }
@@ -158,6 +172,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                     role: 'assistant',
                     content: fullContent,
                     timestamp: new Date(),
+                    toolsUsed,
+                    conversationId,
                   },
                 ]
               })
@@ -197,6 +213,11 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
       e.preventDefault()
       handleSend()
     }
+  }
+
+  const handleNewChat = () => {
+    setMessages([])
+    setInput('')
   }
 
   if (!isOpen || !mounted) return null
@@ -242,15 +263,26 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
               <p className="text-xs text-muted-foreground">Ask me anything about your tickets</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 hover:bg-muted"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNewChat}
+              className="h-8 px-3 hover:bg-muted text-xs font-medium"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              New Chat
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 hover:bg-muted"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
         </div>
 
         {/* Content - Scrollable */}
@@ -298,9 +330,76 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
             <>
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto space-y-4 mb-4 px-6 pt-4 bg-background">
-                {messages.map((msg) => (
+              {messages.map((msg) => (
+                <div key={msg.id} className="space-y-2">
+                  {/* Collapsible Tools Dropdown */}
+                  {msg.role === 'assistant' && msg.toolsUsed && msg.toolsUsed.length > 0 && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[85%] bg-muted/30 border border-border rounded-lg overflow-hidden">
+                        {/* Header - Always Visible */}
+                        <button
+                          onClick={() => setExpandedTools(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                            <span className="text-[10px] font-semibold text-foreground uppercase tracking-wide">Tools Used</span>
+                            <span className="text-[10px] text-muted-foreground">({msg.toolsUsed.length})</span>
+                          </div>
+                          {expandedTools[msg.id] ? (
+                            <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </button>
+                        
+                        {/* Expandable Content */}
+                        {expandedTools[msg.id] && (
+                          <div className="border-t border-border px-3 py-2 space-y-1.5 bg-background/50">
+                            {msg.toolsUsed.map((tool, idx) => {
+                              const getToolIcon = () => {
+                                if (tool.includes('Searching for user')) return <Users className="h-3 w-3" />
+                                if (tool.includes('Searching tickets') || tool.includes('Fetching tickets')) return <Search className="h-3 w-3" />
+                                if (tool.includes('Found')) return <Database className="h-3 w-3" />
+                                return <div className="h-2 w-2 rounded-full bg-blue-500" />
+                              }
+                              
+                              const getToolColor = () => {
+                                if (tool.includes('✅')) return 'text-green-600 dark:text-green-400'
+                                if (tool.includes('🔍') || tool.includes('🎫')) return 'text-blue-600 dark:text-blue-400'
+                                if (tool.includes('❌')) return 'text-red-600 dark:text-red-400'
+                                if (tool.includes('ℹ️')) return 'text-yellow-600 dark:text-yellow-400'
+                                return 'text-foreground'
+                              }
+                              
+                              return (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <div className={`${getToolColor()} flex-shrink-0`}>
+                                    {getToolIcon()}
+                                  </div>
+                                  <span className={`text-[10px] ${getToolColor()}`}>
+                                    {tool}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                            
+                            {msg.conversationId && (
+                              <div className="pt-1.5 mt-1.5 border-t border-border">
+                                <div className="text-[9px] text-muted-foreground font-mono flex items-center gap-1">
+                                  <span className="opacity-60">Conversation ID:</span>
+                                  <span className="select-all">{msg.conversationId}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Message Content */}
                   <div
-                    key={msg.id}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
@@ -311,7 +410,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                       }`}
                     >
                       <div className="prose prose-sm max-w-none text-xs">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <ReactMarkdown>{msg.content.replace(/# TOOLS USED:[\s\S]*?\n\n/, '')}</ReactMarkdown>
                       </div>
                       <div
                         className={`text-[10px] mt-2 ${
@@ -322,7 +421,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
                 {isStreaming && (
                   <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <div className="animate-spin h-4 w-4 border-2 border-[#6E72FF] border-t-transparent rounded-full" />
