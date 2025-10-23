@@ -21,14 +21,12 @@ export function AddUserButton({ onClick, className = "" }: AddUserButtonProps) {
         hover:bg-[#5b4cf2] 
         text-white 
         rounded-[5px] 
-        flex 
-        items-center 
-        justify-center 
-        gap-2 
+        relative
         transition-all 
         duration-200 
         font-semibold
-        ${isHovered ? 'shadow-lg transform scale-105' : 'shadow-md'}
+        shadow-sm
+        ${isHovered ? 'shadow-md transform scale-[1.02]' : ''}
         ${className}
       `}
       style={{ 
@@ -38,14 +36,29 @@ export function AddUserButton({ onClick, className = "" }: AddUserButtonProps) {
         fontWeight: '600', 
         fontSize: '12px', 
         lineHeight: '1.2102272510528564em',
-        padding: '0 12px'
+        border: 'none',
+        outline: 'none'
       }}
     >
+      {/* Icon positioned exactly like Figma: x: 12, y: 12 */}
       <UserPlus 
-        className="w-4 h-4" 
-        style={{ width: '14px', height: '14px' }} 
+        style={{ 
+          position: 'absolute',
+          left: '12px',
+          top: '12px',
+          width: '14px', 
+          height: '14px' 
+        }} 
       />
-      <span>Add User</span>
+      {/* Text positioned exactly like Figma: x: 30, y: 11 */}
+      <span style={{
+        position: 'absolute',
+        left: '30px',
+        top: '11px',
+        width: '54px',
+        height: '15px',
+        textAlign: 'left'
+      }}>Add User</span>
     </button>
   );
 }

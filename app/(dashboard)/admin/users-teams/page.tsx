@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
+import { AddUserButton } from "@/components/users/add-user-button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -335,10 +336,7 @@ export default function UsersTeamsPage() {
               </div>
               <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add User
-                  </Button>
+                  <AddUserButton onClick={() => setShowAddUserModal(true)} />
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
