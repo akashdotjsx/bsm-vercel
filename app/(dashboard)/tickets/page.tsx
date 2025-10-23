@@ -328,13 +328,7 @@ export default function TicketsPage() {
   
   // Use real tickets data from API instead of mock data
 
-  const [showAIChat, setShowAIChat] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [aiMessages, setAiMessages] = useState<
-    Array<{ id: string; type: "user" | "ai"; content: string; timestamp: Date }>
-  >([])
-  const [aiInput, setAiInput] = useState("")
-  const [aiLoading, setAiLoading] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
@@ -715,51 +709,6 @@ export default function TicketsPage() {
     setSearchTerm("")
   }, [])
 
-  const handleSendAIMessage = useCallback(async () => {
-    if (!aiInput.trim()) return
-
-    const userMessage = {
-      id: Date.now().toString(),
-      type: "user" as const,
-      content: aiInput.trim(),
-      timestamp: new Date(),
-    }
-
-    setAiMessages((prev) => [...prev, userMessage])
-    setAiInput("")
-    setAiLoading(true)
-
-    try {
-      // Simulate AI response - in real implementation, this would call Gemini 2.5 API
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      const aiMessage = {
-        id: (Date.now() + 1).toString(),
-        type: "ai" as const,
-        content: `Based on your tickets data, here's what I found regarding "${userMessage.content}":
-
-Current ticket statistics:
-• Total tickets: ${tickets?.length || 0}
-• Open tickets: ${tickets?.filter((t: any) => t.status === "new").length || 0}
-• High priority: ${tickets?.filter((t: any) => t.priority === "high" || t.priority === "urgent" || t.priority === "critical").length || 0}
-
-I can help you analyze ticket trends, suggest prioritization, or provide insights about your support workflow. Feel free to ask follow-up questions!`,
-        timestamp: new Date(),
-      }
-
-      setAiMessages((prev) => [...prev, aiMessage])
-    } catch (error) {
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: "ai" as const,
-        content: "Sorry, I encountered an error while processing your question. Please try again.",
-        timestamp: new Date(),
-      }
-      setAiMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setAiLoading(false)
-    }
-  }, [aiInput, filteredTickets])
 
   const handleImportTickets = useCallback(async () => {
     if (!importFile) {
@@ -1757,7 +1706,7 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
               <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="relative inline-block">
                   <Button
-                    onClick={() => setShowAIChat(true)}
+                    onClick={() => setShowAIPanel(true)}
                     className="bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] hover:from-[#6E72FF]/90 hover:to-[#FF2CB9]/90 text-white transition-all relative z-10 flex items-center justify-center"
                     style={{ 
                       fontSize: '13px', 
@@ -1920,109 +1869,6 @@ I can help you analyze ticket trends, suggest prioritization, or provide insight
         isOpen={showAIPanel}
         onClose={() => setShowAIPanel(false)}
       />
-
-      <Dialog open={showAIChat} onOpenChange={setShowAIChat}>
-        <DialogContent className="max-w-4xl h-[600px] flex flex-col p-0">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-[#6E72FF]" />
-<span className="font-sans text-sm">Ask AI about My Tickets</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAIChat}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Clear Chat
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-
-          {/* Chat Messages Area */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {aiMessages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-center">
-                <div className="space-y-2">
-                  <Bot className="h-12 w-12 text-muted-foreground mx-auto" />
-<p className="text-muted-foreground font-sans text-13">
-                    Ask me anything about your tickets, trends, priorities, or support workflow
-                  </p>
-                </div>
-              </div>
-            ) : (
-              aiMessages.map((message) => (
-                <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.type === "user" ? "bg-[#6E72FF] text-white" : "bg-muted text-foreground"
-                    }`}
-                  >
-                    <p className="font-sans text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p
-                      className={`text-xs mt-1 ${message.type === "user" ? "text-[#6E72FF]/70" : "text-muted-foreground"}`}
-                    >
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {aiLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <LoadingSpinner size="sm" />
-<span className="font-sans text-13 text-muted-foreground">AI is thinking...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Chat Input Area */}
-          <div className="border-t px-6 py-4">
-            <div className="flex items-end gap-3">
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex-1 relative">
-                <Textarea
-                  placeholder="Ask AI about your tickets..."
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-className="min-h-[40px] max-h-[120px] resize-none pr-12 font-sans text-13"
-                  disabled={aiLoading}
-                />
-                <Button
-                  onClick={handleSendAIMessage}
-                  disabled={!aiInput.trim() || aiLoading}
-                  size="sm"
-                  className="absolute right-2 bottom-2 h-8 w-8 p-0"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
        <Dialog open={showImportDialog} onOpenChange={(open) => {
          if (!open) {
