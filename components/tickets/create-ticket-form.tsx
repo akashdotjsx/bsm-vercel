@@ -836,12 +836,21 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           <div className="mt-4 ml-0 mr-6 mb-6 p-4 border-2 border-dashed border-muted-foreground/30 dark:border-muted-foreground/50 rounded-lg text-center">
             <Button
               type="button"
-              className="h-9 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 dark:hover:bg-primary/90 mb-2"
+              className="h-9 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground text-sm font-medium rounded-[5px] hover:bg-primary/90 dark:hover:bg-primary/90 mb-2"
             >
-              <Upload className="w-4 h-4 mr-2" />
               Choose File
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2">
+                <g clipPath="url(#clip0_604_2505)">
+                  <path d="M13.5933 12.2599C14.2435 11.9055 14.7572 11.3445 15.0532 10.6657C15.3493 9.98686 15.4108 9.22877 15.2281 8.51108C15.0454 7.79338 14.629 7.15696 14.0444 6.70225C13.4599 6.24754 12.7406 6.00044 12 5.99995H11.16C10.9582 5.21944 10.5821 4.49484 10.0599 3.88061C9.5378 3.26638 8.8832 2.77852 8.14537 2.45369C7.40754 2.12886 6.60567 1.97552 5.80005 2.0052C4.99443 2.03489 4.20602 2.24682 3.49409 2.62506C2.78216 3.0033 2.16525 3.53802 1.68972 4.189C1.2142 4.83999 0.892434 5.59031 0.748627 6.38355C0.60482 7.17678 0.64271 7.9923 0.859449 8.76879C1.07619 9.54528 1.46613 10.2625 1.99997 10.8666M7.99998 13.9999V7.99995M7.99998 7.99995L10.6666 10.6657M7.99998 7.99995L5.33331 10.6657" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_604_2505">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
             </Button>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Drag and drop files here, or click to upload</p>
+            <p className="text-sm" style={{ color: '#595959' }}>Drag and drop files here, or click to upload</p>
           </div>
         </div>
 
@@ -853,28 +862,30 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2 mb-4">
                    <Label className="text-sm font-medium" style={{ color: '#595959' }}>Suggested Solutions</Label>
-            <div className="p-4 bg-background dark:bg-card border border-border dark:border-border rounded-md">
-                     <p className="text-sm leading-relaxed" style={{ color: '#2D2F34' }}>
+            <div className="p-4">
+                     <p className="text-sm leading-relaxed" style={{ color: '#595959', fontFamily: 'Inter', fontWeight: 500, fontSize: '14px', lineHeight: '2em' }}>
                 Based on the category, potential solutions might include:<br/>
                 • Refer to knowledge base article KB-203.<br/>
                 • Verify network connectivity.<br/>
-                • Restart relevant services.<br/>
-                <span className="text-xs">(AI-generated suggestions)</span>
+                • Restart relevant services. <span style={{ color: '#595959' }}>(AI-generated suggestions)</span>
               </p>
             </div>
           </div>
 
-          <div className="p-4 bg-background dark:bg-card border border-border dark:border-border rounded-md">
+          <div className="p-4 border border-[#DEE3ED] rounded-[5px] bg-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary dark:bg-primary rounded-full flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-primary-foreground dark:text-primary-foreground" />
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.45489 15.6009V11.8866M2.5 13.7438H6.40979M13.4475 8.91516L12.7037 10.3283C12.4961 10.7227 12.3923 10.9199 12.2536 11.0909C12.1306 11.2425 11.9875 11.3785 11.8278 11.4953C11.6479 11.6271 11.4403 11.7257 11.0251 11.923L9.53763 12.6295L11.0251 13.3361C11.4403 13.5332 11.6479 13.6318 11.8278 13.7636C11.9875 13.8805 12.1306 14.0165 12.2536 14.1681C12.3923 14.339 12.4961 14.5362 12.7037 14.9307L13.4475 16.3438L14.1912 14.9307C14.3988 14.5362 14.5025 14.339 14.6412 14.1681C14.7642 14.0165 14.9074 13.8805 15.067 13.7636C15.2469 13.6318 15.4545 13.5332 15.8697 13.3361L17.3572 12.6295L15.8697 11.923C15.4545 11.7257 15.2469 11.6271 15.067 11.4953C14.9074 11.3785 14.7642 11.2425 14.6412 11.0909C14.5025 10.9199 14.3988 10.7227 14.1912 10.3283L13.4475 8.91516Z" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M7.20239 4.15311L7.60708 3.34375L8.01176 4.15311L8.0118 4.15319C8.14873 4.42706 8.21721 4.56401 8.30869 4.68267C8.38986 4.78799 8.48427 4.8824 8.58959 4.96358C8.70827 5.05506 8.84523 5.12355 9.11915 5.26051L9.92851 5.66519L9.11915 6.06987C8.84523 6.20683 8.70827 6.27531 8.58959 6.36679C8.48427 6.44797 8.38986 6.54238 8.30869 6.6477C8.2172 6.76638 8.14872 6.90334 8.01176 7.17726L7.60708 7.98662L7.20239 7.17726C7.06544 6.90334 6.99696 6.76638 6.90547 6.6477C6.82429 6.54238 6.72988 6.44797 6.62457 6.36679C6.50588 6.27531 6.36893 6.20683 6.09501 6.06987L5.28564 5.66519L6.09501 5.26051C6.36893 5.12355 6.50588 5.05507 6.62457 4.96358C6.72988 4.8824 6.82429 4.78799 6.90547 4.68267C6.99695 4.56401 7.06542 4.42706 7.20236 4.15319L7.20239 4.15311Z" stroke="black" strokeWidth="0.835717" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                         <span className="text-sm font-semibold" style={{ color: '#202020' }}>Auto-Assign via AI</span>
+                    <span className="text-sm font-semibold" style={{ color: '#202020', fontFamily: 'Inter', fontWeight: 600, fontSize: '16px' }}>Auto-Assign via AI</span>
                   </div>
-                         <p className="text-sm" style={{ color: '#595959' }}>Allow AI to intelligently assign this ticket to the most suitable agent.</p>
+                  <p className="text-sm" style={{ color: '#595959', fontFamily: 'Inter', fontWeight: 400, fontSize: '12px' }}>Allow AI to intelligently assign this ticket to the most suitable agent.</p>
                 </div>
               </div>
               <Switch
@@ -882,14 +893,25 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 onCheckedChange={(checked) => handleInputChange('aiAutoAssign', checked)}
               />
             </div>
+            
+            <div className="flex justify-center mt-4">
+              <Button
+                type="button"
+                className="h-9 bg-[#6E72FF] text-white text-sm font-medium rounded-[5px] hover:bg-[#5b4cf2]"
+                style={{ 
+                  fontFamily: 'Inter', 
+                  fontWeight: 600, 
+                  fontSize: '12px',
+                  lineHeight: '1.2102272510528564em',
+                  width: 'fit-content',
+                  paddingLeft: '15px',
+                  paddingRight: '15px'
+                }}
+              >
+                Generate AI Summary
+              </Button>
+            </div>
           </div>
-
-          <Button
-            type="button"
-            className="w-full h-9 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 dark:hover:bg-primary/90 mt-4"
-          >
-            Generate AI Summary
-          </Button>
           </div>
         </div>
 
@@ -902,7 +924,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           type="button"
           variant="outline"
           onClick={onCancel}
-          className="h-9 px-4 text-sm font-medium border-border dark:border-border text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-muted"
+          className="h-9 px-4 text-sm font-medium border-black text-black hover:bg-gray-100"
+          style={{ 
+            backgroundColor: '#FAFAFA',
+            borderColor: '#000000',
+            borderRadius: '5px'
+          }}
         >
           Cancel
         </Button>
