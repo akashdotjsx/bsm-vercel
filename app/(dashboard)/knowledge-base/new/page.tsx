@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PageContent } from "@/components/layout/page-content"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -17,41 +16,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  useArticle,
-  useUpdateArticle,
-  useArticleCategories,
-} from "@/hooks/use-knowledge-base"
+import { useCreateArticle, useArticleCategories } from "@/hooks/use-knowledge-base"
 import { toast } from "sonner"
 
-export default function EditArticlePage({ params }: { params: { id: string } }) {
+export default function NewArticlePage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
     content: "",
     category_id: "",
-    status: "draft" as "draft" | "published" | "archived",
+    status: "draft" as "draft" | "published",
     tags: "",
   })
 
-  const { data: article, isLoading } = useArticle(params.id)
   const { data: categories } = useArticleCategories()
-  const updateArticle = useUpdateArticle()
-
-  // Populate form when article loads
-  useEffect(() => {
-    if (article) {
-      setFormData({
-        title: article.title || "",
-        summary: article.summary || "",
-        content: article.content || "",
-        category_id: article.category_id || "",
-        status: article.status as any,
-        tags: article.tags?.join(", ") || "",
-      })
-    }
-  }, [article])
+  const createArticle = useCreateArticle()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,20 +51,19 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0)
 
-    updateArticle.mutate(
+    createArticle.mutate(
       {
-        id: params.id,
         title: formData.title,
-        summary: formData.summary || null,
+        summary: formData.summary || undefined,
         content: formData.content,
-        category_id: formData.category_id || null,
+        category_id: formData.category_id || undefined,
         status: formData.status,
-        tags: tagsArray.length > 0 ? tagsArray : null,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
       },
       {
-        onSuccess: () => {
-          toast.success("Article updated successfully")
-          router.push(`/knowledge-base/article/${params.id}`)
+        onSuccess: (data) => {
+          toast.success("Article created successfully")
+          router.push(`/knowledge-base/article/${data.id}`)
         },
       }
     )
@@ -106,50 +85,11 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
     }, 0)
   }
 
-  if (isLoading) {
-    return (
-      <PageContent
-        breadcrumb={[
-          { label: "Knowledge Base", href: "/knowledge-base" },
-          { label: "Edit Article" },
-        ]}
-      >
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </PageContent>
-    )
-  }
-
-  if (!article) {
-    return (
-      <PageContent
-        breadcrumb={[
-          { label: "Knowledge Base", href: "/knowledge-base" },
-          { label: "Edit Article" },
-        ]}
-      >
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-semibold mb-2">Article not found</h2>
-          <p className="text-muted-foreground mb-4">
-            The article you're trying to edit doesn't exist
-          </p>
-          <Button onClick={() => router.push("/knowledge-base")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Knowledge Base
-          </Button>
-        </div>
-      </PageContent>
-    )
-  }
-
   return (
     <PageContent
       breadcrumb={[
         { label: "Knowledge Base", href: "/knowledge-base" },
-        { label: article.title, href: `/knowledge-base/article/${params.id}` },
-        { label: "Edit" },
+        { label: "New Article" },
       ]}
     >
       <div className="max-w-4xl mx-auto space-y-6">
@@ -163,17 +103,17 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
             <Button
               variant="outline"
               onClick={handleSaveDraft}
-              disabled={updateArticle.isPending}
+              disabled={createArticle.isPending}
             >
-              {updateArticle.isPending && formData.status === "draft" ? (
+              {createArticle.isPending && formData.status === "draft" ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
               Save Draft
             </Button>
-            <Button onClick={handlePublish} disabled={updateArticle.isPending}>
-              {updateArticle.isPending && formData.status === "published" ? (
+            <Button onClick={handlePublish} disabled={createArticle.isPending}>
+              {createArticle.isPending && formData.status === "published" ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : null}
               Publish
@@ -185,7 +125,7 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
         <form id="article-form" onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>Edit Article</CardTitle>
+              <CardTitle>Create New Article</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Title */}
@@ -230,24 +170,6 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
                         {cat.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

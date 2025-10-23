@@ -1,39 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { PageContent } from "@/components/layout/page-content"
 import {
   Search,
-  CreditCard,
-  Server,
-  Wrench,
-  AlertTriangle,
-  RefreshCw,
-  Package,
-  Shield,
-  Users,
-  Settings,
-  BarChart3,
-  Headphones,
-  Bot,
-  Sparkles,
-  TrendingUp,
   BookOpen,
-  Zap,
+  Plus,
+  Filter,
   MoreVertical,
   Edit,
   Trash2,
-  Plus,
-  Send,
-  X,
-  Loader2,
+  Bookmark,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  Eye,
+  Calendar,
+  User,
+  Folder,
+  Star,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -42,866 +41,359 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useRouter } from "next/navigation"
-import { useArticleCategories, useKnowledgeArticles, useCreateArticle } from "@/hooks/use-knowledge-articles"
-import { useArticleBookmarks } from "@/hooks/use-article-interactions"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  useKnowledgeArticles,
+  useArticleCategories,
+  useDeleteArticle,
+  useArticleBookmarks,
+  useToggleArticleBookmark,
+  useIsArticleBookmarked,
+} from "@/hooks/use-knowledge-base"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { toast } from "sonner"
-
-interface ChatMessage {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-}
-
-// Icon mapping for categories
-const categoryIcons: Record<string, any> = {
-  "IT Support": Server,
-  "Billing": CreditCard,
-  "Operations": Wrench,
-  "Incident": AlertTriangle,
-  "Change": RefreshCw,
-  "Asset": Package,
-  "Security": Shield,
-  "Users": Users,
-  "System": Settings,
-  "Analytics": BarChart3,
-  "Support": Headphones,
-  default: BookOpen,
-}
-
-const knowledgeCategories = [
-  {
-    name: "Billing & Finance",
-    icon: CreditCard,
-    articles: 12,
-    description: "Billing processes, invoicing, and financial management",
-    aiInsights: "3 articles need updates based on recent policy changes",
-    trending: false,
-  },
-  {
-    name: "IT Operations",
-    icon: Server,
-    articles: 28,
-    description: "Infrastructure management and IT operations guides",
-    aiInsights: "Most searched category this month (+45% views)",
-    trending: true,
-  },
-  {
-    name: "Service Operations",
-    icon: Wrench,
-    articles: 35,
-    description: "Service delivery and operational procedures",
-    aiInsights: "2 knowledge gaps detected from recent tickets",
-    trending: false,
-  },
-  {
-    name: "Incident Management",
-    icon: AlertTriangle,
-    articles: 18,
-    description: "Incident response and resolution procedures",
-    aiInsights: "High relevance to current ticket volume",
-    trending: true,
-  },
-  {
-    name: "Change Management",
-    icon: RefreshCw,
-    articles: 15,
-    description: "Change control processes and approval workflows",
-    aiInsights: "AI suggests 4 new articles based on workflow patterns",
-    trending: false,
-  },
-  {
-    name: "Asset Management",
-    icon: Package,
-    articles: 22,
-    description: "IT asset tracking and lifecycle management",
-    aiInsights: "Content freshness score: 87% (good)",
-    trending: false,
-  },
-  {
-    name: "Security & Compliance",
-    icon: Shield,
-    articles: 19,
-    description: "Security policies and compliance requirements",
-    aiInsights: "5 articles flagged for compliance review",
-    trending: false,
-  },
-  {
-    name: "User Management",
-    icon: Users,
-    articles: 14,
-    description: "User accounts, permissions, and access control",
-    aiInsights: "Low engagement - consider restructuring content",
-    trending: false,
-  },
-  {
-    name: "System Administration",
-    icon: Settings,
-    articles: 31,
-    description: "System configuration and administrative tasks",
-    aiInsights: "Most comprehensive category - well maintained",
-    trending: false,
-  },
-  {
-    name: "Reporting & Analytics",
-    icon: BarChart3,
-    articles: 16,
-    description: "Performance metrics and business intelligence",
-    aiInsights: "Growing demand - 67% increase in searches",
-    trending: true,
-  },
-  {
-    name: "Customer Support",
-    icon: Headphones,
-    articles: 25,
-    description: "Support processes and customer service guidelines",
-    aiInsights: "AI-generated FAQ suggestions available",
-    trending: false,
-  },
-]
+import { formatDistanceToNow } from "date-fns"
 
 export default function KnowledgeBasePage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
-  const [showEditCategory, setShowEditCategory] = useState(false)
-  const [showDeleteCategory, setShowDeleteCategory] = useState(false)
-  const [showAddCategory, setShowAddCategory] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<any>(null)
-  const [editForm, setEditForm] = useState({ name: "", description: "" })
-  
-  // Debug auth state
-  const { organizationId, user } = useAuth()
-  console.log('🔍 AUTH DEBUG - organizationId:', organizationId)
-  console.log('🔍 AUTH DEBUG - user:', user ? 'EXISTS' : 'NULL')
-  
-  // Fetch real data from database
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useArticleCategories()
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedStatus, setSelectedStatus] = useState<string>("published")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [articleToDelete, setArticleToDelete] = useState<string | null>(null)
+
+  // Fetch data
+  const { data: categories, isLoading: categoriesLoading } = useArticleCategories()
   const { data: articles, isLoading: articlesLoading } = useKnowledgeArticles({
-    status: 'published',
+    status: selectedStatus as any,
     query: searchQuery,
+    category_id: selectedCategory === "all" ? undefined : selectedCategory,
     limit: 100,
   })
-  const { data: bookmarkedArticles, isLoading: bookmarksLoading } = useArticleBookmarks()
-  
-  console.log('🔍 HOOK DEBUG - categoriesError:', categoriesError)
-  
+  const { data: bookmarks } = useArticleBookmarks()
+  const deleteArticle = useDeleteArticle()
+  const toggleBookmark = useToggleArticleBookmark()
+
   const loading = categoriesLoading || articlesLoading
-  
-  // Map real categories to UI format
-  const realKnowledgeCategories = (categoriesData || []).map(cat => {
-    // Get icon based on category name
-    const iconKey = Object.keys(categoryIcons).find(key => 
-      cat.name.toLowerCase().includes(key.toLowerCase())
-    )
-    const Icon = iconKey ? categoryIcons[iconKey] : categoryIcons.default
-    
-    return {
-      name: cat.name,
-      icon: Icon,
-      articles: cat.count,
-      description: `${cat.count} articles in ${cat.name}`,
-      aiInsights: cat.trending ? `Trending: ${cat.count} articles` : `${cat.count} articles available`,
-      trending: cat.trending || false,
+
+  const handleDeleteArticle = () => {
+    if (articleToDelete) {
+      deleteArticle.mutate(articleToDelete)
+      setDeleteDialogOpen(false)
+      setArticleToDelete(null)
     }
-  })
-
-  const [showAIChat, setShowAIChat] = useState(false)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "Hi! I'm here to help you create knowledge base articles. What topic would you like me to write about? Please describe the subject, target audience, and any specific points you'd like covered.",
-      timestamp: new Date(),
-    },
-  ])
-  const [currentMessage, setCurrentMessage] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedArticle, setGeneratedArticle] = useState<any>(null)
-  const [showSaveArticle, setShowSaveArticle] = useState(false)
-  const [articleForm, setArticleForm] = useState({
-    title: "",
-    category: "",
-    content: "",
-  })
-
-  const router = useRouter()
-
-  // Debug: Log what we're getting from hooks
-  console.log('🔍 DEBUG - categoriesData:', categoriesData)
-  console.log('🔍 DEBUG - realKnowledgeCategories:', realKnowledgeCategories)
-  console.log('🔍 DEBUG - loading:', loading)
-  
-  const filteredCategories = realKnowledgeCategories.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      category.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
-  const handleEditCategory = (category: any) => {
-    setSelectedCategory(category)
-    setEditForm({ name: category.name, description: category.description })
-    setShowEditCategory(true)
   }
 
-  const handleDeleteCategory = (category: any) => {
-    setSelectedCategory(category)
-    setShowDeleteCategory(true)
+  const handleBookmarkToggle = (articleId: string, isBookmarked: boolean, bookmarkId?: string | null) => {
+    toggleBookmark.mutate({ articleId, isBookmarked, bookmarkId })
   }
 
-  const handleCategoryClick = (category: any) => {
-    router.push(`/knowledge-base/category/${category.name.toLowerCase().replace(/\s+/g, "-")}`)
+  const isArticleBookmarked = (articleId: string) => {
+    return bookmarks?.some(b => b.article_id === articleId)
   }
 
-  const handleSaveCategory = () => {
-    toast.info('Category management', {
-      description: 'Category management will be implemented soon.'
-    })
-    setShowEditCategory(false)
-  }
-
-  const handleConfirmDelete = () => {
-    toast.info('Category management', {
-      description: 'Category management will be implemented soon.'
-    })
-    setShowDeleteCategory(false)
-  }
-
-  const handleAddCategory = () => {
-    toast.info('Category management', {
-      description: 'Category management will be implemented soon.'
-    })
-    setShowAddCategory(false)
-    setEditForm({ name: "", description: "" })
-  }
-
-  const handleSendMessage = async () => {
-    if (!currentMessage.trim()) return
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: currentMessage,
-      timestamp: new Date(),
-    }
-
-    setChatMessages((prev) => [...prev, userMessage])
-    setCurrentMessage("")
-    setIsGenerating(true)
-
-    setTimeout(() => {
-      const responses = [
-        "That's a great topic! Could you tell me more about the specific use case or scenario you'd like the article to cover?",
-        "Excellent! What level of technical detail should I include? Should this be for beginners, intermediate users, or advanced practitioners?",
-        "Perfect! Let me generate a comprehensive article on that topic. This will include step-by-step instructions, best practices, and troubleshooting tips.",
-        "Great! I'll create a detailed article covering all the key aspects. Would you like me to include any specific examples or case studies?",
-      ]
-
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-      }
-
-      setChatMessages((prev) => [...prev, assistantMessage])
-      setIsGenerating(false)
-
-      if (chatMessages.length >= 4) {
-        setTimeout(() => {
-          const finalMessage: ChatMessage = {
-            id: (Date.now() + 2).toString(),
-            role: "assistant",
-            content:
-              "Based on our conversation, I have enough information to create a comprehensive article. Would you like me to generate it now?",
-            timestamp: new Date(),
-          }
-          setChatMessages((prev) => [...prev, finalMessage])
-        }, 1000)
-      }
-    }, 1500)
-  }
-
-  const handleGenerateArticle = () => {
-    setIsGenerating(true)
-
-    setTimeout(() => {
-      const article = {
-        title: "Complete Guide to IT Service Management Best Practices",
-        content: `# Complete Guide to IT Service Management Best Practices
-
-## Introduction
-
-IT Service Management (ITSM) is a strategic approach to designing, delivering, managing, and improving the way information technology (IT) is used within an organization. This comprehensive guide covers the essential best practices for implementing effective ITSM processes.
-
-## Key Components of ITSM
-
-### 1. Service Strategy
-- Define service portfolio and value propositions
-- Establish governance frameworks
-- Align IT services with business objectives
-
-### 2. Service Design
-- Design services for availability and performance
-- Implement security and compliance measures
-- Plan capacity and continuity requirements
-
-### 3. Service Transition
-- Manage changes and releases effectively
-- Validate and test service changes
-- Manage knowledge and assets
-
-### 4. Service Operation
-- Handle incidents and problems efficiently
-- Manage events and access requests
-- Monitor service performance continuously
-
-### 5. Continual Service Improvement
-- Measure and analyze service performance
-- Identify improvement opportunities
-- Implement and monitor improvements
-
-## Best Practices Implementation
-
-### Incident Management
-1. **Rapid Response**: Establish clear escalation procedures
-2. **Root Cause Analysis**: Investigate underlying issues
-3. **Communication**: Keep stakeholders informed throughout resolution
-
-### Change Management
-1. **Risk Assessment**: Evaluate potential impacts before implementation
-2. **Approval Process**: Implement proper authorization workflows
-3. **Testing**: Validate changes in controlled environments
-
-### Problem Management
-1. **Proactive Identification**: Monitor trends and patterns
-2. **Knowledge Base**: Document known errors and workarounds
-3. **Continuous Improvement**: Learn from recurring issues
-
-## Conclusion
-
-Effective ITSM implementation requires commitment, proper planning, and continuous improvement. By following these best practices, organizations can deliver reliable IT services that support business objectives and enhance user satisfaction.`,
-      }
-
-      setGeneratedArticle(article)
-      setArticleForm({
-        title: article.title,
-        category: "",
-        content: article.content,
-      })
-      setIsGenerating(false)
-      setShowSaveArticle(true)
-    }, 3000)
-  }
-
-  const handleSaveGeneratedArticle = () => {
-    toast.success('Article saved', {
-      description: `"${articleForm.title}" has been saved to the ${articleForm.category} category!`
-    })
-    setShowSaveArticle(false)
-    setShowAIChat(false)
-    setChatMessages([
-      {
-        id: "1",
-        role: "assistant",
-        content:
-          "Hi! I'm here to help you create knowledge base articles. What topic would you like me to write about? Please describe the subject, target audience, and any specific points you'd like covered.",
-        timestamp: new Date(),
-      },
-    ])
-    setGeneratedArticle(null)
+  const getBookmarkId = (articleId: string) => {
+    return bookmarks?.find(b => b.article_id === articleId)?.id
   }
 
   return (
     <PageContent breadcrumb={[{ label: "Knowledge Base" }]}>
-      <div className="space-y-6 text-[13px]">
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-[13px] font-semibold tracking-tight">Knowledge Base</h1>
-            <p className="text-muted-foreground text-[13px]">
-              Find answers and documentation for all platform features
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Knowledge Base</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Browse and manage knowledge articles
             </p>
           </div>
           <div className="flex items-center gap-2">
-<Button
+            <Button
               variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditForm({ name: "", description: "" })
-                setShowAddCategory(true)
-              }}
-              className="text-13"
+              onClick={() => router.push("/knowledge-base/categories")}
             >
+              <Folder className="h-4 w-4 mr-2" />
+              Manage Categories
+            </Button>
+            <Button onClick={() => router.push("/knowledge-base/new")}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-<Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAIChat(true)}
-              className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90 text-13"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              AI Generate Article
-            </Button>
-<Button className="text-13">
-              <Search className="h-4 w-4 mr-2" />
-              Browse All Articles
+              New Article
             </Button>
           </div>
         </div>
 
-<Card className="border-[var(--primary)]/20 bg-gradient-to-r from-[var(--primary)]/5 to-transparent">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
               <div className="flex items-center gap-3">
-<Bot className="h-5 w-5 text-[var(--primary)]" />
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                </div>
                 <div>
-                  <h3 className="font-medium text-[11px]">AI Knowledge Intelligence</h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    12 content gaps identified • 8 articles need updates •
-<span className="text-[var(--primary)] font-medium"> 3 auto-generated drafts</span>
+                  <p className="text-sm text-muted-foreground">Total Articles</p>
+                  <p className="text-2xl font-semibold">{articles?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Folder className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Categories</p>
+                  <p className="text-2xl font-semibold">{categories?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Star className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Bookmarked</p>
+                  <p className="text-2xl font-semibold">{bookmarks?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Eye className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Views</p>
+                  <p className="text-2xl font-semibold">
+                    {articles?.reduce((sum, a) => sum + (a.view_count || 0), 0) || 0}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  89% Accuracy
-                </Badge>
-                <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  247 Articles
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex items-center gap-4 py-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search for articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-className="pl-10 h-10 text-13"
-            />
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Bookmarked Articles Section */}
-        {bookmarkedArticles && bookmarkedArticles.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[13px] flex items-center gap-2">
-                <Bookmark className="h-5 w-5" />
-                Your Bookmarks
-              </h2>
-              <Badge variant="secondary" className="text-[11px]">
-                {bookmarkedArticles.length} saved
-              </Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bookmarkedArticles.slice(0, 6).map((bookmark: any) => (
-                <Card
-                  key={bookmark.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/knowledge-base/article/${bookmark.article?.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-[13px] font-medium line-clamp-2">
-                          {bookmark.article?.title}
-                        </h3>
-                        <Badge variant="outline" className="text-[10px] shrink-0">
-                          {bookmark.article?.category}
-                        </Badge>
-                      </div>
-                      {bookmark.article?.summary && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {bookmark.article.summary}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                        <Bookmark className="h-3 w-3" />
-                        <span>Saved for later</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            {bookmarkedArticles.length > 6 && (
-              <Button variant="outline" size="sm" className="w-full text-[13px]">
-                View All Bookmarks ({bookmarkedArticles.length})
-              </Button>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
-            Array.from({ length: 9 }).map((_, i) => (
-              <div key={`kb-skel-${i}`} className="0 rounded-lg border p-6">
-                <div className="flex items-start space-x-4">
-                  <Skeleton className="w-12 h-12 rounded-lg" />
-                  <div className="flex-1 space-y-3">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-3/4" />
-                    </div>
-                    <div className="p-2 rounded-md border">
-                      <div className="flex items-start gap-2">
-                        <Skeleton className="h-3 w-3" />
-                        <Skeleton className="h-3 w-full" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            filteredCategories.map((category) => {
-              const Icon = category.icon
-              return (
-                <div
-                  key={category.name}
-                  className="0 rounded-lg border p-6 hover:shadow-md transition-all duration-200 group hover:border-primary/20 relative"
-                >
-                <div className="absolute top-4 right-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-<DropdownMenuContent align="end" className="text-13">
-                      <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Category
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteCategory(category)} className="text-red-600">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Category
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div
-                  className="flex items-start space-x-4 cursor-pointer"
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-200">
-                      <Icon className="h-6 w-6 text-primary transition-colors duration-200" />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-[11px] font-semibold">{category.name}</h3>
-                      {category.trending && (
-                        <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          Trending
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{category.description}</p>
-
-<div className="mb-3 p-2 rounded-md bg-[var(--primary)]/5 border border-[var(--primary)]/10">
-                      <div className="flex items-start gap-2">
-<Sparkles className="h-3 w-3 text-[var(--primary)] mt-0.5 shrink-0" />
-                        <p className="text-[10px] text-foreground leading-relaxed">{category.aiInsights}</p>
-                      </div>
-                    </div>
-
-                    <p className="text-[10px] font-medium text-primary">{category.articles} articles</p>
-                  </div>
-                </div>
-              </div>
-            )
-          })
-          )}
-        </div>
-      </div>
-
-      <Dialog open={showEditCategory} onOpenChange={setShowEditCategory}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Category</DialogTitle>
-            <DialogDescription className="text-[13px]">Update the category name and description.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" className="text-[13px]">
-                Category Name
-              </Label>
-              <Input
-                id="name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                className="text-[13px]"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description" className="text-[13px]">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                className="text-[13px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditCategory(false)} className="text-[13px]">
-              Cancel
-            </Button>
-            <Button onClick={handleSaveCategory} className="text-[13px]">
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showDeleteCategory} onOpenChange={setShowDeleteCategory}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              Are you sure you want to delete "{selectedCategory?.name}"? This action cannot be undone and will remove
-              all articles in this category.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteCategory(false)} className="text-[13px]">
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete} className="text-[13px]">
-              Delete Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Category</DialogTitle>
-            <DialogDescription className="text-[13px]">Create a new knowledge base category.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="new-name" className="text-[13px]">
-                Category Name
-              </Label>
-              <Input
-                id="new-name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                placeholder="Enter category name"
-                className="text-[13px]"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="new-description" className="text-[13px]">
-                Description
-              </Label>
-              <Textarea
-                id="new-description"
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                placeholder="Enter category description"
-                className="text-[13px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddCategory(false)} className="text-[13px]">
-              Cancel
-            </Button>
-            <Button onClick={handleAddCategory} className="text-[13px]">
-              Create Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAIChat} onOpenChange={setShowAIChat}>
-        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-<Bot className="h-5 w-5 text-[var(--primary)]" />
-                <DialogTitle>AI Article Generator</DialogTitle>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowAIChat(false)} className="h-8 w-8 p-0">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <DialogDescription className="text-[13px]">
-              Chat with AI to generate comprehensive knowledge base articles
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/50 rounded-lg">
-              {chatMessages.map((message) => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.role === "user" ? "bg-[#7073fc] text-white" : "0 border shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {message.role === "assistant" && <Bot className="h-4 w-4 text-[#7073fc] mt-0.5 flex-shrink-0" />}
-<p className="text-13 leading-relaxed">{message.content}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {isGenerating && (
-                <div className="flex justify-start">
-                  <div className="0 border shadow-sm p-3 rounded-lg">
-                    <div className="flex items-center gap-2">
-<Loader2 className="h-4 w-4 text-[var(--primary)] animate-spin" />
-                      <p className="text-[13px] text-muted-foreground">AI is thinking...</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-shrink-0 mt-4">
-              <div className="flex gap-2">
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={currentMessage}
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  placeholder="Describe the article you'd like me to create..."
-className="flex-1 text-13"
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  placeholder="Search articles..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
                 />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!currentMessage.trim() || isGenerating}
-                  className="text-[13px]"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
               </div>
-
-              {chatMessages.length >= 4 && !generatedArticle && (
-<div className="mt-3 p-3 bg-[var(--primary)]/5 rounded-lg border border-[var(--primary)]/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-<Sparkles className="h-4 w-4 text-[var(--primary)]" />
-<p className="text-13 text-muted-foreground">
-                        Ready to generate your article based on our conversation
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleGenerateArticle}
-                      disabled={isGenerating}
-className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-13 text-[var(--primary-foreground)]"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="h-4 w-4 mr-2" />
-                          Generate Article
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showSaveArticle} onOpenChange={setShowSaveArticle}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Save Generated Article</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              Review and save your AI-generated article to the knowledge base
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="article-title" className="text-[13px]">
-                Article Title
-              </Label>
-              <Input
-                id="article-title"
-                value={articleForm.title}
-                onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })}
-                className="text-[13px]"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="article-category" className="text-[13px]">
-                Category
-              </Label>
-              <Select
-                value={articleForm.category}
-                onValueChange={(value) => setArticleForm({ ...articleForm, category: value })}
-              >
-                <SelectTrigger className="text-[13px]">
-                  <SelectValue placeholder="Select a category" />
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
-                <SelectContent className="text-[13px]">
-                  {knowledgeCategories.map((category) => (
-                    <SelectItem key={category.name} value={category.name}>
-                      {category.name}
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name} ({cat.count})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="grid gap-2">
-              <Label className="text-[13px]">Article Preview</Label>
-              <div className="max-h-60 overflow-y-auto p-3 bg-muted/50 rounded-lg border">
-                <pre className="whitespace-pre-wrap text-[13px] leading-relaxed">{articleForm.content}</pre>
-              </div>
-            </div>
-          </div>
+        {/* Articles List */}
+        <div className="space-y-3">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-12 w-12 rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-6 w-20" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : articles && articles.length > 0 ? (
+            articles.map((article: any) => {
+              const isBookmarked = isArticleBookmarked(article.id)
+              const bookmarkId = getBookmarkId(article.id)
 
+              return (
+                <Card
+                  key={article.id}
+                  className="hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <BookOpen className="h-6 w-6 text-primary" />
+                      </div>
+                      <div
+                        className="flex-1 min-w-0"
+                        onClick={() => router.push(`/knowledge-base/article/${article.id}`)}
+                      >
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                            {article.title}
+                          </h3>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleBookmarkToggle(article.id, isBookmarked, bookmarkId)
+                              }}
+                            >
+                              <Bookmark
+                                className={`h-4 w-4 ${isBookmarked ? "fill-current text-yellow-500" : ""}`}
+                              />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    router.push(`/knowledge-base/article/${article.id}/edit`)
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setArticleToDelete(article.id)
+                                    setDeleteDialogOpen(true)
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                        {article.summary && (
+                          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                            {article.summary}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                          {article.category && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Folder className="h-3 w-3" />
+                              {typeof article.category === 'object' ? article.category.name : article.category}
+                            </Badge>
+                          )}
+                          <Badge variant="outline">{article.status}</Badge>
+                          {article.author && (
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              <span>{article.author.display_name || article.author.email}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {formatDistanceToNow(new Date(article.created_at), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{article.view_count || 0} views</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ThumbsUp className="h-3 w-3" />
+                            <span>{article.helpful_count || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No articles found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery
+                    ? "Try adjusting your search or filters"
+                    : "Get started by creating your first article"}
+                </p>
+                <Button onClick={() => router.push("/knowledge-base/new")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Article
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Article</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this article? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveArticle(false)} className="text-[13px]">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-              onClick={handleSaveGeneratedArticle}
-              disabled={!articleForm.title || !articleForm.category}
-              className="text-[13px]"
+              variant="destructive"
+              onClick={handleDeleteArticle}
+              disabled={deleteArticle.isPending}
             >
-              Save Article
+              {deleteArticle.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
