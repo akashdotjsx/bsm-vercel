@@ -7,6 +7,7 @@ import { X, Maximize2, ChevronRight, Settings, Send, ChevronDown, Globe } from "
 import Image from "next/image"
 import ReactMarkdown from 'react-markdown'
 import { useAuth } from "@/lib/contexts/auth-context"
+import { useTheme } from "next-themes"
 
 interface AIAssistantModalProps {
   isOpen: boolean
@@ -42,6 +43,7 @@ interface Message {
 
 export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
   const { user, profile } = useAuth()
+  const { theme } = useTheme()
   const [input, setInput] = useState("")
   const [mounted, setMounted] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -217,9 +219,9 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
       }}
     >
       {/* Side Tray - Fixed overlay */}
-      <div className="relative bg-white dark:bg-[#1a1a1a] h-full shadow-2xl flex flex-col" style={{ borderRadius: '0' }}>
+      <div className="relative bg-background h-full shadow-2xl flex flex-col" style={{ borderRadius: '0' }}>
         {/* Header - Fixed */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a]">
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] rounded-[16px] flex items-center justify-center">
               <svg
@@ -236,28 +238,37 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
               </svg>
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#2D2F34] dark:text-white">AI Assistant</h2>
-              <p className="text-xs text-[#8e8e8e] dark:text-gray-400">Ask me anything about your tickets</p>
+              <h2 className="text-sm font-semibold text-foreground">AI Assistant</h2>
+              <p className="text-xs text-muted-foreground">Ask me anything about your tickets</p>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 hover:bg-muted"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#1a1a1a]">
+        <div className="flex-1 flex flex-col overflow-hidden bg-background">
           {messages.length === 0 ? (
             <>
               {/* Suggestions Section */}
               <div className="px-6 pt-4 mb-8">
-                <h3 className="text-xs font-medium text-[#8e8e8e] dark:text-gray-400 mb-4">Suggestions</h3>
+                <h3 className="text-xs font-medium text-muted-foreground mb-4">Suggestions</h3>
                 <div className="space-y-3">
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
                       disabled={isStreaming}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-[#F3F4FF] dark:bg-[#2a2a2a] rounded-lg hover:bg-[#E8E9FF] dark:hover:bg-[#333333] transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="text-xs text-[#2D2F34] dark:text-white text-left flex-1 pr-3">
+                      <span className="text-xs text-foreground text-left flex-1 pr-3">
                         {suggestion}
                       </span>
                       <svg
@@ -271,7 +282,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                         <path
                           d="M6 4L10 8L6 12"
                           stroke="currentColor"
-                          className="stroke-[#2D2F34] dark:stroke-white"
+                          className="stroke-foreground"
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -286,7 +297,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           ) : (
             <>
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4 px-6 pt-4 bg-white dark:bg-[#1a1a1a]">
+              <div className="flex-1 overflow-y-auto space-y-4 mb-4 px-6 pt-4 bg-background">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -296,7 +307,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                       className={`max-w-[85%] rounded-lg px-4 py-3 ${
                         msg.role === 'user'
                           ? 'bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] text-white'
-                          : 'bg-[#F3F4FF] dark:bg-[#2a2a2a] text-[#2D2F34] dark:text-white'
+                          : 'bg-muted/50 text-foreground'
                       }`}
                     >
                       <div className="prose prose-sm max-w-none text-xs">
@@ -304,7 +315,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                       </div>
                       <div
                         className={`text-[10px] mt-2 ${
-                          msg.role === 'user' ? 'text-white/70' : 'text-[#8e8e8e] dark:text-gray-400'
+                          msg.role === 'user' ? 'text-white/70' : 'text-muted-foreground'
                         }`}
                       >
                         {msg.timestamp.toLocaleTimeString()}
@@ -313,7 +324,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                   </div>
                 ))}
                 {isStreaming && (
-                  <div className="flex items-center gap-2 text-[#8e8e8e] dark:text-gray-400 text-xs">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <div className="animate-spin h-4 w-4 border-2 border-[#6E72FF] border-t-transparent rounded-full" />
                     AI is thinking...
                   </div>
@@ -324,7 +335,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           )}
 
           {/* Input Section - Fixed at bottom */}
-          <div className="flex-shrink-0 space-y-4 px-6 pb-4 pt-2 bg-white dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 space-y-4 px-6 pb-4 pt-2 bg-background border-t border-border">
             {/* Input Field */}
             <div className="relative">
               <div className="w-full min-h-[120px] bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] rounded-xl p-[2px]">
@@ -335,7 +346,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask Anything..."
                   disabled={isStreaming}
-                  className="w-full h-full min-h-[116px] bg-white dark:bg-[#1a1a1a] rounded-xl p-4 text-xs text-[#2D2F34] dark:text-white placeholder:text-[#8e8e8e] dark:placeholder:text-gray-500 resize-none focus:outline-none disabled:opacity-50"
+                  className="w-full h-full min-h-[116px] bg-background rounded-xl p-4 text-xs text-foreground placeholder:text-muted-foreground resize-none focus:outline-none disabled:opacity-50"
                 />
               </div>
             </div>
@@ -348,7 +359,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   webSearch
                     ? 'bg-gradient-to-r from-[#6E72FF] to-[#FF2CB9] text-white shadow-md'
-                    : 'bg-white dark:bg-[#2a2a2a] text-[#5F5F5F] dark:text-gray-400 border border-[#E5E5E5] dark:border-gray-700 hover:border-[#6E72FF] dark:hover:border-[#6E72FF]'
+                    : 'bg-background text-muted-foreground border border-border hover:border-[#6E72FF]'
                 }`}
                 title="Enable web search"
               >
@@ -360,18 +371,18 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
               <div className="relative" ref={modelDropdownRef}>
                 <button
                   onClick={() => setShowModelDropdown(!showModelDropdown)}
-                  className="flex items-center gap-2 bg-white dark:bg-[#2a2a2a] border border-[#E5E5E5] dark:border-gray-700 rounded-lg px-3 py-2 hover:border-[#6E72FF] dark:hover:border-[#6E72FF] transition-colors"
+                  className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2 hover:border-[#6E72FF] transition-colors"
                 >
                   <div className="w-3 h-3 bg-[#168846] rounded flex items-center justify-center">
                     <div className="w-1.5 h-1.5 bg-white rounded-sm" />
                   </div>
-                  <span className="text-xs text-[#5F5F5F] dark:text-gray-400 max-w-[80px] truncate">{selectedModel.name}</span>
-                  <ChevronDown className="w-3 h-3 text-[#9F9F9F] dark:text-gray-500" />
+                  <span className="text-xs text-muted-foreground max-w-[80px] truncate">{selectedModel.name}</span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </button>
                 
                 {showModelDropdown && (
                   <div 
-                    className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-[#2a2a2a] border border-[#E5E5E5] dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-y-auto z-50"
+                    className="absolute bottom-full left-0 mb-2 w-48 bg-background border border-border rounded-lg shadow-xl max-h-64 overflow-y-auto z-50"
                   >
                     {AI_MODELS.map((model) => (
                       <button
@@ -380,8 +391,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                           setSelectedModel(model)
                           setShowModelDropdown(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F3F4FF] dark:hover:bg-[#333] transition-colors ${
-                          selectedModel.id === model.id ? 'bg-[#F3F4FF] dark:bg-[#333] text-[#6E72FF]' : 'text-[#5F5F5F] dark:text-gray-400'
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${
+                          selectedModel.id === model.id ? 'bg-muted/50 text-[#6E72FF]' : 'text-muted-foreground'
                         }`}
                       >
                         {model.name}
@@ -395,15 +406,15 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
               <div className="relative" ref={languageDropdownRef}>
                 <button
                   onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                  className="flex items-center gap-2 bg-white dark:bg-[#2a2a2a] border border-[#E5E5E5] dark:border-gray-700 rounded-lg px-3 py-2 hover:border-[#6E72FF] dark:hover:border-[#6E72FF] transition-colors"
+                  className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2 hover:border-[#6E72FF] transition-colors"
                 >
-                  <span className="text-xs text-[#5F5F5F] dark:text-gray-400">{selectedLanguage}</span>
-                  <ChevronDown className="w-3 h-3 text-[#9F9F9F] dark:text-gray-500" />
+                  <span className="text-xs text-muted-foreground">{selectedLanguage}</span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </button>
                 
                 {showLanguageDropdown && (
                   <div 
-                    className="absolute bottom-full right-0 mb-2 w-36 bg-white dark:bg-[#2a2a2a] border border-[#E5E5E5] dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-y-auto z-50"
+                    className="absolute bottom-full right-0 mb-2 w-36 bg-background border border-border rounded-lg shadow-xl max-h-64 overflow-y-auto z-50"
                   >
                     {LANGUAGES.map((lang) => (
                       <button
@@ -412,8 +423,8 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                           setSelectedLanguage(lang)
                           setShowLanguageDropdown(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-[#F3F4FF] dark:hover:bg-[#333] transition-colors ${
-                          selectedLanguage === lang ? 'bg-[#F3F4FF] dark:bg-[#333] text-[#6E72FF]' : 'text-[#5F5F5F] dark:text-gray-400'
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${
+                          selectedLanguage === lang ? 'bg-muted/50 text-[#6E72FF]' : 'text-muted-foreground'
                         }`}
                       >
                         {lang}
