@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,6 +41,20 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
   // Auth context for organization
   const { organization } = useAuth()
   
+  // Add custom CSS for placeholder color
+  React.useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      [data-placeholder] {
+        color: #595959 !important;
+      }
+    `
+    document.head.appendChild(style)
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+  
   // Custom columns hook
   const { columns: customColumns, isLoading: customColumnsLoading } = useCustomColumnsGraphQL(organization?.id || '')
   
@@ -56,10 +70,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
     assignee_ids: [] as string[], // Multiple assignees
     watchers: "",
     targetDueDate: "",
-    priority: "medium", // Default priority
-    status: "new", // Default status
-    impact: "medium", // Default impact
-    urgency: "medium", // Default urgency
+    priority: "", // No default - user must select
+    status: "", // No default - user must select
+    impact: "", // No default - user must select
+    urgency: "", // No default - user must select
     calculatedPriority: "",
     slaPolicy: "",
     associatedProject: "",
@@ -162,7 +176,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         onBlur={handleBlur}
         onKeyPress={handleKeyPress}
         placeholder={column.defaultValue || `Enter ${column.title.toLowerCase()}`}
-        className={`w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card text-foreground dark:text-foreground ${!isValid ? 'border-destructive dark:border-destructive' : ''}`}
+        className={`w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card text-foreground dark:text-foreground placeholder:text-[#595959] ${!isValid ? 'border-destructive dark:border-destructive' : ''}`}
       />
     )
   }
@@ -309,7 +323,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               value={form.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
                      placeholder="Enter Title"
-                     className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card"
+                     className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card placeholder:text-[#595959]"
                      style={{ color: '#2D2F34' }}
               required
             />
@@ -320,8 +334,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Requester</Label>
               <Select value={form.requester} onValueChange={(value) => handleInputChange('requester', value)}>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
-                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.requester ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="current-user">Current User</SelectItem>
@@ -333,8 +347,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Department *</Label>
               <Select value={form.department} onValueChange={(value) => handleInputChange('department', value)} required>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
-                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.department ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="it">IT</SelectItem>
@@ -351,7 +365,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Category *</Label>
               <Select value={form.category} onValueChange={(value) => handleInputChange('category', value)} required>
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ height: '38px', width: '100%' }}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.category ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,8 +385,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 disabled={!form.category}
                 required
               >
-                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
-                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: form.subcategory ? '#2D2F34' : '#595959', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableServices.map((service: any) => (
@@ -392,7 +406,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               value={form.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe the issue or request in detail..."
-               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card"
+               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card placeholder:text-[#595959]"
                style={{ color: '#2D2F34' }}
               required
             />
@@ -418,7 +432,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                     }
                   }}
                 >
-                  <SelectTrigger className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                  <SelectTrigger 
+                    className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground" 
+                    style={{ 
+                      width: '100%',
+                      '--placeholder-color': '#595959'
+                    } as React.CSSProperties}
+                  >
                     <SelectValue placeholder="Select Assignees" />
                   </SelectTrigger>
                   <SelectContent>
@@ -482,8 +502,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
                      <Label className="text-sm font-medium" style={{ color: '#595959' }}>Watchers</Label>
               <Select value={form.watchers} onValueChange={(value) => handleInputChange('watchers', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', width: '100%' }}>
-                  <SelectValue placeholder="Add Watchers" style={{ color: '#717171' }} />
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card" 
+                  style={{ color: '#2D2F34', width: '100%' }}
+                >
+                  <SelectValue placeholder="Add Watchers" />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -500,7 +523,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
                      <Label className="text-sm font-medium" style={{ color: '#595959' }}>Target Due Date *</Label>
               <Select value={form.targetDueDate} onValueChange={(value) => handleInputChange('targetDueDate', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  style={{ width: '100%' }}
+                >
                   <SelectValue placeholder="Select Due Date" />
                 </SelectTrigger>
                 <SelectContent>
@@ -514,7 +540,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
                      <Label className="text-sm font-medium" style={{ color: '#595959' }}>Priority *</Label>
               <Select value={form.priority} onValueChange={(value) => handleInputChange('priority', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  style={{ width: '100%' }}
+                >
                   <SelectValue placeholder="Select Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -531,7 +560,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Status</Label>
               <Select value={form.status} onValueChange={(value) => handleInputChange('status', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  style={{ width: '100%' }}
+                >
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
               <SelectContent>
@@ -561,7 +593,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 value={form.associatedProject}
                 onChange={(e) => handleInputChange('associatedProject', e.target.value)}
                 placeholder="Link to a project"
-                className="w-full h-10 border border-border dark:border-border rounded-md pl-10 pr-10 bg-background dark:bg-card text-foreground dark:text-foreground"
+                className="w-full h-10 border border-border dark:border-border rounded-md pl-10 pr-10 bg-background dark:bg-card text-foreground dark:text-foreground placeholder:text-[#595959]"
               />
               <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1_358)">
@@ -589,7 +621,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Impact</Label>
               <Select value={form.impact} onValueChange={(value) => handleInputChange('impact', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  style={{ width: '100%' }}
+                >
                   <SelectValue placeholder="Select Impact Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -603,8 +638,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <div className="space-y-2 flex-1">
               <Label className="text-sm font-medium" style={{ color: '#595959' }}>Urgency</Label>
               <Select value={form.urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
-                  <SelectValue placeholder="Select" />
+                <SelectTrigger 
+                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" 
+                  style={{ width: '100%' }}
+                >
+                  <SelectValue placeholder="Select Urgency Level" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
@@ -666,7 +704,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
                 placeholder="Gather user requirements"
-                       className="flex-1 border-0 focus:ring-0 text-sm bg-transparent"
+                       className="flex-1 border-0 focus:ring-0 text-sm bg-transparent placeholder:text-[#595959]"
                        style={{ color: '#2D2F34' }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
@@ -703,7 +741,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {customColumns && customColumns.length > 0 && (
           <div className="space-y-0">
             <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-              <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Custom Fields</h3>
+              <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21', color: '#595959' }}>Custom Fields</h3>
             </div>
             <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
               <div className="space-y-4">
@@ -712,7 +750,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                   .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) // Sort by sort_order
                   .map((column) => (
                     <div key={column.id} className="space-y-2">
-                      <Label className="text-sm font-medium text-foreground dark:text-foreground">
+                      <Label className="text-sm font-medium" style={{ color: '#595959' }}>
                         {column.title}
                         {column.defaultValue && (
                           <span className="text-xs text-muted-foreground dark:text-muted-foreground ml-1">(Default: {column.defaultValue})</span>
