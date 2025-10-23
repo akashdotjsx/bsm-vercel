@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import { useTheme } from "next-themes"
 import { 
   X, 
   User, 
@@ -40,6 +41,7 @@ interface CreateTicketFormProps {
 export default function CreateTicketForm({ onSave, onCancel, isSubmitting = false }: CreateTicketFormProps) {
   // Auth context for organization
   const { organization } = useAuth()
+  const { theme } = useTheme()
   
   // Add custom CSS for placeholder color
   React.useEffect(() => {
@@ -593,11 +595,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 value={form.associatedProject}
                 onChange={(e) => handleInputChange('associatedProject', e.target.value)}
                 placeholder="Link to a project"
-                className="w-full h-10 border border-border dark:border-border rounded-md pl-10 pr-10 bg-background dark:bg-card text-foreground dark:text-foreground placeholder:text-[#595959]"
+                className="w-full h-10 border border-border dark:border-border rounded-md pl-10 pr-10 bg-background dark:bg-card text-foreground dark:text-foreground placeholder:text-[#595959] dark:placeholder:text-[#8e8e8e]"
               />
               <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1_358)">
-                  <path d="M9.33347 7.33334C9.04716 6.95059 8.68189 6.63389 8.26243 6.40471C7.84297 6.17554 7.37913 6.03926 6.90237 6.00512C6.4256 5.97097 5.94708 6.03976 5.49924 6.20682C5.0514 6.37388 4.64472 6.63529 4.3068 6.97334L2.3068 8.97334C1.69961 9.60201 1.36363 10.444 1.37122 11.318C1.37881 12.192 1.72938 13.028 2.3474 13.6461C2.96543 14.2641 3.80147 14.6147 4.67546 14.6223C5.54945 14.6298 6.39146 14.2939 7.02013 13.6867L8.16013 12.5467M6.66679 8.66666C6.95309 9.04942 7.31836 9.36612 7.73782 9.59529C8.15728 9.82446 8.62113 9.96074 9.09789 9.99489C9.57465 10.029 10.0532 9.96024 10.501 9.79318C10.9489 9.62613 11.3555 9.36471 11.6935 9.02666L13.6935 7.02666C14.3006 6.39799 14.6366 5.55598 14.629 4.68199C14.6214 3.808 14.2709 2.97196 13.6529 2.35394C13.0348 1.73591 12.1988 1.38535 11.3248 1.37775C10.4508 1.37016 9.6088 1.70614 8.98012 2.31333L7.83346 3.45333" stroke="#000000" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9.33347 7.33334C9.04716 6.95059 8.68189 6.63389 8.26243 6.40471C7.84297 6.17554 7.37913 6.03926 6.90237 6.00512C6.4256 5.97097 5.94708 6.03976 5.49924 6.20682C5.0514 6.37388 4.64472 6.63529 4.3068 6.97334L2.3068 8.97334C1.69961 9.60201 1.36363 10.444 1.37122 11.318C1.37881 12.192 1.72938 13.028 2.3474 13.6461C2.96543 14.2641 3.80147 14.6147 4.67546 14.6223C5.54945 14.6298 6.39146 14.2939 7.02013 13.6867L8.16013 12.5467M6.66679 8.66666C6.95309 9.04942 7.31836 9.36612 7.73782 9.59529C8.15728 9.82446 8.62113 9.96074 9.09789 9.99489C9.57465 10.029 10.0532 9.96024 10.501 9.79318C10.9489 9.62613 11.3555 9.36471 11.6935 9.02666L13.6935 7.02666C14.3006 6.39799 14.6366 5.55598 14.629 4.68199C14.6214 3.808 14.2709 2.97196 13.6529 2.35394C13.0348 1.73591 12.1988 1.38535 11.3248 1.37775C10.4508 1.37016 9.6088 1.70614 8.98012 2.31333L7.83346 3.45333" stroke={theme === 'dark' ? '#ffffff' : '#000000'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
                 </g>
                 <defs>
                   <clipPath id="clip0_1_358">
