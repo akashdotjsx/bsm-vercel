@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Portkey from 'portkey-ai'
-import mammoth from 'mammoth'
-import pdfParse from 'pdf-parse'
 import TurndownService from 'turndown'
+
+// Dynamic imports for packages with compatibility issues
+const getMammoth = async () => (await import('mammoth')).default
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -42,6 +43,7 @@ async function parseDocument(file: File): Promise<{ content: string; title: stri
 
       case 'docx':
       case 'doc': {
+        const mammoth = await getMammoth()
         const result = await mammoth.convertToHtml({ buffer })
         const markdown = turndownService.turndown(result.value)
         const title = extractTitleFromContent(markdown) || fileName.replace(/\.[^/.]+$/, '')
@@ -49,9 +51,8 @@ async function parseDocument(file: File): Promise<{ content: string; title: stri
       }
 
       case 'pdf': {
-        const pdfData = await pdfParse(buffer)
-        const title = extractTitleFromContent(pdfData.text) || fileName.replace(/\.[^/.]+$/, '')
-        return { content: pdfData.text, title }
+        // PDF parsing is complex in Next.js - suggest users convert to text/markdown first
+        throw new Error('PDF files are not currently supported. Please convert to .txt or .md format first.')
       }
 
       case 'html':
@@ -208,10 +209,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
 }

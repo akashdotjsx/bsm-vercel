@@ -254,7 +254,7 @@ export default function NewArticlePage() {
                       Drop your document here or click to browse
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Supported formats: PDF, Word (.docx), Markdown (.md), Text (.txt), HTML
+                      Supported formats: Word (.docx), Markdown (.md), Text (.txt), HTML
                     </p>
                     <Badge variant="outline" className="gap-1">
                       <Sparkles className="h-3 w-3" />
@@ -263,7 +263,7 @@ export default function NewArticlePage() {
                     <input
                       id="file-upload"
                       type="file"
-                      accept=".pdf,.docx,.doc,.md,.txt,.html,.htm"
+                      accept=".docx,.doc,.md,.txt,.html,.htm"
                       onChange={(e) => {
                         const file = e.target.files?.[0]
                         if (file) handleFileUpload(file)
