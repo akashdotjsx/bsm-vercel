@@ -42,8 +42,30 @@ export function useKnowledgeArticles(params?: ArticleSearchParams) {
         query = query.eq('author_id', params.author_id)
       }
       
-      if (params?.query) {
-        query = query.or(`title.ilike.%${params.query}%,content.ilike.%${params.query}%,summary.ilike.%${params.query}%`)
+if (params?.query) {
+        // Use full-text search RPC for better relevance & performance
+        const { data: searchData, error: searchError } = await supabase.rpc('search_knowledge_articles', {
+          search_query: params.query,
+          org_id: organizationId,
+          category_filter: null,
+          status_filter: params.status ?? 'published',
+          limit_count: params.limit ?? 20,
+          offset_count: params.offset ?? 0,
+        })
+        if (searchError) {
+          console.error('Error searching articles:', searchError)
+          throw searchError
+        }
+        // search RPC returns a subset; fetch full records by IDs to keep types consistent
+        const ids = (searchData || []).map((r: any) => r.id)
+        if (ids.length === 0) return [] as KnowledgeArticle[]
+        const { data: fullData, error: fullError } = await supabase
+          .from('knowledge_articles')
+          .select('*')
+          .in('id', ids)
+          .order('created_at', { ascending: false })
+        if (fullError) throw fullError
+        return fullData as KnowledgeArticle[]
       }
       
       if (params?.tags && params.tags.length > 0) {
@@ -223,37 +245,24 @@ export function useArticleCategories() {
   return useQuery({
     queryKey: ['knowledge-categories', organizationId],
     queryFn: async () => {
-      console.log('🔍 useArticleCategories - organizationId:', organizationId)
       if (!organizationId) throw new Error('No organization ID')
       
       const { data, error } = await supabase
-        .from('knowledge_articles')
-        .select('category')
+        .from('article_categories')
+        .select('id, name, article_count, is_active')
         .eq('organization_id', organizationId)
-        .eq('status', 'published')
-        .not('category', 'is', null)
-      
-      console.log('🔍 useArticleCategories - raw data:', data)
-      console.log('🔍 useArticleCategories - error:', error)
-      
+        .eq('is_active', true)
+
       if (error) {
         console.error('Error fetching categories:', error)
         throw error
       }
       
-      // Group and count categories
-      const categoryMap = data.reduce((acc, { category }) => {
-        if (!category) return acc
-        acc[category] = (acc[category] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-      
-      // Convert to array and sort by count
-      const categories: ArticleCategory[] = Object.entries(categoryMap)
-        .map(([name, count]) => ({
-          name,
-          count,
-          trending: count > 10, // Mark as trending if more than 10 articles
+      const categories: ArticleCategory[] = (data || [])
+        .map((row: any) => ({
+          name: row.name,
+          count: row.article_count ?? 0,
+          trending: (row.article_count ?? 0) > 10,
         }))
         .sort((a, b) => b.count - a.count)
       

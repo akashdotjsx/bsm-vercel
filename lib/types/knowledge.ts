@@ -11,7 +11,10 @@ export const KnowledgeArticleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title too long'),
   content: z.string().min(1, 'Content is required'),
   summary: z.string().optional().nullable(),
+  // DEPRECATED: string category retained for backward compatibility
   category: z.string().optional().nullable(),
+  // NEW: normalized category reference
+  category_id: z.string().uuid().optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   related_service_ids: z.array(z.string().uuid()).optional().nullable(),
   author_id: z.string().uuid().optional().nullable(),
@@ -87,6 +90,7 @@ export interface ArticleCategory {
 export interface ArticleSearchParams {
   query?: string
   category?: string
+  category_id?: string
   tags?: string[]
   status?: ArticleStatus
   author_id?: string
