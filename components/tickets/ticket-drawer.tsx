@@ -783,15 +783,19 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         isDeleting={deleteChecklistItemMutation.isPending}
       />
 
-      {/* Drawer overlay - starts below navbar */}
-      <div className="fixed inset-0 z-50 flex" style={{ top: 'var(--header-height, 56px)' }}>
+      {/* Drawer overlay */}
+      <div className="fixed inset-0 z-50 flex">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+        <div className="absolute inset-0" onClick={onClose} />
         
         {/* Drawer panel */}
         <div 
           className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background text-foreground shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-border"
-          style={{ height: 'calc(100vh - var(--header-height, 56px))' }}
+          style={{ 
+            height: '100vh',
+            borderTopLeftRadius: '10px',
+            borderBottomLeftRadius: '10px'
+          }}
         >
           {/* Header - Hide in create mode since CreateTicketForm has its own header */}
           {!isCreateMode && (

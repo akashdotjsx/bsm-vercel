@@ -78,14 +78,18 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex" style={{ top: 'var(--header-height, 56px)' }}>
+    <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0" onClick={onClose} />
       
       {/* Drawer panel */}
       <div 
         className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-white shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-gray-200"
-        style={{ height: 'calc(100vh - var(--header-height, 56px))' }}
+        style={{ 
+          height: '100vh',
+          borderTopLeftRadius: '10px',
+          borderBottomLeftRadius: '10px'
+        }}
       >
         {/* Header */}
         <div className="p-4 bg-white flex items-center justify-between flex-shrink-0 border-b border-gray-200">
