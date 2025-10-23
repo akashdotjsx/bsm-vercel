@@ -55,6 +55,7 @@ import { UserSelector } from "@/components/users/user-selector"
 import { TeamSelector } from "@/components/users/team-selector"
 import { departmentAPI } from "@/lib/api/departments"
 import AddUserDrawer from "@/components/users/add-user-drawer"
+import { AddUserButton } from "@/components/users/add-user-button"
 
 // Type definitions
 interface User {
@@ -717,22 +718,10 @@ export default function UsersPage() {
            </div>
            
            {/* Add User Button - Positioned on the right */}
-           <Button
+           <AddUserButton
              onClick={() => setShowAddUser(true)}
-             className="bg-[#6E72FF] hover:bg-[#5b4cf2] text-white rounded-[5px] flex items-center justify-center gap-2"
-             style={{ 
-               width: '96px', 
-               height: '36px', 
-               fontFamily: 'Inter', 
-               fontWeight: '600', 
-               fontSize: '12px', 
-               lineHeight: '1.2102272510528564em',
-               padding: '0 12px'
-             }}
-           >
-             <UserPlus style={{ width: '14px', height: '14px' }} />
-             <span>Add User</span>
-           </Button>
+             className="w-24 h-9"
+           />
         </div>
 
          {/* Stats Cards */}
