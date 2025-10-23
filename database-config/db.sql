@@ -847,3 +847,37 @@ CREATE TABLE public.search_suggestions (
   CONSTRAINT valid_search_type CHECK (search_type IN ('all', 'tickets', 'users', 'knowledge', 'services', 'assets')),
   CONSTRAINT valid_clicked_result_type CHECK (clicked_result_type IN ('ticket', 'user', 'knowledge', 'service', 'asset'))
 );
+
+-- Chat/Conversation Tables
+CREATE TABLE public.conversations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  organization_id uuid,
+  chat_name character varying DEFAULT 'New Chat'::character varying,
+  openai_thread_id character varying,
+  openai_assistant_id character varying,
+  is_archived boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT conversations_pkey PRIMARY KEY (id),
+  CONSTRAINT conversations_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT conversations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
+);
+
+CREATE TABLE public.chat_messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  conversation_id uuid NOT NULL,
+  message_id character varying NOT NULL UNIQUE,
+  user_query text NOT NULL,
+  ai_response text DEFAULT ''::text,
+  message_type character varying DEFAULT 'ai'::character varying,
+  tool_calls jsonb DEFAULT '[]'::jsonb,
+  extra_data jsonb DEFAULT '{}'::jsonb,
+  images text[] DEFAULT '{}'::text[],
+  videos text[] DEFAULT '{}'::text[],
+  streaming_error boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id)
+);

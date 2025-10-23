@@ -48,7 +48,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
   const [form, setForm] = useState({
     title: "",
     description: "",
-    requester: "current-user", // Auto-populated with current user
+    requester: "", // Will show placeholder "Select"
     department: "",
     category: "",
     subcategory: "",
@@ -67,7 +67,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
     customFields: {} as Record<string, any>,
     staffOnlyComments: "",
     aiAutoAssign: false,
-    aiSummary: ""
+    aiSummary: "",
+    tags: [] as string[]
   })
 
   const [newChecklistItem, setNewChecklistItem] = useState("")
@@ -267,10 +268,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       {/* Header - Fixed */}
       <div className="pt-6 pr-6 pb-6 pl-0 border-b border-border dark:border-border flex-shrink-0">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-[#F3F4FF] dark:bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 bg-[#F3F4FF] rounded-full flex items-center justify-center flex-shrink-0">
             <svg width="40" height="39" viewBox="0 0 40 39" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="0.5" width="39" height="39" rx="19.5" fill="currentColor" className="text-[#F3F4FF] dark:text-primary/20"/>
-              <path d="M16.2853 18.5714L19.9996 22.2857L23.7139 18.5714M12.571 12.0714H27.4282C27.9207 12.0714 28.3931 12.2671 28.7414 12.6154C29.0896 12.9636 29.2853 13.436 29.2853 13.9286V19.5C29.2853 21.9627 28.307 24.3246 26.5656 26.066C24.8242 27.8074 22.4623 28.7857 19.9996 28.7857C18.7802 28.7857 17.5727 28.5455 16.4461 28.0789C15.3195 27.6122 14.2958 26.9282 13.4336 26.066C11.6922 24.3246 10.7139 21.9627 10.7139 19.5V13.9286C10.7139 13.436 10.9095 12.9636 11.2578 12.6154C11.6061 12.2671 12.0785 12.0714 12.571 12.0714Z" stroke="currentColor" strokeWidth="1.57857" strokeLinecap="round" strokeLinejoin="round" className="text-foreground dark:text-primary"/>
+              <rect x="0.5" width="39" height="39" rx="19.5" fill="#F3F4FF"/>
+              <path d="M16.2853 18.5714L19.9996 22.2857L23.7139 18.5714M12.571 12.0714H27.4282C27.9207 12.0714 28.3931 12.2671 28.7414 12.6154C29.0896 12.9636 29.2853 13.436 29.2853 13.9286V19.5C29.2853 21.9627 28.307 24.3246 26.5656 26.066C24.8242 27.8074 22.4623 28.7857 19.9996 28.7857C18.7802 28.7857 17.5727 28.5455 16.4461 28.0789C15.3195 27.6122 14.2958 26.9282 13.4336 26.066C11.6922 24.3246 10.7139 21.9627 10.7139 19.5V13.9286C10.7139 13.436 10.9095 12.9636 11.2578 12.6154C11.6061 12.2671 12.0785 12.0714 12.571 12.0714Z" stroke="#000000" strokeWidth="1.57857" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <div className="flex-1">
@@ -298,34 +299,42 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Basic Details Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Basic Details</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Basic Details</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           {/* Ticket Title */}
-          <div className="space-y-2 mb-4">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Ticket Title *</Label>
+                 <div className="space-y-2 mb-4">
+                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Ticket Title *</Label>
             <Input
               value={form.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Enter Title"
-              className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card text-foreground dark:text-foreground"
+                     placeholder="Enter Title"
+                     className="w-full h-10 border border-border dark:border-border rounded-md px-4 text-sm bg-background dark:bg-card"
+                     style={{ color: '#2D2F34' }}
               required
             />
           </div>
 
           {/* Requester and Department Row */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Requester</Label>
-              <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4">
-                <span className="text-sm text-muted-foreground dark:text-muted-foreground">Current User (Auto-filled)</span>
-              </div>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Requester</Label>
+              <Select value={form.requester} onValueChange={(value) => handleInputChange('requester', value)}>
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current-user">Current User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Department *</Label>
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Department *</Label>
               <Select value={form.department} onValueChange={(value) => handleInputChange('department', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
-                  <SelectValue placeholder="Select Department" />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="it">IT</SelectItem>
@@ -338,12 +347,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           </div>
 
           {/* Category and Sub-Category Row */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Category *</Label>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Category *</Label>
               <Select value={form.category} onValueChange={(value) => handleInputChange('category', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
-                  <SelectValue placeholder="Select Category" />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   {supabaseCategories.map((cat) => (
@@ -354,16 +363,16 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Sub-Category *</Label>
-              <Select 
-                value={form.subcategory} 
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Sub-Category *</Label>
+              <Select
+                value={form.subcategory}
                 onValueChange={(value) => handleInputChange('subcategory', value)}
                 disabled={!form.category}
                 required
               >
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
-                  <SelectValue placeholder="Select Sub-Category" />
+                <SelectTrigger className="border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', height: '38px', width: '100%' }}>
+                  <SelectValue placeholder="Select" style={{ color: '#717171' }} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableServices.map((service: any) => (
@@ -378,12 +387,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           {/* Description */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Description *</Label>
+                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Description *</Label>
             <Textarea
               value={form.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe the issue or request in detail..."
-              className="w-full min-h-[100px] border border-border dark:border-border rounded-md px-4 py-3 text-sm resize-none bg-background dark:bg-card text-foreground dark:text-foreground"
+               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card"
+               style={{ color: '#2D2F34' }}
               required
             />
           </div>
@@ -393,12 +403,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Assignment & Communication Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Assignment & Communication</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Assignment & Communication</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Assignees *</Label>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+                   <div className="space-y-2 flex-1">
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Assignees *</Label>
               <div className="relative">
                 <Select 
                   value="" 
@@ -408,7 +418,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                     }
                   }}
                 >
-                  <SelectTrigger className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground">
+                  <SelectTrigger className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
                     <SelectValue placeholder="Select Assignees" />
                   </SelectTrigger>
                   <SelectContent>
@@ -416,9 +426,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
-                            {user.avatar_url ? (
+                            {(user as any).avatar_url ? (
                               <img
-                                src={user.avatar_url}
+                                src={(user as any).avatar_url}
                                 alt={user.display_name || user.email}
                                 className="w-full h-full rounded-full object-cover"
                               />
@@ -469,11 +479,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </div>
               )}
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Watchers</Label>
+            <div className="space-y-2 flex-1">
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Watchers</Label>
               <Select value={form.watchers} onValueChange={(value) => handleInputChange('watchers', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
-                  <SelectValue placeholder="Add Watchers" />
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card" style={{ color: '#2D2F34', width: '100%' }}>
+                  <SelectValue placeholder="Add Watchers" style={{ color: '#717171' }} />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -486,11 +496,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Target Due Date *</Label>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Target Due Date *</Label>
               <Select value={form.targetDueDate} onValueChange={(value) => handleInputChange('targetDueDate', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
                   <SelectValue placeholder="Select Due Date" />
                 </SelectTrigger>
                 <SelectContent>
@@ -501,10 +511,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Priority *</Label>
+            <div className="space-y-2 flex-1">
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Priority *</Label>
               <Select value={form.priority} onValueChange={(value) => handleInputChange('priority', value)} required>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
                   <SelectValue placeholder="Select Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -517,12 +527,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Status</Label>
-            <Select value={form.status} onValueChange={(value) => handleInputChange('status', value)}>
-              <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Status</Label>
+              <Select value={form.status} onValueChange={(value) => handleInputChange('status', value)}>
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
               <SelectContent>
                 <SelectItem value="new">New</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
@@ -532,6 +543,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
+            </div>
+            <div className="flex-1"></div>
           </div>
           </div>
         </div>
@@ -539,7 +552,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Associated Project Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Associated Project</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Associated Project</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2">
@@ -560,12 +573,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Timeline & Priority Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Timeline & Priority</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Timeline & Priority</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Impact</Label>
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Impact</Label>
               <Select value={form.impact} onValueChange={(value) => handleInputChange('impact', value)}>
                 <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
                   <SelectValue placeholder="Select Impact Level" />
@@ -579,7 +592,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Urgency</Label>
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Urgency</Label>
               <Select value={form.urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
                 <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
                   <SelectValue placeholder="Select" />
@@ -596,13 +609,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">Calculated Priority</Label>
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Calculated Priority</Label>
               <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4">
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">N/A</span>
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground dark:text-foreground">SLA Policy</Label>
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>SLA Policy</Label>
               <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4">
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">Select impact & urgency for SLA</span>
               </div>
@@ -614,17 +627,17 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* Task Management Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Task Management</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Task Management</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Checklist</Label>
+                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Checklist</Label>
             
             {/* Checklist Items */}
             {draftChecklist.map((item, index) => (
               <div key={index} className="flex items-center gap-3 p-3 bg-background dark:bg-card border border-border dark:border-border rounded-md">
                 <Square className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
-                <span className="flex-1 text-sm text-foreground dark:text-foreground">{item}</span>
+                       <span className="flex-1 text-sm" style={{ color: '#2D2F34' }}>{item}</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -644,7 +657,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
                 placeholder="Gather user requirements"
-                className="flex-1 border-0 focus:ring-0 text-sm bg-transparent text-foreground dark:text-foreground"
+                       className="flex-1 border-0 focus:ring-0 text-sm bg-transparent"
+                       style={{ color: '#2D2F34' }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -678,7 +692,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {customColumns && customColumns.length > 0 && (
           <div className="space-y-0">
             <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-              <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Custom Fields</h3>
+              <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Custom Fields</h3>
             </div>
             <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
               <div className="space-y-4">
@@ -730,12 +744,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Staff-only Comments</Label>
+                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Staff-only Comments</Label>
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add internal notes visible only to your team. Use rich text for better formatting."
-              className="w-full min-h-[100px] border border-border dark:border-border rounded-md px-4 py-3 text-sm resize-none bg-background dark:bg-card text-foreground dark:text-foreground"
+               className="w-full min-h-[120px] border border-border dark:border-border rounded-md px-5 py-4 text-sm resize-none bg-background dark:bg-card text-foreground dark:text-foreground"
             />
           </div>
 
@@ -755,13 +769,13 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
         {/* AI & Automation Section */}
         <div className="space-y-0">
           <div className="bg-[#F3F4FF] dark:bg-primary/10 py-2.5 pl-0 pr-6" style={{ height: '40px' }}>
-            <h3 className="text-[#595959] dark:text-primary pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>AI & Automation</h3>
+            <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>AI & Automation</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
           <div className="space-y-2 mb-4">
-            <Label className="text-sm font-medium text-foreground dark:text-foreground">Suggested Solutions</Label>
+                   <Label className="text-sm font-medium" style={{ color: '#595959' }}>Suggested Solutions</Label>
             <div className="p-4 bg-background dark:bg-card border border-border dark:border-border rounded-md">
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground leading-relaxed">
+                     <p className="text-sm leading-relaxed" style={{ color: '#2D2F34' }}>
                 Based on the category, potential solutions might include:<br/>
                 • Refer to knowledge base article KB-203.<br/>
                 • Verify network connectivity.<br/>
@@ -779,9 +793,9 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground dark:text-foreground">Auto-Assign via AI</span>
+                         <span className="text-sm font-semibold" style={{ color: '#202020' }}>Auto-Assign via AI</span>
                   </div>
-                  <p className="text-sm text-muted-foreground dark:text-muted-foreground">Allow AI to intelligently assign this ticket to the most suitable agent.</p>
+                         <p className="text-sm" style={{ color: '#595959' }}>Allow AI to intelligently assign this ticket to the most suitable agent.</p>
                 </div>
               </div>
               <Switch
