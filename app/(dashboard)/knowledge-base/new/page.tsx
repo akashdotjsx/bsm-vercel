@@ -1,14 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { PageContent } from "@/components/layout/page-content"
-import { ArrowLeft, Save, Loader2 } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Upload, FileText, Sparkles, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import {
   Select,
   SelectContent,
@@ -21,6 +24,7 @@ import { toast } from "sonner"
 
 export default function NewArticlePage() {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<"manual" | "import">("manual")
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
@@ -29,6 +33,16 @@ export default function NewArticlePage() {
     status: "draft" as "draft" | "published",
     tags: "",
   })
+  
+  // Document import state
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingProgress, setProcessingProgress] = useState(0)
+  const [aiSuggestions, setAiSuggestions] = useState<{
+    category: string | null
+    tags: string[]
+    qualityScore: number
+  } | null>(null)
 
   const { data: categories } = useArticleCategories()
   const createArticle = useCreateArticle()
@@ -67,6 +81,88 @@ export default function NewArticlePage() {
         },
       }
     )
+  }
+
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      setUploadedFile(file)
+      setIsProcessing(true)
+      setProcessingProgress(0)
+
+      try {
+        // Simulate progress for UX
+        const progressInterval = setInterval(() => {
+          setProcessingProgress((prev) => Math.min(prev + 10, 90))
+        }, 200)
+
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("categories", JSON.stringify(categories?.map((c) => c.name) || []))
+
+        const response = await fetch("/api/knowledge/import", {
+          method: "POST",
+          body: formData,
+        })
+
+        clearInterval(progressInterval)
+        setProcessingProgress(100)
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message || "Failed to process document")
+        }
+
+        const result = await response.json()
+        const data = result.data
+
+        // Find category ID from name
+        const categoryId =
+          categories?.find((c) => c.name === data.category)?.id || ""
+
+        // Populate form with AI-enhanced data
+        setFormData({
+          title: data.title,
+          summary: data.summary,
+          content: data.content,
+          category_id: categoryId,
+          status: "draft",
+          tags: data.tags.join(", "),
+        })
+
+        setAiSuggestions({
+          category: data.category,
+          tags: data.tags,
+          qualityScore: data.qualityScore,
+        })
+
+        toast.success("Document processed successfully!", {
+          description: "Review and edit the extracted content below",
+        })
+      } catch (error: any) {
+        console.error("Upload error:", error)
+        toast.error("Failed to process document", {
+          description: error.message,
+        })
+      } finally {
+        setIsProcessing(false)
+      }
+    },
+    [categories]
+  )
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const file = e.dataTransfer.files[0]
+      if (file) {
+        handleFileUpload(file)
+      }
+    },
+    [handleFileUpload]
+  )
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
   }
 
   const handleSaveDraft = () => {
@@ -121,94 +217,241 @@ export default function NewArticlePage() {
           </div>
         </div>
 
-        {/* Form */}
-        <form id="article-form" onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Create New Article</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">
-                  Title <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Enter article title..."
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
+        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">
+              <FileText className="h-4 w-4 mr-2" />
+              Manual Entry
+            </TabsTrigger>
+            <TabsTrigger value="import">
+              <Upload className="h-4 w-4 mr-2" />
+              Import Document
+            </TabsTrigger>
+          </TabsList>
 
-              {/* Summary */}
-              <div className="space-y-2">
-                <Label htmlFor="summary">Summary</Label>
-                <Textarea
-                  id="summary"
-                  placeholder="Brief summary of the article (optional)..."
-                  value={formData.summary}
-                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                  rows={3}
-                />
-              </div>
+          <TabsContent value="import" className="space-y-6">
+            {/* Upload Area */}
+            {!uploadedFile && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    AI-Powered Document Import
+                  </CardTitle>
+                  <CardDescription>
+                    Upload your document and let AI extract, format, and enhance the content
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    className="border-2 border-dashed rounded-lg p-12 text-center hover:border-primary transition-colors cursor-pointer"
+                    onClick={() => document.getElementById("file-upload")?.click()}
+                  >
+                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      Drop your document here or click to browse
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Supported formats: Word (.docx), Markdown (.md), Text (.txt), HTML
+                    </p>
+                    <Badge variant="outline" className="gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      AI will auto-categorize and tag
+                    </Badge>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept=".docx,.doc,.md,.txt,.html,.htm"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileUpload(file)
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              {/* Category */}
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Processing State */}
+            {isProcessing && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <div>
+                          <p className="font-medium">Processing document...</p>
+                          <p className="text-sm text-muted-foreground">
+                            {uploadedFile?.name}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {processingProgress}%
+                      </span>
+                    </div>
+                    <Progress value={processingProgress} />
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>✓ Parsing document structure</p>
+                      <p>✓ Extracting content and formatting</p>
+                      <p className="flex items-center gap-2">
+                        <Sparkles className="h-3 w-3" />
+                        AI analyzing and enhancing content...
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              {/* Tags */}
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  placeholder="Enter tags separated by commas (e.g., tutorial, guide, howto)"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Separate multiple tags with commas
-                </p>
-              </div>
+            {/* Success - Show Form */}
+            {uploadedFile && !isProcessing && (
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-green-900">
+                        Document processed successfully!
+                      </p>
+                      <p className="text-sm text-green-700">
+                        AI has extracted and enhanced the content. Review and edit below.
+                      </p>
+                    </div>
+                    {aiSuggestions && (
+                      <Badge variant="outline" className="bg-white">
+                        Quality: {aiSuggestions.qualityScore}/100
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-              {/* Content */}
-              <div className="space-y-2">
-                <Label htmlFor="content">
-                  Content <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="content"
-                  placeholder="Write your article content here... (Markdown supported)"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  rows={20}
-                  className="font-mono text-sm"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  You can use Markdown formatting: **bold**, *italic*, # headings, - lists, etc.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </form>
+          <TabsContent value="manual">
+            <Card>
+              <CardHeader>
+                <CardTitle>Write Article Manually</CardTitle>
+                <CardDescription>
+                  Create your article from scratch with full control
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Article Form (shown for both tabs when ready) */}
+        {(activeTab === "manual" || (activeTab === "import" && uploadedFile && !isProcessing)) && (
+          <form id="article-form" onSubmit={handleSubmit}>
+            <Card>
+              <CardContent className="space-y-6 pt-6">
+                {/* AI Suggestions Banner */}
+                {aiSuggestions && (
+                  <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium">AI Suggestions Applied</p>
+                      {aiSuggestions.category && (
+                        <p className="text-xs text-muted-foreground">
+                          Category: {aiSuggestions.category}
+                        </p>
+                      )}
+                      {aiSuggestions.tags.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Tags: {aiSuggestions.tags.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Title <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter article title..."
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    required
+                  />
+                </div>
+
+                {/* Summary */}
+                <div className="space-y-2">
+                  <Label htmlFor="summary">Summary</Label>
+                  <Textarea
+                    id="summary"
+                    placeholder="Brief summary of the article (optional)..."
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={formData.category_id}
+                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <Input
+                    id="tags"
+                    placeholder="Enter tags separated by commas (e.g., tutorial, guide, howto)"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Separate multiple tags with commas
+                  </p>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-2">
+                  <Label htmlFor="content">
+                    Content <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Write your article content here... (Markdown supported)"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    rows={20}
+                    className="font-mono text-sm"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You can use Markdown formatting: **bold**, *italic*, # headings, - lists, etc.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        )}
       </div>
     </PageContent>
   )
