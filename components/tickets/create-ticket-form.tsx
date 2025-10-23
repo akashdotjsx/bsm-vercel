@@ -563,7 +563,16 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 placeholder="Link to a project"
                 className="w-full h-10 border border-border dark:border-border rounded-md pl-10 pr-10 bg-background dark:bg-card text-foreground dark:text-foreground"
               />
-              <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary dark:text-primary" />
+              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_1_358)">
+                  <path d="M9.33347 7.33334C9.04716 6.95059 8.68189 6.63389 8.26243 6.40471C7.84297 6.17554 7.37913 6.03926 6.90237 6.00512C6.4256 5.97097 5.94708 6.03976 5.49924 6.20682C5.0514 6.37388 4.64472 6.63529 4.3068 6.97334L2.3068 8.97334C1.69961 9.60201 1.36363 10.444 1.37122 11.318C1.37881 12.192 1.72938 13.028 2.3474 13.6461C2.96543 14.2641 3.80147 14.6147 4.67546 14.6223C5.54945 14.6298 6.39146 14.2939 7.02013 13.6867L8.16013 12.5467M6.66679 8.66666C6.95309 9.04942 7.31836 9.36612 7.73782 9.59529C8.15728 9.82446 8.62113 9.96074 9.09789 9.99489C9.57465 10.029 10.0532 9.96024 10.501 9.79318C10.9489 9.62613 11.3555 9.36471 11.6935 9.02666L13.6935 7.02666C14.3006 6.39799 14.6366 5.55598 14.629 4.68199C14.6214 3.808 14.2709 2.97196 13.6529 2.35394C13.0348 1.73591 12.1988 1.38535 11.3248 1.37775C10.4508 1.37016 9.6088 1.70614 8.98012 2.31333L7.83346 3.45333" stroke="#000000" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_1_358">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
             </div>
           </div>
@@ -576,11 +585,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             <h3 className="text-[#595959] dark:text-[#595959] pl-3" style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '16px', lineHeight: '1.21' }}>Timeline & Priority</h3>
           </div>
           <div className="bg-[#fafafa] dark:bg-card pl-0 pr-6 pb-6 pt-4">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Impact</Label>
+          <div className="flex gap-4 mb-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Impact</Label>
               <Select value={form.impact} onValueChange={(value) => handleInputChange('impact', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
                   <SelectValue placeholder="Select Impact Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -591,10 +600,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Urgency</Label>
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Urgency</Label>
               <Select value={form.urgency} onValueChange={(value) => handleInputChange('urgency', value)}>
-                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground">
+                <SelectTrigger className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card text-foreground dark:text-foreground" style={{ width: '100%' }}>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -607,16 +616,16 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>Calculated Priority</Label>
-              <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4">
+          <div className="flex gap-4 w-full max-w-4xl">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>Calculated Priority</Label>
+              <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4" style={{ width: '100%' }}>
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">N/A</span>
               </div>
             </div>
-            <div className="space-y-2">
-                     <Label className="text-sm font-medium" style={{ color: '#595959' }}>SLA Policy</Label>
-              <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4">
+            <div className="space-y-2 flex-1">
+              <Label className="text-sm font-medium" style={{ color: '#595959' }}>SLA Policy</Label>
+              <div className="h-10 border border-border dark:border-border rounded-md bg-muted dark:bg-muted flex items-center px-4" style={{ width: '100%' }}>
                 <span className="text-sm text-muted-foreground dark:text-muted-foreground">Select impact & urgency for SLA</span>
               </div>
             </div>
@@ -651,8 +660,8 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             ))}
             
             {/* Add New Checklist Item */}
-            <div className="flex items-center gap-3 p-3 bg-background dark:bg-card border border-border dark:border-border rounded-md">
-              <Square className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
+            <div className="flex items-center gap-2 p-2 bg-background dark:bg-card border border-border dark:border-border rounded-md">
+              <Square className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
               <Input
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
@@ -673,17 +682,19 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
                 onClick={addChecklistItem}
                 className="w-6 h-6 p-0 hover:bg-muted dark:hover:bg-muted"
               >
-                <Plus className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
+                <Plus className="w-3 h-3 text-muted-foreground dark:text-muted-foreground" />
               </Button>
             </div>
             
-            <Button
-              type="button"
-              onClick={addChecklistItem}
-              className="w-full h-9 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 dark:hover:bg-primary/90"
-            >
-              Add Item
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={addChecklistItem}
+                className="h-9 px-4 bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 dark:hover:bg-primary/90"
+              >
+                Add Item
+              </Button>
+            </div>
           </div>
           </div>
         </div>
