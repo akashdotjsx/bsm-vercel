@@ -243,12 +243,18 @@ export function useCreateCategory() {
     mutationFn: async (input: { name: string; description?: string; icon?: string; color?: string }) => {
       if (!organizationId || !user) throw new Error('Not authenticated')
       
+      // Generate slug from name
+      const slug = input.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+      
       const { data, error } = await supabase
         .from('article_categories')
         .insert({
           ...input,
+          slug,
           organization_id: organizationId,
-          created_by: user.id,
         })
         .select()
         .single()
@@ -273,9 +279,18 @@ export function useUpdateCategory() {
   
   return useMutation({
     mutationFn: async ({ id, ...input }: { id: string; name?: string; description?: string; icon?: string; color?: string }) => {
+      // Generate new slug if name is being updated
+      const updateData: any = { ...input }
+      if (input.name) {
+        updateData.slug = input.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+      }
+      
       const { data, error } = await supabase
         .from('article_categories')
-        .update(input)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single()
