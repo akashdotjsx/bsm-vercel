@@ -24,59 +24,14 @@ import {
   Edit,
   Eye,
   X,
+  Calendar,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useOrganizationsGQL } from "@/hooks/use-workflows-organizations-gql"
 
-// Sample account data - in real app this would come from API
-const accountData = {
-  1: {
-    id: 1,
-    name: "Acme Corporation",
-    country: "United States",
-    website: "https://acme.com",
-    supportChannel: "Email",
-    contactPerson: "John Smith",
-    email: "john.smith@acme.com",
-    address: "123 Business Ave, New York, NY 10001",
-    status: "Active",
-    createdAt: "2024-01-15",
-    lastActivity: "2025-01-15T10:30:00Z",
-    domain: "acme.com",
-    tags: ["Enterprise", "Priority"],
-  },
-  2: {
-    id: 2,
-    name: "TechFlow Solutions",
-    country: "Canada",
-    website: "https://techflow.ca",
-    supportChannel: "Slack",
-    contactPerson: "Sarah Johnson",
-    email: "sarah@techflow.ca",
-    address: "456 Tech Street, Toronto, ON M5V 3A8",
-    status: "Active",
-    createdAt: "2024-01-10",
-    lastActivity: "2025-01-14T15:45:00Z",
-    domain: "techflow.ca",
-    tags: ["SMB", "Tech"],
-  },
-  3: {
-    id: 3,
-    name: "Global Dynamics",
-    country: "United Kingdom",
-    website: "https://globaldynamics.co.uk",
-    supportChannel: "Phone",
-    contactPerson: "Michael Brown",
-    email: "m.brown@globaldynamics.co.uk",
-    address: "789 Corporate Blvd, London, EC1A 1BB",
-    status: "Inactive",
-    createdAt: "2024-01-05",
-    lastActivity: "2024-12-20T09:15:00Z",
-    domain: "globaldynamics.co.uk",
-    tags: ["Enterprise"],
-  },
-}
+// This will be replaced with real data from Supabase
 
 const sampleTickets = [
   {
@@ -253,7 +208,17 @@ export default function AccountDetailPage() {
   const params = useParams()
   const router = useRouter()
   const accountId = params.id as string
-  const account = accountData[Number.parseInt(accountId) as keyof typeof accountData]
+  const { organizations, loading, error } = useOrganizationsGQL()
+  const [account, setAccount] = useState<any>(null)
+
+  useEffect(() => {
+    if (organizations.length > 0 && accountId) {
+      const foundAccount = organizations.find(org => org.id === accountId)
+      if (foundAccount) {
+        setAccount(foundAccount)
+      }
+    }
+  }, [organizations, accountId])
 
   const [activeTab, setActiveTab] = useState("overview")
   const [contacts, setContacts] = useState(sampleContacts)
@@ -345,11 +310,38 @@ export default function AccountDetailPage() {
       contact.department.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  if (loading) {
+    return (
+      <PageContent title="Loading..." description="Loading account details">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="text-sm text-muted-foreground mt-4">Loading account details...</p>
+        </div>
+      </PageContent>
+    )
+  }
+
+  if (error) {
+    return (
+      <PageContent title="Error" description="Failed to load account">
+        <div className="text-center py-12">
+          <h2 className="text-sm font-semibold mb-4 text-red-600">Error Loading Account</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => router.push("/accounts")} className="text-sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Accounts
+          </Button>
+        </div>
+      </PageContent>
+    )
+  }
+
   if (!account) {
     return (
       <PageContent title="Account Not Found" description="The requested account could not be found">
         <div className="text-center py-12">
           <h2 className="text-sm font-semibold mb-4">Account Not Found</h2>
+          <p className="text-sm text-muted-foreground mb-4">The account you're looking for doesn't exist or has been deleted.</p>
           <Button onClick={() => router.push("/accounts")} className="text-sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Accounts
@@ -451,37 +443,43 @@ export default function AccountDetailPage() {
                         <p className="text-sm text-muted-foreground">{account.name}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Account Owner</label>
-                        <div className="flex items-center space-x-2">
-                          <div
-                            className={`w-6 h-6 ${getChipColor(account.contactPerson)} rounded-full flex items-center justify-center text-white text-xs font-medium`}
-                          >
-                            {getInitials(account.contactPerson)}
-                          </div>
-                          <span className="text-sm text-muted-foreground">{account.contactPerson}</span>
-                        </div>
+                        <label className="block text-sm font-medium mb-1">Tier</label>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${
+                            account.tier === 'enterprise' 
+                              ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                              : account.tier === 'premium'
+                              ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                              : 'bg-gray-100 dark:bg-gray-950 text-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800'
+                          }`}
+                        >
+                          {account.tier}
+                        </Badge>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Domain</label>
-                        <p className="text-sm text-muted-foreground">{account.domain}</p>
+                        <p className="text-sm text-muted-foreground">{account.domain || 'No domain set'}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Tags</label>
-                        <div className="flex space-x-1">
-                          {account.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-sm">
-                              {tag}
-                            </Badge>
-                          ))}
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-sm">
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add tag
-                          </Button>
+                        <label className="block text-sm font-medium mb-1">Health Score</label>
+                        <div className="flex items-center gap-2">
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                account.health_score >= 90 ? 'bg-green-500' :
+                                account.health_score >= 70 ? 'bg-yellow-500' :
+                                'bg-red-500'
+                              }`}
+                              style={{ width: `${account.health_score}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs font-medium">{account.health_score}%</span>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Last Customer Activity</label>
-                        <p className="text-sm text-muted-foreground">{formatDateTime(account.lastActivity)}</p>
+                        <label className="block text-sm font-medium mb-1">Created At</label>
+                        <p className="text-sm text-muted-foreground">{formatDate(account.created_at)}</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Status</label>
@@ -541,23 +539,23 @@ export default function AccountDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Contact Information */}
+                {/* Organization Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Contact Information</CardTitle>
+                    <CardTitle className="text-sm">Organization Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{account.email}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{account.website}</span>
+                      <span className="text-sm">{account.domain || 'No domain configured'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{account.address}</span>
+                      <span className="text-sm">Organization ID: {account.id}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Created: {formatDate(account.created_at)}</span>
                     </div>
                   </CardContent>
                 </Card>
