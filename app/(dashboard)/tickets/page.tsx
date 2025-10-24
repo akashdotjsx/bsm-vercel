@@ -181,6 +181,7 @@ export default function TicketsPage() {
     const firstTicket = ticketsData.tickets[0]
     console.log('🔍 FIRST TICKET DATA (RAW):', {
       id: firstTicket.id,
+      ticket_number: firstTicket.ticket_number,
       title: firstTicket.title,
       assignee_id: firstTicket.assignee_id,
       assignee_ids: firstTicket.assignee_ids,

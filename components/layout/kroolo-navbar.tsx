@@ -7,8 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useTheme } from "next-themes"
 import Image from "next/image"
 import { useState, useEffect } from "react"
-import { useNotifications } from "@/lib/contexts/notification-context"
-import { NotificationBell } from "@/components/notifications/notification-bell"
+import { NotificationsBell } from "@/components/notifications/notifications-bell"
 import { GlobalSearch } from "@/components/search/global-search"
 import { AvatarMenu } from "./avatar-menu"
 import { OrganizationSwitcher } from "./organization-switcher"
@@ -29,7 +28,6 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
   const [mounted, setMounted] = useState(false)
   const [timerRunning, setTimerRunning] = useState(false)
   const [timerTime, setTimerTime] = useState("00:00:00")
-  const { notifications } = useNotifications()
   const router = useRouter()
   const isMobile = useIsMobile()
   const { user, profile, organization, signOut, loading } = useAuth()
@@ -179,7 +177,12 @@ export function KrooloNavbar({ className }: KrooloNavbarProps) {
         {!isMobile && <HelpCenterDropdown />}
 
         {/* Notifications */}
-        <NotificationBell notifications={notifications} />
+        {user && profile && (
+          <NotificationsBell 
+            organizationId={profile.organization_id} 
+            userId={user.id} 
+          />
+        )}
 
         {/* Avatar Menu */}
         <AvatarMenu />

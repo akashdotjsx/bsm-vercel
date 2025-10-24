@@ -75,10 +75,10 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
     assignee_ids: [] as string[], // Multiple assignees
     watchers: "",
     targetDueDate: "",
-    priority: "", // No default - user must select
-    status: "", // No default - user must select
-    impact: "", // No default - user must select
-    urgency: "", // No default - user must select
+    priority: "medium", // Default to medium
+    status: "new", // Default to new
+    impact: "medium", // Default to medium
+    urgency: "medium", // Default to medium
     calculatedPriority: "",
     slaPolicy: "",
     associatedProject: "",
@@ -238,10 +238,7 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       alert('Please select at least one assignee')
       return
     }
-    if (!form.targetDueDate) {
-      alert('Please select a target due date')
-      return
-    }
+    // Target due date is now optional - removed validation
     
     // Map form data to API expected format
     const ticketData = {
@@ -249,12 +246,12 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
       description: form.description,
       category: form.category,
       subcategory: form.subcategory,
-      priority: form.priority,
-      urgency: form.urgency,
-      impact: form.impact,
+      priority: form.priority || 'medium', // Fallback to medium if empty
+      urgency: form.urgency || 'medium', // Fallback to medium if empty
+      impact: form.impact || 'medium', // Fallback to medium if empty
       assignee_id: form.assignee_ids.length > 0 ? form.assignee_ids[0] : null, // First assignee for backward compatibility
       assignee_ids: form.assignee_ids, // Multiple assignees
-      due_date: form.targetDueDate ? calculateDueDate(form.targetDueDate) : null,
+      due_date: form.targetDueDate ? calculateDueDate(form.targetDueDate) : null, // Optional due date
       tags: form.tags && form.tags.length > 0 ? form.tags : null,
       custom_fields: form.customFields && Object.keys(form.customFields).length > 0 ? form.customFields : null,
       type: 'request', // Default type
@@ -263,6 +260,11 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
     }
     
     console.log('🎫 Form submitting with data:', ticketData)
+    console.log('🎫 Form assignee data:', {
+      assignee_ids: form.assignee_ids,
+      assignee_id: form.assignee_ids.length > 0 ? form.assignee_ids[0] : null,
+      hasAssignees: form.assignee_ids.length > 0
+    })
     console.log('🎫 Draft checklist:', draftChecklist)
     console.log('🎫 Staff comment:', newComment)
     console.log('🎫 Form validation passed, calling onSave...')

@@ -98,9 +98,12 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  console.log('🚀 API Route: PUT /api/tickets/[id] - Ticket update started for:', params.id)
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    
+    console.log('🚀 API Route: User authenticated for update:', user?.id)
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -215,6 +218,64 @@ export async function PUT(
       await supabase
         .from('ticket_history')
         .insert(historyEntries)
+    }
+
+    // Create notifications for assignment changes
+    try {
+      console.log('🔔 Starting notification creation process...')
+      console.log('🔔 Assignment check:', {
+        assignee_id,
+        currentTicket_assignee_id: currentTicket.assignee_id,
+        hasChanged: assignee_id !== undefined && assignee_id !== currentTicket.assignee_id,
+        isNewAssignment: assignee_id && assignee_id !== currentTicket.assignee_id
+      })
+      
+      const { createTicketAssignedNotification } = await import('@/hooks/use-notifications-gql')
+      console.log('🔔 Successfully imported createTicketAssignedNotification')
+      
+      // Check if assignee was changed
+      if (assignee_id !== undefined && assignee_id !== currentTicket.assignee_id) {
+        // If ticket was assigned to someone new
+        if (assignee_id && assignee_id !== currentTicket.assignee_id) {
+          console.log('🔔 Creating assignment notification for:', {
+            organization_id: profile.organization_id,
+            assignee_id,
+            ticket_id: ticket.id,
+            ticket_number: ticket.ticket_number,
+            title: ticket.title,
+            priority: ticket.priority,
+            requester_id: ticket.requester_id
+          })
+          
+          const notificationResult = await createTicketAssignedNotification(
+            profile.organization_id,
+            assignee_id,
+            {
+              id: ticket.id,
+              ticket_number: ticket.ticket_number,
+              title: ticket.title,
+              priority: ticket.priority,
+              requester_id: ticket.requester_id
+            }
+          )
+          
+          console.log('🔔 Assignment notification created successfully:', notificationResult)
+        }
+      } else {
+        console.log('🔔 No assignment change detected, skipping notification creation')
+      }
+
+      console.log('✅ Assignment notifications process completed')
+    } catch (notificationError) {
+      console.error('❌ Failed to create assignment notifications:', {
+        error: notificationError,
+        message: notificationError?.message,
+        stack: notificationError?.stack,
+        ticket_id: ticket.id,
+        assignee_id,
+        organization_id: profile.organization_id
+      })
+      // Don't fail the ticket update if notifications fail
     }
 
     // Invalidate cache
