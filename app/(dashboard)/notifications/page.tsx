@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/lib/contexts/auth-context'
 import { useTheme } from 'next-themes'
 import { PageContent } from '@/components/layout/page-content'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
