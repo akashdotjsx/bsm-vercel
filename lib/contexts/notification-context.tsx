@@ -1,10 +1,14 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useCallback } from "react"
+import { createContext, useContext, useState, useCallback, useMemo } from "react"
+import { useNotifications as useNotificationsHook } from '@/hooks/use-notifications'
+import type { Notification as DBNotification } from '@/hooks/use-notifications'
+import { formatDistanceToNow } from 'date-fns'
 
+// Legacy interface for backward compatibility with existing UI components
 export interface Notification {
-  id: number
+  id: string
   type: "ticket" | "workflow" | "system" | "info" | "success" | "user"
   icon: any
   title: string
@@ -21,14 +25,17 @@ interface NotificationContextType {
   filteredNotifications: Notification[]
   unreadCount: number
   currentFilter: NotificationFilter
+  loading: boolean
+  error: string | null
   setFilter: (filter: NotificationFilter) => void
   getCountByType: (type: string) => number
   getUnreadCountByType: (type: string) => number
-  markAsRead: (id: number) => void
+  markAsRead: (id: string) => void
   markAllAsRead: () => void
-  clearNotification: (id: number) => void
+  clearNotification: (id: string) => void
   clearAllNotifications: () => void
-  addNotification: (notification: Omit<Notification, "id">) => void
+  addNotification: (notification: Omit<Notification, "id" | "time">) => void
+  refreshNotifications: () => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
@@ -41,88 +48,59 @@ export function useNotifications() {
   return context
 }
 
+// Helper to convert DB notification to UI notification format
+function convertToUINotification(dbNotification: DBNotification): Notification {
+  return {
+    id: dbNotification.id,
+    type: dbNotification.type,
+    icon: null, // Icons are handled in UI components
+    title: dbNotification.title,
+    message: dbNotification.message,
+    time: formatDistanceToNow(new Date(dbNotification.created_at), { addSuffix: true }),
+    read: dbNotification.read,
+    priority: dbNotification.priority,
+  }
+}
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: "ticket",
-      icon: null,
-      title: "High Priority Ticket Assigned",
-      message: "Ticket #TKT-2024-001 has been assigned to you by Sarah Johnson",
-      time: "2 minutes ago",
-      read: false,
-      priority: "high",
-    },
-    {
-      id: 2,
-      type: "workflow",
-      icon: null,
-      title: "Workflow Approval Required",
-      message: "Employee onboarding workflow for John Smith requires your approval",
-      time: "15 minutes ago",
-      read: false,
-      priority: "medium",
-    },
-    {
-      id: 3,
-      type: "system",
-      icon: null,
-      title: "SLA Breach Warning",
-      message: "Ticket #TKT-2024-002 is approaching SLA deadline (2 hours remaining)",
-      time: "1 hour ago",
-      read: false,
-      priority: "high",
-    },
-    {
-      id: 4,
-      type: "info",
-      icon: null,
-      title: "System Maintenance Scheduled",
-      message: "Scheduled maintenance window: Tonight 11 PM - 2 AM EST",
-      time: "3 hours ago",
-      read: true,
-      priority: "low",
-    },
-    {
-      id: 5,
-      type: "success",
-      icon: null,
-      title: "Workflow Completed",
-      message: "IT Asset Request workflow has been completed successfully",
-      time: "5 hours ago",
-      read: true,
-      priority: "low",
-    },
-    {
-      id: 6,
-      type: "user",
-      icon: null,
-      title: "New Team Member Added",
-      message: "Alex Chen has been added to the IT Support team",
-      time: "1 day ago",
-      read: true,
-      priority: "low",
-    },
-  ])
+  // Use the real Supabase notifications hook
+  const {
+    notifications: dbNotifications,
+    loading,
+    error,
+    unreadCount,
+    fetchNotifications,
+    markAsRead: dbMarkAsRead,
+    markAllAsRead: dbMarkAllAsRead,
+    clearNotification: dbClearNotification,
+    clearAllNotifications: dbClearAllNotifications,
+    createNotification: dbCreateNotification,
+  } = useNotificationsHook()
 
   const [currentFilter, setCurrentFilter] = useState<NotificationFilter>("all")
 
-  const filteredNotifications = notifications.filter((notification) => {
-    switch (currentFilter) {
-      case "unread":
-        return !notification.read
-      case "tickets":
-        return notification.type === "ticket"
-      case "workflows":
-        return notification.type === "workflow"
-      case "system":
-        return notification.type === "system" || notification.type === "info"
-      default:
-        return true
-    }
-  })
+  // Convert DB notifications to UI format
+  const notifications = useMemo(
+    () => dbNotifications.map(convertToUINotification),
+    [dbNotifications]
+  )
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((notification) => {
+      switch (currentFilter) {
+        case "unread":
+          return !notification.read
+        case "tickets":
+          return notification.type === "ticket"
+        case "workflows":
+          return notification.type === "workflow"
+        case "system":
+          return notification.type === "system" || notification.type === "info"
+        default:
+          return true
+      }
+    })
+  }, [notifications, currentFilter])
 
   const getCountByType = useCallback(
     (type: string) => {
@@ -133,6 +111,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           return notifications.filter((n) => n.type === "workflow").length
         case "system":
           return notifications.filter((n) => n.type === "system" || n.type === "info").length
+        case "all":
+          return notifications.length
         default:
           return notifications.length
       }
@@ -160,31 +140,38 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setCurrentFilter(filter)
   }, [])
 
-  const markAsRead = useCallback((id: number) => {
-    setNotifications((prev) =>
-      prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
-    )
-  }, [])
+  const markAsRead = useCallback((id: string) => {
+    dbMarkAsRead(id)
+  }, [dbMarkAsRead])
 
   const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
-  }, [])
+    dbMarkAllAsRead()
+  }, [dbMarkAllAsRead])
 
-  const clearNotification = useCallback((id: number) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id))
-  }, [])
+  const clearNotification = useCallback((id: string) => {
+    dbClearNotification(id)
+  }, [dbClearNotification])
 
   const clearAllNotifications = useCallback(() => {
-    setNotifications([])
-  }, [])
+    dbClearAllNotifications()
+  }, [dbClearAllNotifications])
 
   const addNotification = useCallback(
-    (notification: Omit<Notification, "id">) => {
-      const newId = Math.max(...notifications.map((n) => n.id), 0) + 1
-      setNotifications((prev) => [{ ...notification, id: newId }, ...prev])
+    async (notification: Omit<Notification, "id" | "time">) => {
+      await dbCreateNotification({
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        priority: notification.priority,
+        metadata: {},
+      })
     },
-    [notifications],
+    [dbCreateNotification],
   )
+
+  const refreshNotifications = useCallback(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
 
   return (
     <NotificationContext.Provider
@@ -193,6 +180,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         filteredNotifications,
         unreadCount,
         currentFilter,
+        loading,
+        error,
         setFilter,
         getCountByType,
         getUnreadCountByType,
@@ -201,6 +190,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         clearNotification,
         clearAllNotifications,
         addNotification,
+        refreshNotifications,
       }}
     >
       {children}
