@@ -33,7 +33,7 @@ import {
 import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useOrganizationsGQL } from "@/hooks/use-workflows-organizations-gql"
+import { useOrganizationsGQL, createOrganizationGQL, updateOrganizationGQL, deleteOrganizationGQL } from "@/hooks/use-workflows-organizations-gql"
 
 
 const formatDate = (dateString: string) => {
@@ -82,13 +82,15 @@ const getChipColor = (name: string) => {
 }
 
 export default function AccountsPage() {
-  const { organizations, loading, error } = useOrganizationsGQL()
+  const { organizations, loading, error, refetch } = useOrganizationsGQL()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCustomColumns, setShowCustomColumns] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<any>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   
   const [formData, setFormData] = useState({
     name: "",
@@ -106,9 +108,27 @@ export default function AccountsPage() {
     premium: organizations.filter((org: any) => org.tier === 'premium').length,
   }
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
+    if (!formData.name.trim()) {
+      alert("Please enter an organization name")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
     console.log("Creating account:", formData)
-    // TODO: Call createOrganizationGQL mutation
+      
+      await createOrganizationGQL({
+        name: formData.name.trim(),
+        domain: formData.domain.trim() || null,
+        tier: formData.tier,
+        status: formData.status,
+        health_score: 100
+      })
+      
+      // Refresh the organizations list
+      await refetch()
+      
     setShowCreateForm(false)
     setFormData({
       name: "",
@@ -116,6 +136,12 @@ export default function AccountsPage() {
       tier: "basic",
       status: "active",
     })
+    } catch (error) {
+      console.error("Error creating account:", error)
+      alert("Failed to create account. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleViewAccount = (account: any) => {
@@ -135,20 +161,64 @@ export default function AccountsPage() {
 
   const handleDeleteAccount = (account: any) => {
     setSelectedAccount(account)
+    setDeleteConfirmed(false) // Reset checkbox
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    if (!deleteConfirmed) {
+      alert("Please confirm deletion by checking the checkbox.")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
     console.log("Deleting account:", selectedAccount?.id)
+      
+      await deleteOrganizationGQL(selectedAccount.id)
+      
+      // Refresh the organizations list
+      await refetch()
+      
     setShowDeleteModal(false)
     setSelectedAccount(null)
+      setDeleteConfirmed(false)
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      alert("Failed to delete account. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleUpdateAccount = () => {
+  const handleUpdateAccount = async () => {
+    if (!formData.name.trim()) {
+      alert("Please enter an organization name")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
     console.log("Updating account:", selectedAccount?.id, formData)
-    // TODO: Call updateOrganizationGQL mutation
+      
+      await updateOrganizationGQL(selectedAccount.id, {
+        name: formData.name.trim(),
+        domain: formData.domain.trim() || null,
+        tier: formData.tier,
+        status: formData.status,
+      })
+      
+      // Refresh the organizations list
+      await refetch()
+      
     setShowEditModal(false)
     setSelectedAccount(null)
+    } catch (error) {
+      console.error("Error updating account:", error)
+      alert("Failed to update account. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -480,11 +550,143 @@ export default function AccountsPage() {
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-6">
-<Button variant="outline" onClick={() => setShowCreateForm(false)} className="text-sm">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCreateForm(false)} 
+                  className="text-sm"
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
-<Button onClick={handleCreateAccount} className="text-sm">
-                  Create Account
+                <Button 
+                  onClick={handleCreateAccount} 
+                  className="text-sm"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create Account"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Edit Account Modal */}
+        {showEditModal && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Edit Account</CardTitle>
+              <CardDescription className="text-xs">Update account information</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Organization Name</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter organization name"
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Domain</label>
+                  <Input
+                    value={formData.domain}
+                    onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                    placeholder="example.com"
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Tier</label>
+                  <select
+                    value={formData.tier}
+                    onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="basic">Basic</option>
+                    <option value="premium">Premium</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowEditModal(false)} 
+                  className="text-sm"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateAccount} 
+                  className="text-sm"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Updating..." : "Update Account"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <Card className="border-red-200 dark:border-red-800">
+            <CardHeader>
+              <CardTitle className="text-sm text-red-600 dark:text-red-400">Delete Account</CardTitle>
+              <CardDescription className="text-xs">
+                Are you sure you want to delete "{selectedAccount?.name}"? This action cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Confirmation Checkbox */}
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="delete-confirm"
+                  checked={deleteConfirmed}
+                  onChange={(e) => setDeleteConfirmed(e.target.checked)}
+                  className="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                  disabled={isSubmitting}
+                />
+                <label htmlFor="delete-confirm" className="text-xs text-gray-700 dark:text-gray-300">
+                  I understand this action cannot be undone and I want to delete this account
+                </label>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setDeleteConfirmed(false)
+                  }} 
+                  className="text-sm"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDelete} 
+                  className="text-sm"
+                  disabled={isSubmitting || !deleteConfirmed}
+                >
+                  {isSubmitting ? "Deleting..." : "Delete Account"}
                 </Button>
               </div>
             </CardContent>

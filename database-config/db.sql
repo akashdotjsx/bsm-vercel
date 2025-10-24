@@ -269,6 +269,22 @@ CREATE TABLE public.notification_preferences (
   CONSTRAINT notification_preferences_pkey PRIMARY KEY (id),
   CONSTRAINT notification_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  type character varying NOT NULL CHECK (type IN ('ticket', 'workflow', 'system', 'info', 'success', 'user')),
+  title character varying NOT NULL,
+  message text NOT NULL,
+  read boolean DEFAULT false,
+  priority character varying DEFAULT 'medium'::character varying CHECK (priority IN ('high', 'medium', 'low')),
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE,
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE
+);
 CREATE TABLE public.organizations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name character varying NOT NULL,

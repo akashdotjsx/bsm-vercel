@@ -801,7 +801,7 @@ function TicketRow({
           onValueChange={(value) => onStatusUpdate(ticket.dbId || ticket.id, value)}
           disabled={updatingTickets.has(ticket.dbId || ticket.id)}
         >
-          <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-muted/50 rounded-full">
+          <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-muted/50 rounded-full [&>svg]:hidden">
             <div className={`px-2 py-1 rounded-full text-xs font-medium ${
               ticket.status === 'new' ? 'bg-[#DDDEFF] text-[#6E72FF]' :
               ticket.status === 'waiting_on_you' ? 'bg-[#FFF8CB] text-[#BF6D0A]' :
@@ -947,7 +947,7 @@ function TicketRow({
       {/* Custom column cells */}
       {customColumns.map((column: any) => (
         <td key={column.id} className="px-6 py-4 whitespace-nowrap" style={{ fontSize: '12px', fontWeight: 400 }}>
-          <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} editable={false} />
+          <CustomColumnCell column={column} ticketId={ticket.dbId || ticket.id} editable={true} />
         </td>
       ))}
 

@@ -508,8 +508,8 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
         // Remove any fields that might cause JSON type issues
         const cleanTicketData = { ...ticketFields }
         
-        // Remove assignee_ids completely - this field should not be in ticket creation
-        delete cleanTicketData.assignee_ids
+        // Keep assignee_ids for multi-assignee support
+        // Note: assignee_ids is needed for proper ticket assignment
         
         // Ensure custom_fields is properly formatted - remove if empty object
         if (!cleanTicketData.custom_fields || Object.keys(cleanTicketData.custom_fields).length === 0) {
@@ -527,6 +527,12 @@ export default function TicketDrawer({ isOpen, onClose, ticket, preSelectedType 
           organization_id: cleanTicketData.organization_id,
           user_id: user?.id,
           org_id: organization?.id
+        })
+        console.log("[CREATE] Assignee data:", {
+          assignee_id: cleanTicketData.assignee_id,
+          assignee_ids: cleanTicketData.assignee_ids,
+          hasAssigneeId: !!cleanTicketData.assignee_id,
+          hasAssigneeIds: Array.isArray(cleanTicketData.assignee_ids) && cleanTicketData.assignee_ids.length > 0
         })
         
         console.log("[CREATE] Extracted non-ticket data:", {

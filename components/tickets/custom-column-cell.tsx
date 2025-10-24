@@ -14,13 +14,24 @@ interface CustomColumnCellProps {
 export function CustomColumnCell({ column, ticketId, editable = true }: CustomColumnCellProps) {
   const { customFields, setValue: updateCustomField, isSetting } = useCustomColumnValuesGraphQL(ticketId)
   const [value, setValue] = useState<any>(customFields[column.title] || "")
+  const [originalValue, setOriginalValue] = useState<any>(customFields[column.title] || "")
   const [isValid, setIsValid] = useState(true)
 
   useEffect(() => {
-    setValue(customFields[column.title] || "")
+    const dbValue = customFields[column.title] || ""
+    setValue(dbValue)
+    setOriginalValue(dbValue)
   }, [customFields, column.title])
 
   const handleValueChange = async (newValue: any) => {
+    console.log('🎯 handleValueChange called:', {
+      ticketId,
+      columnTitle: column.title,
+      columnType: column.type,
+      newValue,
+      newValueType: typeof newValue
+    })
+    
     setValue(newValue)
     
     // Convert value to appropriate type before saving
@@ -34,6 +45,7 @@ export function CustomColumnCell({ column, ticketId, editable = true }: CustomCo
         processedValue = Number(newValue)
       } else {
         // If it's not a valid number, don't save
+        console.log('⚠️ Invalid number, not saving')
         return
       }
     } else if (column.type === "date") {
@@ -44,6 +56,7 @@ export function CustomColumnCell({ column, ticketId, editable = true }: CustomCo
         // Validate date format (YYYY-MM-DD)
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/
         if (!dateRegex.test(newValue)) {
+          console.log('⚠️ Invalid date format, not saving')
           return // Don't save invalid dates
         }
         processedValue = newValue
@@ -53,17 +66,35 @@ export function CustomColumnCell({ column, ticketId, editable = true }: CustomCo
       processedValue = newValue || ""
     }
     
+    console.log('💾 Saving processed value:', processedValue)
+    
     try {
       await updateCustomField({ fieldName: column.title, value: processedValue })
+      console.log('✅ Custom field saved successfully')
+      // Update originalValue after successful save
+      setOriginalValue(newValue)
     } catch (error) {
-      console.error('Error updating custom field:', error)
+      console.error('❌ Error updating custom field:', error)
+      // Revert to original value on error
+      setValue(originalValue)
     }
   }
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const newValue = e.target.value
-    if (newValue !== value) {
+    console.log('🔍 handleBlur called:', {
+      ticketId,
+      columnTitle: column.title,
+      newValue,
+      originalValue,
+      currentValue: value,
+      isDifferent: newValue !== originalValue
+    })
+    if (newValue !== originalValue) {
+      console.log('💾 Calling handleValueChange from blur')
       handleValueChange(newValue)
+    } else {
+      console.log('⏭️ Skipping save - value unchanged from database')
     }
   }
 

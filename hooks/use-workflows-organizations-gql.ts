@@ -256,7 +256,16 @@ export const createOrganizationGQL = async (data: any) => {
     }
   `
   
-  const result: any = await client.request(mutation, { input: data })
+  // Ensure proper data types for GraphQL - remove settings field that might be causing issues
+  const inputData = {
+    name: data.name,
+    domain: data.domain || null,
+    status: data.status || 'active',
+    tier: data.tier || 'basic',
+    health_score: data.health_score || 100
+  }
+  
+  const result: any = await client.request(mutation, { input: inputData })
   return result.insertIntoorganizationsCollection.records[0]
 }
 

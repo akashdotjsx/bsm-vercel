@@ -165,6 +165,7 @@ async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   console.log("🔍 Raw tickets from GraphQL:", rawTickets.length)
   console.log("🔍 Sample processed ticket:", tickets[0] ? {
     id: tickets[0].id,
+    ticket_number: tickets[0].ticket_number,
     title: tickets[0].title,
     assignee_id: tickets[0].assignee_id,
     assignee_ids: tickets[0].assignee_ids,
@@ -283,6 +284,15 @@ async function fetchTicketGraphQL(id: string) {
  * Create ticket using GraphQL mutation
  */
 async function createTicketGraphQL(ticketData: any) {
+  console.log('🎫 GraphQL: Creating ticket with data:', ticketData)
+  
+  // Fix custom_fields JSON serialization for GraphQL
+  const processedTicketData = { ...ticketData }
+  if (processedTicketData.custom_fields && typeof processedTicketData.custom_fields === 'object') {
+    processedTicketData.custom_fields = JSON.stringify(processedTicketData.custom_fields)
+    console.log('🎫 GraphQL: Serialized custom_fields:', processedTicketData.custom_fields)
+  }
+  
   const client = await createGraphQLClient()
 
   const mutation = gql`
@@ -313,14 +323,87 @@ async function createTicketGraphQL(ticketData: any) {
     }
   `
 
-  const data: any = await client.request(mutation, { input: ticketData })
-  return data.insertIntoticketsCollection.records[0]
+  const data: any = await client.request(mutation, { input: processedTicketData })
+  const ticket = data.insertIntoticketsCollection.records[0]
+  
+  console.log('🎫 GraphQL: Ticket created successfully:', ticket)
+  
+  // Create notifications after successful ticket creation
+  try {
+    console.log('🔔 GraphQL: Starting notification creation process...')
+    console.log('🔔 GraphQL: Ticket details for notifications:', {
+      ticket_id: ticket.id,
+      ticket_number: ticket.ticket_number,
+      title: ticket.title,
+      assignee_id: ticket.assignee_id,
+      requester_id: ticket.requester_id,
+      organization_id: ticket.organization_id
+    })
+    
+    const { createTicketCreatedNotification, createTicketAssignedNotification } = await import('@/hooks/use-notifications-gql')
+    console.log('🔔 GraphQL: Successfully imported notification functions')
+    
+    // Notification for ticket creator (requester)
+    console.log('🔔 GraphQL: Creating ticket created notification for requester:', ticket.requester_id)
+    const createdNotification = await createTicketCreatedNotification(
+      ticket.organization_id,
+      ticket.requester_id,
+      {
+        id: ticket.id,
+        ticket_number: ticket.ticket_number,
+        title: ticket.title,
+        requester_id: ticket.requester_id
+      }
+    )
+    console.log('🔔 GraphQL: Ticket created notification result:', createdNotification)
+
+    // Notification for assignee if ticket is assigned
+    if (ticket.assignee_id) {
+      console.log('🔔 GraphQL: Creating assignment notification for assignee:', ticket.assignee_id)
+      const assignedNotification = await createTicketAssignedNotification(
+        ticket.organization_id,
+        ticket.assignee_id,
+        {
+          id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          priority: ticket.priority,
+          requester_id: ticket.requester_id
+        }
+      )
+      console.log('🔔 GraphQL: Assignment notification result:', assignedNotification)
+    } else {
+      console.log('🔔 GraphQL: No assignee specified, skipping assignment notification')
+    }
+
+    console.log('✅ GraphQL: All notifications created successfully')
+  } catch (notificationError: any) {
+    console.error('❌ GraphQL: Failed to create notifications:', {
+      error: notificationError,
+      message: notificationError?.message,
+      stack: notificationError?.stack,
+      ticket_id: ticket.id,
+      organization_id: ticket.organization_id
+    })
+    // Don't fail the ticket creation if notifications fail
+  }
+  
+  return ticket
 }
 
 /**
  * Update ticket using GraphQL mutation
  */
 async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }) {
+  console.log('🎫 GraphQL: Updating ticket with data:', { id, updates })
+  
+  // Fix custom_fields JSON serialization for GraphQL
+  const processedUpdates = { ...updates }
+  if (processedUpdates.custom_fields && typeof processedUpdates.custom_fields === 'object') {
+    processedUpdates.custom_fields = JSON.stringify(processedUpdates.custom_fields)
+    console.log('🎫 GraphQL: Serialized custom_fields in update:', processedUpdates.custom_fields)
+  }
+  
   const client = await createGraphQLClient()
 
   const mutation = gql`
@@ -334,6 +417,9 @@ async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }
           type
           priority
           status
+          assignee_id
+          organization_id
+          requester_id
           due_date
           custom_fields
           updated_at
@@ -342,8 +428,69 @@ async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }
     }
   `
 
-  const data: any = await client.request(mutation, { id, updates })
-  return data.updateticketsCollection.records[0]
+  const data: any = await client.request(mutation, { id, updates: processedUpdates })
+  const ticket = data.updateticketsCollection.records[0]
+  
+  console.log('🎫 GraphQL: Ticket updated successfully:', ticket)
+  
+  // Create notifications for assignment changes
+  try {
+    console.log('🔔 GraphQL: Starting assignment notification process...')
+    console.log('🔔 GraphQL: Assignment check:', {
+      assignee_id: updates.assignee_id,
+      hasAssigneeId: !!updates.assignee_id,
+      isNewAssignment: updates.assignee_id && updates.assignee_id !== ticket.assignee_id
+    })
+    
+    const { createTicketAssignedNotification } = await import('@/hooks/use-notifications-gql')
+    console.log('🔔 GraphQL: Successfully imported createTicketAssignedNotification')
+    
+    // Check if assignee was changed
+    if (updates.assignee_id !== undefined && updates.assignee_id !== ticket.assignee_id) {
+      // If ticket was assigned to someone new
+      if (updates.assignee_id && updates.assignee_id !== ticket.assignee_id) {
+        console.log('🔔 GraphQL: Creating assignment notification for:', {
+          organization_id: ticket.organization_id,
+          assignee_id: updates.assignee_id,
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          priority: ticket.priority,
+          requester_id: ticket.requester_id
+        })
+        
+        const notificationResult = await createTicketAssignedNotification(
+          ticket.organization_id,
+          updates.assignee_id,
+          {
+            id: ticket.id,
+            ticket_number: ticket.ticket_number,
+            title: ticket.title,
+            priority: ticket.priority,
+            requester_id: ticket.requester_id
+          }
+        )
+        
+        console.log('🔔 GraphQL: Assignment notification created successfully:', notificationResult)
+      }
+    } else {
+      console.log('🔔 GraphQL: No assignment change detected, skipping notification creation')
+    }
+
+    console.log('✅ GraphQL: Assignment notifications process completed')
+  } catch (notificationError: any) {
+    console.error('❌ GraphQL: Failed to create assignment notifications:', {
+      error: notificationError,
+      message: notificationError?.message,
+      stack: notificationError?.stack,
+      ticket_id: ticket.id,
+      assignee_id: updates.assignee_id,
+      organization_id: ticket.organization_id
+    })
+    // Don't fail the ticket update if notifications fail
+  }
+  
+  return ticket
 }
 
 /**
