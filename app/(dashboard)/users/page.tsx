@@ -257,8 +257,36 @@ export default function UsersPage() {
   }
   
   const resetUserPassword = async (email: string) => {
-    // This still needs to use Supabase auth API
-    console.log('Password reset for:', email)
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send password reset email')
+      }
+
+      toast({
+        title: "Password reset email sent",
+        description: `A password reset link has been sent to ${email}`,
+      })
+
+      return data
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      toast({
+        title: "Error sending reset email",
+        description: error instanceof Error ? error.message : 'Failed to send password reset email',
+        variant: "destructive"
+      })
+      throw error
+    }
   }
   
   const createTeam = async (teamData: any) => {
@@ -1356,7 +1384,7 @@ export default function UsersPage() {
                 onClick={async () => {
                   try {
                     if (!selectedUser) return
-                    await resetUserPassword(selectedUser.id)
+                    await resetUserPassword(selectedUser.email)
                     setShowResetPassword(false)
                   } catch (error) {
                     console.error('Error resetting password:', error)

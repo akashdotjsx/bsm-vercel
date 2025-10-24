@@ -8,13 +8,9 @@ export async function POST(req: NextRequest) {
     const { email } = await req.json()
     if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 })
 
-    // Generate a recovery link using the service role
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
-      },
+    // Use resetPasswordForEmail to actually send the email
+    const { data, error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
     })
 
     if (error) {
@@ -22,8 +18,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Many providers don't send email for admin.generateLink; return link so caller can display/copy
-    return NextResponse.json({ action_link: data?.action_link })
+    console.log("[auth.reset-password] Password reset email sent to:", email)
+    return NextResponse.json({ 
+      success: true,
+      message: "Password reset email sent successfully" 
+    })
   } catch (err) {
     console.error("[auth.reset-password] Unexpected error:", err)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

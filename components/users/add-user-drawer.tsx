@@ -84,7 +84,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
       
       {/* Drawer panel */}
       <div 
-        className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-white shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-gray-200"
+        className="ml-auto w-[90vw] sm:w-[70vw] md:w-[60vw] lg:w-[50vw] xl:w-[40vw] min-w-[320px] max-w-[900px] bg-background shadow-2xl flex flex-col relative z-10 overflow-hidden border-l border-border"
         style={{ 
           height: '100vh',
           borderTopLeftRadius: '10px',
@@ -92,10 +92,10 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
         }}
       >
         {/* Header */}
-        <div className="p-4 bg-white flex items-center justify-between flex-shrink-0 border-b border-gray-200">
+        <div className="p-4 bg-background flex items-center justify-between flex-shrink-0 border-b border-border">
           <div className="flex-1 min-w-0 mr-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Add New User</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg font-semibold text-foreground mb-1">Add New User</h2>
+            <p className="text-sm text-muted-foreground">
               Create a new user account with appropriate permissions.
             </p>
           </div>
@@ -110,13 +110,12 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label 
-                className="block"
+                className="block text-muted-foreground"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '12px',
-                  lineHeight: '1.2102272510528564em',
-                  color: '#595959'
+                  lineHeight: '1.2102272510528564em'
                 }}
               >
                 First Name <span className="text-red-500">*</span>
@@ -124,7 +123,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               <Input 
                 value={form.first_name} 
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })} 
-                className="border-[#E6E6E6] focus:border-[#6E72FF] focus:ring-[#6E72FF]"
+                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
                 style={{
                   width: '275px',
                   height: '37px',
@@ -133,21 +132,19 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '14px',
-                  lineHeight: '1.2102272851126534em',
-                  color: '#595959'
+                  lineHeight: '1.2102272851126534em'
                 }}
                 placeholder="John"
               />
             </div>
             <div className="space-y-2.5">
               <label 
-                className="block"
+                className="block text-muted-foreground"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '12px',
-                  lineHeight: '1.2102272510528564em',
-                  color: '#595959'
+                  lineHeight: '1.2102272510528564em'
                 }}
               >
                 Last Name <span className="text-red-500">*</span>
@@ -155,7 +152,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               <Input 
                 value={form.last_name} 
                 onChange={(e) => setForm({ ...form, last_name: e.target.value })} 
-                className="border-[#E6E6E6] focus:border-[#6E72FF] focus:ring-[#6E72FF]"
+                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
                 style={{
                   width: '275px',
                   height: '37px',
@@ -164,8 +161,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '14px',
-                  lineHeight: '1.2102272851126534em',
-                  color: '#595959'
+                  lineHeight: '1.2102272851126534em'
                 }}
                 placeholder="Doe"
               />
@@ -175,13 +171,12 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           {/* Email */}
           <div className="space-y-2">
             <label 
-              className="block"
+              className="block text-muted-foreground"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 500,
                 fontSize: '12px',
-                lineHeight: '1.2102272510528564em',
-                color: '#595959'
+                lineHeight: '1.2102272510528564em'
               }}
             >
               Email Address <span className="text-red-500">*</span>
@@ -190,7 +185,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               type="email"
               value={form.email} 
               onChange={(e) => setForm({ ...form, email: e.target.value })} 
-              className="border-[#E6E6E6] focus:border-[#6E72FF] focus:ring-[#6E72FF]"
+              className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
               style={{
                 width: '575px',
                 height: '37px',
@@ -199,8 +194,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
                 fontFamily: 'Inter',
                 fontWeight: 500,
                 fontSize: '14px',
-                lineHeight: '1.2102272851126534em',
-                color: '#595959'
+                lineHeight: '1.2102272851126534em'
               }}
               placeholder="Enter Email Address"
             />
@@ -210,20 +204,19 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label 
-                className="block"
+                className="block text-muted-foreground"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '12px',
-                  lineHeight: '1.2102272510528564em',
-                  color: '#595959'
+                  lineHeight: '1.2102272510528564em'
                 }}
               >
                 Role <span className="text-red-500">*</span>
               </label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger 
-                  className="border-[#E6E6E6] focus:border-[#6E72FF] focus:ring-[#6E72FF]"
+                  className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
                   style={{
                     width: '275px',
                     height: '37px',
@@ -232,8 +225,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
                     fontFamily: 'Inter',
                     fontWeight: 500,
                     fontSize: '14px',
-                    lineHeight: '1.2102272851126534em',
-                    color: '#595959'
+                    lineHeight: '1.2102272851126534em'
                   }}
                 >
                   <SelectValue />
@@ -249,20 +241,19 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
             </div>
             <div className="space-y-2">
               <label 
-                className="block"
+                className="block text-muted-foreground"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
                   fontSize: '12px',
-                  lineHeight: '1.2102272510528564em',
-                  color: '#595959'
+                  lineHeight: '1.2102272510528564em'
                 }}
               >
                 Department
               </label>
               <Select value={form.department} onValueChange={(v) => setForm({ ...form, department: v })}>
                 <SelectTrigger 
-                  className="border-[#E6E6E6] focus:border-[#6E72FF] focus:ring-[#6E72FF]"
+                  className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
                   style={{
                     width: '275px',
                     height: '37px',
@@ -271,8 +262,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
                     fontFamily: 'Inter',
                     fontWeight: 500,
                     fontSize: '14px',
-                    lineHeight: '1.2102272851126534em',
-                    color: '#595959'
+                    lineHeight: '1.2102272851126534em'
                   }}
                 >
                   <SelectValue placeholder="Select Department" />
@@ -293,26 +283,25 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
 
           {/* Info Note */}
           <div 
-            className="rounded-lg"
+            className="rounded-lg bg-blue-50 dark:bg-blue-950/20"
             style={{
-              backgroundColor: '#F3F4FF',
               borderRadius: '5px',
               padding: '15px 10px',
               width: '575px'
             }}
           >
             <p 
+              className="text-muted-foreground"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 400,
                 fontSize: '12px',
                 lineHeight: '1.2102272510528564em',
-                color: '#6C757D',
                 margin: 0,
                 width: '548px'
               }}
             >
-              <strong style={{ color: '#DC3545' }}>Note:</strong> A temporary password will be generated and sent to the user's email address. They will be required to change it on first login.
+              <strong className="text-destructive">Note:</strong> A temporary password will be generated and sent to the user's email address. They will be required to change it on first login.
             </p>
           </div>
 
@@ -323,7 +312,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               variant="outline"
               onClick={onClose}
               disabled={saving}
-              className="border-black text-black hover:bg-gray-50"
+              className="border-border text-foreground hover:bg-muted"
               style={{
                 height: '36px',
                 padding: '0px 15px',
