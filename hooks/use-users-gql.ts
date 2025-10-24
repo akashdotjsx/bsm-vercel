@@ -309,6 +309,8 @@ export async function inviteUserViaAPI(userData: {
 }
 
 export async function updateProfileGQL(id: string, updates: Partial<Profile>): Promise<Profile> {
+  console.log('🔧 updateProfileGQL called with:', { id, updates })
+  
   const client = await createGraphQLClient()
   
   const mutation = gql`
@@ -332,23 +334,43 @@ export async function updateProfileGQL(id: string, updates: Partial<Profile>): P
     }
   `
   
-  const response: any = await client.request(mutation, { id, set: updates })
-  return response.updateprofilesCollection.records[0]
+  try {
+    const response: any = await client.request(mutation, { id, set: updates })
+    console.log('✅ updateProfileGQL response:', response)
+    
+    if (!response.updateprofilesCollection.records[0]) {
+      throw new Error('No user was updated. The user may not exist or you may not have permission.')
+    }
+    
+    return response.updateprofilesCollection.records[0]
+  } catch (error) {
+    console.error('❌ updateProfileGQL error:', error)
+    throw error
+  }
 }
 
+// DEPRECATED: Use deleteUserViaAPI instead for proper deletion from auth.users table
 export async function deleteProfileGQL(id: string): Promise<boolean> {
-  const client = await createGraphQLClient()
+  throw new Error('deleteProfileGQL is deprecated - use deleteUserViaAPI for proper user deletion from Supabase Auth')
+}
+
+/**
+ * Delete a user completely from Supabase Auth (which cascades to profiles table)
+ * This calls the /api/delete-user endpoint which uses admin API to delete from auth.users
+ */
+export async function deleteUserViaAPI(userId: string): Promise<any> {
+  const response = await fetch('/api/delete-user', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  })
   
-  const mutation = gql`
-    mutation DeleteProfile($id: UUID!) {
-      deleteFromprofilesCollection(filter: { id: { eq: $id } }) {
-        affectedCount
-      }
-    }
-  `
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || 'Failed to delete user')
+  }
   
-  const response: any = await client.request(mutation, { id })
-  return response.deleteFromprofilesCollection.affectedCount > 0
+  return response.json()
 }
 
 // ============================================

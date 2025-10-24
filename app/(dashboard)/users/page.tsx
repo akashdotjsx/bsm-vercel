@@ -44,7 +44,7 @@ import {
   AlertCircle,
   ShieldCheck,
 } from "lucide-react"
-import { useProfilesGQL, useTeamsGQL, inviteUserViaAPI, updateProfileGQL, deleteProfileGQL, createTeamGQL, updateTeamGQL, deleteTeamGQL, addTeamMemberGQL, removeTeamMemberGQL } from "@/hooks/use-users-gql"
+import { useProfilesGQL, useTeamsGQL, inviteUserViaAPI, updateProfileGQL, deleteUserViaAPI, createTeamGQL, updateTeamGQL, deleteTeamGQL, addTeamMemberGQL, removeTeamMemberGQL } from "@/hooks/use-users-gql"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { RoleEditModal } from "@/components/rbac/role-edit-modal"
@@ -144,6 +144,8 @@ export default function UsersPage() {
   const [showManageDepartments, setShowManageDepartments] = useState(false)
   const [showResetPassword, setShowResetPassword] = useState(false)
   const [showEditRole, setShowEditRole] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [roles, setRoles] = useState<Role[]>([])
   const [departments, setDepartments] = useState(initialDepartments)
@@ -387,26 +389,72 @@ export default function UsersPage() {
   const handleUpdateUser = async () => {
     try {
       if (!selectedUser) return
-      await updateUser(selectedUser.id, {
+      
+      console.log('🔄 Updating user:', selectedUser.id, 'with data:', {
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         display_name: `${newUser.first_name} ${newUser.last_name}`,
         role: newUser.role,
         department: newUser.department,
       })
+      
+      const result = await updateUser(selectedUser.id, {
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        display_name: `${newUser.first_name} ${newUser.last_name}`,
+        role: newUser.role,
+        department: newUser.department,
+      })
+      
+      console.log('✅ User update result:', result)
+      
+      toast({
+        title: "User updated successfully",
+        description: `${newUser.first_name} ${newUser.last_name}'s information has been updated`,
+      })
+      
       setShowEditUser(false)
       setSelectedUser(null)
       setNewUser({ first_name: "", last_name: "", email: "", role: "user", department: "", status: "Active" })
     } catch (error) {
-      console.error('Error updating user:', error)
+      console.error('❌ Error updating user:', error)
+      toast({
+        title: "Error updating user",
+        description: error instanceof Error ? error.message : 'Failed to update user',
+        variant: "destructive"
+      })
     }
   }
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    if (user) {
+      setUserToDelete(user)
+      setShowDeleteConfirm(true)
+    }
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+    
     try {
-      await deactivateUser(userId)
+      const userName = userToDelete.display_name || userToDelete.email || 'User'
+      
+      await deleteUserViaAPI(userToDelete.id)
+      refetchUsers()
+      toast({
+        title: "User deleted successfully",
+        description: `${userName} has been permanently deleted from the system`,
+      })
+      setShowDeleteConfirm(false)
+      setUserToDelete(null)
     } catch (error) {
       console.error('Error deleting user:', error)
+      toast({
+        title: "Error deleting user",
+        description: error instanceof Error ? error.message : 'Failed to delete user',
+        variant: "destructive"
+      })
     }
   }
 
@@ -1317,6 +1365,67 @@ export default function UsersPage() {
                 className="text-[13px]"
               >
                 Send Reset Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete User Confirmation Modal */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="font-sans">
+            <DialogHeader>
+              <DialogTitle className="text-[15px] font-semibold flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Delete User
+              </DialogTitle>
+              <DialogDescription className="text-[13px] pt-2">
+                This action cannot be undone. This will permanently delete the user account.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <p className="text-[13px] font-medium text-foreground mb-2">
+                  You are about to delete:
+                </p>
+                <div className="space-y-1">
+                  <p className="text-[13px] font-semibold">
+                    {userToDelete?.display_name || `${userToDelete?.first_name || ''} ${userToDelete?.last_name || ''}`.trim() || 'User'}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground">
+                    {userToDelete?.email}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[13px] text-muted-foreground">
+                  • The user will be removed from Supabase Auth
+                </p>
+                <p className="text-[13px] text-muted-foreground">
+                  • All user data and profile information will be deleted
+                </p>
+                <p className="text-[13px] text-muted-foreground">
+                  • The user will no longer be able to log in
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setUserToDelete(null)
+                }} 
+                className="text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteUser}
+                className="text-[13px] bg-destructive hover:bg-destructive/90"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete User
               </Button>
             </DialogFooter>
           </DialogContent>
