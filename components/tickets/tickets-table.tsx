@@ -551,7 +551,7 @@ function TicketRow({
           onValueChange={(value) => onStatusUpdate(ticket.dbId || ticket.id, value)}
           disabled={updatingTickets.has(ticket.dbId || ticket.id)}
         >
-          <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-muted/50 rounded-full">
+          <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-muted/50 rounded-full [&>svg]:hidden">
             <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)} cursor-pointer`}>
               {getStatusText(ticket.status)}
             </div>
