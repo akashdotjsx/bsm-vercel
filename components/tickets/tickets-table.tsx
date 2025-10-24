@@ -546,26 +546,64 @@ function TicketRow({
 
       {/* Status */}
       <td className="px-3 py-2.5 whitespace-nowrap border-r border-border">
-        <Select
-          value={ticket.status}
-          onValueChange={(value) => onStatusUpdate(ticket.dbId || ticket.id, value)}
-          disabled={updatingTickets.has(ticket.dbId || ticket.id)}
-        >
-          <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-muted/50 rounded-full [&>svg]:hidden">
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)} cursor-pointer`}>
-              {getStatusText(ticket.status)}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              disabled={updatingTickets.has(ticket.dbId || ticket.id)}
+              className="cursor-pointer"
+            >
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                {getStatusText(ticket.status)}
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-32 p-1" align="start">
+            <div className="space-y-1">
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'new')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                New
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'open')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                Open
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'in_progress')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                In Progress
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'pending')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'resolved')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                Resolved
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'closed')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                Closed
+              </button>
+              <button
+                onClick={() => onStatusUpdate(ticket.dbId || ticket.id, 'on_hold')}
+                className="w-full text-left px-2 py-1 text-xs hover:bg-muted rounded"
+              >
+                On Hold
+              </button>
             </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-            <SelectItem value="on_hold">On Hold</SelectItem>
-          </SelectContent>
-        </Select>
+          </PopoverContent>
+        </Popover>
       </td>
 
       {/* Reported By */}
