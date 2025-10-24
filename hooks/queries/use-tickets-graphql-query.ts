@@ -286,6 +286,13 @@ async function fetchTicketGraphQL(id: string) {
 async function createTicketGraphQL(ticketData: any) {
   console.log('🎫 GraphQL: Creating ticket with data:', ticketData)
   
+  // Fix custom_fields JSON serialization for GraphQL
+  const processedTicketData = { ...ticketData }
+  if (processedTicketData.custom_fields && typeof processedTicketData.custom_fields === 'object') {
+    processedTicketData.custom_fields = JSON.stringify(processedTicketData.custom_fields)
+    console.log('🎫 GraphQL: Serialized custom_fields:', processedTicketData.custom_fields)
+  }
+  
   const client = await createGraphQLClient()
 
   const mutation = gql`
@@ -316,7 +323,7 @@ async function createTicketGraphQL(ticketData: any) {
     }
   `
 
-  const data: any = await client.request(mutation, { input: ticketData })
+  const data: any = await client.request(mutation, { input: processedTicketData })
   const ticket = data.insertIntoticketsCollection.records[0]
   
   console.log('🎫 GraphQL: Ticket created successfully:', ticket)
@@ -390,6 +397,13 @@ async function createTicketGraphQL(ticketData: any) {
 async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }) {
   console.log('🎫 GraphQL: Updating ticket with data:', { id, updates })
   
+  // Fix custom_fields JSON serialization for GraphQL
+  const processedUpdates = { ...updates }
+  if (processedUpdates.custom_fields && typeof processedUpdates.custom_fields === 'object') {
+    processedUpdates.custom_fields = JSON.stringify(processedUpdates.custom_fields)
+    console.log('🎫 GraphQL: Serialized custom_fields in update:', processedUpdates.custom_fields)
+  }
+  
   const client = await createGraphQLClient()
 
   const mutation = gql`
@@ -414,7 +428,7 @@ async function updateTicketGraphQL({ id, updates }: { id: string; updates: any }
     }
   `
 
-  const data: any = await client.request(mutation, { id, updates })
+  const data: any = await client.request(mutation, { id, updates: processedUpdates })
   const ticket = data.updateticketsCollection.records[0]
   
   console.log('🎫 GraphQL: Ticket updated successfully:', ticket)
