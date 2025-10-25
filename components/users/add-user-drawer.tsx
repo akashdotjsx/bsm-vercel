@@ -36,6 +36,9 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
     role: "user",
     department: ""
   })
+  
+  // Detect theme
+  const isDarkMode = typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -110,7 +113,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label 
-                className="block text-muted-foreground"
+                className="block text-[#595959] dark:text-[#d1d5db]"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -123,7 +126,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               <Input 
                 value={form.first_name} 
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })} 
-                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
+                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground placeholder:text-[#595959] dark:placeholder:text-[#9ca3af]"
                 style={{
                   width: '275px',
                   height: '37px',
@@ -139,7 +142,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
             </div>
             <div className="space-y-2.5">
               <label 
-                className="block text-muted-foreground"
+                className="block text-[#595959] dark:text-[#d1d5db]"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -152,7 +155,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               <Input 
                 value={form.last_name} 
                 onChange={(e) => setForm({ ...form, last_name: e.target.value })} 
-                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
+                className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground placeholder:text-[#595959] dark:placeholder:text-[#9ca3af]"
                 style={{
                   width: '275px',
                   height: '37px',
@@ -171,7 +174,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           {/* Email */}
           <div className="space-y-2">
             <label 
-              className="block text-muted-foreground"
+              className="block text-[#595959] dark:text-[#d1d5db]"
               style={{
                 fontFamily: 'Inter',
                 fontWeight: 500,
@@ -185,7 +188,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               type="email"
               value={form.email} 
               onChange={(e) => setForm({ ...form, email: e.target.value })} 
-              className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
+              className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground placeholder:text-[#595959] dark:placeholder:text-[#9ca3af]"
               style={{
                 width: '575px',
                 height: '37px',
@@ -204,7 +207,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label 
-                className="block text-muted-foreground"
+                className="block text-[#595959] dark:text-[#d1d5db]"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -241,7 +244,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
             </div>
             <div className="space-y-2">
               <label 
-                className="block text-muted-foreground"
+                className="block text-[#595959] dark:text-[#d1d5db]"
                 style={{
                   fontFamily: 'Inter',
                   fontWeight: 500,
@@ -253,7 +256,7 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
               </label>
               <Select value={form.department} onValueChange={(v) => setForm({ ...form, department: v })}>
                 <SelectTrigger 
-                  className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground"
+                  className="border-border focus:border-[#6E72FF] focus:ring-[#6E72FF] bg-background text-foreground data-[placeholder]:text-[#595959] dark:data-[placeholder]:text-[#9ca3af]"
                   style={{
                     width: '275px',
                     height: '37px',
@@ -283,11 +286,12 @@ export default function AddUserDrawer({ isOpen, onClose, onSubmit, departments }
 
           {/* Info Note */}
           <div 
-            className="rounded-lg bg-blue-50 dark:bg-blue-950/20"
+            className="rounded-lg"
             style={{
               borderRadius: '5px',
               padding: '15px 10px',
-              width: '575px'
+              width: '575px',
+              backgroundColor: isDarkMode ? '#1e293b' : '#F3F4FF'
             }}
           >
             <p 

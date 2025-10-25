@@ -22,6 +22,7 @@ function SelectTrigger({
   className,
   size = "default",
   children,
+  style,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
@@ -31,9 +32,10 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
 className={cn(
-        "border-[var(--border)] data-[placeholder]:text-[var(--placeholder-text)] [&_svg:not([class*='text-'])]:text-[var(--secondary-text-color)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-[var(--input)] dark:hover:bg-[var(--menu-hover)] hover:bg-accent/50 flex w-fit items-center justify-between gap-2 rounded-[8px] border bg-[var(--input)] px-3 py-[6px] text-[11px] whitespace-nowrap shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "border-[var(--border)] data-[placeholder]:text-[var(--placeholder-color,var(--placeholder-text))] [&_svg:not([class*='text-'])]:text-[var(--secondary-text-color)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-[var(--input)] dark:hover:bg-[var(--menu-hover)] hover:bg-accent/50 flex w-fit items-center justify-between gap-2 rounded-[8px] border bg-[var(--input)] px-3 py-[6px] text-[11px] whitespace-nowrap shadow-xs transition-all outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className,
       )}
+      style={style}
       {...props}
     >
       {children}
