@@ -146,18 +146,19 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
       setUserCustomStatuses(statuses)
     }
   }, [customStatusData])
-
-  if (loading) {
+  
+  // Show minimal loading indicator while auth is loading
+  if (loading || !profile) {
     return (
-      <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/30 animate-pulse rounded-full flex items-center justify-center">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 bg-gradient-to-br from-muted/50 to-muted/80 rounded-full flex items-center justify-center">
+        <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
       </div>
     )
   }
-
-  // If no user is authenticated, redirect to login
-  if (!user || !profile) {
-    router.push('/auth/login')
+  
+  // If no user after loading completes, don't render anything  
+  // (middleware will handle redirect)
+  if (!user) {
     return null
   }
 

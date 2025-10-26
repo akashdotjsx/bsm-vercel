@@ -96,33 +96,16 @@ interface AuthCache {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Try to load from cache immediately to prevent flash (memoized)
-  const cachedAuth = React.useMemo(() => {
-    if (typeof window === 'undefined') return null
-    try {
-      const cached = sessionStorage.getItem(AUTH_CACHE_KEY)
-      if (!cached) return null
-      const data = JSON.parse(cached) as AuthCache
-      // Check if cache is still valid (within 5 minutes)
-      if (Date.now() - data.timestamp > CACHE_DURATION) {
-        sessionStorage.removeItem(AUTH_CACHE_KEY)
-        return null
-      }
-      console.log('🚀 Loaded cached auth - NO FLASH!')
-      return data
-    } catch {
-      return null
-    }
-  }, [])
-  
+  // State initialization - all start as null/empty to match SSR
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(cachedAuth?.profile || null)
-  const [organization, setOrganization] = useState<Organization | null>(cachedAuth?.organization || null)
-  const [permissions, setPermissions] = useState<UserPermissionsResponse[]>(cachedAuth?.permissions || [])
-  const [userRoles, setUserRoles] = useState<UserRole[]>(cachedAuth?.userRoles || [])
-  const [loading, setLoading] = useState(!cachedAuth) // If we have cache, don't show loading
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [organization, setOrganization] = useState<Organization | null>(null)
+  const [permissions, setPermissions] = useState<UserPermissionsResponse[]>([])
+  const [userRoles, setUserRoles] = useState<UserRole[]>([])
+  const [loading, setLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
-  const [initialized, setInitialized] = useState(!!cachedAuth)
+  const [initialized, setInitialized] = useState(false)
+  const [cachedAuthLoaded, setCachedAuthLoaded] = useState(false)
   const isHydrated = useHydration()
 
 
@@ -348,6 +331,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isManager = hasAnyPermission(['users.view', 'analytics.view']) || profile?.role === 'manager' || profile?.role === 'admin'
   const isAgent = hasAnyPermission(['tickets.edit', 'services.edit']) || profile?.role === 'agent' || profile?.role === 'manager' || profile?.role === 'admin'
 
+  // Load cache on mount (client-side only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    try {
+      const cached = sessionStorage.getItem(AUTH_CACHE_KEY)
+      if (!cached) return
+      
+      const data = JSON.parse(cached) as AuthCache
+      // Check if cache is still valid (within 5 minutes)
+      if (Date.now() - data.timestamp > CACHE_DURATION) {
+        sessionStorage.removeItem(AUTH_CACHE_KEY)
+        return
+      }
+      
+      console.log('🚀 Loaded cached auth from sessionStorage')
+      // Apply cached data immediately
+      setProfile(data.profile)
+      setOrganization(data.organization)
+      setPermissions(data.permissions)
+      setUserRoles(data.userRoles)
+      setLoading(false)
+      setInitialized(true)
+      setCachedAuthLoaded(true)
+    } catch (err) {
+      console.error('Failed to load cached auth:', err)
+    }
+  }, [])
+  
   useEffect(() => {
     let isMounted = true
     
@@ -358,7 +370,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // If we have cached data, skip loading state entirely
-    if (cachedAuth) {
+    if (cachedAuthLoaded) {
       console.log('✅ Using cached auth data - skipping auth check')
       // Still verify session in background but don't block
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -402,7 +414,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (isMounted) {
             setLoading(false)
             setInitialized(true)
-            setAuthCheckComplete(true)
           }
           return
         }
@@ -410,7 +421,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user && isMounted) {
           console.log('✅ User found, loading profile...', session.user.email)
           setUser(session.user)
-          setAuthCheckComplete(true) // Auth check is done, we know user exists
           
           // Load profile data in background (DON'T AWAIT - prevents blocking)
           loadUserData(session.user.id)
@@ -424,7 +434,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setOrganization(null)
           setPermissions([])
           setUserRoles([])
-          setAuthCheckComplete(true)
         }
       } catch (error) {
         console.error('❌ Error in getSession:', error)
@@ -479,13 +488,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(emergencyTimeout)
       subscription.unsubscribe()
     }
-  }, [])
+  }, [cachedAuthLoaded])
 
   const value = {
     user,
     profile,
     organization,
-    organizationId: profile?.organization_id || null,
+    // Use organization.id first (from cache), fallback to profile.organization_id
+    organizationId: organization?.id || profile?.organization_id || null,
     permissions,
     userRoles,
     loading,
@@ -516,13 +526,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // CRITICAL: Never show loader if we have cached auth
+  // CRITICAL: Show loader only when actually loading (not when using cache)
   // This prevents flashes on page refresh/navigation
-  if (!cachedAuth) {
-    // Only show loader during initial hydration or when loading without cache
-    if (!isHydrated || (loading && !initialized)) {
-      return <KrooloMainLoader />
-    }
+  if (!isHydrated || (loading && !cachedAuthLoaded && !initialized)) {
+    return <KrooloMainLoader />
   }
 
   return (

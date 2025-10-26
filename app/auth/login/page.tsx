@@ -32,39 +32,43 @@ export default function Page() {
   const supabase = createClient()
   const { setUser } = useStore()
   
-  // Single auth check on mount
+  // Check cache and redirect if already authenticated
   useEffect(() => {
     setMounted(true)
     // Force light mode
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
     
-    // Check for existing auth - cache first, then session
+    // Check cache FIRST for instant redirect (no flash)
     const checkAuth = async () => {
       try {
-        // Check cache first (instant)
+        // Check sessionStorage cache
         const cached = sessionStorage.getItem('kroolo_auth_cache')
         if (cached) {
-          console.log('✅ Cache found, redirecting to dashboard')
-          setRedirecting(true)
-          router.push('/dashboard')
-          return
+          const data = JSON.parse(cached)
+          const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+          if (Date.now() - data.timestamp < CACHE_DURATION && data.profile) {
+            console.log('✅ Found cached auth, redirecting to dashboard')
+            setRedirecting(true)
+            router.push('/dashboard')
+            return
+          }
         }
         
-        // No cache, check session
+        // If no cache, check actual session
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          console.log('✅ Session found, redirecting to dashboard')
+          console.log('✅ User session found, redirecting to dashboard')
           setRedirecting(true)
           router.push('/dashboard')
         }
       } catch (error) {
-        console.error('❌ Auth check error:', error)
+        console.error('Auth check error:', error)
       }
     }
     
     checkAuth()
-  }, [router, supabase])
+  }, [router])
 
   // Show loader when redirecting after successful login
   if (redirecting) {
@@ -98,6 +102,9 @@ export default function Page() {
         email: email.trim(),
         password: password.trim(),
       })
+      
+      // Force session cookie refresh to ensure middleware can read it
+      await supabase.auth.getSession()
 
       console.log('Auth response:', { authData, authError })
 
