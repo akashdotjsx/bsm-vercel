@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ import { CustomMenuItem, CustomMenuSeparator } from "@/components/ui/custom-menu
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useGraphQLMutation, useGraphQL } from "@/hooks/use-graphql"
+import { notifyStatusChange } from "@/lib/notifications/send-notification"
 
 // Status options from the main-components reference
 const statusOptions = [
@@ -228,12 +230,13 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
   }
 
   const handleStatusChange = async (newStatus: { label: string; color: string }, isCustom = false) => {
+    const oldStatus = status.label
     setStatus(newStatus)
     setEditCustom(false)
     setStatusMenuOpen(false)
     
     // Persist to database
-    if (profile?.id) {
+    if (profile?.id && organization?.id) {
       try {
         // If it's a custom status, update last used time
         if (isCustom) {
@@ -249,6 +252,23 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
           status: newStatus.label,
           statusColor: newStatus.color,
         })
+        
+        // Send notification to admins for status changes
+        // Always enabled globally - can be disabled via org settings if needed
+        const notifyAdmins = organization?.settings?.notify_on_status_change !== false
+        
+        // Send notification to admins
+        if (oldStatus !== newStatus.label) {
+          await notifyStatusChange({
+            userId: profile.id,
+            userName: `${profile.first_name} ${profile.last_name}`.trim(),
+            organizationId: organization.id,
+            oldStatus: oldStatus,
+            newStatus: newStatus.label,
+            newStatusColor: newStatus.color,
+            notifyAdmins: notifyAdmins,
+          })
+        }
       } catch (error) {
         console.error('Failed to update status:', error)
       }
@@ -287,19 +307,44 @@ export function AvatarMenu({ className }: AvatarMenuProps) {
       </AlertDialog>
 
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50"
-        >
-          <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
-              {userData.initials}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50 relative"
+                >
+                  <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
+                      {userData.initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Status indicator dot - bigger size */}
+                  <span 
+                    className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background shadow-sm"
+                    style={{ backgroundColor: status.color }}
+                    aria-label={`Status: ${status.label}`}
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="bottom" 
+              sideOffset={5} 
+              className="text-xs px-2 py-1 bg-popover border-border text-popover-foreground"
+            >
+              <div className="flex items-center gap-1.5">
+                <span 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: status.color }}
+                />
+                <span className="font-medium">{status.label}</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       
       <DropdownMenuContent
         align="end"

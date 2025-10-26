@@ -39,6 +39,8 @@ interface Profile {
   is_active: boolean
   last_login: string | null
   preferences: Record<string, any>
+  status: string
+  status_color: string
   created_at: string
   updated_at: string
 }
@@ -81,26 +83,62 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Session storage keys
+const AUTH_CACHE_KEY = 'kroolo_auth_cache'
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+interface AuthCache {
+  profile: Profile | null
+  organization: Organization | null
+  permissions: UserPermissionsResponse[]
+  userRoles: UserRole[]
+  timestamp: number
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Try to load from cache immediately to prevent flash (memoized)
+  const cachedAuth = React.useMemo(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const cached = sessionStorage.getItem(AUTH_CACHE_KEY)
+      if (!cached) return null
+      const data = JSON.parse(cached) as AuthCache
+      // Check if cache is still valid (within 5 minutes)
+      if (Date.now() - data.timestamp > CACHE_DURATION) {
+        sessionStorage.removeItem(AUTH_CACHE_KEY)
+        return null
+      }
+      console.log('🚀 Loaded cached auth - NO FLASH!')
+      return data
+    } catch {
+      return null
+    }
+  }, [])
+  
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [organization, setOrganization] = useState<Organization | null>(null)
-  const [permissions, setPermissions] = useState<UserPermissionsResponse[]>([])
-  const [userRoles, setUserRoles] = useState<UserRole[]>([])
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<Profile | null>(cachedAuth?.profile || null)
+  const [organization, setOrganization] = useState<Organization | null>(cachedAuth?.organization || null)
+  const [permissions, setPermissions] = useState<UserPermissionsResponse[]>(cachedAuth?.permissions || [])
+  const [userRoles, setUserRoles] = useState<UserRole[]>(cachedAuth?.userRoles || [])
+  const [loading, setLoading] = useState(!cachedAuth) // If we have cache, don't show loading
   const [permissionsLoading, setPermissionsLoading] = useState(false)
-  const [initialized, setInitialized] = useState(false)
-  const [minLoadingComplete, setMinLoadingComplete] = useState(false)
+  const [initialized, setInitialized] = useState(!!cachedAuth)
   const isHydrated = useHydration()
 
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
+      
+      clearTimeout(timeoutId)
 
       if (error) {
         console.error('Error fetching profile:', error)
@@ -158,6 +196,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Cache auth data to prevent flashes on navigation
+  const cacheAuthData = (profile: Profile | null, org: Organization | null, perms: UserPermissionsResponse[], roles: UserRole[]) => {
+    if (typeof window === 'undefined') return
+    try {
+      const cache: AuthCache = {
+        profile,
+        organization: org,
+        permissions: perms,
+        userRoles: roles,
+        timestamp: Date.now()
+      }
+      sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(cache))
+    } catch (err) {
+      console.error('Failed to cache auth data:', err)
+    }
+  }
+
+  // Parallel data loading - profile is blocking, organization is background
+  const loadUserData = async (userId: string) => {
+    try {
+      // Fetch critical user data in parallel
+      const [userProfile, userPermissions, roles] = await Promise.all([
+        fetchProfile(userId),
+        rbacApi.getUserPermissions(userId),
+        rbacApi.getUserRoles(userId)
+      ])
+
+      // Set profile FIRST (this unblocks the app)
+      if (userProfile) {
+        setProfile(userProfile)
+        
+        // Set permissions immediately
+        const grantedPermissions = Array.isArray(userPermissions) 
+          ? userPermissions.filter(p => p && p.granted === true)
+          : []
+        setPermissions(grantedPermissions)
+        setUserRoles(Array.isArray(roles) ? roles : [])
+        
+        // Fetch organization in BACKGROUND (non-blocking)
+        if (userProfile.organization_id) {
+          fetchOrganization(userProfile.organization_id)
+            .then(org => {
+              if (org) {
+                setOrganization(org)
+                // Cache after organization is loaded
+                cacheAuthData(userProfile, org, grantedPermissions, Array.isArray(roles) ? roles : [])
+              }
+            })
+            .catch(err => console.error('Organization fetch failed:', err))
+        } else {
+          // Cache even without organization
+          cacheAuthData(userProfile, null, grantedPermissions, Array.isArray(roles) ? roles : [])
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    }
+  }
+
   const refreshProfile = async () => {
     if (user) {
       const updatedProfile = await fetchProfile(user.id)
@@ -192,6 +289,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganization(null)
       setPermissions([])
       setUserRoles([])
+      // Clear session cache
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(AUTH_CACHE_KEY)
+      }
     }
   }
 
@@ -256,19 +357,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
     
-    // Minimum loading time for smooth UX (prevent flash)
-    setTimeout(() => {
-      setMinLoadingComplete(true)
-    }, 600)
+    // If we have cached data, skip loading state entirely
+    if (cachedAuth) {
+      console.log('✅ Using cached auth data - skipping auth check')
+      // Still verify session in background but don't block
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user && isMounted) {
+          setUser(session.user)
+          // Refresh data in background
+          loadUserData(session.user.id).catch(err => console.error('Background refresh failed:', err))
+        } else if (!session?.user && isMounted) {
+          // Session expired, clear cache
+          sessionStorage.removeItem(AUTH_CACHE_KEY)
+          setProfile(null)
+          setOrganization(null)
+          setPermissions([])
+          setUserRoles([])
+        }
+      })
+      return // Don't run the rest of the effect
+    }
     
-    // Emergency timeout - always set loading to false after 800ms for faster UX
+    // Safety timeout - aggressive for better UX
     const emergencyTimeout = setTimeout(() => {
-      if (isMounted) {
-        console.warn('🚨 Auth emergency timeout - forcing loading to false')
+      if (isMounted && loading) {
+        console.error('❌ Auth timeout - force completing to prevent infinite loading')
         setLoading(false)
         setInitialized(true)
+        // If we have user but no profile, still allow render
+        if (user && !profile) {
+          console.warn('⚠️ Rendering without profile due to timeout')
+        }
       }
-    }, 800)
+    }, 1500) // 1.5s timeout - aggressive to prevent stuck loading
     
     // Get initial session
     const getSession = async () => {
@@ -281,38 +402,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (isMounted) {
             setLoading(false)
             setInitialized(true)
+            setAuthCheckComplete(true)
           }
           return
         }
         
         if (session?.user && isMounted) {
-          console.log('✅ User found, setting auth state:', session.user.email)
+          console.log('✅ User found, loading profile...', session.user.email)
           setUser(session.user)
+          setAuthCheckComplete(true) // Auth check is done, we know user exists
           
-          // Load profile but don't let it block auth completion
-          fetchProfile(session.user.id)
-            .then(userProfile => {
-              if (isMounted && userProfile) {
-                console.log('📋 Profile loaded:', userProfile.display_name)
-                setProfile(userProfile)
-                
-                if (userProfile.organization_id) {
-                  fetchOrganization(userProfile.organization_id)
-                    .then(org => {
-                      if (isMounted && org) {
-                        console.log('🏢 Organization loaded:', org.name)
-                        setOrganization(org)
-                      }
-                    })
-                    .catch(err => console.error('Organization fetch failed:', err))
-                }
-                
-                // Load permissions asynchronously
-                loadUserPermissions(session.user.id)
-                  .catch(err => console.error('Permissions load failed:', err))
-              }
-            })
-            .catch(err => console.error('Profile fetch failed:', err))
+          // Load profile data in background (DON'T AWAIT - prevents blocking)
+          loadUserData(session.user.id)
+            .catch(err => console.error('Failed to load user data:', err))
             
         } else if (isMounted && !session?.user) {
           console.log('❌ No user session found')
@@ -322,6 +424,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setOrganization(null)
           setPermissions([])
           setUserRoles([])
+          setAuthCheckComplete(true)
         }
       } catch (error) {
         console.error('❌ Error in getSession:', error)
@@ -331,6 +434,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
           setInitialized(true)
           clearTimeout(emergencyTimeout)
+          // Remove root loader
+          if (typeof document !== 'undefined') {
+            document.body.classList.add('auth-resolved')
+          }
         }
       }
     }
@@ -347,27 +454,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           setUser(session.user)
           
-          // Load profile asynchronously without blocking
-          fetchProfile(session.user.id)
-            .then(userProfile => {
-              if (isMounted && userProfile) {
-                setProfile(userProfile)
-                
-                if (userProfile.organization_id) {
-                  fetchOrganization(userProfile.organization_id)
-                    .then(org => {
-                      if (isMounted && org) {
-                        setOrganization(org)
-                      }
-                    })
-                    .catch(err => console.error('Organization fetch failed:', err))
-                }
-                
-                loadUserPermissions(session.user.id)
-                  .catch(err => console.error('Permissions load failed:', err))
-              }
-            })
-            .catch(err => console.error('Profile fetch failed:', err))
+          // Load all user data in parallel (non-blocking)
+          loadUserData(session.user.id)
+            .catch(err => console.error('Failed to load user data:', err))
             
         } else {
           setUser(null)
@@ -427,8 +516,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Show loader only on client-side after hydration
-  if (!isHydrated || loading || !initialized || (user && !profile) || !minLoadingComplete) {
+  // Show loader ONLY during very first load when no cache exists
+  // If we have cached auth, NEVER show loader - renders instantly
+  if (!isHydrated) {
+    return <KrooloMainLoader />
+  }
+  
+  // Only show loader if loading AND no cached data exists
+  if (loading && !initialized && !cachedAuth) {
     return <KrooloMainLoader />
   }
 

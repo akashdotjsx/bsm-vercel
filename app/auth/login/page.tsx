@@ -21,16 +21,24 @@ const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-l
 })
 
 export default function Page() {
+  // Check cache immediately to prevent flash
+  const hasCache = typeof window !== 'undefined' && sessionStorage.getItem('kroolo_auth_cache')
+  
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [redirecting, setRedirecting] = useState(false)
+  const [redirecting, setRedirecting] = useState(!!hasCache) // Start redirecting if cache exists
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
+  
+  // Immediate redirect if cache exists (before render)
+  if (hasCache && typeof window !== 'undefined') {
+    router.push('/dashboard')
+  }
   
   // Force light mode on login page
   useEffect(() => {
@@ -39,20 +47,37 @@ export default function Page() {
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
     
-      // Check if user is already authenticated (but don't show loading)
+    // Check if user is already authenticated - SYNCHRONOUS check first
+    const checkAuthSync = () => {
+      // Check for cached auth data
+      try {
+        const cached = sessionStorage.getItem('kroolo_auth_cache')
+        if (cached) {
+          console.log('Cached auth found, redirecting immediately')
+          setRedirecting(true)
+          router.push('/dashboard')
+          return true
+        }
+      } catch (err) {
+        console.error('Cache check failed:', err)
+      }
+      return false
+    }
+    
+    // Try sync check first
+    if (checkAuthSync()) return
+    
+    // Fallback to async check if no cache
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          console.log('User already authenticated, redirecting to tickets')
+          console.log('User already authenticated, redirecting to dashboard')
           setRedirecting(true)
-          setTimeout(() => {
-            router.push('/tickets')
-          }, 300)
+          router.push('/dashboard')
         }
       } catch (error) {
         console.error('Error checking auth:', error)
-        // Continue to show login page on error
       }
     }
     
