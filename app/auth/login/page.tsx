@@ -32,32 +32,43 @@ export default function Page() {
   const supabase = createClient()
   const { setUser } = useStore()
   
-  // Force light mode on login page
+  // Check cache and redirect if already authenticated
   useEffect(() => {
     setMounted(true)
     // Force light mode
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
     
-      // Check if user is already authenticated (but don't show loading)
+    // Check cache FIRST for instant redirect (no flash)
     const checkAuth = async () => {
       try {
+        // Check sessionStorage cache
+        const cached = sessionStorage.getItem('kroolo_auth_cache')
+        if (cached) {
+          const data = JSON.parse(cached)
+          const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+          if (Date.now() - data.timestamp < CACHE_DURATION && data.profile) {
+            console.log('✅ Found cached auth, redirecting to dashboard')
+            setRedirecting(true)
+            router.push('/dashboard')
+            return
+          }
+        }
+        
+        // If no cache, check actual session
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          console.log('User already authenticated, redirecting to tickets')
+          console.log('✅ User session found, redirecting to dashboard')
           setRedirecting(true)
-          setTimeout(() => {
-            router.push('/tickets')
-          }, 300)
+          router.push('/dashboard')
         }
       } catch (error) {
-        console.error('Error checking auth:', error)
-        // Continue to show login page on error
+        console.error('Auth check error:', error)
       }
     }
     
     checkAuth()
-  }, [router, supabase])
+  }, [router])
 
   // Show loader when redirecting after successful login
   if (redirecting) {
@@ -91,6 +102,9 @@ export default function Page() {
         email: email.trim(),
         password: password.trim(),
       })
+      
+      // Force session cookie refresh to ensure middleware can read it
+      await supabase.auth.getSession()
 
       console.log('Auth response:', { authData, authError })
 
@@ -141,15 +155,13 @@ export default function Page() {
         .update({ last_login: new Date().toISOString() })
         .eq('id', authData.user.id)
 
-      console.log("Login successful, redirecting to tickets")
+      console.log("✅ Login successful, redirecting to dashboard")
       
-      // Show loading screen and then redirect
+      // Show loading screen and redirect (AuthProvider will handle the rest)
       setRedirecting(true)
       
-      // Small delay to show the loading screen, then redirect
-      setTimeout(() => {
-        window.location.href = "/tickets"
-      }, 500)
+      // Use router.push for smooth transition (no full reload)
+      router.push('/dashboard')
 
     } catch (err) {
       console.error("Login error:", err)

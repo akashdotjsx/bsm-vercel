@@ -29,8 +29,12 @@ export function GlobalHeader() {
     setMounted(true)
   }, [])
 
-  // Don't render user data during loading to prevent flash
-  if (loading) {
+  // Show minimal loader only if user exists but profile not yet loaded (background loading)
+  // Don't block the entire header during auth initialization
+  const showMinimalProfile = !profile && user && loading
+
+  // Don't render user data during initial loading to prevent flash
+  if (!mounted) {
     return (
       <header className="h-12 md:h-14 bg-[var(--background)] border-b border-[var(--border)] flex items-center px-4 md:px-6 gap-3 md:gap-6 fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -65,9 +69,9 @@ export function GlobalHeader() {
     )
   }
 
-  // Format user data from profile
+  // Format user data from profile with fallbacks
   const userData = {
-    name: profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User',
+    name: profile ? `${profile.first_name} ${profile.last_name}` : user?.email?.split('@')[0] || 'User',
     email: user?.email || '',
     account: organization?.name || 'Organization',
     id: profile?.id?.slice(-8) || 'N/A',
@@ -81,6 +85,14 @@ export function GlobalHeader() {
   }
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+
+  // Get initials from profile or email
+  const getInitials = () => {
+    if (profile) {
+      return `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`
+    }
+    return user?.email?.[0]?.toUpperCase() || 'U'
+  }
 
   const handleLogout = async () => {
     // Ensure session cookie is cleared before redirect to avoid auth flicker
@@ -192,15 +204,17 @@ export function GlobalHeader() {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 dark:hover:bg-gray-800/50"
+                  disabled={showMinimalProfile}
                 >
-                  <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
-                      {userData.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
+                  {showMinimalProfile ? (
+                    <div className="h-7 w-7 rounded-full bg-muted animate-pulse" />
+                  ) : (
+                    <Avatar className={`${isMobile ? "h-6 w-6" : "h-7 w-7"}`}>
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px] md:text-[11px] font-semibold">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -211,10 +225,7 @@ export function GlobalHeader() {
               <div className="flex items-center gap-3">
                 <Avatar className={`${isMobile ? "h-10 w-10" : "h-12 w-12"} ring-2 ring-white dark:ring-gray-700`}>
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-semibold">
-                    {userData.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                    {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
