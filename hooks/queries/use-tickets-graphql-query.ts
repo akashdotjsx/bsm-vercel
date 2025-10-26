@@ -30,7 +30,7 @@ interface TicketsParams {
  * Fetch tickets using GraphQL
  * This is the SAME GraphQL query you're already using, but now with React Query caching!
  */
-async function fetchTicketsGraphQL(params: TicketsParams = {}) {
+export async function fetchTicketsGraphQL(params: TicketsParams = {}) {
   console.log("🚀 GraphQL: Fetching tickets with params:", params)
   console.log("🔍 Organization ID being used:", params.organization_id)
 
@@ -529,10 +529,10 @@ export function useTicketsGraphQLQuery(params: TicketsParams = {}) {
   return useQuery({
     queryKey: ticketKeys.list(params),
     queryFn: () => fetchTicketsGraphQL(params),
-    staleTime: 0, // Always refetch to get latest data
-    gcTime: 0, // Don't cache to ensure fresh data
-    refetchOnMount: true, // Always refetch on mount
-    refetchOnWindowFocus: true, // Always refetch on window focus
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
+    refetchOnMount: false, // Don't refetch if data is fresh
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   })
 }
 
