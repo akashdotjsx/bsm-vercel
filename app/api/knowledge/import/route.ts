@@ -4,6 +4,7 @@ import TurndownService from 'turndown'
 
 // Dynamic imports for packages with compatibility issues
 const getMammoth = async () => (await import('mammoth')).default
+const getPdfParse = async () => (await import('pdf-parse')).default
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -51,8 +52,11 @@ async function parseDocument(file: File): Promise<{ content: string; title: stri
       }
 
       case 'pdf': {
-        // PDF parsing is complex in Next.js - suggest users convert to text/markdown first
-        throw new Error('PDF files are not currently supported. Please convert to .txt or .md format first.')
+        const pdfParse = await getPdfParse()
+        const pdfData = await pdfParse(buffer)
+        const content = pdfData.text || ''
+        const title = extractTitleFromContent(content) || fileName.replace(/\.[^/.]+$/, '')
+        return { content, title }
       }
 
       case 'html':

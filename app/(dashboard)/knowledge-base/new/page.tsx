@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { PageContent } from "@/components/layout/page-content"
-import { ArrowLeft, Save, Loader2, Upload, FileText, Sparkles, CheckCircle } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Upload, FileText, Sparkles, CheckCircle, Cloud } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,10 +21,11 @@ import {
 } from "@/components/ui/select"
 import { useCreateArticle, useArticleCategories } from "@/hooks/use-knowledge-base"
 import { toast } from "sonner"
+import { GoogleDriveBrowser } from "@/components/knowledge-base/google-drive-browser"
 
 export default function NewArticlePage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"manual" | "import">("manual")
+  const [activeTab, setActiveTab] = useState<"manual" | "import" | "google-drive">("manual")
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
@@ -43,6 +44,10 @@ export default function NewArticlePage() {
     tags: string[]
     qualityScore: number
   } | null>(null)
+  
+  // Google Drive state
+  const [googleDriveAccountId, setGoogleDriveAccountId] = useState<string | null>(null)
+  const [isProcessingGoogleDrive, setIsProcessingGoogleDrive] = useState(false)
 
   const { data: categories } = useArticleCategories()
   const createArticle = useCreateArticle()
@@ -181,6 +186,122 @@ export default function NewArticlePage() {
     }, 0)
   }
 
+  // Handle Google Drive files selection
+  const handleGoogleDriveFilesSelected = async (files: any[]) => {
+    if (files.length === 0) return
+
+    setIsProcessingGoogleDrive(true)
+    setProcessingProgress(0)
+
+    try {
+      // Process files one by one (can be enhanced to batch process)
+      const file = files[0] // Start with first file
+      
+      toast.info(`Downloading and processing ${file.name}...`)
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setProcessingProgress((prev) => Math.min(prev + 10, 90))
+      }, 300)
+
+      // Download file from Google Drive
+      const downloadResponse = await fetch("/api/google-drive/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId: googleDriveAccountId,
+          fileId: file.id,
+          fileName: file.name,
+          mimeType: file.mimeType,
+        }),
+      })
+
+      if (!downloadResponse.ok) {
+        throw new Error("Failed to download file from Google Drive")
+      }
+
+      const downloadData = await downloadResponse.json()
+      
+      // Determine proper filename with extension based on mime type
+      let finalFileName = downloadData.fileName
+      const mimeType = file.mimeType
+      
+      // Add proper extension for Google Docs exports (all exported as PDF)
+      if (mimeType?.startsWith("application/vnd.google-apps")) {
+        // All Google Workspace docs exported as PDF
+        if (!finalFileName.endsWith(".pdf")) {
+          finalFileName += ".pdf"
+        }
+      }
+      
+      // Convert base64 content to file using browser APIs
+      // Decode base64 to binary string, then to Uint8Array
+      const binaryString = atob(downloadData.content)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      const blob = new Blob([bytes], { type: downloadData.mimeType })
+      const downloadedFile = new File([blob], finalFileName, {
+        type: downloadData.mimeType,
+      })
+
+      // Process through existing import pipeline
+      const formData = new FormData()
+      formData.append("file", downloadedFile)
+      formData.append("categories", JSON.stringify(categories?.map((c) => c.name) || []))
+
+      const response = await fetch("/api/knowledge/import", {
+        method: "POST",
+        body: formData,
+      })
+
+      clearInterval(progressInterval)
+      setProcessingProgress(100)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Failed to process document")
+      }
+
+      const result = await response.json()
+      const data = result.data
+
+      // Find category ID from name
+      const categoryId = categories?.find((c) => c.name === data.category)?.id || ""
+
+      // Populate form with AI-enhanced data
+      setFormData({
+        title: data.title,
+        summary: data.summary,
+        content: data.content,
+        category_id: categoryId,
+        status: "draft",
+        tags: data.tags.join(", "),
+      })
+
+      setAiSuggestions({
+        category: data.category,
+        tags: data.tags,
+        qualityScore: data.qualityScore,
+      })
+
+      setUploadedFile(downloadedFile)
+
+      toast.success("Document imported from Google Drive!", {
+        description: "Review and edit the extracted content below",
+      })
+    } catch (error: any) {
+      console.error("Google Drive import error:", error)
+      toast.error("Failed to import from Google Drive", {
+        description: error.message,
+      })
+    } finally {
+      setIsProcessingGoogleDrive(false)
+    }
+  }
+
   return (
     <PageContent
       breadcrumb={[
@@ -218,14 +339,18 @@ export default function NewArticlePage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="manual">
               <FileText className="h-4 w-4 mr-2" />
               Manual Entry
             </TabsTrigger>
             <TabsTrigger value="import">
               <Upload className="h-4 w-4 mr-2" />
-              Import Document
+              Upload File
+            </TabsTrigger>
+            <TabsTrigger value="google-drive">
+              <Cloud className="h-4 w-4 mr-2" />
+              Google Drive
             </TabsTrigger>
           </TabsList>
 
@@ -333,6 +458,71 @@ export default function NewArticlePage() {
             )}
           </TabsContent>
 
+          <TabsContent value="google-drive" className="space-y-6">
+            {/* Google Drive Browser */}
+            <GoogleDriveBrowser
+              onFilesSelected={handleGoogleDriveFilesSelected}
+              onConnect={(accountId) => setGoogleDriveAccountId(accountId)}
+            />
+
+            {/* Processing State */}
+            {isProcessingGoogleDrive && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <div>
+                          <p className="font-medium">Processing from Google Drive...</p>
+                          <p className="text-sm text-muted-foreground">
+                            Downloading and analyzing document
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {processingProgress}%
+                      </span>
+                    </div>
+                    <Progress value={processingProgress} />
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>✓ Downloading from Google Drive</p>
+                      <p>✓ Parsing document structure</p>
+                      <p className="flex items-center gap-2">
+                        <Sparkles className="h-3 w-3" />
+                        AI analyzing and enhancing content...
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Success - Show indicator */}
+            {uploadedFile && !isProcessingGoogleDrive && activeTab === "google-drive" && (
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-green-900">
+                        Document imported successfully!
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Review and edit the extracted content below.
+                      </p>
+                    </div>
+                    {aiSuggestions && (
+                      <Badge variant="outline" className="bg-white">
+                        Quality: {aiSuggestions.qualityScore}/100
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="manual">
             <Card>
               <CardHeader>
@@ -345,8 +535,10 @@ export default function NewArticlePage() {
           </TabsContent>
         </Tabs>
 
-        {/* Article Form (shown for both tabs when ready) */}
-        {(activeTab === "manual" || (activeTab === "import" && uploadedFile && !isProcessing)) && (
+        {/* Article Form (shown for all tabs when ready) */}
+        {(activeTab === "manual" || 
+          (activeTab === "import" && uploadedFile && !isProcessing) ||
+          (activeTab === "google-drive" && uploadedFile && !isProcessingGoogleDrive)) && (
           <form id="article-form" onSubmit={handleSubmit}>
             <Card>
               <CardContent className="space-y-6 pt-6">
