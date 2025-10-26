@@ -90,24 +90,27 @@ export async function POST(request: NextRequest) {
 
     const organization_id = inviterProfile.organization_id
 
-    // Try to invite user first (this will create the user and send invite email)
+    // Use Supabase's inviteUserByEmail - creates user and sends invite
     let authUser = null
     let inviteResult = null
     
     try {
-      // Use inviteUserByEmail - this creates the user AND sends the invite email in one step
-      // Use /auth/confirm because Supabase sends tokens as hash fragments, not query params
-      const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
-      console.log('🔗 Sending invitation with redirect URL:', redirectUrl)
+      console.log('📧 Inviting user:', email)
       
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: redirectUrl,
-        data: {
-          first_name,
-          last_name,
-          invited: true
+      // Use inviteUserByEmail which sends the proper invitation email
+      const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
+      
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        email,
+        {
+          redirectTo: redirectUrl,
+          data: {
+            first_name,
+            last_name,
+            invited: true
+          }
         }
-      })
+      )
       
       if (inviteError) {
         throw inviteError
@@ -115,44 +118,15 @@ export async function POST(request: NextRequest) {
       
       authUser = inviteData
       inviteResult = inviteData
-      console.log('User invited successfully via inviteUserByEmail:', authUser)
+      console.log('✅ Invitation sent successfully to:', email)
       
-    } catch (inviteError) {
-      console.warn('Could not invite user via email, falling back to manual creation:', inviteError)
-      
-      // Fallback: Create user manually
-      const tempPassword = generateTempPassword()
-      
-      const { data: createdUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true, // Auto-confirm email for invited users
-        user_metadata: {
-          first_name,
-          last_name,
-          invited: true
-        }
-      })
-
-      if (authError) {
-        console.error('Error creating auth user:', authError)
-        return NextResponse.json(
-          { error: true, message: `Failed to create user account: ${authError.message}` },
-          { status: 500 }
-        )
-      }
-
-      if (!createdUser.user) {
-        return NextResponse.json(
-          { error: true, message: 'User creation failed - no user returned' },
-          { status: 500 }
-        )
-      }
-      
-      authUser = createdUser
-      inviteResult = null // No invite email was sent
+    } catch (inviteError: any) {
+      console.error('❌ Error inviting user:', inviteError)
+      return NextResponse.json(
+        { error: true, message: `Failed to invite user: ${inviteError.message}` },
+        { status: 500 }
+      )
     }
-
     // Ensure we have the user ID
     const userId = authUser?.user?.id
     if (!userId) {
@@ -254,38 +228,30 @@ export async function POST(request: NextRequest) {
       // Don't fail the entire user creation process if role assignment fails
     }
 
-    // If we didn't successfully send an invite email during user creation, try additional methods
-    if (!inviteResult) {
-      try {
-        // Try password reset email as alternative to invite
-        await supabaseAdmin.auth.resetPasswordForEmail(email, {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/auth/reset-password`
-        })
-        console.log('Sent password reset email as alternative to invite')
-        inviteResult = { user: authUser?.user || { id: userId } } // Mark as successful
-      } catch (resetError) {
-        console.warn('Could not send password reset email either:', resetError)
-        
-        // For development: Set a known password so user can log in for testing
-        try {
-          await supabaseAdmin.auth.admin.updateUserById(userId, {
-            password: 'Welcome123!'
-          })
-          console.log('Set temporary password: Welcome123!')
-        } catch (pwError) {
-          console.warn('Could not set temporary password:', pwError)
+    // Invitation email sent via Supabase - no temporary password needed
+
+    // Try to generate a magic link for manual sharing (in case SMTP is not configured)
+    let magicLink = null
+    try {
+      const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'invite',
+        email: email,
+        options: {
+          redirectTo: redirectUrl
         }
-      }
+      })
+      magicLink = linkData?.properties?.action_link
+    } catch (e) {
+      console.warn('Could not generate magic link:', e)
     }
 
     return NextResponse.json({
       success: true,
       profile,
-      message: inviteResult 
-        ? `User ${email} has been invited successfully. They will receive an email to set up their account.`
-        : `User ${email} has been created successfully. Temporary password: Welcome123! (SMTP not configured, using temporary password for testing)`,
-      hasEmail: !!inviteResult,
-      tempPassword: inviteResult ? null : 'Welcome123!'
+      message: magicLink 
+        ? `User created! Share this link with ${email}: ${magicLink}`
+        : `Invitation sent to ${email}. They will receive an email to set their password and activate their account.`,
+      magicLink: magicLink // Include link for admin to copy
     })
 
   } catch (error) {

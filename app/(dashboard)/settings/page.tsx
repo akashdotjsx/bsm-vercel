@@ -352,7 +352,6 @@ export default function SettingsPage() {
     {
       category: "Administration",
       items: [
-        { id: "users-teams", label: "Users & Teams", icon: Users },
         { id: "security", label: "Security & Access", icon: Shield },
         { id: "integrations", label: "Integrations", icon: Zap },
         { id: "system", label: "System Settings", icon: Server },
@@ -1267,41 +1266,6 @@ export default function SettingsPage() {
     </div>
   )
 
-  const renderUsersTeamsSection = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-[13px] font-semibold">Users & Teams</h2>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, teams, and access permissions</p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="font-medium">User Invites</Label>
-              <p className="text-sm text-muted-foreground">Allow users to invite new members</p>
-            </div>
-            <Switch
-              checked={systemSettings.userInvites}
-              onCheckedChange={(checked) => setSystemSettings((prev) => ({ ...prev, userInvites: checked }))}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="font-medium">Team Management</Label>
-              <p className="text-sm text-muted-foreground">Enable team creation and management</p>
-            </div>
-            <Switch
-              checked={systemSettings.teamManagement}
-              onCheckedChange={(checked) => setSystemSettings((prev) => ({ ...prev, teamManagement: checked }))}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
 
   const renderIntegrationsSection = () => (
     <div className="space-y-6">
@@ -1415,8 +1379,6 @@ export default function SettingsPage() {
         return renderKnowledgeSection()
       case "ai-automation":
         return renderAISection()
-      case "users-teams":
-        return renderUsersTeamsSection()
       case "integrations":
         return renderIntegrationsSection()
       case "system":
