@@ -1,9 +1,10 @@
 "use client"
 
-import React from "react"
+"use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/contexts/auth-context"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,22 +42,42 @@ import {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { user, profile, organization, loading: authLoading } = useAuth()
   const [activeSection, setActiveSection] = useState("profile")
   const [searchQuery, setSearchQuery] = useState("")
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
 
   const [profileData, setProfileData] = useState({
-    name: "Admin User",
-    email: "admin@kroolo.com",
+    name: "",
+    email: "",
     status: "active",
     avatar: "",
-    title: "System Administrator",
-    department: "IT Services",
-    phone: "+1 (555) 123-4567",
+    title: "",
+    department: "",
+    phone: "",
     timezone: "America/New_York",
     language: "en",
-    bio: "Experienced system administrator with 10+ years in IT service management.",
+    bio: "",
   })
+
+  // Load profile data from auth context
+  useEffect(() => {
+    if (profile) {
+      console.log('📝 Loading profile data in settings:', profile)
+      setProfileData({
+        name: profile.display_name || `${profile.first_name} ${profile.last_name}`.trim() || "",
+        email: profile.email || user?.email || "",
+        status: profile.is_active ? "active" : "inactive",
+        avatar: profile.avatar_url || "",
+        title: profile.role || "",
+        department: profile.department || "",
+        phone: profile.phone || "",
+        timezone: profile.timezone || "America/New_York",
+        language: "en",
+        bio: profile.preferences?.bio || "",
+      })
+    }
+  }, [profile, user])
 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
@@ -66,9 +87,21 @@ export default function SettingsPage() {
   const [organizationSettings, setOrganizationSettings] = useState({
     logo: null as File | null,
     logoUrl: "/placeholder.svg?height=80&width=80&text=Logo",
-    name: "Kroolo Enterprise",
-    urlSlug: "kroolo-enterprise",
+    name: "",
+    urlSlug: "",
   })
+
+  // Load organization data from auth context
+  useEffect(() => {
+    if (organization) {
+      console.log('🏢 Loading organization data in settings:', organization)
+      setOrganizationSettings(prev => ({
+        ...prev,
+        name: organization.name || "",
+        urlSlug: organization.domain || "",
+      }))
+    }
+  }, [organization])
 
   const departments = [
     "IT Services",
@@ -1386,6 +1419,32 @@ export default function SettingsPage() {
       default:
         return renderDefaultSection()
     }
+  }
+
+  // Show loading state while auth is loading
+  if (authLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-8 h-8 mx-auto mb-4 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login prompt if not authenticated
+  if (!user || !profile) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center max-w-md">
+          <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+          <p className="text-muted-foreground mb-4">Please log in to access your settings</p>
+          <Button onClick={() => router.push('/auth/login')}>Go to Login</Button>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -182,14 +183,24 @@ export default function SecurityAccessPage() {
   }
 
   return (
-    <PageContent
-      title="Security & Access"
-      description="Manage user roles, permissions, and security policies"
-      breadcrumb={[
-        { label: "Administration", href: "/admin" },
-        { label: "Security & Access", href: "/admin/security" },
-      ]}
+    <PermissionGuard 
+      permission="administration.full_edit"
+      fallback={
+        <PageContent title="Access Denied" description="You don't have permission to access this page">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">This page requires administration permissions.</p>
+          </div>
+        </PageContent>
+      }
     >
+      <PageContent
+        title="Security & Access"
+        description="Manage user roles, permissions, and security policies"
+        breadcrumb={[
+          { label: "Administration", href: "/admin" },
+          { label: "Security & Access", href: "/admin/security" },
+        ]}
+      >
       <div className="space-y-6 text-[13px]">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -870,5 +881,6 @@ export default function SecurityAccessPage() {
         </Dialog>
       </div>
     </PageContent>
+    </PermissionGuard>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AdminPageGuard } from "@/components/auth/admin-page-guard"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -157,14 +158,15 @@ export default function SLAManagementPage() {
   }
 
   return (
-    <PageContent
-      title="SLA Management"
-      description="Configure and monitor Service Level Agreements"
-      breadcrumb={[
-        { label: "Administration", href: "/admin" },
-        { label: "SLA Management", href: "/admin/sla" },
-      ]}
-    >
+    <AdminPageGuard permission="administration.view">
+      <PageContent
+        title="SLA Management"
+        description="Configure and monitor Service Level Agreements"
+        breadcrumb={[
+          { label: "Administration", href: "/admin" },
+          { label: "SLA Management", href: "/admin/sla" },
+        ]}
+      >
       <div className="space-y-6 font-sans text-[13px]">
         <div>
           <h1 className="text-[13px] font-semibold tracking-tight">SLA Management</h1>
@@ -511,5 +513,6 @@ export default function SLAManagementPage() {
         </Dialog>
       </div>
     </PageContent>
+    </AdminPageGuard>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { AdminPageGuard } from "@/components/auth/admin-page-guard"
 import { PageContent } from "@/components/layout/page-content"
 import { ServiceRequestDetails } from "@/components/services/service-request-details"
 import { Card, CardContent } from "@/components/ui/card"
@@ -185,10 +186,11 @@ export default function AdminServiceRequestsPage() {
   }
 
   return (
-    <PageContent
-      title="All Service Requests"
-      description="Manage all service requests across the organization"
-    >
+    <AdminPageGuard permission="administration.view">
+      <PageContent
+        title="All Service Requests"
+        description="Manage all service requests across the organization"
+      >
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -405,5 +407,6 @@ export default function AdminServiceRequestsPage() {
         />
       )}
     </PageContent>
+    </AdminPageGuard>
   )
 }
