@@ -505,21 +505,53 @@ export default function CreateTicketForm({ onSave, onCancel, isSubmitting = fals
             </div>
             <div className="space-y-2 flex-1">
                      <Label className="text-sm font-medium ticket-form-label">Watchers</Label>
-              <Select value={form.watchers} onValueChange={(value) => handleInputChange('watchers', value)}>
-                <SelectTrigger 
-                  className="h-10 border border-border dark:border-border rounded-md bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
-                  style={{ width: '100%' }}
-                >
-                  <SelectValue placeholder="Add Watchers" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.display_name || user.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Select value={form.watchers} onValueChange={(value) => handleInputChange('watchers', value)}>
+                  <SelectTrigger 
+                    className="h-10 border border-border dark:border-border rounded-md pl-10 bg-background dark:bg-card ticket-form-input ticket-form-placeholder" 
+                    style={{ width: '100%' }}
+                  >
+                    <SelectValue placeholder="Add Watchers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-[#6E72FF] flex items-center justify-center text-white text-xs font-medium">
+                            {(user as any).avatar_url ? (
+                              <img
+                                src={(user as any).avatar_url}
+                                alt={user.display_name || user.email}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              (() => {
+                                if (user.display_name) {
+                                  return user.display_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                                }
+                                if (user.first_name && user.last_name) {
+                                  return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+                                }
+                                if (user.first_name) {
+                                  return user.first_name.substring(0, 2).toUpperCase()
+                                }
+                                return user.email.substring(0, 2).toUpperCase()
+                              })()
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">{user.display_name || user.email}</div>
+                            {user.email !== user.display_name && (
+                              <div className="text-xs text-muted-foreground">{user.email}</div>
+                            )}
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary dark:text-primary" />
+              </div>
             </div>
           </div>
 
