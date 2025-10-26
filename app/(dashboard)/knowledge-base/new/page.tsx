@@ -222,10 +222,28 @@ export default function NewArticlePage() {
 
       const downloadData = await downloadResponse.json()
       
-      // Convert base64 content to file
-      const contentBuffer = Buffer.from(downloadData.content, "base64")
-      const blob = new Blob([contentBuffer], { type: downloadData.mimeType })
-      const downloadedFile = new File([blob], downloadData.fileName, {
+      // Determine proper filename with extension based on mime type
+      let finalFileName = downloadData.fileName
+      const mimeType = file.mimeType
+      
+      // Add proper extension for Google Docs exports (all exported as PDF)
+      if (mimeType?.startsWith("application/vnd.google-apps")) {
+        // All Google Workspace docs exported as PDF
+        if (!finalFileName.endsWith(".pdf")) {
+          finalFileName += ".pdf"
+        }
+      }
+      
+      // Convert base64 content to file using browser APIs
+      // Decode base64 to binary string, then to Uint8Array
+      const binaryString = atob(downloadData.content)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      const blob = new Blob([bytes], { type: downloadData.mimeType })
+      const downloadedFile = new File([blob], finalFileName, {
         type: downloadData.mimeType,
       })
 

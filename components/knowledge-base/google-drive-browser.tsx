@@ -228,8 +228,11 @@ export function GoogleDriveBrowser({ onFilesSelected, onConnect }: GoogleDriveBr
   const isSupportedFile = (mimeType: string) => {
     const supported = [
       "application/vnd.google-apps.document",
+      "application/vnd.google-apps.spreadsheet",
+      "application/vnd.google-apps.presentation",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "application/msword",
+      "application/pdf",
       "text/plain",
       "text/markdown",
       "text/html",
@@ -415,7 +418,7 @@ export function GoogleDriveBrowser({ onFilesSelected, onConnect }: GoogleDriveBr
             {/* Supported Formats */}
             <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
               <p className="font-medium">Supported formats:</p>
-              <p>Google Docs, Word (.docx), Text (.txt), Markdown (.md), HTML</p>
+              <p>Google Docs/Sheets/Slides (exported as PDF), Word (.docx), PDF, Text (.txt), Markdown (.md), HTML</p>
             </div>
           </>
         )}
