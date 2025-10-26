@@ -516,15 +516,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Show loader ONLY during very first load when no cache exists
-  // If we have cached auth, NEVER show loader - renders instantly
-  if (!isHydrated) {
-    return <KrooloMainLoader />
-  }
-  
-  // Only show loader if loading AND no cached data exists
-  if (loading && !initialized && !cachedAuth) {
-    return <KrooloMainLoader />
+  // CRITICAL: Never show loader if we have cached auth
+  // This prevents flashes on page refresh/navigation
+  if (!cachedAuth) {
+    // Only show loader during initial hydration or when loading without cache
+    if (!isHydrated || (loading && !initialized)) {
+      return <KrooloMainLoader />
+    }
   }
 
   return (

@@ -21,63 +21,45 @@ const KrooloMainLoader = dynamic(() => import('@/components/common/kroolo-main-l
 })
 
 export default function Page() {
-  // Check cache immediately to prevent flash
-  const hasCache = typeof window !== 'undefined' && sessionStorage.getItem('kroolo_auth_cache')
-  
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [redirecting, setRedirecting] = useState(!!hasCache) // Start redirecting if cache exists
+  const [redirecting, setRedirecting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { setUser } = useStore()
   
-  // Immediate redirect if cache exists (before render)
-  if (hasCache && typeof window !== 'undefined') {
-    router.push('/dashboard')
-  }
-  
-  // Force light mode on login page
+  // Single auth check on mount
   useEffect(() => {
     setMounted(true)
     // Force light mode
     document.documentElement.classList.remove('dark')
     document.documentElement.setAttribute('data-theme', 'light')
     
-    // Check if user is already authenticated - SYNCHRONOUS check first
-    const checkAuthSync = () => {
-      // Check for cached auth data
-      try {
-        const cached = sessionStorage.getItem('kroolo_auth_cache')
-        if (cached) {
-          console.log('Cached auth found, redirecting immediately')
-          setRedirecting(true)
-          router.push('/dashboard')
-          return true
-        }
-      } catch (err) {
-        console.error('Cache check failed:', err)
-      }
-      return false
-    }
-    
-    // Try sync check first
-    if (checkAuthSync()) return
-    
-    // Fallback to async check if no cache
+    // Check for existing auth - cache first, then session
     const checkAuth = async () => {
       try {
+        // Check cache first (instant)
+        const cached = sessionStorage.getItem('kroolo_auth_cache')
+        if (cached) {
+          console.log('✅ Cache found, redirecting to dashboard')
+          setRedirecting(true)
+          router.push('/dashboard')
+          return
+        }
+        
+        // No cache, check session
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          console.log('User already authenticated, redirecting to dashboard')
+          console.log('✅ Session found, redirecting to dashboard')
           setRedirecting(true)
           router.push('/dashboard')
         }
       } catch (error) {
-        console.error('Error checking auth:', error)
+        console.error('❌ Auth check error:', error)
       }
     }
     
@@ -166,15 +148,13 @@ export default function Page() {
         .update({ last_login: new Date().toISOString() })
         .eq('id', authData.user.id)
 
-      console.log("Login successful, redirecting to tickets")
+      console.log("✅ Login successful, redirecting to dashboard")
       
-      // Show loading screen and then redirect
+      // Show loading screen and redirect (AuthProvider will handle the rest)
       setRedirecting(true)
       
-      // Small delay to show the loading screen, then redirect
-      setTimeout(() => {
-        window.location.href = "/tickets"
-      }, 500)
+      // Use router.push for smooth transition (no full reload)
+      router.push('/dashboard')
 
     } catch (err) {
       console.error("Login error:", err)
