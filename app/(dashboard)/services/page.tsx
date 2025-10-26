@@ -91,6 +91,37 @@ export default function ServicesPage() {
   const [showRequestDrawer, setShowRequestDrawer] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  // Debug: Log when component mounts and track URL changes
+  useEffect(() => {
+    console.log('✅ ServicesPage mounted')
+    console.log('📍 URL:', window.location.pathname)
+    console.log('📍 Title:', document.title)
+    console.log('📦 Organization:', organization?.id)
+    
+    // Force correct page title
+    document.title = 'Services | Kroolo BSM'
+    
+    // Check if we're really on the services page
+    if (!window.location.pathname.startsWith('/services')) {
+      console.error('🚨 WRONG PAGE! Expected /services but got:', window.location.pathname)
+    }
+    
+    return () => {
+      console.log('❌ ServicesPage unmounted')
+    }
+  }, [])
+  
+  // Watch for unexpected URL changes
+  useEffect(() => {
+    const checkURL = setInterval(() => {
+      if (!window.location.pathname.startsWith('/services')) {
+        console.error('🚨 URL CHANGED UNEXPECTEDLY to:', window.location.pathname)
+      }
+    }, 1000)
+    
+    return () => clearInterval(checkURL)
+  }, [])
+
   // Use the MCP hook for data fetching
   const { categories, loading, error, refetch } = useServicesMCP()
 

@@ -1,3 +1,6 @@
+'use client'
+
+import { AdminPageGuard } from "@/components/auth/admin-page-guard"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +10,8 @@ import Link from "next/link"
 
 export default function ApprovalWorkflowsPage() {
   return (
-    <PageContent
+    <AdminPageGuard permission="administration.view">
+      <PageContent
       title="Approval Workflows"
       description="Configure multi-step approval processes"
       breadcrumb={[
@@ -121,5 +125,6 @@ export default function ApprovalWorkflowsPage() {
         </Card>
       </div>
     </PageContent>
+    </AdminPageGuard>
   )
 }

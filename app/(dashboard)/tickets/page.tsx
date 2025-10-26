@@ -119,6 +119,17 @@ export default function TicketsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   
+  // Debug: Track if tickets page mounts when it shouldn't
+  useEffect(() => {
+    console.log('🎫 TicketsPage mounted')
+    console.log('📍 URL:', window.location.pathname)
+    console.log('📍 Title:', document.title)
+    document.title = 'Tickets | Kroolo BSM'
+    return () => {
+      console.log('❌ TicketsPage unmounted')
+    }
+  }, [])
+  
   // State for filters
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState("all")
