@@ -4,10 +4,11 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function middleware(request: NextRequest) {
   console.log("[Middleware ENTRY] Path:", request.nextUrl.pathname, "| Method:", request.method)
   
-  // Fast path for static assets and API routes
+  // Fast path for static assets, API routes, and public pages
   if (request.nextUrl.pathname.startsWith('/_next/') || 
       request.nextUrl.pathname.startsWith('/api/') ||
-      request.nextUrl.pathname.includes('.')) {
+      request.nextUrl.pathname.includes('.') ||
+      request.nextUrl.pathname === '/') {  // Landing page is public
     return NextResponse.next()
   }
 
@@ -44,10 +45,11 @@ export async function middleware(request: NextRequest) {
   console.log("[Middleware] Cookies:", request.cookies.getAll().map(c => c.name).join(', '))
   
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth/login')
+  const isPublicPage = request.nextUrl.pathname === '/'
   const isAuthenticated = !!session
   
-  // Redirect unauthenticated users to login (except if already on auth pages)
-  if (!isAuthenticated && !isAuthPage) {
+  // Redirect unauthenticated users to login (except if already on auth/public pages)
+  if (!isAuthenticated && !isAuthPage && !isPublicPage) {
     const loginUrl = new URL('/auth/login', request.url)
     console.log("[Middleware] ❌ No session - Redirecting to login:", request.nextUrl.pathname)
     return NextResponse.redirect(loginUrl)
