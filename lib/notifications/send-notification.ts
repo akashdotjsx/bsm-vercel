@@ -224,6 +224,66 @@ export async function notifySLABreach(params: {
 }
 
 /**
+ * Send notification when a user changes their status
+ */
+export async function notifyStatusChange(params: {
+  userId: string
+  userName: string
+  organizationId: string
+  oldStatus: string
+  newStatus: string
+  newStatusColor: string
+  notifyAdmins?: boolean
+}) {
+  try {
+    const supabase = createClient()
+    
+    // If notifyAdmins is true, get all admin/manager users in the organization
+    if (params.notifyAdmins) {
+      const { data: admins, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .eq('organization_id', params.organizationId)
+        .in('role', ['admin', 'manager'])
+        .neq('id', params.userId) // Don't notify the user who changed their status
+        .eq('is_active', true)
+      
+      if (error) {
+        console.error('Failed to fetch admins for status notification:', error)
+        return false
+      }
+      
+      // Send notification to each admin
+      const notificationPromises = (admins || []).map(admin => 
+        sendNotification({
+          userId: admin.id,
+          organizationId: params.organizationId,
+          type: 'user',
+          title: 'User Status Changed',
+          message: `${params.userName} changed their status from "${params.oldStatus}" to "${params.newStatus}"`,
+          priority: 'low',
+          metadata: {
+            changedByUserId: params.userId,
+            changedByUserName: params.userName,
+            oldStatus: params.oldStatus,
+            newStatus: params.newStatus,
+            newStatusColor: params.newStatusColor,
+            action: 'status_changed',
+          },
+        })
+      )
+      
+      await Promise.all(notificationPromises)
+    }
+    
+    return true
+  } catch (err) {
+    console.error('Error sending status change notification:', err)
+    return false
+  }
+}
+
+/**
  * Send multiple notifications at once
  */
 export async function sendBatchNotifications(notifications: NotificationPayload[]): Promise<boolean[]> {

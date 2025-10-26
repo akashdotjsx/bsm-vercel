@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  console.log("[Middleware ENTRY] Path:", request.nextUrl.pathname, "| Method:", request.method)
+  
   // Fast path for static assets and API routes
   if (request.nextUrl.pathname.startsWith('/_next/') || 
       request.nextUrl.pathname.startsWith('/api/') ||
@@ -32,25 +34,33 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Public paths that don't require authentication
-  const publicPaths = ["/", "/auth/login", "/auth/sign-up", "/auth/callback", "/auth/confirm", "/auth/reset-password"]
-  const isPublicPath = publicPaths.some(
-    (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path),
-  )
-
-  // Redirect all unauthenticated users to login (except public paths)
-  if (!user && !isPublicPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
-    return NextResponse.redirect(url)
+  // Fast auth check using getSession() - reads cookie, no API call
+  const { data: { session }, error } = await supabase.auth.getSession()
+  
+  // Debug logging
+  console.log("[Middleware] Path:", request.nextUrl.pathname)
+  console.log("[Middleware] Session:", session ? 'EXISTS' : 'NULL')
+  console.log("[Middleware] Error:", error?.message || 'none')
+  console.log("[Middleware] Cookies:", request.cookies.getAll().map(c => c.name).join(', '))
+  
+  const isAuthPage = request.nextUrl.pathname.startsWith('/auth/login')
+  const isAuthenticated = !!session
+  
+  // Redirect unauthenticated users to login (except if already on auth pages)
+  if (!isAuthenticated && !isAuthPage) {
+    const loginUrl = new URL('/auth/login', request.url)
+    console.log("[Middleware] ❌ No session - Redirecting to login:", request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
   }
-
-  console.log("[v0] Middleware processed for:", request.nextUrl.pathname, user ? "authenticated" : "unauthenticated")
-
+  
+  // Redirect authenticated users away from login page
+  if (isAuthenticated && isAuthPage) {
+    const dashboardUrl = new URL('/dashboard', request.url)
+    console.log("[Middleware] Redirecting to dashboard:", request.nextUrl.pathname)
+    return NextResponse.redirect(dashboardUrl)
+  }
+  
+  console.log("[Middleware] Auth check passed:", request.nextUrl.pathname)
   return supabaseResponse
 }
 
