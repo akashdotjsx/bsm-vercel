@@ -110,11 +110,28 @@ export default function AssetManagementPage() {
   // GraphQL mutations for write operations
   const createAsset = async (data: any) => {
     try {
-      const result = await createAssetGQL(data)
+      // Clean up empty strings - remove them to let database use default NULL values
+      const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
+        // Only include the field if it has a non-empty value
+        if (value !== "" && value !== null && value !== undefined) {
+          acc[key] = value
+        }
+        return acc
+      }, {} as any)
+      
+      // Add required fields
+      const assetData = {
+        ...cleanedData,
+        organization_id: organizationId,
+        status: cleanedData.status || 'active',
+      }
+      console.log('Creating asset with data:', assetData)
+      const result = await createAssetGQL(assetData)
       refetch()
       toast.success('Asset created successfully!')
       return result
     } catch (error) {
+      console.error('Error creating asset:', error)
       toast.error('Failed to create asset', {
         description: error instanceof Error ? error.message : 'An error occurred'
       })
@@ -124,11 +141,22 @@ export default function AssetManagementPage() {
   
   const updateAsset = async (id: string, data: any) => {
     try {
-      const result = await updateAssetGQL(id, data)
+      // Clean up empty strings - remove them to let database use default NULL values
+      const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
+        // Only include the field if it has a non-empty value
+        if (value !== "" && value !== null && value !== undefined) {
+          acc[key] = value
+        }
+        return acc
+      }, {} as any)
+      
+      console.log('Updating asset with data:', cleanedData)
+      const result = await updateAssetGQL(id, cleanedData)
       refetch()
       toast.success('Asset updated successfully!')
       return result
     } catch (error) {
+      console.error('Error updating asset:', error)
       toast.error('Failed to update asset', {
         description: error instanceof Error ? error.message : 'An error occurred'
       })

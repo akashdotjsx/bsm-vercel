@@ -483,8 +483,8 @@ export function useAssetsGQL(params: AssetsParams = {}) {
                 support_team_id
                 location
                 purchase_date
-                warranty_end_date
-                attributes
+                warranty_expiry
+                custom_fields
                 created_at
                 updated_at
               }
@@ -547,7 +547,7 @@ export function useAssetTypesGQL(params: { organization_id?: string; is_active?:
                 name
                 description
                 icon
-                attributes_schema
+                schema_definition
                 is_active
                 created_at
                 updated_at
@@ -965,35 +965,44 @@ export function useUpdateServiceRequestStatus() {
 // ============================================
 
 export async function createAssetGQL(assetData: any): Promise<any> {
-  const client = await createGraphQLClient()
-  
-  const mutation = gql`
-    mutation CreateAsset($input: assetsInsertInput!) {
-      insertIntoassetsCollection(objects: [$input]) {
-        records {
-          id
-          name
-          asset_tag
-          hostname
-          ip_address
-          status
-          criticality
-          asset_type_id
-          owner_id
-          support_team_id
-          location
-          purchase_date
-          warranty_end_date
-          attributes
-          created_at
-          updated_at
+  try {
+    console.log('🎯 createAssetGQL - Received data:', assetData)
+    
+    const client = await createGraphQLClient()
+    
+    const mutation = gql`
+      mutation CreateAsset($input: assetsInsertInput!) {
+        insertIntoassetsCollection(objects: [$input]) {
+          records {
+            id
+            name
+            asset_tag
+            hostname
+            ip_address
+            status
+            criticality
+            asset_type_id
+            owner_id
+            support_team_id
+            location
+            purchase_date
+            warranty_expiry
+            custom_fields
+            created_at
+            updated_at
+          }
         }
       }
-    }
-  `
-  
-  const response: any = await client.request(mutation, { input: assetData })
-  return response.insertIntoassetsCollection.records[0]
+    `
+    
+    const response: any = await client.request(mutation, { input: assetData })
+    console.log('✅ createAssetGQL - Success:', response)
+    return response.insertIntoassetsCollection.records[0]
+  } catch (error: any) {
+    console.error('❌ createAssetGQL - Error:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
+    throw new Error(error?.response?.errors?.[0]?.message || error?.message || 'Failed to create asset')
+  }
 }
 
 export async function updateAssetGQL(id: string, updates: any): Promise<any> {
@@ -1015,8 +1024,8 @@ export async function updateAssetGQL(id: string, updates: any): Promise<any> {
           support_team_id
           location
           purchase_date
-          warranty_end_date
-          attributes
+          warranty_expiry
+          custom_fields
           created_at
           updated_at
         }
