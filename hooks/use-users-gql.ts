@@ -297,6 +297,7 @@ export async function inviteUserViaAPI(userData: {
   const response = await fetch('/api/create-user', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify(userData)
   })
   
@@ -362,6 +363,7 @@ export async function deleteUserViaAPI(userId: string): Promise<any> {
   const response = await fetch('/api/delete-user', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin', // Ensure cookies are sent
     body: JSON.stringify({ userId })
   })
   

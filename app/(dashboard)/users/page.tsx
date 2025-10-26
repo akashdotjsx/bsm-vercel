@@ -422,9 +422,58 @@ export default function UsersPage() {
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         display_name: `${newUser.first_name} ${newUser.last_name}`,
+        email: newUser.email,
         role: newUser.role,
         department: newUser.department,
       })
+      
+      // If email has changed and user is admin, use the admin API endpoint
+      if (selectedUser.email !== newUser.email && profile?.role === 'admin') {
+        try {
+          const emailResponse = await fetch('/api/admin/update-user-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: selectedUser.id,
+              newEmail: newUser.email
+            })
+          })
+          
+          if (!emailResponse.ok) {
+            const errorData = await emailResponse.json()
+            throw new Error(errorData.error || 'Failed to update email')
+          }
+          
+          console.log('✅ Email updated via admin API')
+        } catch (emailError) {
+          console.error('❌ Error updating email:', emailError)
+          throw emailError
+        }
+      }
+      
+      // If role has changed and user is admin, use the admin API endpoint
+      if (selectedUser.role !== newUser.role && profile?.role === 'admin') {
+        try {
+          const roleResponse = await fetch('/api/admin/update-user-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: selectedUser.id,
+              newRole: newUser.role
+            })
+          })
+          
+          if (!roleResponse.ok) {
+            const errorData = await roleResponse.json()
+            throw new Error(errorData.error || 'Failed to update role')
+          }
+          
+          console.log('✅ Role updated via admin API')
+        } catch (roleError) {
+          console.error('❌ Error updating role:', roleError)
+          throw roleError
+        }
+      }
       
       const result = await updateUser(selectedUser.id, {
         first_name: newUser.first_name,
@@ -1165,6 +1214,7 @@ export default function UsersPage() {
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                   className="col-span-3 text-[13px]"
+                  disabled={profile?.role !== 'admin'}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

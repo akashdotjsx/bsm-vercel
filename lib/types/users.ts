@@ -82,3 +82,43 @@ export interface UpdateTeamData {
 
 // For backward compatibility with existing code
 export type User = Profile
+
+// RBAC Types
+export interface Role {
+  id: string
+  organization_id: string
+  name: string
+  description?: string
+  is_system_role: boolean
+  is_active: boolean
+  created_by?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Permission {
+  id: string
+  name: string
+  display_name: string
+  description?: string
+  module: string
+  action: string
+  resource_pattern?: string
+  is_system_permission: boolean
+  created_at: string
+}
+
+export interface UserRole {
+  id: string
+  user_id: string
+  role_id: string
+  assigned_by?: string
+  assigned_at: string
+  expires_at?: string
+  is_active: boolean
+  role?: Role
+}
+
+export interface UserWithRole extends Profile {
+  user_roles?: UserRole[]
+}
