@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useMode } from "@/lib/contexts/mode-context"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { usePrefetchTicketsGraphQL } from "@/hooks/queries/use-tickets-graphql-query"
-import { usePrefetchUsers } from "@/hooks/queries/use-users-query"
+import { usePrefetchNav } from "@/hooks/use-prefetch-nav"
 import {
   Ticket,
   Workflow,
@@ -94,9 +93,8 @@ export function SidebarNavigation() {
   const { isCollapsed, toggleSidebar, setCollapsed } = useSidebar()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   
-  // Prefetch hooks for instant navigation
-  const prefetchTickets = usePrefetchTicketsGraphQL()
-  const prefetchUsers = usePrefetchUsers()
+  // Centralized prefetch hook for all nav pages
+  const { prefetchByHref } = usePrefetchNav()
 
   const navigationItems = mode === "customer" ? customerViewItems : employeeViewItems
   const sectionTitle = mode === "customer" ? "Customer Support" : "SERVICE MANAGEMENT"
@@ -271,12 +269,7 @@ export function SidebarNavigation() {
                                 <Link
                                 key={subItem.name}
                                 href={subItem.href}
-                                onMouseEnter={() => {
-                                  // Prefetch tickets on hover for submenu items
-                                  if (subItem.href.includes('/tickets')) {
-                                    prefetchTickets()
-                                  }
-                                }}
+                                onMouseEnter={() => prefetchByHref(subItem.href)}
                                  className={cn(
                                    "flex items-center px-3 py-1.5 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                                    pathname === subItem.href
@@ -298,14 +291,7 @@ export function SidebarNavigation() {
                         <TooltipTrigger asChild>
                            <Link
                              href={item.href}
-                             onMouseEnter={() => {
-                               // Prefetch data on hover for instant navigation
-                               if (item.href === "/tickets" || item.href.startsWith("/tickets")) {
-                                 prefetchTickets()
-                               } else if (item.href === "/users") {
-                                 prefetchUsers()
-                               }
-                             }}
+                             onMouseEnter={() => prefetchByHref(item.href)}
                              className={cn(
                                "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                                isActive
@@ -327,14 +313,7 @@ export function SidebarNavigation() {
                     ) : (
                       <Link
                         href={item.href}
-                        onMouseEnter={() => {
-                          // Prefetch data on hover for instant navigation
-                          if (item.href === "/tickets" || item.href.startsWith("/tickets")) {
-                            prefetchTickets()
-                          } else if (item.href === "/users") {
-                            prefetchUsers()
-                          }
-                        }}
+                        onMouseEnter={() => prefetchByHref(item.href)}
                         className={cn(
                           "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                           isActive
@@ -373,12 +352,7 @@ export function SidebarNavigation() {
                       <TooltipTrigger asChild>
                          <Link
                            href={item.href}
-                           onMouseEnter={() => {
-                             // Prefetch data on hover
-                             if (item.href === "/users" || item.href === "/admin/users-teams") {
-                               prefetchUsers()
-                             }
-                           }}
+                           onMouseEnter={() => prefetchByHref(item.href)}
                            className={cn(
                              "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                              isActive
@@ -401,12 +375,7 @@ export function SidebarNavigation() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      onMouseEnter={() => {
-                        // Prefetch data on hover
-                        if (item.href === "/users" || item.href === "/admin/users-teams") {
-                          prefetchUsers()
-                        }
-                      }}
+                      onMouseEnter={() => prefetchByHref(item.href)}
                       className={cn(
                         "flex items-center py-2 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
                         isActive
