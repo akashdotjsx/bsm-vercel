@@ -32,7 +32,6 @@ import {
 } from "lucide-react"
 import { PageContent } from "@/components/layout/page-content"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useStore } from "@/lib/store"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { toast } from "@/lib/toast"
@@ -66,7 +65,7 @@ import { FilterDialog } from "@/components/tickets/filter-dialog"
 const TicketDrawer = dynamic(
   () => import("@/components/tickets/ticket-drawer"),
   {
-    loading: () => <LoadingSpinner size="lg" />,
+    loading: () => null, // No spinner, drawer opens fast enough
     ssr: false,
   },
 )
@@ -162,10 +161,14 @@ export default function TicketsPage() {
   // GraphQL + React Query for reads (CACHED! No refetch on navigation)
   const { 
     data: ticketsData, 
-    isLoading: loading, 
+    isLoading,        // Only true on FIRST load (no cached data)
+    isFetching,       // True when fetching (including background refetch)
     error: queryError, 
     refetch 
   } = useTicketsGraphQLQuery(ticketsParams)
+  
+  // Smart loading: only show spinner if NO cached data exists
+  const loading = isLoading && !ticketsData
   
   console.log('🔍 GraphQL Query Status:', {
     loading,
@@ -2153,7 +2156,7 @@ export default function TicketsPage() {
       </Dialog>
 
 
-      <Suspense fallback={<LoadingSpinner size="lg" />}>
+      <Suspense fallback={null}>
         <TicketDrawer
           isOpen={showTicketTray}
           onClose={() => {
