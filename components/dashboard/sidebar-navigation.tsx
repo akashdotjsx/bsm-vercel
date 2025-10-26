@@ -75,14 +75,14 @@ const servicesSubmenuItemsManager = [
 ]
 
 const administrationItems = [
-  { name: "Integrations", href: "/integrations", icon: Zap, permission: null },
-  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: null },
-  { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: null },
-  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: null },
-  { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: null },
-  { name: "All Service Requests", href: "/admin/service-requests", icon: List, permission: null },
-  { name: "Users & Teams", href: "/users", icon: Users, permission: null },
-  { name: "Security & Access", href: "/admin/security", icon: Shield, permission: null },
+  { name: "Integrations", href: "/integrations", icon: Zap, permission: "integrations.view" },
+  { name: "Approval Workflows", href: "/admin/approvals", icon: CheckCircle, permission: "administration.view" },
+  { name: "SLA Management", href: "/admin/sla", icon: Clock, permission: "administration.view" },
+  { name: "Priority Matrix", href: "/admin/priorities", icon: AlertTriangle, permission: "administration.view" },
+  { name: "Service Catalog", href: "/admin/catalog", icon: Building2, permission: "administration.view" },
+  { name: "All Service Requests", href: "/admin/service-requests", icon: List, permission: "administration.view" },
+  { name: "Users & Teams", href: "/users", icon: Users, permission: "users.view" },
+  { name: "Security & Access", href: "/admin/security", icon: Shield, permission: "administration.full_edit" },
 ]
 
 export function SidebarNavigation() {
@@ -92,6 +92,15 @@ export function SidebarNavigation() {
   const { profile, organization, canView, loading, permissionsLoading, isAdmin } = useAuth()
   const { isCollapsed, toggleSidebar, setCollapsed } = useSidebar()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  
+  // Check if user should see Administration section
+  // IMPORTANT: Hide during loading to prevent showing then hiding
+  const showAdministration = !loading && !permissionsLoading && (
+    isAdmin || 
+    canView('administration.view') || 
+    canView('integrations.view') ||
+    canView('users.view')
+  )
   
   // Centralized prefetch hook for all nav pages
   const { prefetchByHref } = usePrefetchNav()
@@ -123,10 +132,9 @@ export function SidebarNavigation() {
     }
   }
 
-  // Show skeleton during loading to prevent flash
   // Helper function to determine if an item should be shown
   const shouldShowItem = (item: any) => {
-    // Always show items with no permission requirement
+    // Always show items with no permission requirement (Dashboard, Accounts, Notifications)
     if (!item.permission) {
       return true
     }
@@ -136,14 +144,9 @@ export function SidebarNavigation() {
       return true
     }
     
-    // During initial loading, show skeleton/placeholder to prevent flickering
-    if (loading) {
-      return true
-    }
-    
-    // If permissions are still loading, show the item to prevent flickering
-    if (permissionsLoading) {
-      return true
+    // If still loading, hide items with permissions (show skeleton instead)
+    if (loading || permissionsLoading) {
+      return false
     }
     
     // Once loaded, check actual permissions
@@ -269,6 +272,13 @@ export function SidebarNavigation() {
                                 <Link
                                 key={subItem.name}
                                 href={subItem.href}
+                                onClick={() => {
+                                  console.log('🔍 Sidebar Navigation Click:', {
+                                    name: subItem.name,
+                                    href: subItem.href,
+                                    currentPath: pathname
+                                  })
+                                }}
                                 onMouseEnter={() => prefetchByHref(subItem.href)}
                                  className={cn(
                                    "flex items-center px-3 py-1.5 text-[12px] font-medium rounded-md transition-all duration-300 ease-in-out",
@@ -335,7 +345,7 @@ export function SidebarNavigation() {
           </nav>
         </div>
 
-         {mode === "employee" && (
+         {mode === "employee" && showAdministration && (
            <div className="px-4 pb-4 border-t border-sidebar-border pt-4">
              {!isCollapsed && (
                <h3 className="text-[10px] font-semibold text-sidebar-foreground/80 uppercase tracking-wider mb-2 px-3">

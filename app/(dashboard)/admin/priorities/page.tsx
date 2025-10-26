@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AdminPageGuard } from "@/components/auth/admin-page-guard"
 import { PageContent } from "@/components/layout/page-content"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -122,14 +123,15 @@ export default function PriorityMatrixPage() {
   }
 
   return (
-    <PageContent
-      title="Priority Matrix"
-      description="Configure priority levels based on impact and urgency"
-      breadcrumb={[
-        { label: "Administration", href: "/admin" },
-        { label: "Priority Matrix", href: "/admin/priorities" },
-      ]}
-    >
+    <AdminPageGuard permission="administration.view">
+      <PageContent
+        title="Priority Matrix"
+        description="Configure priority levels based on impact and urgency"
+        breadcrumb={[
+          { label: "Administration", href: "/admin" },
+          { label: "Priority Matrix", href: "/admin/priorities" },
+        ]}
+      >
       <div className="space-y-6">
         <div>
           <h1 className="text-[13px] font-semibold text-foreground">Priority Matrix</h1>
@@ -422,5 +424,6 @@ export default function PriorityMatrixPage() {
         </Card>
       </div>
     </PageContent>
+    </AdminPageGuard>
   )
 }

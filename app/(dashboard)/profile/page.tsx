@@ -37,9 +37,10 @@ import {
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { createClient } from "@/lib/supabase/client"
 
 export default function ProfilePage() {
-  const { user, profile, organization, loading, updateProfile } = useAuth()
+  const { user, profile, organization, loading, refreshProfile } = useAuth()
   const router = useRouter()
   
   const [isEditing, setIsEditing] = useState(false)
@@ -134,18 +135,32 @@ export default function ProfilePage() {
     setSuccessMessage("")
     
     try {
-      // TODO: Implement updateProfile mutation
-      // await updateProfile(profileData)
-      console.log("Updating profile:", profileData)
+      const supabase = createClient()
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Update profile using Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          phone: profileData.phone,
+          department: profileData.department,
+          timezone: profileData.timezone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+      
+      if (updateError) throw updateError
+      
+      // Refresh the auth context to get updated profile
+      await refreshProfile()
       
       setSuccessMessage("Profile updated successfully!")
       setIsEditing(false)
       
       setTimeout(() => setSuccessMessage(""), 3000)
     } catch (error) {
+      console.error('Profile update error:', error)
       setErrorMessage("Failed to update profile. Please try again.")
       setTimeout(() => setErrorMessage(""), 3000)
     } finally {
@@ -171,11 +186,14 @@ export default function ProfilePage() {
     setSuccessMessage("")
     
     try {
-      // TODO: Implement password change
-      console.log("Changing password")
+      const supabase = createClient()
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Update password using Supabase Auth
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password: passwordData.new_password
+      })
+      
+      if (passwordError) throw passwordError
       
       setSuccessMessage("Password changed successfully!")
       setIsChangingPassword(false)
@@ -186,8 +204,9 @@ export default function ProfilePage() {
       })
       
       setTimeout(() => setSuccessMessage(""), 3000)
-    } catch (error) {
-      setErrorMessage("Failed to change password. Please try again.")
+    } catch (error: any) {
+      console.error('Password change error:', error)
+      setErrorMessage(error.message || "Failed to change password. Please try again.")
       setTimeout(() => setErrorMessage(""), 3000)
     } finally {
       setSaveLoading(false)

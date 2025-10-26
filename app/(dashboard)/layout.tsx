@@ -10,6 +10,7 @@ import { Menu } from "lucide-react"
 import { useState } from "react"
 import { SidebarProvider, useSidebar } from "@/lib/contexts/sidebar-context"
 import { cn } from "@/lib/utils"
+import { UnifiedPageGuard } from "@/components/guards/unified-page-guard"
 
 /**
  * Persistent Dashboard Layout
@@ -79,7 +80,9 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <DashboardContent>{children}</DashboardContent>
+      <UnifiedPageGuard>
+        <DashboardContent>{children}</DashboardContent>
+      </UnifiedPageGuard>
     </SidebarProvider>
   )
 }
